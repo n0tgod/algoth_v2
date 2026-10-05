@@ -1400,7 +1400,7 @@
 - L292 `test_report_shows_what_the_money_is_made_of()` — Отчёт книги обязан называть концентрацию, а не только итог.
 - L346 `test_short_record_carries_the_promise_from_birth_and_the_cache_…` — Обещание модели (`fav_bp`) едет В ЗАПИСИ короткой позиции и в КЭШЕ.
 
-## research/dca_paper/test_short_adds.py · 167 строк
+## research/dca_paper/test_short_adds.py · 178 строк
 
 Проверки замера «доливы в прибыльный шорт».
 
@@ -1412,11 +1412,11 @@
   - L38 `_Mkt.__init__(self, own_step=-0.01, wave_step=0.0)`
   - L41 `_Mkt.move(self, sym, t0, t1)`
   - L44 `_Mkt.wave(self, t0, t1)`
-- L48 `test_add_pnl_is_the_remaining_path_capped_at_own_share_minus_ro…`
-- L64 `test_triggers_fire_strictly_before_exit_by_their_own_rule()`
-- L79 `test_repeats_inside_the_parent_window_only()`
-- L91 `test_stats_control_and_beat()`
-- L110 `test_run_wiring_with_stub_market_and_cash()`
+- L48 `test_add_outcome_is_the_whole_position_with_a_shared_floor()`
+- L72 `test_triggers_fire_strictly_before_exit_by_their_own_rule()`
+- L87 `test_repeats_inside_the_parent_window_only()`
+- L99 `test_stats_control_and_beat()`
+- L121 `test_run_wiring_with_stub_market_and_cash()`
 
 ## research/dca_paper/test_short_age.py · 148 строк
 

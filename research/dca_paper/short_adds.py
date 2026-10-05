@@ -21,16 +21,18 @@
 - **M — аномалия «имя слабее рынка»**: родитель в плюсе И ход имени с
   входа ниже волны рынка (средний ход 20 прокси-имён S8) на ≥ 1 / 2 %.
 
-Долив — та же доля нотионала, что у базовой ступени (четверть × плечо),
-живёт до выхода родителя; его pnl = приращение отметок родителя от часа
-долива до выхода (линейность по ступеням), убыток ограничен его долей
-маржи (своя ликвидация), издержки — круг на его нотионал. Чего здесь нет:
-общий пол позиции после долива (ликвидация ближе) — это ядро, второй шаг.
+Долив — та же доля нотионала, что у базовой ступени (четверть × плечо).
+Считается ВСЯ позиция: после долива pnl идёт вдвое быстрее, и общий пол
+капитуляции (−90 % маржи у безопасной линейки, −50 % у оптимальной)
+достигается при вдвое меньшем ходе против — по часовым отметкам, с
+оговоркой часа. Величина ячейки — приращение денег позиции от долива
+(с доливом минус без), нетто круга издержек на нотионал долива; позиции,
+добитые доливом раньше своего выхода, считаются отдельно.
 
-Судья: случайные позиции, ОТКРЫТЫЕ в те же часы, столько же, с тем же
-доливом (200 зёрен): триггер обязан выбирать продолжение лучше случайного
-открытого — иначе он измерял бы не аномалию, а то, что любая живая
-позиция в среднем дотягивает в плюс. Для `R` рядом — касса: повторы
+Судьи два: случайные позиции, ОТКРЫТЫЕ в те же часы, столько же, с тем же
+доливом (200 зёрен), и то же среди открытых В ПЛЮСЕ — триггер обязан
+выбирать продолжение лучше случайного открытого, иначе он измерял бы не
+аномалию, а то, что любая живая позиция в среднем дотягивает в плюс. Для `R` рядом — касса: повторы
 разрешены как СВОИ позиции (`rules.ONE_PER_NAME` снят на время счёта), с
 деньгами, просадкой и σ дня на $10k.
 """
@@ -53,6 +55,7 @@ import rules as R                                             # noqa: E402
 import costs as CO                                            # noqa: E402
 import run_short as S                                         # noqa: E402
 import run_d10 as D10                                         # noqa: E402
+import run_d2 as D2                                           # noqa: E402
 import short_grid as G                                        # noqa: E402
 import agree_book as AG                                       # noqa: E402
 import arm_book as AB                                         # noqa: E402
@@ -148,22 +151,52 @@ def trigger(v, kind, val, reps=None):
     return None
 
 
-def add_pnl(v, k):
-    """pnl долива долями зарезервированной маржи родителя: приращение отметок
-    от часа k до выхода, не ниже −доли (своя ликвидация), минус круг издержек."""
+def floor_of_ruler(rk):
+    """Пол капитуляции линейки долями маржи: −(1 − доля пола), как у ядра в терминах съеденной маржи."""
+    for frac, rulers in S.floor_groups().items():
+        if rk in rulers:
+            return -(1.0 - float(frac))
+    return -(1.0 - float(D2.FLOOR_FRAC))
+
+
+def add_outcome(v, k, floor_pnl):
+    """Позиция с доливом второй ступени на часе k против позиции без него.
+
+    После долива pnl позиции идёт вдвое быстрее: на часе j он равен
+    2·cum_j − cum_k. Общий пол (`floor_pnl`, доля маржи) достигнут —
+    позиция закрыта на этом часе, раньше своего выхода. `delta` —
+    приращение денег позиции от долива долями зарезервированной маржи,
+    `net` — за вычетом круга издержек на нотионал долива; `early_floor` —
+    позиция добита доливом раньше своего выхода.
+    """
     rec, p = v["rec"], v["path"]
+    cum, K = p["cum"], p["K"]
     share = share_of(rec)
     lev = float(rec.get("lev") or 0.0)
-    gross = float(p["final"]) - float(p["cum"][k])
-    gross = max(gross, -share)
+    ck = float(cum[k])
+    j_exit, floored = K, False
+    for j in range(k + 1, K + 1):
+        c = cum.get(j)
+        if c is None:
+            continue
+        if 2.0 * float(c) - ck <= float(floor_pnl):
+            j_exit, floored = j, True
+            break
+    cj = float(cum[j_exit])
+    total_with = 2.0 * cj - ck
+    delta = total_with - float(p["final"])
     cost = share * lev * D10.ROUND_COST_BP / 1e4
-    return {"gross": gross, "net": gross - cost, "cost": cost,
-            "px_bp": (gross / (share * lev) * 1e4) if (share > 0 and lev > 0) else None,
-            "capped": gross <= -share + 1e-12}
+    return {"delta": delta, "net": delta - cost, "cost": cost, "add_pnl": cj - ck,
+            "early_floor": bool(floored and j_exit < K),
+            "px_bp": ((cj - ck) / (share * lev) * 1e4) if (share > 0 and lev > 0) else None}
+
+
+def outcome(views, key, k):
+    return add_outcome(views[key], k, floor_of_ruler(key[0]))
 
 
 def stats(adds):
-    """Сводка доливов: среднее и медиана, доля плюсовых, худшие 5 %, в цене."""
+    """Сводка доливов: среднее и медиана приращения, доля плюсовых, худшие 5 %, добитые, в цене."""
     if not adds:
         return None
     net = sorted(a["net"] for a in adds)
@@ -172,36 +205,40 @@ def stats(adds):
     return {"n": n, "mean": sum(net) / n, "median": statistics.median(net),
             "pos": sum(1 for x in net if x > 0) / n,
             "worst5": net[max(0, int(0.05 * (n - 1)))],
-            "capped": sum(1 for a in adds if a["capped"]) / n,
+            "early_floor": sum(1 for a in adds if a["early_floor"]) / n,
             "px_mean": (sum(px) / len(px)) if px else None,
             "px_median": (statistics.median(px) if px else None),
             "sum": sum(net)}
 
 
-def control(views, changed, idx, seeds=SEEDS, log=print):
-    """Случайные позиции, открытые в те же часы, с тем же доливом — средний net по зёрнам."""
+def control(views, changed, idx, seeds=SEEDS, log=print, in_profit=False):
+    """Случайные позиции, открытые в те же часы (при `in_profit` — и в плюсе на этом часе),
+    с тем же доливом — средний net по зёрнам."""
     hours = [(key[0], k) for key, k in changed.items()]
     means, t0 = [], time.time()
     for i in range(int(seeds)):
-        rnd = random.Random(2000 + i)
+        rnd = random.Random((7000 if in_profit else 2000) + i)
         got, used = [], set()
         for rk, k in hours:
             pool = (idx.get(rk) or {}).get(k) or []
             pick = None
-            for _try in range(20):
+            for _try in range(30):
                 if not pool:
                     break
                 c = rnd.choice(pool)
-                if c not in used:
-                    pick = c
-                    break
+                if c in used:
+                    continue
+                if in_profit and not (float(views[c]["path"]["cum"].get(k) or 0.0) > 0):
+                    continue
+                pick = c
+                break
             if pick is None:
                 continue
             used.add(pick)
-            got.append(add_pnl(views[pick], k)["net"])
+            got.append(outcome(views, pick, k)["net"])
         means.append((sum(got) / len(got)) if got else None)
         if i and i % 50 == 0:
-            log(f"    контроль: {i} зёрен из {seeds}, {time.time() - t0:.0f} с")
+            log(f"    контроль{' в плюсе' if in_profit else ''}: {i} зёрен из {seeds}, {time.time() - t0:.0f} с")
     vals = [m for m in means if m is not None]
     return {"means": vals, "median": (statistics.median(vals) if vals else None)}
 
@@ -217,7 +254,7 @@ def by_book(views, changed):
     """Доливы по книгам (линейка → книги семейства)."""
     out = {bk: [] for bk in BOOK_KEYS}
     for key, k in changed.items():
-        a = add_pnl(views[key], k)
+        a = outcome(views, key, k)
         for bk, rk in S.BOOKS.items():
             if rk == key[0]:
                 out[bk].append(a)
@@ -273,17 +310,22 @@ def run(seeds=SEEDS, log=print, now=None, launch=None, ctx=None, mem_limit=None,
             k = trigger(v, kind, val, reps=reps.get(key))
             if k is not None:
                 changed[key] = k
-        adds = {key: add_pnl(views[key], k) for key, k in changed.items()}
+        adds = {key: outcome(views, key, k) for key, k in changed.items()}
         st = stats(list(adds.values()))
         cell = {"kind": kind, "title": title, "val": val, "n": len(changed), "stats": st,
                 "books": by_book(views, changed), "control": None, "beat": None,
+                "control_plus": None, "beat_plus": None,
                 "tails_after": sum(1 for key in changed if views[key]["tail"])}
         if changed:
             ctl = control(views, changed, idx, seeds=seeds, log=log)
             cell["control"] = {"median": ctl["median"], "n": len(ctl["means"])}
             cell["beat"] = beat(ctl["means"], st["mean"])
+            ctp = control(views, changed, idx, seeds=seeds, log=log, in_profit=True)
+            cell["control_plus"] = {"median": ctp["median"], "n": len(ctp["means"])}
+            cell["beat_plus"] = beat(ctp["means"], st["mean"])
         log(f"{kind} {title}: доливов {len(changed)}, среднее {None if not st else round(st['mean'], 4)}, "
-            f"случайные не хуже в {cell['beat']}")
+            f"добито {None if not st else round(st['early_floor'], 3)}; случайные не хуже в {cell['beat']}, "
+            f"в плюсе — {cell['beat_plus']}")
         cells.append(cell)
     # касса: повторы как свои позиции (правило «одна на имя» снято)
     packed = AG.packed_short(cache)
@@ -336,28 +378,30 @@ def _f(x, d=2):
 
 
 def verdict(cell):
-    b = cell.get("beat")
+    """Фраза из чисел: среднее нетто и доля зёрен, где случайный открытый В ПЛЮСЕ не хуже."""
+    b = cell.get("beat_plus")
     st = cell.get("stats") or {}
     if b is None or st.get("mean") is None:
         return "не измерено"
     if st["mean"] <= 0:
         return "долив в минусе"
     if b <= 0.05:
-        return "лучше случайного открытого"
+        return "лучше случайного в плюсе"
     if b >= 0.95:
-        return "хуже случайного открытого"
-    return "в шуме случайного"
+        return "хуже случайного в плюсе"
+    return "в шуме случайного в плюсе"
 
 
 def report(s):
     L_ = ["# Доливы в прибыльный шорт: заполнить зарезервированные ступени по триггеру", "",
           "Решение владельца 2026-10-05. Короткая книга резервирует маржу на четыре ступени и "
-          "заполняет одну; долив здесь — вторая ступень той же доли нотионала в сторону прибыли, "
-          "живёт до выхода родителя, убыток не ниже своей доли маржи, издержки — круг на свой "
-          "нотионал. Первый взгляд по отметкам кэша, без общего пола позиции (это ядро, второй "
-          f"шаг). Судья — случайные позиции, открытые в те же часы, с тем же доливом ({s.get('seeds') or SEEDS} зёрен). "
-          "Доли — от зарезервированной маржи родителя; «в цене» — ход цены после долива в б.п. "
-          "(б.п. только здесь, как в хранении: это не показ денег, а мера хода).", ""]
+          "заполняет одну; долив здесь — вторая ступень той же доли нотионала в сторону прибыли. "
+          "Считается ВСЯ позиция: после долива pnl идёт вдвое быстрее, общий пол капитуляции "
+          "(−90 % маржи у безопасной линейки, −50 % у оптимальной) достигается при вдвое меньшем "
+          "ходе против — по часовым отметкам кэша, с оговоркой часа. Величина — приращение денег "
+          "позиции от долива, нетто круга издержек на его нотионал, долями зарезервированной маржи. "
+          f"Судьи — случайные позиции, открытые в те же часы, и такие же в плюсе ({s.get('seeds') or SEEDS} зёрен). "
+          "«В цене» — ход цены за жизнь долива в б.п. (мера хода, не показ денег).", ""]
     if s.get("error"):
         return "\n".join(L_ + [f"**Не посчитано:** {s['error']}.", ""])
     dg = s.get("diag") or {}
@@ -365,16 +409,19 @@ def report(s):
            f"выбором модели {_i(dg.get('repeats'))} (ног листа {_i(dg.get('legs'))}); доля базовой ступени "
            f"(медиана) {_f(dg.get('share_median'))}; волна не собралась {_i(dg.get('wave_none'))} раз.", ""]
     L_ += ["## Доливы по триггерам (все линейки вместе)", "",
-           "| триггер | доливов | хвостовых родителей | среднее, % маржи | медиана | плюсовых | худшие 5 % | "
-           "ликвидация долива | в цене, среднее | случайные открытые: медиана среднего / не хуже | вывод |",
-           "|---|--:|--:|--:|--:|--:|--:|--:|--:|---|---|"]
+           "| триггер | доливов | хвостовых родителей | приращение, % маржи: среднее | медиана | плюсовых | "
+           "худшие 5 % | добито доливом | в цене, среднее | случайные открытые: медиана / не хуже | "
+           "случайные в плюсе: медиана / не хуже | вывод |",
+           "|---|--:|--:|--:|--:|--:|--:|--:|--:|---|---|---|"]
     for c in s.get("cells") or []:
         st = c.get("stats") or {}
         ctl = c.get("control") or {}
+        ctp = c.get("control_plus") or {}
         L_.append(f"| {c['title']} | {_i(c.get('n'))} | {_i(c.get('tails_after'))} | {_pp(st.get('mean'), 2)} | "
                   f"{_pp(st.get('median'), 2)} | {_pu(st.get('pos'))} | {_pp(st.get('worst5'))} | "
-                  f"{_pu(st.get('capped'), 1)} | {_bp(st.get('px_mean'))} | "
-                  f"{_pp(ctl.get('median'), 2)} / {_pu(c.get('beat'))} | {verdict(c)} |")
+                  f"{_pu(st.get('early_floor'), 1)} | {_bp(st.get('px_mean'))} | "
+                  f"{_pp(ctl.get('median'), 2)} / {_pu(c.get('beat'))} | "
+                  f"{_pp(ctp.get('median'), 2)} / {_pu(c.get('beat_plus'))} | {verdict(c)} |")
     L_.append("")
     L_ += ["## По книгам: сумма доливов против денег родителей (доли маржи, нетто записей)", "",
            "| книга | родителей | Σ родителей | " + " | ".join(c["title"] for c in s.get("cells") or []) + " |",
@@ -398,10 +445,11 @@ def report(s):
             L_.append(f"| {R.ruler_title(bk)} | {title} | {_i(c.get('n'))} | {_pp(c.get('final'))} | "
                       f"{_pp(c.get('max_dd'))} | {_sd(c.get('sigma_day'))} | {_usd(c.get('wo3'))} | {_i(c.get('tails'))} |")
     L_ += ["", "## Как читать", "",
-           "- Долив имеет смысл, если его среднее в плюсе ПОСЛЕ издержек, случайный открытый в те же часы "
-           "не хуже редко (≤ 5 % зёрен), а ликвидаций долива и худших 5 % книга переживёт.",
-           "- «Хвостовых родителей» — сколько родителей после долива кончились полом или ликвидацией: там "
-           "долив теряет всю свою долю, а общий пол позиции (не смоделирован) стоял бы ближе.",
+           "- Долив имеет смысл, если приращение денег позиции в плюсе ПОСЛЕ издержек, случайный открытый "
+           "В ПЛЮСЕ в те же часы не хуже редко (≤ 5 % зёрен), а добитых доливом и худших 5 % книга переживёт.",
+           "- «Добито доливом» — позиция дошла до общего пола раньше своего выхода только из-за второй "
+           "ступени: без долива она дожила бы до своего исхода. «Хвостовых родителей» — родители, "
+           "кончившиеся полом или ликвидацией и без долива.",
            "- Триггер по прибыли судится против случайного открытого, потому что любая живая позиция в "
            "среднем дотягивает в плюс: вопрос — выбирает ли триггер продолжение ЛУЧШЕ среднего.",
            "- Правилом ничего не назначается: это первый взгляд по отметкам; второй шаг — ядро с общим "

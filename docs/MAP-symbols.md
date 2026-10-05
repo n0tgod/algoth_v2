@@ -2289,44 +2289,46 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L386 `publish(name)`
 - L391 `main(argv=None)`
 
-## research/dca_paper/short_adds.py · 433 строк
+## research/dca_paper/short_adds.py · 481 строк
 
 Доливы в прибыльный шорт: заполнить зарезервированные ступени по триггеру.
 
-- L45 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L46 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L65 `ART = 'DCA-short-adds'`
-- L66 `SEEDS = 200`
-- L67 `MAIN_DEP = 10000`
-- L68 `HOUR = 3600.0`
-- L69 `BOOK_KEYS = list(S.BOOKS)`
-- L70 `TAIL_EXITS = T.TAIL_EXITS`
-- L71 `PROFIT = (0.1, 0.25, 0.5)`
-- L72 `WEAK = (0.01, 0.02)`
-- L73 `BASE_SHARE = 0.25`
-- L74 `CELLS = [('P', f'прибыль ≥ +{int(100 * x)} %', …`
-- L79 `share_of(rec)` — Доля нотионала базовой ступени — из заполнений записи.
-- L89 `view_lite(rec, mkt)` — Путь по отметкам и ход имени против волны рынка по часам — без β.
-- L104 `repeats_of(cache, legs_)` — {ключ родителя: [часы повторных выборов]} — лист выбрал то же имя при открытой позиции.
-- L125 `trigger(v, kind, val, reps=None)` — Первый час долива СТРОГО до выхода родителя, иначе None.
-- L151 `add_pnl(v, k)` — pnl долива долями зарезервированной маржи родителя: приращение отметок от часа k до выхода, не ниже −доли (св…
-- L165 `stats(adds)` — Сводка доливов: среднее и медиана, доля плюсовых, худшие 5 %, в цене.
-- L181 `control(views, changed, idx, seeds=SEEDS, log=print)` — Случайные позиции, открытые в те же часы, с тем же доливом — средний net по зёрнам.
-- L209 `beat(ctl_means, value)`
-- L216 `by_book(views, changed)` — Доливы по книгам (линейка → книги семейства).
-- L227 `with_repeats(fn)` — Правило «одна на имя» снято на время счёта — и возвращено, что бы ни случилось.
-- L237 `run(seeds=SEEDS, log=print, now=None, launch=None, ctx=None, me…`
-- L310 `_pp(x, d=1)`
-- L314 `_pu(x, d=0)`
-- L318 `_bp(x)`
-- L322 `_usd(x)`
-- L326 `_sd(x)`
-- L330 `_i(x)`
-- L334 `_f(x, d=2)`
-- L338 `verdict(cell)`
-- L352 `report(s)`
-- L413 `publish(name)`
-- L419 `main(argv=None)`
+- L47 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L48 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L68 `ART = 'DCA-short-adds'`
+- L69 `SEEDS = 200`
+- L70 `MAIN_DEP = 10000`
+- L71 `HOUR = 3600.0`
+- L72 `BOOK_KEYS = list(S.BOOKS)`
+- L73 `TAIL_EXITS = T.TAIL_EXITS`
+- L74 `PROFIT = (0.1, 0.25, 0.5)`
+- L75 `WEAK = (0.01, 0.02)`
+- L76 `BASE_SHARE = 0.25`
+- L77 `CELLS = [('P', f'прибыль ≥ +{int(100 * x)} %', …`
+- L82 `share_of(rec)` — Доля нотионала базовой ступени — из заполнений записи.
+- L92 `view_lite(rec, mkt)` — Путь по отметкам и ход имени против волны рынка по часам — без β.
+- L107 `repeats_of(cache, legs_)` — {ключ родителя: [часы повторных выборов]} — лист выбрал то же имя при открытой позиции.
+- L128 `trigger(v, kind, val, reps=None)` — Первый час долива СТРОГО до выхода родителя, иначе None.
+- L154 `floor_of_ruler(rk)` — Пол капитуляции линейки долями маржи: −(1 − доля пола), как у ядра в терминах съеденной маржи.
+- L162 `add_outcome(v, k, floor_pnl)` — Позиция с доливом второй ступени на часе k против позиции без него.
+- L194 `outcome(views, key, k)`
+- L198 `stats(adds)` — Сводка доливов: среднее и медиана приращения, доля плюсовых, худшие 5 %, добитые, в цене.
+- L214 `control(views, changed, idx, seeds=SEEDS, log=print, in_profit=…` — Случайные позиции, открытые в те же часы (при `in_profit` — и в плюсе на этом часе), с тем же доливом — средн…
+- L246 `beat(ctl_means, value)`
+- L253 `by_book(views, changed)` — Доливы по книгам (линейка → книги семейства).
+- L264 `with_repeats(fn)` — Правило «одна на имя» снято на время счёта — и возвращено, что бы ни случилось.
+- L274 `run(seeds=SEEDS, log=print, now=None, launch=None, ctx=None, me…`
+- L352 `_pp(x, d=1)`
+- L356 `_pu(x, d=0)`
+- L360 `_bp(x)`
+- L364 `_usd(x)`
+- L368 `_sd(x)`
+- L372 `_i(x)`
+- L376 `_f(x, d=2)`
+- L380 `verdict(cell)` — Фраза из чисел: среднее нетто и доля зёрен, где случайный открытый В ПЛЮСЕ не хуже.
+- L395 `report(s)`
+- L461 `publish(name)`
+- L467 `main(argv=None)`
 
 ## research/dca_paper/short_age.py · 411 строк
 

@@ -45,20 +45,28 @@ class _Mkt:
         return self.wave_step * round((t1 - t0) / H)
 
 
-def test_add_pnl_is_the_remaining_path_capped_at_own_share_minus_round():
-    rec = _rec()                                   # cum: 0.1, 0.3, 0.2, −0.1; K = 4
+def test_add_outcome_is_the_whole_position_with_a_shared_floor():
+    rec = _rec()                                   # cum: 0.1, 0.3, 0.2, −0.1; K = 4; итог −0.1
     v = A.view_lite(rec, _Mkt())
     assert A.share_of(rec) == 0.25 and A.share_of(dict(rec, fills=None)) == A.BASE_SHARE
-    a1 = A.add_pnl(v, 1)                           # от 0.1 к −0.1: −0.2
     cost = 0.25 * 20.0 * A.D10.ROUND_COST_BP / 1e4
-    assert abs(a1["gross"] + 0.2) < 1e-12 and abs(a1["net"] - (-0.2 - cost)) < 1e-12 and not a1["capped"]
+    a1 = A.add_outcome(v, 1, -0.9)                 # с долива на часе 1: итог 2·(−0.1) − 0.1 = −0.3 против −0.1
+    assert abs(a1["delta"] + 0.2) < 1e-12 and abs(a1["net"] - (-0.2 - cost)) < 1e-12 and not a1["early_floor"]
     assert abs(a1["px_bp"] - (-0.2 / 5.0 * 1e4)) < 1e-9
-    a2 = A.add_pnl(v, 2)                           # от 0.3 к −0.1: −0.4 → не ниже своей доли −0.25
-    assert abs(a2["gross"] + 0.25) < 1e-12 and a2["capped"]
-    up = A.view_lite(_rec(deltas=(0.1, 0.1, 0.1, 0.2)), _Mkt())
-    a3 = A.add_pnl(up, 2)                          # от 0.2 к 0.5: +0.3
-    assert abs(a3["gross"] - 0.3) < 1e-12 and abs(a3["net"] - (0.3 - cost)) < 1e-12
-    print(f"ok  pnl долива: остаток пути, пол своей доли (−0.25), круг {cost:.4f} на свой нотионал")
+    a2 = A.add_outcome(v, 2, -0.9)                 # с часа 2: 2·(−0.1) − 0.3 = −0.5 против −0.1 → −0.4, пола нет
+    assert abs(a2["delta"] + 0.4) < 1e-12 and not a2["early_floor"]
+    a2f = A.add_outcome(v, 2, -0.5)                # пол −0.5 достигнут на часе выхода — не «добито раньше»
+    assert abs(a2f["delta"] + 0.4) < 1e-12 and not a2f["early_floor"]
+    # родитель провалился и вернулся: без долива +0.4, с доливом общий пол −0.5 добивает на часе 3
+    rec2 = _rec(deltas=(0.1, 0.2, -0.45, 0.35, 0.2))          # cum: .1 .3 −.15 .2 .4; K = 5
+    v2 = A.view_lite(rec2, _Mkt())
+    hit = A.add_outcome(v2, 2, -0.5)
+    assert hit["early_floor"] and abs(hit["delta"] - (-0.6 - 0.4)) < 1e-12, hit
+    assert abs(hit["px_bp"] - (-0.45 / 5.0 * 1e4)) < 1e-9
+    safe = A.add_outcome(v2, 2, -0.9)              # пол −0.9 не достигнут: 2·0.4 − 0.3 = 0.5 против 0.4
+    assert not safe["early_floor"] and abs(safe["delta"] - 0.1) < 1e-12
+    assert A.floor_of_ruler("safe_s") < A.floor_of_ruler("optimal_s") < 0
+    print(f"ok  долив: вся позиция с общим полом — добитая раньше выхода считается отдельно; круг {cost:.4f}")
 
 
 def test_triggers_fire_strictly_before_exit_by_their_own_rule():
@@ -96,11 +104,14 @@ def test_stats_control_and_beat():
         cache[key] = rec
         views[key] = A.view_lite(rec, _Mkt())
     changed = {("safe_s", "S1USDT", AT): 2, ("safe_s", "S3USDT", AT): 2}   # оба продолжают в плюс
-    st = A.stats([A.add_pnl(views[k], h) for k, h in changed.items()])
+    st = A.stats([A.outcome(views, k, h) for k, h in changed.items()])
     assert st["n"] == 2 and st["pos"] == 1.0 and abs(st["mean"] - (0.2 - 0.25 * 20 * 11 / 1e4)) < 1e-12
+    assert st["early_floor"] == 0.0
     idx = A.P.open_index(views)
     ctl = A.control(views, changed, idx, seeds=5, log=lambda *a: None)
     assert len(ctl["means"]) == 5 and ctl["median"] is not None
+    ctp = A.control(views, changed, idx, seeds=5, log=lambda *a: None, in_profit=True)
+    assert len(ctp["means"]) == 5 and ctp["median"] is not None
     assert abs(A.beat([0.1, 0.2, 0.3], 0.2) - 2 / 3) < 1e-3 and A.beat([], 0.1) is None
     bb = A.by_book(views, changed)
     assert bb["safe_h"]["n"] == 2 and bb["optimal_h"] is None
@@ -145,7 +156,7 @@ def test_run_wiring_with_stub_market_and_cash():
     assert not s.get("error") and len(s["cells"]) == len(A.CELLS)
     cells = {c["title"]: c for c in s["cells"]}
     p10 = cells["прибыль ≥ +10 %"]
-    assert p10["n"] == 16 and p10["beat"] is not None and p10["stats"]["n"] == 16, p10["n"]   # 8 имён × 2 линейки
+    assert p10["n"] == 16 and p10["beat"] is not None and p10["beat_plus"] is not None, p10["n"]   # 8 имён × 2 линейки
     assert cells["повторный выбор модели"]["n"] == 2 and cells["повтор при родителе в плюсе"]["n"] == 2
     assert cells["в плюсе и слабее рынка на ≥ 1 %"]["n"] == 24      # и «плохие» в плюсе на часе 1 при имени слабее рынка
     assert s["diag"]["repeats"] == 2 and s["diag"]["share_median"] == 0.25
@@ -158,7 +169,7 @@ def test_run_wiring_with_stub_market_and_cash():
 
 
 if __name__ == "__main__":
-    for t in (test_add_pnl_is_the_remaining_path_capped_at_own_share_minus_round,
+    for t in (test_add_outcome_is_the_whole_position_with_a_shared_floor,
               test_triggers_fire_strictly_before_exit_by_their_own_rule,
               test_repeats_inside_the_parent_window_only,
               test_stats_control_and_beat,
