@@ -8210,19 +8210,20 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L30 `in_window(line, a, b)`
 - L42 `main(argv=None)`
 
-## tools/memtop.py · 145 строк
+## tools/memtop.py · 155 строк
 
 Кто держит память на сервере — через очередь заданий.
 
 - L21 `ROOT = os.path.dirname(os.path.dirname(os.path…`
 - L22 `LOGS = ('research/s8_loop/out/train.log', 'res…`
 - L32 `PS_TOP = 18`
-- L36 `DU_DIRS = ('research/b1_book/out/cache', 'researc…` — Каталоги, чей размер спрашивается по `--du`: кэш чтения из бакета (предел `remote.cache_gb`), сводки цикла, с…
-- L40 `ARGS_W = 150`
-- L43 `sh(cmd, timeout=60)` — stdout команды строками; ошибка — одной строкой с причиной.
-- L55 `ps_rows(lines, top=PS_TOP, width=ARGS_W)` — Строки `ps -eo pid,ppid,rss,etimes,args` → (pid, ppid, МБ, возраст, args).
-- L78 `tail_lines(path, n)` — Последние `n` строк файла и заметка о его длине.
-- L94 `main(argv=None)`
+- L35 `JOB_TAIL_LINES = 400` — Очередь заданий публикует ПОСЛЕДНИЕ 400 строк лога (`tools/jobs.sh`): всё, что обязано дойти до читателя, печ…
+- L39 `DU_DIRS = ('research/b1_book/out/cache', 'researc…` — Каталоги, чей размер спрашивается по `--du`: кэш чтения из бакета (предел `remote.cache_gb`), сводки цикла, с…
+- L43 `ARGS_W = 150`
+- L46 `sh(cmd, timeout=60)` — stdout команды строками; ошибка — одной строкой с причиной.
+- L58 `ps_rows(lines, top=PS_TOP, width=ARGS_W)` — Строки `ps -eo pid,ppid,rss,etimes,args` → (pid, ppid, МБ, возраст, args).
+- L81 `tail_lines(path, n)` — Последние `n` строк файла и заметка о его длине.
+- L97 `main(argv=None)`
 
 ## tools/probe_cli_models.py · 56 строк
 

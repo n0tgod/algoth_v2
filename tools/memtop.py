@@ -30,6 +30,9 @@ LOGS = ("research/s8_loop/out/train.log",
         "research/a1_universe/out/instruments.log",
         "research/s8_loop/out/model/train_log.jsonl")
 PS_TOP = 18
+# Очередь заданий публикует ПОСЛЕДНИЕ 400 строк лога (`tools/jobs.sh`):
+# всё, что обязано дойти до читателя, печатается в конце.
+JOB_TAIL_LINES = 400
 # Каталоги, чей размер спрашивается по `--du`: кэш чтения из бакета
 # (предел `remote.cache_gb`), сводки цикла, сырой поток записи. Полная
 # запись (миллионы файлов) сюда не входит — `du` по ней идёт минуты.
@@ -98,14 +101,32 @@ def main(argv=None):
     ap.add_argument("--tail", type=int, default=40, help="строк хвоста на лог")
     ap.add_argument("--du", action="store_true", help="размер каталогов из списка")
     a = ap.parse_args(argv)
-    print(f"== free -m ({datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC) ==")
-    for ln in sh(["free", "-m"]):
-        print("  " + ln)
-    print(f"\n== процессы по памяти (RSS, МБ; возраст чч:мм; первые {PS_TOP}) ==")
-    rows = ps_rows(sh(["ps", "-eo", "pid,ppid,rss,etimes,args", "--no-headers"]))
-    print(f"  всего памяти у первых {PS_TOP}: {sum(r[2] for r in rows)} МБ")
-    for pid, ppid, mb, age, args in rows:
-        print(f"  {pid:>8} {ppid:>8} {mb:>6} {age:>7}  {args}")
+    # Порядок печати — не вкус, а требование канала: очередь заданий
+    # оставляет последние `JOB_TAIL_LINES` строк, и 04.10 таблицы памяти,
+    # напечатанные первыми, отрезались хвостами десяти логов целиком.
+    # Хвосты идут первыми, таблицы — последними: что обязано дойти,
+    # печатается в конце.
+    print(f"(хвосты логов — первыми, таблицы памяти — в конце: очередь "
+          f"заданий хранит последние {JOB_TAIL_LINES} строк)")
+    for rel in LOGS:
+        p = os.path.join(ROOT, rel)
+        print(f"\n== {rel} (хвост {a.tail}) ==")
+        if not os.path.exists(p):
+            print("  (файла нет)")
+            continue
+        lines, note = tail_lines(p, a.tail)
+        print(f"  {note}")
+        for ln in lines or ():
+            print("  " + ln[:220])
+    if a.du:
+        print("\n== размер каталогов (du -sh) ==")
+        for rel in DU_DIRS:
+            p = os.path.join(ROOT, rel)
+            if not os.path.isdir(p):
+                print(f"  {rel}: (нет)")
+                continue
+            got = sh(["du", "-sh", p], timeout=120)
+            print(f"  {rel}: {(got[0].split()[0] if got and got[0].split() else '?')}")
     print(f"\n== убийства ядра с {a.day} 00:00 UTC ==")
     got = [ln for ln in sh(["journalctl", "-k", "--utc", "--since", f"{a.day} 00:00:00",
                             "--no-pager", "-o", "short-iso"], timeout=120)
@@ -119,25 +140,14 @@ def main(argv=None):
         print("  последнее: " + kills[-1][:220])
     for ln in got[-30:]:
         print("  " + ln[:220])
-    if a.du:
-        print("\n== размер каталогов (du -sh) ==")
-        for rel in DU_DIRS:
-            p = os.path.join(ROOT, rel)
-            if not os.path.isdir(p):
-                print(f"  {rel}: (нет)")
-                continue
-            got = sh(["du", "-sh", p], timeout=120)
-            print(f"  {rel}: {(got[0].split()[0] if got and got[0].split() else '?')}")
-    for rel in LOGS:
-        p = os.path.join(ROOT, rel)
-        print(f"\n== {rel} (хвост {a.tail}) ==")
-        if not os.path.exists(p):
-            print("  (файла нет)")
-            continue
-        lines, note = tail_lines(p, a.tail)
-        print(f"  {note}")
-        for ln in lines or ():
-            print("  " + ln[:220])
+    print(f"\n== free -m ({datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC) ==")
+    for ln in sh(["free", "-m"]):
+        print("  " + ln)
+    print(f"\n== процессы по памяти (RSS, МБ; возраст чч:мм; первые {PS_TOP}) ==")
+    rows = ps_rows(sh(["ps", "-eo", "pid,ppid,rss,etimes,args", "--no-headers"]))
+    print(f"  всего памяти у первых {PS_TOP}: {sum(r[2] for r in rows)} МБ")
+    for pid, ppid, mb, age, args in rows:
+        print(f"  {pid:>8} {ppid:>8} {mb:>6} {age:>7}  {args}")
     return 0
 
 

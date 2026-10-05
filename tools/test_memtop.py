@@ -51,6 +51,36 @@ def test_tail_zero_prints_nothing_not_everything():
         assert note == "строк всего 1000", note
 
 
+def test_memory_tables_survive_the_job_tail():
+    # Дефект 04.10: очередь заданий хранит ПОСЛЕДНИЕ 400 строк лога, а
+    # таблицы памяти печатались первыми и при десяти логах по 40 строк
+    # хвоста (420 строк) отрезались целиком — задание отвечало на всё,
+    # кроме вопроса, ради которого запущено.
+    import io
+    from contextlib import redirect_stdout
+    with tempfile.TemporaryDirectory() as d:
+        for rel in M.LOGS:
+            p = os.path.join(d, rel)
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            with open(p, "w") as f:
+                f.write("\n".join(f"строка {i}" for i in range(1000)) + "\n")
+        root0 = M.ROOT
+        M.ROOT = d
+        try:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                rc = M.main(["--day", "2026-10-04"])      # хвост по умолчанию
+        finally:
+            M.ROOT = root0
+    assert rc == 0
+    kept = buf.getvalue().splitlines()[-M.JOB_TAIL_LINES:]
+    text = "\n".join(kept)
+    for head in ("== free -m", "== процессы по памяти", "== убийства ядра"):
+        assert head in text, f"«{head}» не дожил до последних {M.JOB_TAIL_LINES} строк"
+    # и хвосты логов при этом печатаются — просто раньше таблиц
+    assert buf.getvalue().count("строк всего 1000") == len(M.LOGS)
+
+
 def test_main_runs_without_server_logs(capsys=None):
     # На стенде логов нет: каждый источник печатает «(файла нет)», а не падает.
     import io
