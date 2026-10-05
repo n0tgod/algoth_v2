@@ -758,6 +758,22 @@ class Shard:
             delay = min(delay * 2, 30)
 
 
+def rss_mb():
+    """RSS этого процесса в МБ по `/proc/self/status`; None — не прочитан.
+
+    Мера, а не оценка: ядро само говорит, сколько страниц процесс
+    держит. «Не прочитан» остаётся `None` — отсутствие меры не ноль.
+    """
+    try:
+        with open("/proc/self/status") as f:
+            for ln in f:
+                if ln.startswith("VmRSS:"):
+                    return int(ln.split()[1]) // 1024
+    except (OSError, ValueError, IndexError):
+        pass
+    return None
+
+
 class Collector:
     def __init__(self, symbols, raw_symbols, root, log, deep=DEEP,
                  paper=False):
@@ -963,6 +979,11 @@ class Collector:
         """
         return {
             "uptime_sec": round(time.time() - self.started, 1),
+            # Память процесса — рядом с возрастом: 05.10 сборщик держал
+            # 2448 МБ через 25 ч при 1.5 ГБ на старте, и обучение S8
+            # стояло пять суток, пока никто не видел этого числа.
+            # Сторож перезапускает по потолку (`COLLECT_RSS_MAX_MB`).
+            "rss_mb": rss_mb(),
             "messages": self.n_msg, "trades": self.n_trades,
             "resets": self.n_resets,
             "last_msg_age_sec": (round(time.time() - self.last_msg, 1)

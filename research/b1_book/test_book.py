@@ -2009,9 +2009,15 @@ def test_health_is_one_definition():
     h = c.health()
     need = {"snapshots", "snapshot_errors", "last_snap_age_sec",
             "snap_pass_sec", "uptime_sec", "messages", "last_msg_age_sec",
-            "writes", "write_age_sec"}
+            "writes", "write_age_sec", "rss_mb"}
     check("здоровье несёт меру записи снимков", need <= set(h),
           str(sorted(set(need) - set(h))))
+    # Память процесса — число из /proc, а не оценка: 05.10 сборщик рос
+    # до 2448 МБ за сутки, и никто этого не видел. На стенде процесс
+    # теста весит десятки мегабайт — положительное целое.
+    check("здоровье несёт память процесса (МБ) положительным целым",
+          isinstance(h.get("rss_mb"), int) and h["rss_mb"] > 0,
+          str(h.get("rss_mb")))
     page = c.snapshot()["status"]
     check("страница показывает те же поля", need <= set(page),
           str(sorted(set(need) - set(page))))
