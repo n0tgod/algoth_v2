@@ -29,6 +29,7 @@ import argparse
 import json
 import os
 import pickle
+import subprocess
 import sys
 import time
 import warnings
@@ -2474,6 +2475,37 @@ def train_mem_ok(avail_mb, min_mb=None):
     return True, f"память: доступно {avail_mb} МБ при пороге {min_mb}"
 
 
+def mem_holders_line(lines=None, n=3, width=60):
+    """Кто держит память — строкой в лог при откладывании обучения.
+
+    Пять суток «отложено по памяти» (30.09 → 04.10) не назвали
+    виновника: гейт печатал, СКОЛЬКО доступно, но не КТО держит, и
+    рост сборщика до 2.4 ГБ нашёлся только ручным замером. Строка
+    берёт первые `n` процессов по RSS из `ps`; разбора нет — сырые
+    числа ядра (КБ → МБ, секунды → часы), чтобы не заводить второго
+    разборщика `ps` рядом с `tools/memtop.py`.
+    """
+    if lines is None:
+        try:
+            r = subprocess.run(["ps", "-eo", "rss,etimes,args", "--sort=-rss",
+                                "--no-headers"], capture_output=True,
+                               text=True, timeout=20)
+            lines = (r.stdout or "").splitlines()
+        except Exception as e:                                # noqa: BLE001
+            return f"держат память: не измерено ({e})"
+    out = []
+    for ln in lines:
+        parts = ln.split(None, 2)
+        if len(parts) < 3 or not parts[0].isdigit() or not parts[1].isdigit():
+            continue
+        out.append(f"{int(parts[0]) // 1024} МБ {int(parts[1]) / 3600:.1f} ч "
+                   f"{parts[2][:width]}")
+        if len(out) >= n:
+            break
+    return "держат память (RSS, возраст): " + (" | ".join(out) if out
+                                                else "ps пуст")
+
+
 def train_due(prev_man, now_ts, every_h=None):
     """Пора ли переобучать: (да/нет, причина словами).
 
@@ -3462,6 +3494,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         log_(mem_why)
         if not mem_ok:
             due, why, deferred = False, mem_why, True
+            log_(mem_holders_line())
     if not due and booked is not None:
         cyc = round(time.time() - t0, 1)
         log_((f"обучение отложено по памяти: {why}" if deferred

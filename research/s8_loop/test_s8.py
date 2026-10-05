@@ -5518,6 +5518,30 @@ def test_day_brake_math_and_activation():
           not TR.day_brake_active(None, now))
 
 
+def test_mem_holders_are_named_when_training_is_deferred():
+    """При откладывании обучения по памяти лог называет держателей.
+
+    Пять суток строк «отложено по памяти» (30.09 → 04.10) не назвали
+    виновника — рост сборщика нашёлся ручным замером.
+    """
+    import train as T
+    ps = ["  RSS ELAPSED COMMAND",
+          "2506752  90360 .venv/bin/python research/b1_book/collect.py --http 8765",
+          "1153024  88200 .venv/bin/python research/s8_loop/train.py",
+          " 313344 6048240 claude --continue",
+          "  51200 404000 /usr/lib/systemd/systemd-journald",
+          "мусор"]
+    ln = T.mem_holders_line(ps, n=3)
+    check("первые три по RSS, в МБ и часах, с командой",
+          ln == "держат память (RSS, возраст): 2448 МБ 25.1 ч .venv/bin/python "
+                "research/b1_book/collect.py --http 8765 | 1126 МБ 24.5 ч "
+                ".venv/bin/python research/s8_loop/train.py | 306 МБ 1680.1 ч "
+                "claude --continue", ln)
+    check("пустой ps — сказано, а не пусто",
+          T.mem_holders_line([]) == "держат память (RSS, возраст): ps пуст")
+    check("живой ps читается", "МБ" in T.mem_holders_line() or "не измерено" in T.mem_holders_line())
+
+
 def test_training_runs_on_a_cadence_not_every_hour():
     """Обучение ушло из ЧАСОВОГО пути на объявленную каденцию.
 
@@ -5952,6 +5976,7 @@ def main():
     test_books_run_before_training_on_prev_weights()
     print("дневной тормоз")
     test_day_brake_math_and_activation()
+    test_mem_holders_are_named_when_training_is_deferred()
     test_training_runs_on_a_cadence_not_every_hour()
     test_day_brake_blocks_entries_not_reviews()
     print()
