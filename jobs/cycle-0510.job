@@ -1,0 +1,1 @@
+run tools/loggrep.py --file train --preset cycle --days 2 --last 12
