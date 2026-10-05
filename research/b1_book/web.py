@@ -1284,6 +1284,23 @@ function renderModel() {
        per-coin beta, so this book starts later than the faster ones —
        picks begin once the bar is crossed.</div>`
     : "";
+  // Стоящее обучение обязано кричать там, где смотрят на модель:
+  // 30.09 → 04.10 веса не обновлялись 109 ч, и страница показывала
+  // «age 109 h» тем же шрифтом, что «age 2 h». Правило одно —
+  // `s8_loop/stall.py`, судит сервер; страница показывает вердикт
+  // и причину последнего цикла, а не судит число сама.
+  const sl = d.stall || {};
+  const stallLine = sl.stalled
+    ? `<div class="mline" style="border-left:3px solid #e5484d;
+         padding-left:8px"><b>training has stalled: the weights are
+       ${sl.age_h} h old</b> (cadence ${sl.cadence_h} h, alarm from
+       ${sl.threshold_h} h)${sl.last_why ? ` — last cycle ${
+         String(sl.last_at || "").slice(11, 16)} UTC: ${
+         String(sl.last_why).replace(/</g, "&lt;")}` : ""}. The books
+       keep trading on stale weights; the server memory is the usual
+       cause (job <code>status</code>, <code>run tools/memtop.py</code>).
+       </div>`
+    : "";
   // Запаздывание входа — числом и С РАЗБОРОМ по шагам: «шесть минут»
   // без разложения выглядит как лень движка, тогда как лечится каждый
   // шаг по-своему, а часть из них не лечится вовсе (признаки часа не
@@ -1385,7 +1402,7 @@ function renderModel() {
              of the 08-24…27 drain: would have cut +572 $ of −2061
              at a cost of ≈0 $ in the profitable base).</div>`))
     : "";
-  box.innerHTML = armBtns + rrLine + brakeLine + lagLine + gateLine
+  box.innerHTML = armBtns + stallLine + rrLine + brakeLine + lagLine + gateLine
     + stopLine + floorLine
     + `<div class="mline">trained on ${m.sections ?? "—"}
       cross-sections, ${m.symbols ?? "—"} coins · noise check ${

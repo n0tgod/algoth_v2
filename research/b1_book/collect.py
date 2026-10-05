@@ -94,6 +94,7 @@ from common import universe_filter as UF                   # noqa: E402
 # (а не лениво, как `trades`), потому что модуль без импортов вовсе:
 # он не тянет ни numpy, ни математику признаков.
 import books as BK                                        # noqa: E402
+import stall as ST                                        # noqa: E402
 import web                                                # noqa: E402
 
 WS_URL = "wss://stream.bybit.com/v5/public/linear"
@@ -2336,6 +2337,11 @@ class Collector:
                 out["last_run"] = json.load(f)
         except (OSError, ValueError):
             pass
+        # Стоит ли обучение — вердиктом сервера, по правилу `stall.py`
+        # (тому же, что у сторожа и `status`): 30.09 → 04.10 страница
+        # показывала «age 109 h» тем же шрифтом, что «age 2 h».
+        out["stall"] = ST.stall_of(out.get("manifest"), out.get("last_run"),
+                                   time.time())
         # Сделки, деньги и сводки — ТЕМ ЖЕ кодом, что у страницы
         # сделок (`_book_view`). Две реализации здесь уже разошлись
         # однажды: обзор строил книгу по последним 200 строкам файлов

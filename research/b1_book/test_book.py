@@ -1992,6 +1992,47 @@ def test_nofile_covers_every_kind():
           "порядок доводов изменился — проверить заново")
 
 
+def test_model_state_carries_training_stall():
+    """Ответ `/model` несёт вердикт «обучение стоит» по правилу `stall.py`.
+
+    30.09 → 04.10 веса не обновлялись 109 ч; страница обучения
+    показывала «age 109 h» так же, как «age 2 h», — число без суда.
+    Судит сервер, одним правилом со сторожем и `status`.
+    """
+    import json
+    import tempfile
+    import time
+    from datetime import datetime, timezone
+
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    mdir = os.path.join(root, "model")
+    os.makedirs(mdir)
+    now = time.time()
+    json.dump({"trained_at": datetime.fromtimestamp(now - 50 * 3600, timezone.utc)
+               .isoformat(timespec="seconds"), "version": 7},
+              open(os.path.join(mdir, "manifest.json"), "w"))
+    json.dump({"at": "2026-10-04T13:05:10+00:00", "reason": "часовой цикл без обучения",
+               "train_why": "память: доступно 2762 МБ при пороге 3072"},
+              open(os.path.join(mdir, "last_run.json"), "w"))
+    c = C.Collector(["TEST"], [], root, lambda m: None)
+    st = c._model_dir_state(mdir).get("stall") or {}
+    check("вердикт «стоит» при весах 50 ч", st.get("stalled") is True
+          and st.get("measured") is True and abs(st.get("age_h", 0) - 50) < 0.1, str(st))
+    check("причина последнего цикла едет на страницу",
+          "2762" in (st.get("last_why") or ""), str(st))
+    json.dump({"trained_at": datetime.fromtimestamp(now - 2 * 3600, timezone.utc)
+               .isoformat(timespec="seconds"), "version": 7},
+              open(os.path.join(mdir, "manifest.json"), "w"))
+    st = c._model_dir_state(mdir).get("stall") or {}
+    check("свежие веса — не стоит", st.get("stalled") is False, str(st))
+    st = c._model_dir_state(os.path.join(root, "нет")).get("stall") or {}
+    check("каталога нет — «не измерено», не тревога",
+          st.get("measured") is False and st.get("stalled") is False
+          and st.get("note"), str(st))
+
+
 def test_health_is_one_definition():
     """Здоровье сбора — одно определение на страницу и на файл.
 
@@ -8468,6 +8509,7 @@ def main():
     test_shrunken_run_announces_dropped_symbols()
     test_nofile_covers_every_kind()
     test_health_is_one_definition()
+    test_model_state_carries_training_stall()
     test_collected_symbols_are_not_lost()
     test_candles_window_can_end_in_the_past()
     test_heat_grid_from_book_snapshots()
