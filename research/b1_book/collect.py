@@ -5969,8 +5969,18 @@ class Collector:
     _JSONL_HEAD = 512
     # Рядом пишется стакан, и память здесь дороже секунд: при
     # превышении бюджета выбрасываются самые давние по последнему
-    # обращению.
-    _JSONL_BUDGET = 192 * 1024 * 1024
+    # обращению. Бюджет — в байтах ОБЪЕКТОВ (оценка `memsize.deep_size`
+    # при разборе), а не файла: разобранная строка JSON весит в памяти
+    # в 5–10 раз больше своих байт на диске, и 192 МБ «файлов» были
+    # 1.3 ГБ RSS (06.10: 6.9 млн списков в процессе, сборщик 2.2 ГБ
+    # через шесть минут после подъёма — первый же тормоз дня читал все
+    # журналы книг). Класс ошибки — бюджет в чужих единицах.
+    _JSONL_BUDGET = 384 * 1024 * 1024
+
+    @staticmethod
+    def _jsonl_cost(entry):
+        """Сколько памяти держит запись кеша — байты объектов."""
+        return entry.get("est") or 0
 
     @staticmethod
     def _jsonl(path):
@@ -6025,18 +6035,20 @@ class Collector:
             except ValueError:
                 continue
         cache[path] = {"sig": sig, "head": head, "offset": offset + cut,
-                       "rows": rows, "used": time.time()}
+                       "rows": rows, "used": time.time(),
+                       "est": MS.deep_size(rows)}
         Collector._jsonl_trim()
         return rows
 
     @staticmethod
     def _jsonl_trim():
         cache = Collector._JSONL_CACHE
-        total = sum(v["sig"][1] for v in cache.values())
+        cost = Collector._jsonl_cost
+        total = sum(cost(v) for v in cache.values())
         if total <= Collector._JSONL_BUDGET:
             return
         for path, _ in sorted(cache.items(), key=lambda kv: kv[1]["used"]):
-            total -= cache.pop(path)["sig"][1]
+            total -= cost(cache.pop(path))
             if total <= Collector._JSONL_BUDGET:
                 break
 

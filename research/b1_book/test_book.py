@@ -2033,6 +2033,60 @@ def test_model_state_carries_training_stall():
           and st.get("note"), str(st))
 
 
+def test_jsonl_cache_budget_counts_objects_not_file_bytes():
+    """Бюджет кеша журналов меряется памятью объектов, а не байтами файла.
+
+    06.10: бюджет 192 МБ «файлов» держал 1.3 ГБ разобранных строк
+    (6.9 млн списков), сборщик — 2.2 ГБ через шесть минут после
+    подъёма. Файлы в тесте маленькие на диске (6 КБ) и тяжёлые в памяти
+    (сотни КБ списков): старый счёт оставил бы все, новый — выбрасывает
+    давние по бюджету. Подделка счёта (байты файла) обязана кусаться.
+    """
+    import json as _json
+    import tempfile
+
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    paths = []
+    for k in range(3):
+        p = os.path.join(d, f"book{k}", "picks.jsonl")
+        os.makedirs(os.path.dirname(p))
+        with open(p, "w", encoding="utf-8") as f:
+            for i in range(120):
+                f.write(_json.dumps({"i": i, "ladder": [[1, 2]] * 24}) + "\n")
+        paths.append(p)
+    file_kb = os.path.getsize(paths[0]) // 1024
+    cache, budget_was = C.Collector._JSONL_CACHE, C.Collector._JSONL_BUDGET
+    cache.clear()
+    try:
+        est = C.Collector._jsonl(paths[0]) and cache[paths[0]]["est"]
+        check("разобранный файл весит в памяти на порядок больше, чем на диске",
+              est > 10 * file_kb * 1024, f"{est} байт против {file_kb} КБ")
+        # бюджет — на два файла из трёх
+        C.Collector._JSONL_BUDGET = int(est * 2.5)
+        cache.clear()
+        for p in paths:
+            C.Collector._jsonl(p)
+        check("по бюджету объектов остаются два последних файла из трёх",
+              set(cache) == set(paths[1:]), str([x.rsplit("/", 2)[-2] for x in cache]))
+        # Контроль: счёт байтами файла (как было) оставил бы все три.
+        cost_was = C.Collector._jsonl_cost
+        C.Collector._jsonl_cost = staticmethod(lambda e: e["sig"][1])
+        assert C.Collector._jsonl_cost(cache[paths[1]]) == os.path.getsize(paths[1])
+        try:
+            cache.clear()
+            for p in paths:
+                C.Collector._jsonl(p)
+            check("подделка «байты файла» кусается (контроль): остаются все три",
+                  set(cache) == set(paths), str(len(cache)))
+        finally:
+            C.Collector._jsonl_cost = cost_was
+    finally:
+        cache.clear()
+        C.Collector._JSONL_BUDGET = budget_was
+
+
 def test_second_ring_matches_deque_bit_for_bit():
     """Посекундная история массивом отдаёт то же, что кольцо кортежей.
 
@@ -8590,6 +8644,7 @@ def main():
     test_disk_rate_compares_same_phase_of_hour()
     test_shrunken_run_announces_dropped_symbols()
     test_nofile_covers_every_kind()
+    test_jsonl_cache_budget_counts_objects_not_file_bytes()
     test_second_ring_matches_deque_bit_for_bit()
     test_health_is_one_definition()
     test_model_state_carries_training_stall()
