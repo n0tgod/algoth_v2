@@ -170,6 +170,24 @@ def census(c, deep=False):
             others.append((b, name, _count(v)))
     for b, name, n in sorted(others, reverse=True)[:12]:
         parts[f"прочее: {name}"] = {"n": n, "mb": round(b / 2 ** 20, 1)}
+    # Кеш разобранных журналов живёт на КЛАССЕ, не на экземпляре —
+    # `vars(c)` его не видит, а 06.10 именно он держал 1.3 ГБ.
+    jc = getattr(type(c), "_JSONL_CACHE", None)
+    if isinstance(jc, dict):
+        ents = []
+        for path, e in jc.items():
+            est = int(e.get("est") or 0)
+            ents.append((est, path, e))
+        tot = sum(x[0] for x in ents)
+        total += tot
+        parts["_JSONL_CACHE (разобранные журналы книг, класс)"] = {
+            "n": len(ents), "mb": round(tot / 2 ** 20, 1),
+            "budget_mb": round(getattr(type(c), "_JSONL_BUDGET", 0) / 2 ** 20),
+            "top": [{"file": "/".join(p.rsplit("/", 2)[-2:]),
+                     "rows": len(e.get("rows") or ()),
+                     "mb": round(est / 2 ** 20, 1),
+                     "file_mb": round((e.get("sig") or (0, 0))[1] / 2 ** 20, 1)}
+                    for est, p, e in sorted(ents, reverse=True)[:8]]}
     sig = _get(c, "sig.by") or {}
     n_sec = sum(len(getattr(l, "sec", ())) for l in sig.values())
     ring = sum(int(getattr(getattr(l, "sec", None), "nbytes", 0) or 0)
