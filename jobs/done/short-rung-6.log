@@ -1,7 +1,3 @@
-== задание short-rung-6 ==
-строка: run research/dca_paper/short_rung.py --group 0.5
-начало: 2026-10-06T18:16:25Z
-запускаю: .venv/bin/python research/dca_paper/short_rung.py --group 0.5
 h24/gbm: часов 961, коротких выборов 2883, ног под краем 2867, отброшено (нет полей / знак) 10
 h24/nn: часов 961, коротких выборов 2883, ног под краем 2685, отброшено (нет полей / знак) 186
 ног обеих рук: 5552
@@ -390,3 +386,15 @@ h24/nn: часов 961, коротких выборов 2883, ног под кр
 
 Чего замер не делает: правил книг не меняет; окно одно, веса модели эти часы видели (оценка сверху); третья и четвёртая ступени судятся только как ячейка `r4`, не по отдельности; безопасная печатается, не судится. Разрешение доли нуля — одно зерно из десяти.
 
+публикуется в ветку main:
+ jobs/done/short-rung-6.log                         | 219 +++++++++++++++++++++
+ .../dca_paper/out/DCA-short-rung-part-0.5.json     |   1 +
+ research/dca_paper/out/DCA-short-rung.json         |   1 +
+ research/dca_paper/out/DCA-short-rung.md           |  61 ++++++
+ research/s8_loop/out/day_brake.json                |   2 +-
+ 5 files changed, 283 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   e8ae84a1..8ec37bb9  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-06T20:07:47Z, код 0
