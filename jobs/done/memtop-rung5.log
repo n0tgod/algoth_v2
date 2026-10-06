@@ -398,3 +398,14 @@
    1496656        1      4  227:18  /usr/lib/polkit-1/polkitd --no-debug
    2329847        1      4  130:58  /usr/lib/systemd/systemd-timesyncd
 конец: 2026-10-06T17:21:39Z, код 0
+публикуется в ветку main:
+ jobs/done/memtop-rung5.done |   1 +
+ jobs/done/memtop-rung5.log  | 400 ++++++++++++++++++++++++++++++++++++++++++++
+ jobs/done/status-rung5.done |   1 +
+ jobs/done/status-rung5.log  |   9 +
+ jobs/poke.log               |   4 +
+ 5 files changed, 415 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   1174e4b2..7a477ce5  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

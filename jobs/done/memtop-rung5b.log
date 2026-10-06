@@ -1,0 +1,65 @@
+== задание memtop-rung5b ==
+строка: run tools/memtop.py --tail 0
+начало: 2026-10-06T17:22:50Z
+запускаю: .venv/bin/python tools/memtop.py --tail 0
+(хвосты логов — первыми, таблицы памяти — в конце: очередь заданий хранит последние 400 строк)
+
+== research/s8_loop/out/train.log (хвост 0) ==
+  строк всего 78517
+
+== research/dca_paper/out/short.log (хвост 0) ==
+  строк всего 60858
+
+== research/dca_paper/out/daily.log (хвост 0) ==
+  строк всего 166590
+
+== research/dca_paper/out/pair.log (хвост 0) ==
+  строк всего 79392
+
+== research/b1_book/out/collect.log (хвост 0) ==
+  строк всего 1105189
+
+== research/b1_book/out/watchdog.log (хвост 0) ==
+  строк всего 8692
+
+== research/b1_book/out/ship.log (хвост 0) ==
+  строк всего 201
+
+== research/a1_universe/out/refresh.log (хвост 0) ==
+  строк всего 17256
+
+== research/a1_universe/out/instruments.log (хвост 0) ==
+  строк всего 551
+
+== research/s8_loop/out/model/train_log.jsonl (хвост 0) ==
+  строк всего 633
+
+== убийства ядра с 2026-10-06 00:00 UTC ==
+  строк 0, убийств 0
+
+== free -m (2026-10-06 17:22:51 UTC) ==
+                 total        used        free      shared  buff/cache   available
+  Mem:            7745        3825         253           4        3981        3920
+  Swap:              0           0           0
+
+== процессы по памяти (RSS, МБ; возраст чч:мм; первые 18) ==
+  всего памяти у первых 18: 3236 МБ
+   3513073        1   1571   09:23  .venv/bin/python research/b1_book/collect.py --http 8765
+   3513339        1    723   09:22  .venv/bin/python research/s8_loop/train.py
+   3621480  3621476    446   00:34  .venv/bin/python research/dca_paper/short_rung.py --group 0.5
+     21675    14604    317 1698:44  claude --continue
+   2329852        1     60  130:59  /usr/lib/systemd/systemd-journald
+   3630057  3630050     30   00:00  .venv/bin/python tools/memtop.py --tail 0
+   2637243        1     26  586:34  /sbin/multipathd -d -s
+       961        1      9 1707:38  /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+   3629679  2329848      9   00:00  sshd: root [priv]
+         1        0      8 1707:38  /usr/lib/systemd/systemd --system --deserialize=89
+   2329846        1      6  130:59  /usr/lib/systemd/systemd-resolved
+   3629680  3629679      6   00:00  sshd: root [net]
+    691277        1      5  322:37  /usr/sbin/rsyslogd -n -iNONE
+      1129        1      4 1707:31  /usr/lib/systemd/systemd --user --deserialize=10
+   1496656        1      4  227:19  /usr/lib/polkit-1/polkitd --no-debug
+   2329847        1      4  130:59  /usr/lib/systemd/systemd-timesyncd
+   2329848        1      4  130:59  sshd: /usr/sbin/sshd -D [listener] 1 of 10-100 startups
+   2329858        1      4  130:59  /usr/lib/systemd/systemd-networkd
+конец: 2026-10-06T17:22:51Z, код 0
