@@ -2033,6 +2033,83 @@ def test_model_state_carries_training_stall():
           and st.get("note"), str(st))
 
 
+def test_second_ring_matches_deque_bit_for_bit():
+    """Посекундная история массивом отдаёт то же, что кольцо кортежей.
+
+    06.10: кортежи держали 1.9 ГБ на 725 имён и не оставляли места
+    обучению. Правка памяти, меняющая числа, была бы другой мерой —
+    поэтому сверка с прежней структурой бит в бит, на всех трёх фазах
+    заполнения (до предела, ровно предел, с заворотом), и подделка
+    порядка заворота обязана кусаться.
+    """
+    import random
+    from collections import deque
+
+    import numpy as np
+
+    import signals as SG
+
+    rnd = random.Random(7)
+    K = 50
+    def rows(n):
+        out = []
+        px = 100.0
+        for k in range(n):
+            px *= 1 + rnd.uniform(-1e-3, 1e-3)
+            # ровно как `Live.close_second`: int-секунда, объёмы, ±inf у
+            # пустой секунды, nan у закрытия без цены
+            if k % 4 == 0:
+                out.append((1791200000 + k, 0.0, 0.0, -np.inf, np.inf, np.nan))
+            else:
+                out.append((1791200000 + k, rnd.random() * 500, rnd.random() * 300,
+                            px * 1.0002, px * 0.9998, px))
+        return out
+    for n in (0, 1, 9, 49, 50, 51, 125):
+        dq, ring = deque(maxlen=K), SG.SecRing(K)
+        for r in rows(n):
+            dq.append(r)
+            ring.append(r)
+        same_len = len(dq) == len(ring) and bool(dq) == bool(ring)
+        if n:
+            a_ref = np.array(dq, dtype=np.float64)
+            a_new = ring.array()
+            same = (a_ref.shape == a_new.shape and a_new.dtype == np.float64
+                    and np.array_equal(a_ref, a_new, equal_nan=True))
+            last = ring[-1]
+            same_last = (len(last) == 6 and isinstance(last[0], int)
+                         and last[0] == dq[-1][0]
+                         and all((x == y) or (x != x and y != y)
+                                 for x, y in zip(last[1:], dq[-1][1:])))
+        else:
+            same = ring.array().shape == (0, 6)
+            same_last = True
+        check(f"n={n}: длина, массив и последняя секунда совпадают",
+              same_len and same and same_last, f"{same_len} {same} {same_last}")
+    check("массив — копия, не вид на кольцо",
+          not np.shares_memory(SG.SecRing(K).array(), SG.SecRing(K).a))
+    ring = SG.SecRing(14400)
+    check("память на имя известна числом: 14400×6×8 байт",
+          ring.nbytes == 14400 * 6 * 8, str(ring.nbytes))
+    # Контроль: подделка порядка заворота обязана разойтись с эталоном.
+    class Poison(SG.SecRing):
+        def array(self):
+            return np.concatenate((self.a[:self.i], self.a[self.i:]))
+    dq, bad = deque(maxlen=K), Poison(K)
+    for r in rows(125):
+        dq.append(r); bad.append(r)
+    check("подделка порядка заворота кусается (контроль)",
+          not np.array_equal(np.array(dq, dtype=np.float64), bad.array(), equal_nan=True))
+    # Детектор живёт на новой структуре: прогон секунд через Live.
+    lv = SG.Live("TEST")
+    for k in range(30):
+        lv.on_trade({"p": 100.0 + k * 0.01, "v": 1.0, "side": 1 if k % 2 else -1,
+                     "ts": (1791200000 + k) * 1000})
+    lv.close_second(1791200030)
+    a = lv.arrays()
+    check("Live.arrays() отдаёт массив из кольца", a is not None and a.shape[1] == 6
+          and len(lv.sec) == 30 and lv.sec[-1][0] == 1791200029, str(None if a is None else a.shape))
+
+
 def test_health_is_one_definition():
     """Здоровье сбора — одно определение на страницу и на файл.
 
@@ -8508,6 +8585,7 @@ def main():
     test_disk_rate_compares_same_phase_of_hour()
     test_shrunken_run_announces_dropped_symbols()
     test_nofile_covers_every_kind()
+    test_second_ring_matches_deque_bit_for_bit()
     test_health_is_one_definition()
     test_model_state_carries_training_stall()
     test_collected_symbols_are_not_lost()

@@ -276,12 +276,68 @@ def absorb_metrics(buy, sell, close, w, vol_mult, move_mult, imb, side):
     return out
 
 
+class SecRing:
+    """Посекундная история одним массивом, а не кольцом кортежей.
+
+    Повод (06.10). `deque(maxlen=KEEP_SEC)` из кортежей `(t, buy, sell,
+    hi, lo, close)` — это 14 400 кортежей по шесть объектов на каждое из
+    725 имён: 2.7 МБ на имя, 1.9 ГБ на сборщик, замерено на стенде. При
+    машине в 7.7 ГБ эти 1.9 ГБ не оставляли места обучению S8 (веса не
+    обновлялись с 30.09). Те же числа в одном массиве float64 — 0.69 МБ
+    на имя, 0.48 ГБ на всех; `array()` отдаёт ровно то, что отдавал
+    `np.array(deque, dtype=float64)`, бит в бит — это держит проверка.
+
+    Наружу — то, чем пользовался детектор: `append`, `len`, истинность,
+    `[-1]` (последняя секунда кортежем прежних типов) и `array()`.
+    """
+
+    __slots__ = ("a", "n", "i")
+
+    def __init__(self, maxlen):
+        self.a = np.empty((int(maxlen), 6), dtype=np.float64)
+        self.n = 0                              # сколько секунд лежит
+        self.i = 0                              # куда пишется следующая
+
+    def append(self, row):
+        self.a[self.i] = row
+        self.i = (self.i + 1) % self.a.shape[0]
+        self.n = min(self.n + 1, self.a.shape[0])
+
+    def __len__(self):
+        return self.n
+
+    def __bool__(self):
+        return self.n > 0
+
+    def __getitem__(self, k):
+        """Только последняя секунда — больше детектор не спрашивает."""
+        if k != -1:
+            raise IndexError("SecRing отдаёт только [-1]")
+        if not self.n:
+            raise IndexError("пусто")
+        r = self.a[(self.i - 1) % self.a.shape[0]].tolist()
+        # Номер секунды в кортеже всегда был `int` (`int(ts // 1000)`);
+        # сравнение с ним в `absorb.Tracker.step` переживёт и float, но
+        # тип возвращается прежний, чтобы не менять ничего, кроме памяти.
+        return (int(r[0]), r[1], r[2], r[3], r[4], r[5])
+
+    def array(self):
+        """Строки по порядку записи, копия — как `np.array(deque)`."""
+        if self.n < self.a.shape[0]:
+            return self.a[:self.n].copy()
+        return np.concatenate((self.a[self.i:], self.a[:self.i]))
+
+    @property
+    def nbytes(self):
+        return int(self.a.nbytes)
+
+
 class Live:
     """Кольцевая история одного символа и его бумажные сделки."""
 
     def __init__(self, symbol):
         self.symbol = symbol
-        self.sec = deque(maxlen=KEEP_SEC)      # (t, buy, sell, hi, lo, close)
+        self.sec = SecRing(KEEP_SEC)           # (t, buy, sell, hi, lo, close)
         self.cur = None                        # накапливаемая секунда
         self.levels = ([], [], float("nan"), float("nan"))
         self.frames = (None, None, None, None, None)
@@ -323,7 +379,7 @@ class Live:
     def arrays(self):
         if len(self.sec) < 10:
             return None
-        a = np.array(self.sec, dtype=np.float64)
+        a = self.sec.array()
         close = a[:, 5]
         ok = np.isfinite(close) & (close > 0)
         if ok.sum() < 10:
