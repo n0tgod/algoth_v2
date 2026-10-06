@@ -83,3 +83,11 @@
    2329848        1      4  121:34  sshd: /usr/sbin/sshd -D [listener] 1 of 10-100 startups
    2329858        1      4  121:34  /usr/lib/systemd/systemd-networkd
 конец: 2026-10-06T07:58:21Z, код 0
+публикуется в ветку main:
+ jobs/done/memtop-0758.done          |  1 +
+ jobs/done/memtop-0758.log           | 85 +++++++++++++++++++++++++++++++++++++
+ jobs/done/status-0758.log           | 48 +++++++++++++++++++++
+ jobs/poke.log                       |  3 ++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 138 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at 8faeae6c43cc2058a178eba04363307d40e68d2e but expected b02541cd40eaa086da6a5d2f522d7104b451e7c5
