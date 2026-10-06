@@ -2,3 +2,12 @@
 строка: run research/dca_paper/short_rung.py --group 0.5
 начало: 2026-10-06T16:48:42Z
 запускаю: .venv/bin/python research/dca_paper/short_rung.py --group 0.5
+конец: 2026-10-06T18:15:50Z, код 143
+публикуется в ветку main:
+ jobs/done/memtop-rung5c.log         | 9 +++++++++
+ jobs/done/short-rung-5.log          | 1 +
+ jobs/done/stop-rung5.done           | 1 +
+ jobs/done/stop-rung5.log            | 4 ++++
+ jobs/poke.log                       | 4 ++++
+ research/s8_loop/out/day_brake.json | 2 +-
+ 6 files changed, 20 insertions(+), 1 deletion(-)

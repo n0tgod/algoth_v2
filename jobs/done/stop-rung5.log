@@ -1,0 +1,8 @@
+== задание stop-rung5 ==
+строка: run tools/stop_run.py research/dca_paper/short_rung.py
+начало: 2026-10-06T18:15:50Z
+запускаю: .venv/bin/python tools/stop_run.py research/dca_paper/short_rung.py
+найдено 1: 3621480
+TERM → 3621480
+остановлено: 3621480
+конец: 2026-10-06T18:15:52Z, код 0

@@ -63,3 +63,12 @@
    2329848        1      4  131:49  sshd: /usr/sbin/sshd -D [listener] 1 of 10-100 startups
    2329858        1      4  131:49  /usr/lib/systemd/systemd-networkd
 конец: 2026-10-06T18:12:59Z, код 0
+публикуется в ветку main:
+ jobs/done/memtop-rung5c.done |  1 +
+ jobs/done/memtop-rung5c.log  | 65 ++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                |  3 ++
+ 3 files changed, 69 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   44c82d23..4e7960b2  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
