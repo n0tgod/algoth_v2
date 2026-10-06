@@ -82,3 +82,11 @@ aggr_h: записей 2546, взято кассой 904, S0 +45.8 → S3 +11.2 
 Чего замер не делает: не меняет правила книг и не судит направление; он называет ось, на которой теряется ход, — что с ней делать, решает владелец.
 
 конец: 2026-10-06T07:59:28Z, код 0
+публикуется в ветку main:
+ jobs/done/cost-gap-1.log         | 80 ++++++++++++++++++++++++++++++++++++++++
+ jobs/done/deploy-model-cache.log | 18 ++++++++-
+ 2 files changed, 97 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   3545237c..99358501  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
