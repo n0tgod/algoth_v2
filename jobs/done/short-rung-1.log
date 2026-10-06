@@ -175,3 +175,11 @@ h24/nn: часов 952, коротких выборов 2856, ног под кр
 кэш хранилища: снято 5686 файлов, осталось 1.80 ГБ при пределе 2
 СТОП: память 1284 МБ больше предела 1200 МБ — прогон останавливается сам, цикл не трогаем
 конец: 2026-10-06T11:48:53Z, код 3
+публикуется в ветку main:
+ jobs/done/short-rung-1.log          | 173 ++++++++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json |   2 +-
+ 2 files changed, 174 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   bb780bc5..a1dc1c53  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
