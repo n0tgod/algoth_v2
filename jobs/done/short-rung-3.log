@@ -197,3 +197,10 @@ Traceback (most recent call last):
     raise ResponseStreamingError(error=e)
 botocore.exceptions.ResponseStreamingError: An error occurred while reading from response stream: ('Connection broken: IncompleteRead(12496896 bytes read, 4122624 more expected)', IncompleteRead(12496896 bytes read, 4122624 more expected))
 конец: 2026-10-06T16:31:46Z, код 1
+публикуется в ветку main:
+ jobs/done/short-rung-3.log | 195 +++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 195 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   42088908..e7289577  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

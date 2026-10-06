@@ -1,0 +1,58 @@
+== задание short-rung-4 ==
+строка: run research/dca_paper/short_rung.py --group 0.5
+начало: 2026-10-06T16:39:27Z
+запускаю: .venv/bin/python research/dca_paper/short_rung.py --group 0.5
+h24/gbm: часов 959, коротких выборов 2877, ног под краем 2861, отброшено (нет полей / знак) 10
+h24/nn: часов 959, коротких выборов 2877, ног под краем 2679, отброшено (нет полей / знак) 186
+ног обеих рук: 5540
+решений 5540, уникальных позиций 4820, с повтором в срок 3947 (82%); медиана задержки первого повтора 1.0 ч
+пол капитуляции 0.5 — линейки optimal_s
+коротких ног (край ≥ 33) 5540: rr2 437, lo 4678, any 5540; символов 402
+окно решений 2026-08-08 10:00 … 2026-10-06 16:00 UTC (59.2 суток, дат 60)
+память: 199.0 МБ (ноги загружены; предел 1200)
+кэш хранилища: снято 2422 файлов, осталось 1.80 ГБ при пределе 2
+  символ 3/402  решений 79
+кэш хранилища: снято 8735 файлов, осталось 1.80 ГБ при пределе 2
+хранилище: повтор 1/3 для b1/book/POWERUSDT/2026-08-10.tar: An error occurred while reading from response stream: ('Connection broken: IncompleteRead(4165632 bytes read, 278528 mor
+  символ 5/402  решений 95
+кэш хранилища: снято 6704 файлов, осталось 1.80 ГБ при пределе 2
+кэш хранилища: снято 7056 файлов, осталось 1.80 ГБ при пределе 2
+кэш хранилища: снято 2646 файлов, осталось 1.80 ГБ при пределе 2
+хранилище: повтор 1/3 для b1/book/TUTUSDT/2026-08-24.tar: An error occurred while reading from response stream: ('Connection broken: IncompleteRead(4165632 bytes read, 10917888 m
+хранилище: повтор 2/3 для b1/book/TUTUSDT/2026-08-24.tar: An error occurred while reading from response stream: ('Connection broken: IncompleteRead(4165632 bytes read, 10917888 m
+хранилище: повтор 3/3 для b1/book/TUTUSDT/2026-08-24.tar: An error occurred while reading from response stream: ('Connection broken: IncompleteRead(4165632 bytes read, 10917888 m
+Traceback (most recent call last):
+  File "/root/algoth_v2/research/dca_paper/short_rung.py", line 560, in <module>
+    main()
+  File "/root/algoth_v2/research/dca_paper/short_rung.py", line 551, in main
+    s = run(limit=a.limit, log=print, seeds=a.seeds, groups=groups, out_dir=out_dir)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/short_rung.py", line 366, in run
+    got, t = S.replay_cells(legs_, cells, src=src, log=log, adds_of=adds_of, rulers=group)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/run_short.py", line 207, in replay_cells
+    part = D10.collect(legs=need, cells=list(cells), rich=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_ladder/run_d10.py", line 455, in collect
+    bars = get(sym, a0, b1)
+           ^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/tail.py", line 153, in bars
+    store.prefetch(os.path.join(self.root, "book", sym), hours)
+  File "/root/algoth_v2/research/b1_book/store.py", line 230, in prefetch
+    return REMOTE.prefetch(dirpath, need) if need else 0
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/b1_book/remote.py", line 266, in prefetch
+    tmp = fut.result()
+          ^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/b1_book/remote.py", line 195, in _download
+    raise RemoteFetchError(f"хранилище: {key} не скачан за {ATTEMPTS} попытки: {str(err)[:160]}")
+remote.RemoteFetchError: хранилище: b1/book/TUTUSDT/2026-08-24.tar не скачан за 4 попытки: An error occurred while reading from response stream: ('Connection broken: IncompleteRead(4165632 bytes read, 10917888 more expected)', IncompleteRead(4165632 b
+конец: 2026-10-06T16:46:11Z, код 1
