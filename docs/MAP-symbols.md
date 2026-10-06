@@ -908,7 +908,7 @@ A3 — кандидаты в пары на момент окна.
 - L349 `report(res)`
 - L381 `main(argv=None)`
 
-## research/b1_book/memsize.py · 238 строк
+## research/b1_book/memsize.py · 252 строк
 
 Перепись памяти сборщика: кто сколько держит — числом, по структурам.
 
@@ -922,9 +922,9 @@ A3 — кандидаты в пары на момент окна.
 - L126 `_get(obj, dotted)`
 - L135 `_count(v)`
 - L142 `census(c, deep=False)` — Перепись структур сборщика `c`: части, сумма, RSS, неучтённое.
-- L187 `_TRACE = {'since': None}`
-- L190 `trace_state()`
-- L199 `trace_control(cmd, top=25, now=None, rss=None)` — `start` / `top` / `stop` для tracemalloc — с отказом, когда тесно.
+- L201 `_TRACE = {'since': None}`
+- L204 `trace_state()`
+- L213 `trace_control(cmd, top=25, now=None, rss=None)` — `start` / `top` / `stop` для tracemalloc — с отказом, когда тесно.
 
 ## research/b1_book/paper.py · 111 строк
 
@@ -980,7 +980,7 @@ A3 — кандидаты в пары на момент окна.
 - L217 `compare(seeded, was_close)` — Сопоставить пересчитанные сделки с их записанными исходами.
 - L242 `main()`
 
-## research/b1_book/signals.py · 799 строк
+## research/b1_book/signals.py · 808 строк
 
 Живой детектор: уровни, события поглощения и бумажные сделки.
 
@@ -1007,34 +1007,34 @@ A3 — кандидаты в пары на момент окна.
 - L220 `absorb_metrics(buy, sell, close, w, vol_mult, move_mult, imb, s…` — Измеренные величины последнего окна и вердикт по ним.
 - L279 `class SecRing` — Посекундная история одним массивом, а не кольцом кортежей.
   - L296 `SecRing.__init__(self, maxlen)`
-  - L301 `SecRing.append(self, row)`
-  - L306 `SecRing.__len__(self)`
-  - L309 `SecRing.__bool__(self)`
-  - L312 `SecRing.__getitem__(self, k)` — Только последняя секунда — больше детектор не спрашивает.
-  - L324 `SecRing.array(self)` — Строки по порядку записи, копия — как `np.array(deque)`.
-  - L331 `SecRing.nbytes(self)`
-- L335 `class Live` — Кольцевая история одного символа и его бумажные сделки.
-  - L338 `Live.__init__(self, symbol)`
-  - L358 `Live.on_trade(self, t)` — --- поток --------------------------------------------------------
-  - L373 `Live.close_second(self, sec)`
-  - L379 `Live.arrays(self)`
-  - L390 `Live.minute_frames(self, a)` — Секунды -> минуты, в том же виде, какой ждёт `levels.build`.
-  - L406 `Live.stop_frames(self)` — Свечи ДО СЕКУНДЫ РЕШЕНИЯ, а не до последнего пересчёта уровней.
-  - L427 `Live.refresh_levels(self, now)` — Уровни пересчитываются раз в минуту: структура медленная.
-  - L459 `Live.candles(self, a, minutes=240)` — Минутные свечи из накопленных секунд — для графика страницы.
-  - L475 `Live.check(self, now)`
-  - L509 `Live.make_trade(self, now, long, lvl, kind, price, noise, px, rule)` — Собрать сделку. Одна реализация геометрии на оба правила.
-  - L592 `Live.on_book(self, bids, asks, now)` — Шаг отслеживания поглощения по свежему снимку книги.
-  - L604 `Live.check_book(self, now)` — Правило по стакану. Геометрия — общая с правилом по ленте.
-  - L621 `Live.update_open(self, now)` — Провести открытые сделки; вернуть закрывшиеся на этом шаге.
-  - L649 `Live.restore(self, rows, prints=None)` — Поднять историю сделок с диска.
-  - L700 `Live.view(self, since=0.0, done_keep=20)` — Состояние для страницы.
-- L746 `class Signals` — Живые детекторы по всем символам.
-  - L749 `Signals.__init__(self, symbols)`
-  - L752 `Signals.on_trade(self, t)`
-  - L757 `Signals.tick(self, now=None, books=None)` — Шаг всех детекторов. Возвращает `(открытые, закрытые)`.
-  - L776 `Signals.view(self, sym, since=0.0)`
-  - L782 `Signals.history(self, sym)` — Сделки, что держим в памяти, — закрытые И ОТКРЫТЫЕ.
+  - L306 `SecRing.append(self, row)`
+  - L313 `SecRing.__len__(self)`
+  - L316 `SecRing.__bool__(self)`
+  - L319 `SecRing.__getitem__(self, k)` — Только последняя секунда — больше детектор не спрашивает.
+  - L331 `SecRing.array(self)` — Строки по порядку записи, копия — как `np.array(deque)`.
+  - L340 `SecRing.nbytes(self)`
+- L344 `class Live` — Кольцевая история одного символа и его бумажные сделки.
+  - L347 `Live.__init__(self, symbol)`
+  - L367 `Live.on_trade(self, t)` — --- поток --------------------------------------------------------
+  - L382 `Live.close_second(self, sec)`
+  - L388 `Live.arrays(self)`
+  - L399 `Live.minute_frames(self, a)` — Секунды -> минуты, в том же виде, какой ждёт `levels.build`.
+  - L415 `Live.stop_frames(self)` — Свечи ДО СЕКУНДЫ РЕШЕНИЯ, а не до последнего пересчёта уровней.
+  - L436 `Live.refresh_levels(self, now)` — Уровни пересчитываются раз в минуту: структура медленная.
+  - L468 `Live.candles(self, a, minutes=240)` — Минутные свечи из накопленных секунд — для графика страницы.
+  - L484 `Live.check(self, now)`
+  - L518 `Live.make_trade(self, now, long, lvl, kind, price, noise, px, rule)` — Собрать сделку. Одна реализация геометрии на оба правила.
+  - L601 `Live.on_book(self, bids, asks, now)` — Шаг отслеживания поглощения по свежему снимку книги.
+  - L613 `Live.check_book(self, now)` — Правило по стакану. Геометрия — общая с правилом по ленте.
+  - L630 `Live.update_open(self, now)` — Провести открытые сделки; вернуть закрывшиеся на этом шаге.
+  - L658 `Live.restore(self, rows, prints=None)` — Поднять историю сделок с диска.
+  - L709 `Live.view(self, since=0.0, done_keep=20)` — Состояние для страницы.
+- L755 `class Signals` — Живые детекторы по всем символам.
+  - L758 `Signals.__init__(self, symbols)`
+  - L761 `Signals.on_trade(self, t)`
+  - L766 `Signals.tick(self, now=None, books=None)` — Шаг всех детекторов. Возвращает `(открытые, закрытые)`.
+  - L785 `Signals.view(self, sym, since=0.0)`
+  - L791 `Signals.history(self, sym)` — Сделки, что держим в памяти, — закрытые И ОТКРЫТЫЕ.
 
 ## research/b1_book/store.py · 336 строк
 

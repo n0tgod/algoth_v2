@@ -291,17 +291,24 @@ class SecRing:
     `[-1]` (последняя секунда кортежем прежних типов) и `array()`.
     """
 
-    __slots__ = ("a", "n", "i")
+    __slots__ = ("a", "n", "i", "maxlen")
 
     def __init__(self, maxlen):
-        self.a = np.empty((int(maxlen), 6), dtype=np.float64)
+        # Массив заводится первой секундой, а не в конструкторе: при
+        # выключенном детекторе (боевой сборщик, `paper=False`) кольца
+        # не кормятся никогда, и 725 пустых массивов по 0.69 МБ были бы
+        # 0.5 ГБ виртуальной памяти ни за что.
+        self.maxlen = int(maxlen)
+        self.a = None
         self.n = 0                              # сколько секунд лежит
         self.i = 0                              # куда пишется следующая
 
     def append(self, row):
+        if self.a is None:
+            self.a = np.empty((self.maxlen, 6), dtype=np.float64)
         self.a[self.i] = row
-        self.i = (self.i + 1) % self.a.shape[0]
-        self.n = min(self.n + 1, self.a.shape[0])
+        self.i = (self.i + 1) % self.maxlen
+        self.n = min(self.n + 1, self.maxlen)
 
     def __len__(self):
         return self.n
@@ -315,7 +322,7 @@ class SecRing:
             raise IndexError("SecRing отдаёт только [-1]")
         if not self.n:
             raise IndexError("пусто")
-        r = self.a[(self.i - 1) % self.a.shape[0]].tolist()
+        r = self.a[(self.i - 1) % self.maxlen].tolist()
         # Номер секунды в кортеже всегда был `int` (`int(ts // 1000)`);
         # сравнение с ним в `absorb.Tracker.step` переживёт и float, но
         # тип возвращается прежний, чтобы не менять ничего, кроме памяти.
@@ -323,13 +330,15 @@ class SecRing:
 
     def array(self):
         """Строки по порядку записи, копия — как `np.array(deque)`."""
-        if self.n < self.a.shape[0]:
+        if self.a is None:
+            return np.empty((0, 6), dtype=np.float64)
+        if self.n < self.maxlen:
             return self.a[:self.n].copy()
         return np.concatenate((self.a[self.i:], self.a[:self.i]))
 
     @property
     def nbytes(self):
-        return int(self.a.nbytes)
+        return int(self.a.nbytes) if self.a is not None else 0
 
 
 class Live:

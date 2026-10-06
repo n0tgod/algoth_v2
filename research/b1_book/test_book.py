@@ -2085,10 +2085,15 @@ def test_second_ring_matches_deque_bit_for_bit():
             same_last = True
         check(f"n={n}: длина, массив и последняя секунда совпадают",
               same_len and same and same_last, f"{same_len} {same} {same_last}")
+    r1 = SG.SecRing(K)
+    r1.append(rows(1)[0])
     check("массив — копия, не вид на кольцо",
-          not np.shares_memory(SG.SecRing(K).array(), SG.SecRing(K).a))
+          not np.shares_memory(r1.array(), r1.a))
     ring = SG.SecRing(14400)
-    check("память на имя известна числом: 14400×6×8 байт",
+    check("пустое кольцо не занимает памяти (детектор выключен — нулю и быть)",
+          ring.nbytes == 0 and ring.a is None and ring.array().shape == (0, 6))
+    ring.append(rows(1)[0])
+    check("после первой секунды — массив на всё окно: 14400×6×8 байт",
           ring.nbytes == 14400 * 6 * 8, str(ring.nbytes))
     # Контроль: подделка порядка заворота обязана разойтись с эталоном.
     class Poison(SG.SecRing):
