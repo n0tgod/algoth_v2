@@ -1368,6 +1368,31 @@ def test_time_add_take_level_uses_the_average_of_the_bar_start():
           f"долив в баре тейка уровень не двигает ({same['exit_px']:.2f})")
 
 
+def test_time_adds_min_profit_threshold_gates_candidates():
+    """Порог прибыли: кандидат исполняется только когда pnl по открытию бара
+    выше порога; порог 0 тождествен `adds_if_profit`; без порога — первый."""
+    hour = 3600.0
+    path = [100.0, 99.0, 98.0, 96.0, 94.0, 92.0, 90.0]          # шорт в плюсе, прибыль растёт
+    bars = []
+    for i in range(1, len(path)):
+        op, cl = path[i - 1], path[i]
+        bars.append((4_000_000.0 + (i - 1) * hour, op, max(op, cl) + 0.1, min(op, cl) - 0.1, cl, 1000.0))
+    cands = [(b[0], 0.25) for b in bars[1:]]
+    # база — четверть нотионала 4× = нотионал 1.0 капитала: pnl шорта по открытию бара = (100 − open) %:
+    # бар1 +1 %, бар2 +2 %, бар3 +4 %, бар4 +6 %, бар5 +8 %
+    r10 = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short", adds=cands, adds_max=1, adds_min_profit=0.03)
+    r25 = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short", adds=cands, adds_max=1, adds_min_profit=0.07)
+    r0 = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short", adds=cands, adds_max=1, adds_min_profit=0.0)
+    rp = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short", adds=cands, adds_max=1, adds_if_profit=True)
+    assert r10["adds"] == 1 and r10["fills"][1][0] == bars[3][0], r10["fills"]      # первый бар с pnl > 3 % — бар 3 (+4 %)
+    assert r25["adds"] == 1 and r25["fills"][1][0] == bars[5][0], r25["fills"]      # > 7 % — бар 5 (+8 %)
+    assert r0["fills"] == rp["fills"] and r0["pnl_frac"] == rp["pnl_frac"], "порог 0 ≠ adds_if_profit"
+    r99 = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short", adds=cands, adds_max=1, adds_min_profit=0.99)
+    assert r99["adds"] == 0 and len(r99["fills"]) == 1
+    print(f"ok  порог прибыли долива: 3 % → бар {int((r10['fills'][1][0]-bars[0][0])//hour)}, "
+          f"7 % → бар {int((r25['fills'][1][0]-bars[0][0])//hour)}, 99 % → без долива")
+
+
 TESTS = [
     test_open_mark_equals_the_simulation_pnl,
     test_liq_price_matches_spec5_table,
@@ -1391,6 +1416,7 @@ TESTS = [
     test_time_add_shares_the_floor_and_can_kill_the_position,
     test_time_adds_respect_profit_gate_max_and_reserve,
     test_time_add_take_level_uses_the_average_of_the_bar_start,
+    test_time_adds_min_profit_threshold_gates_candidates,
     test_ladder_beats_hold_on_recovery,
     test_ladder_partial_fill,
     test_liquidation_on_gap,

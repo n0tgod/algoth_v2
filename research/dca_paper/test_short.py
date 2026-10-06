@@ -442,6 +442,19 @@ def test_replay_cells_runs_only_the_groups_of_the_asked_rulers():
           f"записей {len(out[S.CELL[0]])}; без фильтра — обе группы, числа те же")
 
 
+def test_replay_cells_sink_passes_records_through_and_reports_data_end():
+    lo, at = T9._rise_then_fall()
+    src = T3._Src({"SSSUSDT": lo})
+    legs = T10._legs(at, "SSSUSDT", n=3)
+    sunk = []
+    out, tail = T10._with_levels(lambda: S.replay_cells(
+        legs, [S.CELL], src=src, log=lambda *a: None, rulers=["optimal_s"],
+        sink=lambda rk, k, r: sunk.append((rk, k, r))))
+    assert out[S.CELL[0]] == {} and len(sunk) == 3 and {rk for rk, _k, _r in sunk} == {"optimal_s"}
+    assert tail.get("data_end") and tail["data_end"] >= max(float(r["end_ts"]) for _rk, _k, r in sunk), tail
+    print(f"ok  replay_cells с sink: {len(sunk)} записей ушли получателю, ответ пуст, конец записи в хвосте")
+
+
 if __name__ == "__main__":
     test_cache_signature_follows_the_cell_and_the_hold()
     test_legs_come_from_both_arms_in_time_order()
@@ -453,4 +466,5 @@ if __name__ == "__main__":
     test_report_shows_what_the_money_is_made_of()
     test_short_record_carries_the_promise_from_birth_and_the_cache_keeps_it()
     test_replay_cells_runs_only_the_groups_of_the_asked_rulers()
-    print("\nвсе 10 проверок прошли")
+    test_replay_cells_sink_passes_records_through_and_reports_data_end()
+    print("\nвсе 11 проверок прошли")

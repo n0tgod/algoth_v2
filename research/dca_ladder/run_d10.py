@@ -304,11 +304,14 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
     ради неё все 36 значило бы тратить на книгу тридцать шесть проходов
     вместо одного. Умолчание — вся сетка, как у замера.
 
-    `adds_of(g, key)` — политика доливов ПО ВРЕМЕНИ для ячейки `key`
-    (замер «вторая ступень по повторному выбору», 2026-10-06): словарь
-    `{"adds": [(момент, доля)], "max": n|None, "if_profit": bool}` либо
-    None — тогда ядро считает как книга. Записи ячейки несут число
-    исполненных доливов полем `adds`. Умолчание — прежний счёт.
+    `adds_of(g, key)` — политика ячейки `key` (замер «вторая ступень по
+    повторному выбору», 2026-10-06): словарь `{"adds": [(момент, доля)],
+    "max": n|None, "if_profit": bool, "min_profit": доля|None,
+    "floor_frac": доля|None}` либо None — тогда ядро считает как книга.
+    `floor_frac` ячейки заменяет пол книги (`D2.FLOOR_FRAC`) — ось пола
+    (замер трёх осей, 06.10). Записи ячейки несут число исполненных
+    доливов полем `adds` и свой пол полем `floor_frac`. Умолчание —
+    прежний счёт.
 
     `rich` добавляет то, что нужно КНИГЕ и не нужно замеру: почасовые
     отметки (из них касса строит дневную кривую и просадку) и заполнения
@@ -367,9 +370,12 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
         # считается одним проходом, а не проходом на каждый час)
         pol = adds_of(g, key) if adds_of is not None else None
         kw = ({"adds": list(pol.get("adds") or ()), "adds_max": pol.get("max"),
-               "adds_if_profit": bool(pol.get("if_profit"))} if pol else {})
+               "adds_if_profit": bool(pol.get("if_profit")),
+               "adds_min_profit": pol.get("min_profit")} if pol else {})
+        floor = (float(pol["floor_frac"]) if pol and pol.get("floor_frac") is not None
+                 else D2.FLOOR_FRAC)
         r = L.simulate_dca(hold, rungs, w, 1.0, lev, look(1.0 * lev),
-                           take_rule=tr, floor_frac=D2.FLOOR_FRAC,
+                           take_rule=tr, floor_frac=floor,
                            side="short", track=bool(rich),
                            checkpoints=checkpoints, **kw)
         marks, prev = [], 0.0
@@ -394,7 +400,7 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
             "end_ts": float(hold[-1][0]),
             "sched_end": float(g["at"]) + D2.HOLD_H * HOUR,
             "depth": int(r["depth"]), "n_rungs": len(rungs),
-            "adds": int(r.get("adds") or 0),
+            "adds": int(r.get("adds") or 0), "floor_frac": float(floor),
             "avg": float(r["avg"]), "entry_px": entry,
             "exit_px": float(r["exit_px"]), "filled": filled,
             "fills": ([[float(a), float(b), float(c)]
@@ -405,7 +411,7 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
 
 def collect(limit=None, src=None, log=print, legs=None, cells=None,
             rich=False, raw=False, ckpt_hours=None, adds_of=None,
-            rulers=None):
+            rulers=None, sink=None):
     """Дорогой проход: бары символа читаются ОДИН раз на все ячейки.
 
     `cells` сужает сетку (книги `h24` считают одну ячейку в час), `rich`
@@ -417,6 +423,13 @@ def collect(limit=None, src=None, log=print, legs=None, cells=None,
     считает только СВОИ линейки, а не обе с выбросом половины — на
     14 ячейках × 5.5 тысячи решений лишняя линейка стоила 450 МБ и
     половину времени (06.10). Записи оставленных линеек те же бит в бит.
+
+    `sink(rk, key, rec)` — записи отдаются по одной СРАЗУ и в памяти не
+    держатся (память прохода не растёт с числом ячеек; 30 ячеек × 5.5
+    тысячи решений в памяти не живут). Состояние позиции тогда не
+    проставляется — у получателя нет конца записи до конца прохода; он
+    берёт `data_end` из ответа и ставит состояние сам
+    (`run_d6.position_state`). Хвост ленты по записям тоже не размечается.
     """
     rulers = list(rulers) if rulers is not None else list(RULERS)
     for rk in rulers:
@@ -441,7 +454,7 @@ def collect(limit=None, src=None, log=print, legs=None, cells=None,
     keys = [c[0] for c in (cells if cells is not None else CELLS)]
     recs = {rk: {k: ([] if raw else Store()) for k in keys} for rk in rulers}
     mem_guard("ноги загружены", log=log)
-    n, skipped = 0, 0
+    n, skipped, sunk_end = 0, 0, 0.0
     said, done = time.time(), 0
     for sym, glist in by_sym.items():
         done += 1
@@ -475,13 +488,17 @@ def collect(limit=None, src=None, log=print, legs=None, cells=None,
                     continue
                 got = 1
                 for k, r in o.items():
-                    recs[rk][k].append(r)
+                    if sink is not None:
+                        sunk_end = max(sunk_end, float(r.get("end_ts") or 0.0))
+                        sink(rk, k, r)
+                    else:
+                        recs[rk][k].append(r)
             n += got
             skipped += (1 - got)
     # Конец записи — у источника (`run_d6.record_end_of`), а не у
     # пересчитанного подмножества: одни оборванные записи в подмножестве
     # делали бы мёртвую позицию «открытой» (2026-09-24, длинные книги).
-    data_end = D6.record_end_of(src)
+    data_end = max(D6.record_end_of(src), sunk_end)
     for rk in recs:
         for k in recs[rk]:
             st = recs[rk][k]

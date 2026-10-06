@@ -536,7 +536,42 @@ def test_collect_rulers_subset_is_bit_for_bit_and_only_those():
           f"чужая линейка отвергнута словами")
 
 
+def test_cell_policy_floor_and_sink_do_not_retain_records():
+    """Пол ячейки заменяет пол книги и едет в запись; `sink` отдаёт записи
+    сразу и в памяти не держит, конец записи в ответе учитывает их."""
+    lo, at = T9._rise_then_fall()
+    src = T3._Src({"SSSUSDT": lo})
+    legs = _legs(at, "SSSUSDT", n=2)
+    base = ("fence:none:t2", "fence", "none", "t2")      # ячейка книги: без рунгов — пол активен с входа
+    cells = [base, (base[0] + "#f", base[1], base[2], base[3])]
+
+    def adds_of(g, key):
+        # четверть нотионала на всей резервной марже: ликвидация шорта далеко (+250 %),
+        # и пол ячейки берётся 0.99 — почти у входа, чтобы рост к 106 его задел
+        return {"adds": [], "floor_frac": 0.99} if key.endswith("#f") else None
+    got = _with_levels(lambda: D10.collect(src=src, legs=legs, cells=cells, raw=True, rich=True,
+                                           log=lambda *a: None, rulers=["optimal_s"], adds_of=adds_of))
+    a = got["recs"]["optimal_s"][base[0]]
+    b = got["recs"]["optimal_s"][base[0] + "#f"]
+    assert a and len(a) == len(b)
+    assert all(abs(r["floor_frac"] - D2.FLOOR_FRAC) < 1e-12 for r in a) and all(r["floor_frac"] == 0.99 for r in b)
+    # книга доезжает по спуску до тейка; пол 0.99 режет на росте к 106 — другой исход того же пути
+    assert a[0]["exit"] == "тейк" and b[0]["exit"] == "пол" and b[0]["pnl"] < a[0]["pnl"], (
+        a[0]["exit"], a[0]["pnl"], b[0]["exit"], b[0]["pnl"])
+    sunk = []
+    got2 = _with_levels(lambda: D10.collect(src=src, legs=legs, cells=cells, raw=True, rich=True,
+                                            log=lambda *a: None, rulers=["optimal_s"], adds_of=adds_of,
+                                            sink=lambda rk, k, r: sunk.append((rk, k, r))))
+    assert not any(got2["recs"]["optimal_s"][k] for k in got2["recs"]["optimal_s"]), "записи остались в памяти при sink"
+    assert len(sunk) == len(a) + len(b) and {k for _rk, k, _r in sunk} == {c[0] for c in cells}
+    assert got2["data_end"] >= max(float(r["end_ts"]) for _rk, _k, r in sunk)
+    assert all("state" not in r for _rk, _k, r in sunk)              # состояние ставит получатель
+    print(f"ok  пол ячейки {b[0]['floor_frac']} против книги {a[0]['floor_frac']}: {a[0]['exit']} → {b[0]['exit']}; "
+          f"sink отдал {len(sunk)} записей, в памяти 0")
+
+
 TESTS = [
+    test_cell_policy_floor_and_sink_do_not_retain_records,
     test_collect_rulers_subset_is_bit_for_bit_and_only_those,
     test_grid_is_declared_before_the_run,
     test_gate_of_splits_legs_by_ratio_and_edge,

@@ -431,7 +431,8 @@ def simulate_single(bars, capital, leverage, mmr, take_px=None, stop_px=None,
 def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
                  take_px=None, floor_frac=None, track=False,
                  checkpoints=None, take_rule=None, side="long",
-                 adds=None, adds_max=None, adds_if_profit=False):
+                 adds=None, adds_max=None, adds_if_profit=False,
+                 adds_min_profit=None):
     """DCA на РЕАЛЬНЫХ барах: доливы против хода, тейк по ходу, пол.
 
     Вход в `bars[0][1]` (открытие первого бара после решения, next_open) —
@@ -521,8 +522,11 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     считается по ТВХ на его НАЧАЛО. `adds_max` — не больше стольких
     доливов; `adds_if_profit` — кандидат исполняется, только если
     позиция в плюсе по открытию бара (иначе пропускается, ход — к
-    следующему кандидату). Умолчание `None` не меняет ни одного числа —
-    закреплено тестом. В ответе — `adds` (сколько исполнено).
+    следующему кандидату); `adds_min_profit` — то же с порогом: pnl
+    позиции по открытию бара долей капитала строго выше порога (0.25 =
+    +25 % зарезервированной маржи); `adds_if_profit=True` есть порог 0.
+    Умолчание `None` не меняет ни одного числа — закреплено тестом. В
+    ответе — `adds` (сколько исполнено).
 
     Возвращает: exit ("тейк"/"трейл"/"пол"/"ликвидация"/"срок"), pnl_frac
     (доля капитала позиции; ликвидация = −1.0), depth, avg,
@@ -549,6 +553,8 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     fills = [(float(bars[0][0]), entry, float(weights[0]))]
     pend = sorted((float(t), float(w)) for t, w in (adds or ()))
     pi, n_adds = 0, 0
+    add_gate = (float(adds_min_profit) if adds_min_profit is not None
+                else (0.0 if adds_if_profit else None))
     if take_rule is not None:
         if take_px is not None:
             raise ValueError("take_px и take_rule вместе неоднозначны")
@@ -603,8 +609,8 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
             op = float(_o)
             if not (op > 0 and w_add > 0):
                 continue
-            if adds_if_profit and not (d * (qty * op - cash) / capital > 0):
-                continue                       # не в плюсе — кандидат пропущен
+            if add_gate is not None and not (d * (qty * op - cash) / capital > add_gate):
+                continue                       # не дотянула до порога — кандидат пропущен
             if cash + w_add * notional > notional * (1.0 + 1e-9):
                 continue                       # резерв маржи исчерпан
             cash += w_add * notional

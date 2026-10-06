@@ -168,7 +168,7 @@ def floor_groups():
 
 
 def replay_cells(need, cells, src=None, log=print, ckpt_hours=None,
-                 adds_of=None, rulers=None):
+                 adds_of=None, rulers=None, sink=None):
     """Досчёт решений на НЕСКОЛЬКО ячеек одной геометрии: отметки и
     заполнения, пол — по группам книг.
 
@@ -182,7 +182,9 @@ def replay_cells(need, cells, src=None, log=print, ckpt_hours=None,
     книги отдал бы двум из трёх чужой пол.
 
     `adds_of` — политика доливов по времени на ячейку (`run_d10`); книга
-    её не передаёт. `rulers` — какие линейки считать (умолчание — все);
+    её не передаёт. `sink(rk, key, rec)` — записи сразу получателю, в
+    памяти не держатся (ответ тогда пуст, `data_end` — в хвосте).
+    `rulers` — какие линейки считать (умолчание — все);
     каждый проход по группе пола считает только линейки СВОЕЙ группы —
     так память и время прохода не тратятся на линейку, которую группа
     выбрасывает (06.10). Возвращает ({ключ ячейки: {(линейка, имя,
@@ -195,6 +197,7 @@ def replay_cells(need, cells, src=None, log=print, ckpt_hours=None,
     try:
         src = src or TL.TailBars(log=log)
         got = {"recs": {}}
+        data_end = 0.0
         was_floor = D2.FLOOR_FRAC
         try:
             for frac, group in sorted(floor_groups().items()):
@@ -207,9 +210,10 @@ def replay_cells(need, cells, src=None, log=print, ckpt_hours=None,
                 part = D10.collect(legs=need, cells=list(cells), rich=True,
                                    raw=True, src=src, log=log,
                                    ckpt_hours=ckpt_hours, adds_of=adds_of,
-                                   rulers=mine)
+                                   rulers=mine, sink=sink)
                 for rk in mine:
                     got["recs"][rk] = (part.get("recs") or {}).get(rk) or {}
+                data_end = max(data_end, float(part.get("data_end") or 0.0))
                 del part
         finally:
             D2.FLOOR_FRAC = was_floor
@@ -225,6 +229,7 @@ def replay_cells(need, cells, src=None, log=print, ckpt_hours=None,
             else:
                 t = {"why": "источник баров без хвоста ленты"}
             tail = tail if tail is not None else t
+        tail = dict(tail or {}, data_end=data_end)
         out = {}
         for c in cells:
             cell_out = {}
