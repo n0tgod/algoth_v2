@@ -36,7 +36,7 @@ printf '#!/bin/sh\necho "git $*" >> "$TESTDIR/calls.log"\nexit 0\n' > "$tmp/stub
 # Подставной sleep не нулевой: подъём идёт фоном (nohup … &), и нулевое
 # ожидание спрашивало бы pgrep раньше, чем «питон» отметил подъём.
 printf '#!/bin/sh\n/bin/sleep 0.3\n' > "$tmp/stubs/sleep"
-printf '#!/bin/sh\ntouch "$TESTDIR/up"\necho "python $*" >> "$TESTDIR/calls.log"\nexit 0\n' \
+printf '#!/bin/sh\ntouch "$TESTDIR/up"\necho "python $* ARENA=${MALLOC_ARENA_MAX:-}" >> "$TESTDIR/calls.log"\nexit 0\n' \
     > "$tmp/.venv/bin/python"
 chmod +x "$tmp/stubs/"* "$tmp/.venv/bin/python" "$tmp/tools/restart_book.sh"
 
@@ -52,6 +52,7 @@ run
 check "обычный перезапуск: сборщик остановлен и поднят" \
       '[ "$rc" = 0 ] && grep -q "pkill -f b1_book/collect.py" "$tmp/calls.log" && grep -q "python research/b1_book/collect.py --http 8765" "$tmp/calls.log"'
 check "обычный перезапуск подтягивает код (деплой)" 'grep -q "git pull --rebase --autostash" "$tmp/calls.log"'
+check "сборщик поднимается с MALLOC_ARENA_MAX=2" 'grep -q "collect.py --http 8765 ARENA=2" "$tmp/calls.log"'
 check "обычный перезапуск останавливает цикл обучения (деплой)" \
       'grep -qF "pkill -f s8_loop/train.py\$" "$tmp/calls.log" && grep -q "перезапускаю циклы обучения" "$tmp/out.log"'
 
