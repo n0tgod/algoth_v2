@@ -218,6 +218,18 @@ def use_remote(remote):
     return remote
 
 
+def prefetch(dirpath, hours):
+    """Заранее стянуть из хранилища архивы дней для часов, которых нет на
+    диске (читатели истории зовут это один раз на имя и окно). Без
+    хранилища — ноль и ничего."""
+    if REMOTE is None:
+        return 0
+    need = [h for h in hours
+            if not any(os.path.exists(os.path.join(dirpath, f"{h}.jsonl" + sfx))
+                       for sfx in ("", ".gz"))]
+    return REMOTE.prefetch(dirpath, need) if need else 0
+
+
 def read_hour(dirpath, hour, log=None, parse=json.loads):
     """Записи одного часа: простой файл, сжатый или оба сразу.
 

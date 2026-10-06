@@ -23,14 +23,25 @@
   запроса того же часа сети не стоит; промахи, скачивания, отказы —
   числом в `stats()`;
 - ключей нет — хранилища нет: читатель говорит это ОДИН раз словами и
-  живёт как прежде (`from_env` отдаёт None).
+  живёт как прежде (`from_env` отдаёт None);
+- сеть ИКАЕТ: обрыв потока или отказ запроса повторяются с отступом
+  (`ATTEMPTS`, `BACKOFF_S`), а после исчерпания попыток читатель падает
+  ВСЛУХ (`RemoteFetchError`), не подменяя час пустотой — 06.10 одна
+  `IncompleteRead` без повтора убила 2.4 часа реплея, а молчаливый
+  пустой час сделал бы позицию с дырой (отказ, неотличимый от тишины);
+- архивы ДНЕЙ одного имени качаются ПАРАЛЛЕЛЬНО (`prefetch`,
+  `PREFETCH_WORKERS` потоков): скачивание и md5 — в потоках, установка в
+  кэш (распаковка, маркер, учёт, вытеснение) — последовательно в потоке
+  вызывающего; числа те же, что при чтении по одному часу.
 """
 import hashlib
 import os
 import sys
 import tarfile
 import tempfile
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
@@ -40,6 +51,14 @@ ROOT_B1 = os.path.join(HERE, "out")
 SUBS = ("book", "trades", "raw", "liq", "metrics")
 PREFIX = "b1"
 CACHE_GB = 2.0
+ATTEMPTS = 4                      # попыток скачать архив
+BACKOFF_S = (2.0, 4.0, 8.0)       # отступ между попытками, секунд
+PREFETCH_WORKERS = 6              # параллельных скачиваний архивов дней
+MISSING_CODES = ("NoSuchKey", "404", "NotFound")
+
+
+class RemoteFetchError(OSError):
+    """Архив не скачан за все попытки: отказ ВСЛУХ, а не пустой час."""
 
 
 class Remote:
@@ -52,6 +71,8 @@ class Remote:
         self.log = log or (lambda m: None)
         self.missing = set()
         self.fetched = self.misses = self.bad = self.errors = self.hits = 0
+        self.retries = self.prefetched = 0
+        self._lock = threading.Lock()          # счётчики и «нет» из потоков
         self.size = self._cache_size()
 
     # --- дорога до ключа --------------------------------------------------
@@ -108,34 +129,82 @@ class Remote:
 
     def _fetch_archive(self, key, dest):
         """Скачать архив дня, сверить md5, распаковать в `dest`. True — есть."""
-        try:
-            r = self.s3.get_object(Bucket=self.bucket, Key=key)
-        except Exception as e:                                  # noqa: BLE001
-            code = str((getattr(e, "response", None) or {})
-                       .get("Error", {}).get("Code", ""))
-            if code in ("NoSuchKey", "404", "NotFound"):
-                self.missing.add(key)
-                self.misses += 1
-            else:
-                self.errors += 1
-                if self.errors <= 3:
-                    self.log(f"хранилище: отказ на {key}: {str(e)[:160]}")
+        tmp = self._download(key)
+        if tmp is None:
             return False
-        fd, tmp = tempfile.mkstemp(prefix="b1-", suffix=".tar")
-        os.close(fd)
-        try:
-            h = hashlib.md5()
-            with open(tmp, "wb") as f:
-                body = r["Body"]
-                for chunk in iter(lambda: body.read(1 << 20), b""):
-                    h.update(chunk)
-                    f.write(chunk)
+        return self._install(key, dest, tmp)
+
+    @staticmethod
+    def _code(e):
+        return str((getattr(e, "response", None) or {}).get("Error", {}).get("Code", ""))
+
+    def _download(self, key):
+        """Скачать архив во временный файл и сверить md5. Потокобезопасно:
+        трогает только клиента, свой файл и счётчики под замком.
+
+        Возвращает путь к файлу; None — в хранилище нет (запомнено) или
+        md5 не сошёлся за все попытки. Сеть икает — попытки с отступом;
+        все исчерпаны — `RemoteFetchError`, вслух.
+        """
+        err = None
+        for attempt in range(ATTEMPTS):
+            if attempt:
+                with self._lock:
+                    self.retries += 1
+                self.log(f"хранилище: повтор {attempt}/{ATTEMPTS - 1} для {key}: {str(err)[:120]}")
+                time.sleep(BACKOFF_S[min(attempt - 1, len(BACKOFF_S) - 1)])
+            try:
+                r = self.s3.get_object(Bucket=self.bucket, Key=key)
+            except Exception as e:                                  # noqa: BLE001
+                if self._code(e) in MISSING_CODES:
+                    with self._lock:
+                        self.missing.add(key)
+                        self.misses += 1
+                    return None
+                err = e
+                with self._lock:
+                    self.errors += 1
+                continue
+            fd, tmp = tempfile.mkstemp(prefix="b1-", suffix=".tar")
+            os.close(fd)
+            try:
+                h = hashlib.md5()
+                with open(tmp, "wb") as f:
+                    body = r["Body"]
+                    for chunk in iter(lambda: body.read(1 << 20), b""):
+                        h.update(chunk)
+                        f.write(chunk)
+            except Exception as e:                                  # noqa: BLE001
+                err = e                                   # обрыв потока — повтор
+                with self._lock:
+                    self.errors += 1
+                self._rm(tmp)
+                continue
             want = str((r.get("Metadata") or {}).get("md5") or "").lower() \
                 or str(r.get("ETag", "")).strip('"').lower()
             if want and want != h.hexdigest():
-                self.bad += 1
-                self.log(f"хранилище: {key} не сошёлся по md5 — не взят")
-                return False
+                self._rm(tmp)
+                err = ValueError("md5 не сошёлся")
+                if attempt == ATTEMPTS - 1:
+                    with self._lock:
+                        self.bad += 1
+                    self.log(f"хранилище: {key} не сошёлся по md5 за {ATTEMPTS} попытки — не взят")
+                    return None
+                continue
+            return tmp
+        raise RemoteFetchError(f"хранилище: {key} не скачан за {ATTEMPTS} попытки: {str(err)[:160]}")
+
+    @staticmethod
+    def _rm(path):
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+    def _install(self, key, dest, tmp):
+        """Распаковать скачанный архив в кэш, записать маркер дня, учесть
+        размер, вытеснить лишнее. Только в потоке вызывающего."""
+        try:
             os.makedirs(dest, exist_ok=True)
             n, names = 0, []
             with tarfile.open(tmp, "r:") as tf:
@@ -166,10 +235,43 @@ class Remote:
             self.log(f"хранилище: архив {key} не распакован: {e}")
             return False
         finally:
+            self._rm(tmp)
+
+    def prefetch(self, dirpath, hours, workers=PREFETCH_WORKERS):
+        """Скачать архивы дней этих часов параллельно, установить в кэш
+        последовательно. Возвращает число установленных архивов.
+
+        Берутся только дни, которых в кэше ещё нет (маркера дня нет) и
+        про которые не известно «в хранилище нет». Отказ одного архива
+        после всех попыток роняет всё вслух (`RemoteFetchError`).
+        """
+        keys = {}
+        for hour in hours:
+            key = self.key(dirpath, hour)
+            if key is None or key in self.missing or key in keys:
+                continue
+            _pre, sub, sym, _day = key.split("/")
+            dest = os.path.join(self.cache, sub, sym)
+            if self._members(dest, hour[:10]) is not None:
+                continue
+            keys[key] = dest
+        if not keys:
+            return 0
+        done = 0
+        with ThreadPoolExecutor(max_workers=max(1, min(int(workers), len(keys)))) as ex:
+            futs = {ex.submit(self._download, key): key for key in keys}
             try:
-                os.remove(tmp)
-            except OSError:
-                pass
+                for fut in as_completed(futs):
+                    key = futs[fut]
+                    tmp = fut.result()
+                    if tmp is not None and self._install(key, keys[key], tmp):
+                        done += 1
+            except BaseException:
+                for f in futs:
+                    f.cancel()
+                raise
+        self.prefetched += done
+        return done
 
     # --- кэш ---------------------------------------------------------------
     def _walk(self):
@@ -219,9 +321,9 @@ class Remote:
                      f"{total / 2**30:.2f} ГБ при пределе {self.cap / 2**30:g}")
 
     def stats(self):
-        return {"fetched": self.fetched, "hits": self.hits, "misses": self.misses,
-                "bad_md5": self.bad, "errors": self.errors,
-                "cache_gb": round(self.size / 2**30, 3)}
+        return {"fetched": self.fetched, "prefetched": self.prefetched, "hits": self.hits,
+                "misses": self.misses, "bad_md5": self.bad, "errors": self.errors,
+                "retries": self.retries, "cache_gb": round(self.size / 2**30, 3)}
 
 
 def from_env(env_path=None, root=ROOT_B1, cache_gb=CACHE_GB, log=None):

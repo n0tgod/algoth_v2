@@ -3,7 +3,10 @@
 сверен по md5 и распакован в кэш; соседний час — из кэша; «нет в
 хранилище» — раз; несошедшийся md5 не берётся; предел кэша вытесняет
 старое; чужой каталог — без запроса; без ключей — только диск; источник
-реплея включает хранилище."""
+реплея включает хранилище; обрыв потока повторяется с отступом, вечный
+обрыв падает вслух без битого файла в кэше; архивы дней качаются
+параллельно и ставятся в кэш по одному; предвыборка пропускает часы,
+которые есть на диске."""
 import gzip
 import hashlib
 import io
@@ -49,6 +52,27 @@ class FakeS3:
         md5 = hashlib.md5(data).hexdigest()
         return {"Body": io.BytesIO(data), "ETag": f'"{"0" * 32 if self.lie else md5}"',
                 "Metadata": {}}
+
+
+class BrokenBody:
+    """Поток, который рвётся на первом чтении — как `IncompleteRead`."""
+
+    def read(self, n=-1):
+        raise OSError("Connection broken: IncompleteRead")
+
+
+class FlakyS3(FakeS3):
+    """Первые `break_first` запросов отдают рвущийся поток, дальше — целый."""
+
+    def __init__(self, objs, break_first=2):
+        super().__init__(objs)
+        self.break_first = break_first
+
+    def get_object(self, Bucket, Key):
+        r = super().get_object(Bucket, Key)
+        if self.gets <= self.break_first:
+            r["Body"] = BrokenBody()
+        return r
 
 
 def gz(rows):
@@ -149,6 +173,92 @@ def main():
         TL.TailBars(root=root, log=lambda m: None, remote=rm)
         check("источник реплея включает хранилище", store.REMOTE is rm)
         store.use_remote(None)
+        # --- сеть икает: повтор с отступом, вечный обрыв — вслух и без битого файла ---
+        was_backoff = RM.BACKOFF_S
+        RM.BACKOFF_S = (0.0, 0.0, 0.0)
+        try:
+            flaky = FlakyS3(dict(objs), break_first=2)
+            rm4 = RM.Remote(flaky, "b", root=root, log=lambda m: None)
+            store.use_remote(rm4)
+            dc = os.path.join(root, "trades", "CCCUSDT")
+            os.makedirs(dc, exist_ok=True)
+            objs_c = {"b1/trades/CCCUSDT/2026-09-03.tar": tar_of({"2026-09-03-01.jsonl.gz": gz([{"c": 1}])})}
+            flaky.objs.update(objs_c)
+            rows = store.read_hour(dc, "2026-09-03-01")
+            st4 = rm4.stats()
+            check("обрыв потока дважды — третья попытка читает час",
+                  rows == [{"c": 1}] and flaky.gets == 3 and st4["retries"] == 2 and st4["errors"] == 2, (rows, flaky.gets, st4))
+            dead = FlakyS3(dict(objs_c), break_first=10 ** 6)
+            rm5 = RM.Remote(dead, "b", root=root, log=lambda m: None)
+            store.use_remote(rm5)
+            dd_ = os.path.join(root, "trades", "DDDUSDT")
+            os.makedirs(dd_, exist_ok=True)
+            dead.objs = {"b1/trades/DDDUSDT/2026-09-03.tar": tar_of({"2026-09-03-01.jsonl.gz": gz([{"d": 1}])})}
+            raised = None
+            try:
+                store.read_hour(dd_, "2026-09-03-01")
+            except RM.RemoteFetchError as e:
+                raised = str(e)
+            cdir = os.path.join(root, "cache", "trades", "DDDUSDT")
+            leftovers = sorted(os.listdir(cdir)) if os.path.exists(cdir) else []
+            check("вечный обрыв — отказ вслух после всех попыток, кэш без битого файла",
+                  raised is not None and "не скачан за 4 попытки" in raised and dead.gets == RM.ATTEMPTS
+                  and leftovers == [], (raised, dead.gets, leftovers))
+            # --- предвыборка: архивы дней параллельно, установка по одному, часы с диска не тянутся ---
+            days = {f"b1/trades/EEEUSDT/2026-09-1{dd}.tar": tar_of({f"2026-09-1{dd}-00.jsonl.gz": gz([{"e": dd}]),
+                                                                    f"2026-09-1{dd}-01.jsonl.gz": gz([{"e": dd, "h": 1}])})
+                    for dd in range(0, 5)}
+            s3e = FakeS3(days)
+            rm6 = RM.Remote(s3e, "b", root=root, log=lambda m: None)
+            store.use_remote(rm6)
+            de = os.path.join(root, "trades", "EEEUSDT")
+            os.makedirs(de, exist_ok=True)
+            for hh in ("00", "01"):                                       # день 14 целиком есть на диске
+                with gzip.open(os.path.join(de, f"2026-09-14-{hh}.jsonl.gz"), "wt") as f:
+                    f.write(json.dumps({"local": 14}) + "\n")
+            hours = [f"2026-09-1{dd}-{hh:02d}" for dd in range(0, 6) for hh in (0, 1)]   # день 15 в хранилище отсутствует
+            got = store.prefetch(de, hours)
+            st6 = rm6.stats()
+            check("предвыборка качает дни разом и ставит по одному; местный день не тянется; нет дня — запомнено",
+                  got == 4 and st6["prefetched"] == 4 and s3e.gets == 5 and st6["misses"] == 1
+                  and "b1/trades/EEEUSDT/2026-09-15.tar" in rm6.missing
+                  and "b1/trades/EEEUSDT/2026-09-14.tar" not in rm6.missing, (got, st6, s3e.gets))
+            n6 = s3e.gets
+            rows = [store.read_hour(de, f"2026-09-1{dd}-01") for dd in range(0, 4)]
+            check("часы после предвыборки — из кэша, без запросов",
+                  rows == [[{"e": dd, "h": 1}] for dd in range(0, 4)] and s3e.gets == n6
+                  and store.read_hour(de, "2026-09-14-00") == [{"local": 14}] and s3e.gets == n6, (rows, s3e.gets))
+            check("повторная предвыборка — ноль запросов", store.prefetch(de, hours) == 0 and s3e.gets == n6)
+            # предвыборка, у которой один архив рвётся вечно, — вслух
+            dead2 = FlakyS3({"b1/trades/FFFUSDT/2026-09-20.tar": tar_of({"2026-09-20-00.jsonl.gz": gz([{"f": 1}])})},
+                            break_first=10 ** 6)
+            rm7 = RM.Remote(dead2, "b", root=root, log=lambda m: None)
+            store.use_remote(rm7)
+            df = os.path.join(root, "trades", "FFFUSDT")
+            os.makedirs(df, exist_ok=True)
+            raised = None
+            try:
+                store.prefetch(df, ["2026-09-20-00"])
+            except RM.RemoteFetchError as e:
+                raised = str(e)
+            check("предвыборка с вечным обрывом — отказ вслух", raised is not None and "FFFUSDT" in raised, raised)
+            # источник реплея зовёт предвыборку на оба каталога окна
+            import tail as TL
+            called = []
+            was_pf = store.prefetch
+            store.prefetch = lambda d, hs: called.append((os.path.basename(os.path.dirname(d)), os.path.basename(d), len(hs))) or 0
+            try:
+                tb = TL.TailBars(root=root, log=lambda m: None, remote=rm6)
+                tb.bars("GGGUSDT", 1_757_000_000.0, 1_757_000_000.0 + 5 * 3600)
+            finally:
+                store.prefetch = was_pf
+            check("TailBars зовёт предвыборку ленты и книги на часы окна",
+                  called == [("trades", "GGGUSDT", 6), ("book", "GGGUSDT", 6)], called)
+            check("статистика источника несёт числа хранилища",
+                  isinstance(tb.stats().get("remote"), dict) and "retries" in tb.stats()["remote"], tb.stats())
+        finally:
+            RM.BACKOFF_S = was_backoff
+            store.use_remote(None)
     finally:
         store.use_remote(None)
         shutil.rmtree(root, ignore_errors=True)

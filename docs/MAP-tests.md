@@ -453,21 +453,26 @@
 - L17 `check(name, cond, detail='')`
 - L23 `main()`
 
-## research/b1_book/test_remote.py · 162 строк
+## research/b1_book/test_remote.py · 272 строк
 
 Проверки чтения часа из хранилища: промах на диске → архив дня скачан, сверен по md5 и распакован в кэш; сосе…
 
-- L18 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L24 `FAILED = []`
-- L27 `check(name, cond, detail='')`
-- L34 `class NoKey`
-  - L35 `NoKey.__init__(self)`
-- L40 `class FakeS3`
-  - L41 `FakeS3.__init__(self, objs, lie=False)`
-  - L44 `FakeS3.get_object(self, Bucket, Key)`
-- L54 `gz(rows)`
-- L62 `tar_of(members)` — Архив дня, как его пишет выгрузка: {имя члена: байты}.
-- L73 `main()`
+- L21 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L27 `FAILED = []`
+- L30 `check(name, cond, detail='')`
+- L37 `class NoKey`
+  - L38 `NoKey.__init__(self)`
+- L43 `class FakeS3`
+  - L44 `FakeS3.__init__(self, objs, lie=False)`
+  - L47 `FakeS3.get_object(self, Bucket, Key)`
+- L57 `class BrokenBody` — Поток, который рвётся на первом чтении — как `IncompleteRead`.
+  - L60 `BrokenBody.read(self, n=-1)`
+- L64 `class FlakyS3` — Первые `break_first` запросов отдают рвущийся поток, дальше — целый.
+  - L67 `FlakyS3.__init__(self, objs, break_first=2)`
+  - L71 `FlakyS3.get_object(self, Bucket, Key)`
+- L78 `gz(rows)`
+- L86 `tar_of(members)` — Архив дня, как его пишет выгрузка: {имя члена: байты}.
+- L97 `main()`
 
 ## research/d1_seconds/test_detect.py · 803 строк
 

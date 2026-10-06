@@ -136,7 +136,21 @@ class TailBars:
         self.last_book = {}    # символ → последняя ДОПИСАННАЯ минута книги
         self.zero_vol = 0      # баров ленты с нулевым объёмом
 
+    @staticmethod
+    def hours_of(t0, t1):
+        out, h = [], int(t0 // HOUR) * HOUR
+        while h <= t1:
+            out.append(datetime.fromtimestamp(h, timezone.utc).strftime("%Y-%m-%d-%H"))
+            h += HOUR
+        return out
+
     def bars(self, sym, t0, t1):
+        # Часы окна, которых нет на диске, тянутся из хранилища заранее
+        # и параллельно по дням (`store.prefetch`): чтение по одному часу
+        # качало архивы по очереди и шло часами (06.10). Числа те же.
+        hours = self.hours_of(t0, t1)
+        store.prefetch(os.path.join(self.root, "trades", sym), hours)
+        store.prefetch(os.path.join(self.root, "book", sym), hours)
         tape = SW.read_bars(self.root, sym, t0, t1)
         if not tape:
             # Ленты нет вовсе — значит нет ни входа, ни уровней. Такую
@@ -194,7 +208,10 @@ class TailBars:
                 "minutes": sum(self.added.values()),
                 "dry": len(self.dry),
                 "span_med_h": (sp[len(sp) // 2] if sp else None),
-                "zero_vol_tape": self.zero_vol}
+                "zero_vol_tape": self.zero_vol,
+                # хранилище: скачано, повторов, отказов, несошедшихся —
+                # дыра в данных называется числом рядом с числами правила
+                "remote": (store.REMOTE.stats() if store.REMOTE is not None else None)}
 
 
 def apply(recs, last_tape, last_book=None):

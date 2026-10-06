@@ -947,27 +947,37 @@ A3 — кандидаты в пары на момент окна.
 - L89 `by_rule(trades)` — Сводка по каждому правилу отдельно.
 - L95 `equity(trades)` — Кривая счёта по времени закрытия: `(момент, б.п., R)`.
 
-## research/b1_book/remote.py · 237 строк
+## research/b1_book/remote.py · 339 строк
 
 Чтение часа записи из объектного хранилища, когда на диске его нет.
 
-- L35 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L36 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L39 `ROOT_B1 = os.path.join(HERE, 'out')`
-- L40 `SUBS = ('book', 'trades', 'raw', 'liq', 'metri…`
-- L41 `PREFIX = 'b1'`
-- L42 `CACHE_GB = 2.0`
-- L45 `class Remote`
-  - L46 `Remote.__init__(self, s3, bucket, root=ROOT_B1, cache_gb=CACHE_GB, pre…`
-  - L58 `Remote.key(self, dirpath, hour)` — Ключ АРХИВА дня в бакете по каталогу часа; None — не запись.
-  - L68 `Remote.get(self, dirpath, hour)` — Местный путь часа из кэша или None (нет / не сошёлся / отказ).
-  - L100 `Remote._members(dest, day)` — Состав скачанного архива дня — маркер в кэше; None — не тянули.
-  - L109 `Remote._fetch_archive(self, key, dest)` — Скачать архив дня, сверить md5, распаковать в `dest`. True — есть.
-  - L175 `Remote._walk(self)` — --- кэш ---------------------------------------------------------------
-  - L187 `Remote._cache_size(self)`
-  - L190 `Remote._evict(self)` — Снять самые старые по обращению до 90 % предела.
-  - L221 `Remote.stats(self)`
-- L227 `from_env(env_path=None, root=ROOT_B1, cache_gb=CACHE_GB, log=No…` — Хранилище по ключам сервера; None и одна строка — если ключей нет.
+- L46 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L47 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L50 `ROOT_B1 = os.path.join(HERE, 'out')`
+- L51 `SUBS = ('book', 'trades', 'raw', 'liq', 'metri…`
+- L52 `PREFIX = 'b1'`
+- L53 `CACHE_GB = 2.0`
+- L54 `ATTEMPTS = 4`
+- L55 `BACKOFF_S = (2.0, 4.0, 8.0)`
+- L56 `PREFETCH_WORKERS = 6`
+- L57 `MISSING_CODES = ('NoSuchKey', '404', 'NotFound')`
+- L60 `class RemoteFetchError` — Архив не скачан за все попытки: отказ ВСЛУХ, а не пустой час.
+- L64 `class Remote`
+  - L65 `Remote.__init__(self, s3, bucket, root=ROOT_B1, cache_gb=CACHE_GB, pre…`
+  - L79 `Remote.key(self, dirpath, hour)` — Ключ АРХИВА дня в бакете по каталогу часа; None — не запись.
+  - L89 `Remote.get(self, dirpath, hour)` — Местный путь часа из кэша или None (нет / не сошёлся / отказ).
+  - L121 `Remote._members(dest, day)` — Состав скачанного архива дня — маркер в кэше; None — не тянули.
+  - L130 `Remote._fetch_archive(self, key, dest)` — Скачать архив дня, сверить md5, распаковать в `dest`. True — есть.
+  - L138 `Remote._code(e)`
+  - L141 `Remote._download(self, key)` — Скачать архив во временный файл и сверить md5. Потокобезопасно: трогает только клиента, свой файл и счётчики…
+  - L198 `Remote._rm(path)`
+  - L204 `Remote._install(self, key, dest, tmp)` — Распаковать скачанный архив в кэш, записать маркер дня, учесть размер, вытеснить лишнее. Только в потоке вызы…
+  - L240 `Remote.prefetch(self, dirpath, hours, workers=PREFETCH_WORKERS)` — Скачать архивы дней этих часов параллельно, установить в кэш последовательно. Возвращает число установленных…
+  - L277 `Remote._walk(self)` — --- кэш ---------------------------------------------------------------
+  - L289 `Remote._cache_size(self)`
+  - L292 `Remote._evict(self)` — Снять самые старые по обращению до 90 % предела.
+  - L323 `Remote.stats(self)`
+- L329 `from_env(env_path=None, root=ROOT_B1, cache_gb=CACHE_GB, log=No…` — Хранилище по ключам сервера; None и одна строка — если ключей нет.
 
 ## research/b1_book/replay.py · 360 строк
 
@@ -1041,7 +1051,7 @@ A3 — кандидаты в пары на момент окна.
   - L785 `Signals.view(self, sym, since=0.0)`
   - L791 `Signals.history(self, sym)` — Сделки, что держим в памяти, — закрытые И ОТКРЫТЫЕ.
 
-## research/b1_book/store.py · 336 строк
+## research/b1_book/store.py · 348 строк
 
 Хранение потока: запись без потерь и чтение через порчу.
 
@@ -1060,9 +1070,10 @@ A3 — кандидаты в пары на момент окна.
 - L168 `read_jsonl(path, log=None, parse=json.loads)` — Прочитать файл записей: простой, сжатый или сжатый с порчей.
 - L211 `REMOTE = None` — Хранилище часов, которых на диске уже нет (`remote.Remote`). Ставится ЯВНО тем, кто читает историю (реплей, з…
 - L214 `use_remote(remote)` — Включить чтение из хранилища на промахе; None выключает.
-- L221 `read_hour(dirpath, hour, log=None, parse=json.loads)` — Записи одного часа: простой файл, сжатый или оба сразу.
-- L267 `_parse(f, parse=json.loads)` — Разобрать построчно. Возвращает `(записи, дочитано ли до конца)`.
-- L286 `_salvage(path, log, parse=json.loads)` — Разобрать сжатый файл по членам, пропуская испорченные.
+- L221 `prefetch(dirpath, hours)` — Заранее стянуть из хранилища архивы дней для часов, которых нет на диске (читатели истории зовут это один раз…
+- L233 `read_hour(dirpath, hour, log=None, parse=json.loads)` — Записи одного часа: простой файл, сжатый или оба сразу.
+- L279 `_parse(f, parse=json.loads)` — Разобрать построчно. Возвращает `(записи, дочитано ли до конца)`.
+- L298 `_salvage(path, log, parse=json.loads)` — Разобрать сжатый файл по членам, пропуская испорченные.
 
 ## research/b1_book/web.py · 12312 строк
 
@@ -2795,7 +2806,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L115 `repack(path=None, cap=None, log=print, apply=True)` — Переложить строки суток по частям, не переступая порог размера.
 - L184 `main()`
 
-## research/dca_paper/tail.py · 286 строк
+## research/dca_paper/tail.py · 303 строк
 
 Хвост ленты, продолженный серединой стакана: ПРАВИЛО книги.
 
@@ -2807,15 +2818,16 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L77 `book_minute_bars(root, sym, t0, t1, log=None)` — Минутные бары по СЕРЕДИНЕ стакана в окне `[t0, t1]`.
 - L108 `class TailBars` — Бары ленты, продолженные серединой стакана ПОСЛЕ последнего принта.
   - L123 `TailBars.__init__(self, root=ROOT_B1, log=None, remote=None)`
-  - L139 `TailBars.bars(self, sym, t0, t1)`
-  - L170 `TailBars.record_end(self)` — Докуда доходит ЗАПИСЬ: момент последнего такта сборщика.
-  - L190 `TailBars.stats(self)` — Числа правила: их печатает отчёт, а не пересказ прогона.
-- L200 `apply(recs, last_tape, last_book=None)` — Разметить исходы хвостом и не пустить ВХОД из котировки.
-- L258 `CUT_NO_BOOK = 'книги в хвосте нет вовсе'` — Причины, по которым позиция остаётся оборванной ПОСЛЕ правила хвоста. Объявлены строками один раз: два дослов…
-- L259 `CUT_BOOK_SHORT = 'книга кончилась раньше планового конца'`
-- L260 `CUT_BOOK_HOLE = 'книга есть, но не в окне этой позиции'`
-- L261 `CUT_UNKNOWN = 'причина не измерена'`
-- L264 `cut_reason(r, last_tape, last_book)` — Почему эта позиция осталась оборванной, когда хвост уже применён.
+  - L140 `TailBars.hours_of(t0, t1)`
+  - L147 `TailBars.bars(self, sym, t0, t1)`
+  - L184 `TailBars.record_end(self)` — Докуда доходит ЗАПИСЬ: момент последнего такта сборщика.
+  - L204 `TailBars.stats(self)` — Числа правила: их печатает отчёт, а не пересказ прогона.
+- L217 `apply(recs, last_tape, last_book=None)` — Разметить исходы хвостом и не пустить ВХОД из котировки.
+- L275 `CUT_NO_BOOK = 'книги в хвосте нет вовсе'` — Причины, по которым позиция остаётся оборванной ПОСЛЕ правила хвоста. Объявлены строками один раз: два дослов…
+- L276 `CUT_BOOK_SHORT = 'книга кончилась раньше планового конца'`
+- L277 `CUT_BOOK_HOLE = 'книга есть, но не в окне этой позиции'`
+- L278 `CUT_UNKNOWN = 'причина не измерена'`
+- L281 `cut_reason(r, last_tape, last_book)` — Почему эта позиция осталась оборванной, когда хвост уже применён.
 
 ## research/dca_paper/tail_screen.py · 495 строк
 
