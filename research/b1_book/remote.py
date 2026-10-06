@@ -54,9 +54,9 @@ ROOT_B1 = os.path.join(HERE, "out")
 SUBS = ("book", "trades", "raw", "liq", "metrics")
 PREFIX = "b1"
 CACHE_GB = 2.0
-ATTEMPTS = 4                      # попыток скачать архив
+ATTEMPTS = 4                      # попыток БЕЗ продвижения подряд (докачка с продвижением не считается)
 BACKOFF_S = (2.0, 4.0, 8.0)       # отступ между попытками, секунд
-PREFETCH_WORKERS = 4              # параллельных скачиваний архивов дней
+PREFETCH_WORKERS = 3              # параллельных скачиваний архивов дней
 MISSING_CODES = ("NoSuchKey", "404", "NotFound")
 
 
@@ -146,17 +146,26 @@ class Remote:
         трогает только клиента, свой файл и счётчики под замком.
 
         Возвращает путь к файлу; None — в хранилище нет (запомнено) или
-        md5 не сошёлся за все попытки. Сеть икает — попытки с отступом и
-        ДОКАЧКОЙ с места обрыва; все исчерпаны — `RemoteFetchError`, вслух.
+        md5 не сошёлся за все попытки. Обрыв потока — ДОКАЧКА с места
+        обрыва без сна: обрыв на границе блока не есть перегрузка, и
+        архив из многих блоков собирается столькими запросами, сколько
+        нужно. Попытки считаются только когда продвижения НЕТ (запрос
+        отказал или поток оборвался на нуле) — тогда отступ и, после
+        `ATTEMPTS` подряд, `RemoteFetchError` вслух.
         """
-        err, tmp, got, h, want = None, None, 0, hashlib.md5(), None
-        for attempt in range(ATTEMPTS):
-            if attempt:
+        err, tmp, got, h, want, stalled = None, None, 0, hashlib.md5(), None, 0
+        while True:
+            if stalled:
+                if stalled >= ATTEMPTS:
+                    self._rm(tmp)
+                    raise RemoteFetchError(f"хранилище: {key} не скачан — {ATTEMPTS} попытки без "
+                                           f"продвижения подряд (байт {got}): {str(err)[:160]}")
                 with self._lock:
                     self.retries += 1
-                self.log(f"хранилище: повтор {attempt}/{ATTEMPTS - 1} для {key}"
+                self.log(f"хранилище: повтор {stalled}/{ATTEMPTS - 1} для {key}"
                          f"{f' с байта {got}' if got else ''}: {str(err)[:120]}")
-                time.sleep(BACKOFF_S[min(attempt - 1, len(BACKOFF_S) - 1)])
+                time.sleep(BACKOFF_S[min(stalled - 1, len(BACKOFF_S) - 1)])
+            before = got
             kw = {"Bucket": self.bucket, "Key": key}
             if got:
                 kw["Range"] = f"bytes={got}-"
@@ -171,6 +180,7 @@ class Remote:
                 err = e
                 with self._lock:
                     self.errors += 1
+                stalled += 1
                 continue
             if want is None:
                 want = str((r.get("Metadata") or {}).get("md5") or "").lower() \
@@ -189,21 +199,20 @@ class Remote:
                 err = e                          # обрыв потока — докачка с `got`
                 with self._lock:
                     self.errors += 1
+                stalled = 0 if got > before else stalled + 1
                 continue
             if want and want != h.hexdigest():
                 err = ValueError("md5 не сошёлся")
-                if attempt == ATTEMPTS - 1:
+                stalled += 1
+                self._rm(tmp)                    # с нуля: докачивать нечего
+                tmp, got, h = None, 0, hashlib.md5()
+                if stalled >= ATTEMPTS:
                     with self._lock:
                         self.bad += 1
                     self.log(f"хранилище: {key} не сошёлся по md5 за {ATTEMPTS} попытки — не взят")
-                    self._rm(tmp)
                     return None
-                self._rm(tmp)                    # с нуля: докачивать нечего
-                tmp, got, h = None, 0, hashlib.md5()
                 continue
             return tmp
-        self._rm(tmp)
-        raise RemoteFetchError(f"хранилище: {key} не скачан за {ATTEMPTS} попытки: {str(err)[:160]}")
 
     @staticmethod
     def _rm(path):

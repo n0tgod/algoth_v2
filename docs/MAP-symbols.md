@@ -947,7 +947,7 @@ A3 — кандидаты в пары на момент окна.
 - L89 `by_rule(trades)` — Сводка по каждому правилу отдельно.
 - L95 `equity(trades)` — Кривая счёта по времени закрытия: `(момент, б.п., R)`.
 
-## research/b1_book/remote.py · 350 строк
+## research/b1_book/remote.py · 359 строк
 
 Чтение часа записи из объектного хранилища, когда на диске его нет.
 
@@ -959,7 +959,7 @@ A3 — кандидаты в пары на момент окна.
 - L56 `CACHE_GB = 2.0`
 - L57 `ATTEMPTS = 4`
 - L58 `BACKOFF_S = (2.0, 4.0, 8.0)`
-- L59 `PREFETCH_WORKERS = 4`
+- L59 `PREFETCH_WORKERS = 3`
 - L60 `MISSING_CODES = ('NoSuchKey', '404', 'NotFound')`
 - L63 `class RemoteFetchError` — Архив не скачан за все попытки: отказ ВСЛУХ, а не пустой час.
 - L67 `class Remote`
@@ -970,14 +970,14 @@ A3 — кандидаты в пары на момент окна.
   - L133 `Remote._fetch_archive(self, key, dest)` — Скачать архив дня, сверить md5, распаковать в `dest`. True — есть.
   - L141 `Remote._code(e)`
   - L144 `Remote._download(self, key)` — Скачать архив во временный файл и сверить md5. Потокобезопасно: трогает только клиента, свой файл и счётчики…
-  - L209 `Remote._rm(path)`
-  - L215 `Remote._install(self, key, dest, tmp)` — Распаковать скачанный архив в кэш, записать маркер дня, учесть размер, вытеснить лишнее. Только в потоке вызы…
-  - L251 `Remote.prefetch(self, dirpath, hours, workers=PREFETCH_WORKERS)` — Скачать архивы дней этих часов параллельно, установить в кэш последовательно. Возвращает число установленных…
-  - L288 `Remote._walk(self)` — --- кэш ---------------------------------------------------------------
-  - L300 `Remote._cache_size(self)`
-  - L303 `Remote._evict(self)` — Снять самые старые по обращению до 90 % предела.
-  - L334 `Remote.stats(self)`
-- L340 `from_env(env_path=None, root=ROOT_B1, cache_gb=CACHE_GB, log=No…` — Хранилище по ключам сервера; None и одна строка — если ключей нет.
+  - L218 `Remote._rm(path)`
+  - L224 `Remote._install(self, key, dest, tmp)` — Распаковать скачанный архив в кэш, записать маркер дня, учесть размер, вытеснить лишнее. Только в потоке вызы…
+  - L260 `Remote.prefetch(self, dirpath, hours, workers=PREFETCH_WORKERS)` — Скачать архивы дней этих часов параллельно, установить в кэш последовательно. Возвращает число установленных…
+  - L297 `Remote._walk(self)` — --- кэш ---------------------------------------------------------------
+  - L309 `Remote._cache_size(self)`
+  - L312 `Remote._evict(self)` — Снять самые старые по обращению до 90 % предела.
+  - L343 `Remote.stats(self)`
+- L349 `from_env(env_path=None, root=ROOT_B1, cache_gb=CACHE_GB, log=No…` — Хранилище по ключам сервера; None и одна строка — если ключей нет.
 
 ## research/b1_book/replay.py · 360 строк
 

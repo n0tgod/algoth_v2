@@ -239,7 +239,7 @@ def main():
             cdir = os.path.join(root, "cache", "trades", "DDDUSDT")
             leftovers = sorted(os.listdir(cdir)) if os.path.exists(cdir) else []
             check("вечный обрыв — отказ вслух после всех попыток, кэш без битого файла",
-                  raised is not None and "не скачан за 4 попытки" in raised and dead.gets == RM.ATTEMPTS
+                  raised is not None and "4 попытки без продвижения" in raised and dead.gets == RM.ATTEMPTS
                   and leftovers == [], (raised, dead.gets, leftovers))
             # --- докачка: поток рвётся на каждом блоке, архив собирается кусками по Range ---
             big_rows = gz([{"z": "q" * 300}] * 400)
@@ -253,10 +253,21 @@ def main():
             os.makedirs(dh, exist_ok=True)
             rows = store.read_hour(dh, "2026-09-05-00")
             st8 = rm8.stats()
-            check("докачка с места обрыва: архив собран кусками, md5 сошёлся, запросов — по числу кусков",
+            check("докачка с места обрыва: архив собран кусками, md5 сошёлся, запросов — по числу кусков, без сна",
                   rows == [{"z": "q" * 300}] * 400 and cutter.gets == 3 and len(cutter.ranges) == 2
                   and cutter.ranges[0] == f"bytes={block}-" and cutter.ranges[1] == f"bytes={2 * block}-"
-                  and st8["retries"] == 2 and st8["bad_md5"] == 0, (len(rows), cutter.gets, cutter.ranges, st8))
+                  and st8["retries"] == 0 and st8["errors"] == 2 and st8["bad_md5"] == 0, (len(rows), cutter.gets, cutter.ranges, st8))
+            # архив из МНОГИХ блоков (больше, чем попыток) — собирается: продвижение попыткой не считается
+            many = CuttingS3(dict(cut_objs), block=total // 9 + 1)
+            rm8b = RM.Remote(many, "b", root=root, log=lambda m: None)
+            store.use_remote(rm8b)
+            dh2 = os.path.join(root, "trades", "HHHUSDT")
+            shutil.rmtree(os.path.join(root, "cache", "trades", "HHHUSDT"), ignore_errors=True)
+            rows2 = store.read_hour(dh2, "2026-09-05-00")
+            check("архив из девяти блоков при четырёх попытках — собран: докачка с продвижением не есть попытка",
+                  rows2 == [{"z": "q" * 300}] * 400 and many.gets == 9 and rm8b.stats()["retries"] == 0, (len(rows2), many.gets))
+            # а вот обрыв БЕЗ продвижения считается: `BrokenBody` рвётся на нуле — четыре попытки и отказ
+            RM.BACKOFF_S = (0.0, 0.0, 0.0)
             # --- предвыборка: архивы дней параллельно, установка по одному, часы с диска не тянутся ---
             days = {f"b1/trades/EEEUSDT/2026-09-1{dd}.tar": tar_of({f"2026-09-1{dd}-00.jsonl.gz": gz([{"e": dd}]),
                                                                     f"2026-09-1{dd}-01.jsonl.gz": gz([{"e": dd, "h": 1}])})

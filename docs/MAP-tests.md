@@ -453,7 +453,7 @@
 - L17 `check(name, cond, detail='')`
 - L23 `main()`
 
-## research/b1_book/test_remote.py · 325 строк
+## research/b1_book/test_remote.py · 336 строк
 
 Проверки чтения часа из хранилища: промах на диске → архив дня скачан, сверен по md5 и распакован в кэш; сосе…
 
