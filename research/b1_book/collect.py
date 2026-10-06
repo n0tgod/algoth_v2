@@ -818,7 +818,7 @@ class Collector:
         # Состояние модели S8 читается с диска по фиксированным путям и
         # кешируется: страница опрашивает раз в минуту, файлы меняются
         # раз в сутки.
-        self._model_cache = (0.0, None, object())
+        self._model_cache = (0.0, None, object(), None)
         # Цены входа по (символ, час). Закрытый час не меняется, значит
         # прочитанное можно помнить навсегда.
         self._px_cache = {}
@@ -2011,6 +2011,37 @@ class Collector:
             return "traded"
         return "observation" if rr_min < float(traded_gate) else "traded"
 
+    MODEL_CACHE_MAX_SEC = 600
+
+    def _model_sig(self, s8):
+        """Подпись файлов всех книг: (имя, mtime, размер) по каталогам."""
+        sig = []
+        for key in sorted(self.BOOK_DIRS):
+            d = os.path.join(s8, self.BOOK_DIRS[key])
+            try:
+                names = sorted(os.listdir(d))
+            except OSError:
+                sig.append((key, None))
+                continue
+            for fn in names:
+                try:
+                    st = os.stat(os.path.join(d, fn))
+                except OSError:
+                    continue
+                sig.append((key, fn, st.st_mtime_ns, st.st_size))
+        return tuple(sig)
+
+    def _day_brake_view(self, now):
+        """Дневной тормоз для ответа страницы — живой, не из кеша."""
+        bs = getattr(self, "_brake", None)
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                        "s8_loop"))
+        import trades as TR
+        return dict(bs or {}, active=TR.day_brake_active(bs, now),
+                    stale=(bs is None
+                           or now - float(bs.get("at") or 0)
+                           > TR.DAY_BRAKE_STALE_SEC))
+
     def model_state(self, rr_min=None):
         """Состояние модели S8 для страницы: манифест, мысли, живой IC.
 
@@ -2019,13 +2050,26 @@ class Collector:
         модели — не ошибка, а именованное состояние: она копит запись.
         """
         now = time.time()
-        at, cached, was = self._model_cache
+        at, cached, was, sig_was = self._model_cache
+        s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
         # Кеш ключуется порогом: тот же ответ на другой порог был бы
         # молчаливой подменой отбора — таблица показывала бы один
         # фильтр, а числа считались по другому.
-        if cached is not None and now - at < 30 and was == rr_min:
-            return cached
-        s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
+        # Срок кеша — ПОДПИСЬ файлов книг, а не 30 секунд: источники
+        # меняются раз в час (цикл дописывает журналы), а страница
+        # спрашивала каждую минуту и каждый раз пересобирала все книги
+        # — при бюджете кеша журналов 640 МБ это 56 с на ответ и
+        # полный разбор журналов каждую минуту (06.10). Пока файлы те
+        # же, ответ тот же; живые отметки открытых позиций страница
+        # берёт из `/model_marks`. Потолок возраста — на всё, чего
+        # подпись не видит.
+        sig = self._model_sig(s8)
+        if cached is not None and was == rr_min and sig == sig_was \
+                and now - at < self.MODEL_CACHE_MAX_SEC:
+            out = dict(cached)
+            out["day_brake"] = self._day_brake_view(now)
+            out["cached_age_sec"] = round(now - at, 1)
+            return out
         # Предпросмотр снят решением владельца (2026-08-07): боевой
         # контур обучен и торгует, строительные леса убраны. Его
         # артефакты остаются на диске, но не отдаются.
@@ -2079,18 +2123,10 @@ class Collector:
         # час без входов при сработавшем тормозе читался бы как отказ,
         # а тормоз, молча умерший, — как работающий (класс «защита,
         # которой молча нет»). None до первого счёта — тоже состояние.
-        bs = getattr(self, "_brake", None)
-        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
-                                        "s8_loop"))
-        import trades as TR
-        out["day_brake"] = dict(
-            bs or {}, active=TR.day_brake_active(bs, now),
-            stale=(bs is None
-                   or now - float(bs.get("at") or 0)
-                   > TR.DAY_BRAKE_STALE_SEC))
+        out["day_brake"] = self._day_brake_view(now)
         out["took_ms"] = took
         out["took_total_ms"] = round((time.time() - now) * 1000)
-        self._model_cache = (now, out, rr_min)
+        self._model_cache = (now, out, rr_min, sig)
         return out
 
     def live_overlay(self, mdir, tr, reviews):

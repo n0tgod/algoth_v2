@@ -2033,6 +2033,63 @@ def test_model_state_carries_training_stall():
           and st.get("note"), str(st))
 
 
+def test_model_state_cache_follows_journal_signature():
+    """Ответ `/model` пересобирается, когда меняются файлы книг, а не раз в 30 с.
+
+    06.10: страница спрашивала каждую минуту, сборщик каждый раз
+    пересобирал все книги — 56 с на ответ и полный разбор журналов
+    при бюджете кеша 640 МБ. Подпись файлов та же — ответ тот же;
+    дневной тормоз в ответе при этом живой.
+    """
+    import json as _json
+    import tempfile
+
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    here_was, dirs_was = C.HERE, C.Collector.BOOK_DIRS
+    C.HERE = os.path.join(root, "b1_book")
+    os.makedirs(C.HERE)
+    s8 = os.path.join(root, "s8_loop", "out")
+    for d in ("model_h4", "model_h24"):
+        os.makedirs(os.path.join(s8, d))
+        with open(os.path.join(s8, d, "manifest.json"), "w") as f:
+            _json.dump({"trained_at": "2026-10-06T03:56:49+00:00", "version": 7}, f)
+    try:
+        C.Collector.BOOK_DIRS = {"h4": "model_h4", "h24": "model_h24"}
+        c = C.Collector(["TEST"], [], root, lambda m: None)
+        calls = []
+        real = c._model_dir_state
+        c._model_dir_state = lambda mdir, rr_min=None: (calls.append(mdir) or real(mdir, rr_min=rr_min))
+        c._brake = {"at": 1.0, "on": False}
+        a = c.model_state()
+        n1 = len(calls)
+        c._brake = {"at": 2.0, "on": True}
+        b = c.model_state()
+        check("файлы те же — книги не пересобираются, ответ из кеша",
+              n1 >= 2 and len(calls) == n1 and "cached_age_sec" in b, f"{n1} {len(calls)}")
+        check("дневной тормоз в кешированном ответе живой",
+              b["day_brake"].get("at") == 2.0 and b["day_brake"].get("on") is True
+              and a["day_brake"].get("at") == 1.0, str(b["day_brake"]))
+        with open(os.path.join(s8, "model_h24", "picks.jsonl"), "w") as f:
+            f.write(_json.dumps({"hour": "2026-10-06-04"}) + "\n")
+        c.model_state()
+        check("изменился файл книги — пересборка", len(calls) == 2 * n1, str(len(calls)))
+        c.model_state(rr_min=1.0)
+        check("другой порог — своя сборка", len(calls) == 3 * n1, str(len(calls)))
+        # Контроль: потолок возраста — рухнувший в ноль — пересобирает всегда.
+        was = C.Collector.MODEL_CACHE_MAX_SEC
+        C.Collector.MODEL_CACHE_MAX_SEC = 0
+        try:
+            c.model_state(rr_min=1.0)
+            check("подставной потолок возраста 0 кусается (контроль): пересборка без изменений",
+                  len(calls) == 4 * n1, str(len(calls)))
+        finally:
+            C.Collector.MODEL_CACHE_MAX_SEC = was
+    finally:
+        C.HERE, C.Collector.BOOK_DIRS = here_was, dirs_was
+
+
 def test_brake_recomputes_only_when_journals_or_day_change():
     """Тормоз не пересчитывает реализованный день при неизменных входах.
 
@@ -5883,7 +5940,7 @@ def test_book_registry_is_one_list():
         with open(os.path.join(decoy, "manifest.json"), "w",
                   encoding="utf-8") as f:
             json.dump({"horizon_h": 4, "book": "model_z"}, f)
-        col._model_cache = (0.0, None, object())
+        col._model_cache = (0.0, None, object(), None)
         st = col.model_state()
         got = {k: ((v.get("manifest") or {}).get("book"))
                for k, v in (st.get("books") or {}).items()}
@@ -8712,6 +8769,7 @@ def main():
     test_disk_rate_compares_same_phase_of_hour()
     test_shrunken_run_announces_dropped_symbols()
     test_nofile_covers_every_kind()
+    test_model_state_cache_follows_journal_signature()
     test_brake_recomputes_only_when_journals_or_day_change()
     test_jsonl_cache_budget_counts_objects_not_file_bytes()
     test_second_ring_matches_deque_bit_for_bit()
