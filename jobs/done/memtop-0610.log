@@ -93,3 +93,12 @@
    2329848        1      4  118:00  sshd: /usr/sbin/sshd -D [listener] 1 of 10-100 startups
    2329858        1      4  118:00  /usr/lib/systemd/systemd-networkd
 конец: 2026-10-06T04:24:27Z, код 0
+публикуется в ветку main:
+ jobs/done/gate-0610.done            |  1 +
+ jobs/done/gate-0610.log             | 22 +++++++++
+ jobs/done/memtop-0610.done          |  1 +
+ jobs/done/memtop-0610.log           | 95 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  4 ++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 124 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at f39c15fdca352ddd1883b62609c74c27343be6f0 but expected 48f649a7c7a6f298be8c30940cab23c985f824b1
