@@ -156,6 +156,20 @@ def census(c, deep=False):
         b = deep_size(v, seen)
         total += b
         parts[name] = {"n": _count(v), "mb": round(b / 2 ** 20, 1)}
+    # Всё остальное у сборщика — автоматически: кэш, забытый в `PARTS`,
+    # обязан быть виден здесь, а не в неучтённом остатке. Простые
+    # значения (числа, строки, замки) пропускаются.
+    known = {attr.split(".")[0] for _, attr in PARTS}
+    others = []
+    for name, v in list(vars(c).items()):
+        if name in known or v is None or isinstance(v, (int, float, str, bool)):
+            continue
+        b = deep_size(v, seen)
+        total += b
+        if b >= 64 * 1024:
+            others.append((b, name, _count(v)))
+    for b, name, n in sorted(others, reverse=True)[:12]:
+        parts[f"прочее: {name}"] = {"n": n, "mb": round(b / 2 ** 20, 1)}
     sig = _get(c, "sig.by") or {}
     n_sec = sum(len(getattr(l, "sec", ())) for l in sig.values())
     ring = sum(int(getattr(getattr(l, "sec", None), "nbytes", 0) or 0)

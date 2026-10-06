@@ -66,12 +66,19 @@ def main():
           isinstance(rep["rss_mb"], int) and rep["sum_mb"] >= 0
           and "unaccounted_mb" in rep, str({k: rep[k] for k in ("rss_mb", "sum_mb")}))
     ring_row = parts["  из них кольца секунд (точно, nbytes)"]
-    check("кольца секунд посчитаны точно: 39 секунд, 2 кольца × 14400×48 байт",
-          ring_row["n"] == 39 and abs(ring_row["mb"] - 2 * 14400 * 48 / 2 ** 20) < 0.05,
+    check("кольца секунд посчитаны точно: 39 секунд, одно заведённое кольцо 14400×48 байт",
+          ring_row["n"] == 39 and abs(ring_row["mb"] - 14400 * 48 / 2 ** 20) < 0.05,
           str(ring_row))
     check("детектор — самая большая часть у свежего сборщика",
           max(parts, key=lambda k: parts[k]["mb"]).startswith("signals.by"),
           str(sorted(((v["mb"], k) for k, v in parts.items()), reverse=True)[:3]))
+    # 50 списков по 2000 РАЗНЫХ чисел (малые int общие и считались бы раз)
+    c.forgotten_cache = {k: list(range(k * 10 ** 5, k * 10 ** 5 + 2000)) for k in range(50)}
+    rep_f = M.census(c)
+    check("кэш, забытый в списке, виден как «прочее», а не в остатке",
+          rep_f["parts"].get("прочее: forgotten_cache", {}).get("mb", 0) > 2.5,
+          str({k: v for k, v in rep_f["parts"].items() if k.startswith("прочее")}))
+    del c.forgotten_cache
     rep2 = c.mem_report(trace="stop")
     check("маршрут сборщика отдаёт перепись и состояние трассировки",
           "parts" in rep2 and rep2["trace"].get("ok") is True, str(rep2.get("trace")))
