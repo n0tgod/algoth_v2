@@ -219,3 +219,14 @@ h24/nn: часов 954, коротких выборов 2862, ног под кр
   символ 72/400  решений 1329
 СТОП: память 1271 МБ больше предела 1200 МБ — прогон останавливается сам, цикл не трогаем
 конец: 2026-10-06T14:02:04Z, код 3
+публикуется в ветку main:
+ jobs/done/short-rung-2.log          | 82 ++++++++++++++++++++++++++++++++++++-
+ jobs/done/status-rung2.done         |  1 +
+ jobs/done/status-rung2.log          |  9 ++++
+ jobs/poke.log                       |  1 +
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 93 insertions(+), 2 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   32ef5d70..2ca006ab  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
