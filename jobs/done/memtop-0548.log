@@ -1,0 +1,85 @@
+== задание memtop-0548 ==
+строка: run tools/memtop.py --day 2026-10-06 --tail 2
+начало: 2026-10-06T05:49:06Z
+запускаю: .venv/bin/python tools/memtop.py --day 2026-10-06 --tail 2
+(хвосты логов — первыми, таблицы памяти — в конце: очередь заданий хранит последние 400 строк)
+
+== research/s8_loop/out/train.log (хвост 2) ==
+  строк всего 78002
+  [10-06 05:44:54] память 2183 МБ, пик 3942 (gbm/mfe_4h обучена, строк 994103)
+  [10-06 05:44:54] gbm/mfe_4h: обучена на 994,103 строках за 688 с; топ: eat_ask 0.2826, traded_share 0.2623, eat_bid 0.1667
+
+== research/dca_paper/out/short.log (хвост 2) ==
+  строк всего 59643
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+
+== research/dca_paper/out/daily.log (хвост 2) ==
+  строк всего 163694
+  опубликовано
+  
+
+== research/dca_paper/out/pair.log (хвост 2) ==
+  строк всего 77931
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+
+== research/b1_book/out/collect.log (хвост 2) ==
+  строк всего 1093557
+  [    7344 с] ВНИМАНИЕ: полный проход снимков занял 1.03 с при шаге 1 с — снимков в часе будет около 3481, не 3600
+  [    7385 с] сообщений 26,639,187 (+215,484), сделок 1,849,974 (+16,427), книг готово 782/782, тем принято 2346/2346, сбросов 0, диска на ~80 дн.
+
+== research/b1_book/out/watchdog.log (хвост 2) ==
+  строк всего 8634
+  ТРЕВОГА обучение S8: веса от 2026-09-30 08:37 UTC, 141.0 ч назад (каденция 24, тревога с 36 ч) — обучение стоит; последний цикл 03:40 UTC: память: доступно 2689 МБ при пороге 3072 — рядом другие прогоны, обучение отложен
+  ТРЕВОГА обучение S8: веса от 2026-09-30 08:37 UTC, 141.1 ч назад (каденция 24, тревога с 36 ч) — обучение стоит; последний цикл 03:40 UTC: память: доступно 2689 МБ при пороге 3072 — рядом другие прогоны, обучение отложен
+
+== research/b1_book/out/ship.log (хвост 2) ==
+  строк всего 201
+  [03:15:09] после: /root/algoth_v2/research/b1_book/out: свободно 65.8 ГБ; /root: свободно 70.9 ГБ; 6 с
+  [03:15:09] итого отправлено 0.01 ГБ, дней закрыто 1 из 1
+
+== research/a1_universe/out/refresh.log (хвост 2) ==
+  строк всего 17256
+  Отказов нет.
+  
+
+== research/a1_universe/out/instruments.log (хвост 2) ==
+  строк всего 551
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+
+== research/s8_loop/out/model/train_log.jsonl (хвост 2) ==
+  строк всего 622
+  {"kind": "books", "seq": 529, "hour": "2026-10-06-02", "at": "10-06 03:19", "sections": 1430, "symbols": 790, "train_why": "память: доступно 2945 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час", "ste
+  {"kind": "books", "seq": 529, "hour": "2026-10-06-02", "at": "10-06 03:40", "sections": 1430, "symbols": 790, "train_why": "память: доступно 2689 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час", "ste
+
+== убийства ядра с 2026-10-06 00:00 UTC ==
+  строк 0, убийств 0
+
+== free -m (2026-10-06 05:49:08 UTC) ==
+                 total        used        free      shared  buff/cache   available
+  Mem:            7745        5539         177           4        2431        2206
+  Swap:              0           0           0
+
+== процессы по памяти (RSS, МБ; возраст чч:мм; первые 18) ==
+  всего памяти у первых 18: 5064 МБ
+   3462931        1   3098   01:59  .venv/bin/python research/s8_loop/train.py
+   3462584        1   1510   02:03  .venv/bin/python research/b1_book/collect.py --http 8765
+     21675    14604    303 1687:11  claude --continue
+   3486761  3486755     30   00:00  .venv/bin/python tools/memtop.py --day 2026-10-06 --tail 2
+   2637243        1     26  575:00  /sbin/multipathd -d -s
+   2329852        1     23  119:25  /usr/lib/systemd/systemd-journald
+         1        0      9 1696:05  /usr/lib/systemd/systemd --system --deserialize=89
+       961        1      9 1696:04  /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+   3486934  2329848      9   00:00  sshd: root [priv]
+   3487021  2329848      8   00:00  sshd: [accepted]
+   2329846        1      6  119:25  /usr/lib/systemd/systemd-resolved
+   3486959  3486934      6   00:00  sshd: root [net]
+   3487022  3487021      6   00:00  sshd: [net]
+    691277        1      5  311:03  /usr/sbin/rsyslogd -n -iNONE
+       922        1      4 1696:04  /usr/lib/systemd/systemd-logind
+   1496656        1      4  215:46  /usr/lib/polkit-1/polkitd --no-debug
+   2329847        1      4  119:25  /usr/lib/systemd/systemd-timesyncd
+   2329848        1      4  119:25  sshd: /usr/sbin/sshd -D [listener] 2 of 10-100 startups
+конец: 2026-10-06T05:49:08Z, код 0
