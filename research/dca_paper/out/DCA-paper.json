@@ -11,20 +11,20 @@
    "all": {
     "n": 70,
     "days": 36,
-    "usd": 18.86,
-    "final": 0.1886,
+    "usd": 19.17,
+    "final": 0.1917,
     "max_dd": -0.0335,
-    "day_median": 0.00099,
+    "day_median": 0.0011,
     "day_worst": -0.0199,
     "day_green": 0.583,
     "win": 0.629,
     "hold_h": 49.9,
     "hold_med_h": 72.0,
-    "bite": 5.5,
+    "bite": 4.9,
     "top_sym": "STRKUSDT",
-    "usd_wo_top": 14.71,
+    "usd_wo_top": 15.02,
     "top_day": "2026-09-18",
-    "usd_wo_top3d": 1.94,
+    "usd_wo_top3d": 2.24,
     "worst_day": "2026-08-14",
     "max_dd_wo_worst": -0.0329,
     "max_dd_wo_top3d": -0.0365,
@@ -383,10 +383,10 @@
      },
      {
       "d": "2026-10-06",
-      "usd": 0.1,
+      "usd": 0.4,
       "n": 1,
       "bt": 0,
-      "long": 0.1,
+      "long": 0.4,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -400,16 +400,16 @@
    "forward": {
     "n": 2,
     "days": 2,
-    "usd": 0.07,
-    "final": 0.0007,
+    "usd": 0.38,
+    "final": 0.0038,
     "max_dd": 0.0,
-    "day_median": 0.00035,
+    "day_median": 0.00189,
     "day_worst": -0.0003,
     "day_green": 0.5,
     "win": 0.5,
     "hold_h": 72.0,
     "hold_med_h": 72.0,
-    "bite": 0.3,
+    "bite": 0.1,
     "top_sym": "SANDUSDT",
     "usd_wo_top": -0.03,
     "top_day": "2026-10-06",
@@ -432,10 +432,10 @@
      },
      {
       "d": "2026-10-06",
-      "usd": 0.1,
+      "usd": 0.4,
       "n": 1,
       "bt": 0,
-      "long": 0.1,
+      "long": 0.4,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -819,12 +819,12 @@
     "n": 70,
     "applied": 70,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 0.89,
     "slip_usd": 0.43,
-    "fund_usd": 0.88,
+    "fund_usd": 1.18,
     "gross_usd": 19.3,
-    "net_usd": 18.86,
+    "net_usd": 19.17,
     "fee_bp": 2.8,
     "fee_mean_bp": 4.8,
     "fee_worst_bp": 1.3,
@@ -832,9 +832,9 @@
     "slip_mean_bp": 2.3,
     "slip_worst_bp": 1.1,
     "fund_bp": 0.0,
-    "fund_mean_bp": 4.7,
+    "fund_mean_bp": 6.1,
     "fund_worst_bp": -14.3,
-    "cost_usd": 0.44
+    "cost_usd": 0.14
    },
    "n_forward": 2,
    "n_restored": 68,
@@ -856,8 +856,8 @@
       "book": null,
       "lev": 1.0,
       "margin": 29.7,
-      "mark_frac": -9.1e-05,
-      "mark_usd": -0.0027,
+      "mark_frac": -0.000577,
+      "mark_usd": -0.0171,
       "entry_px": 41.18,
       "avg": 41.18,
       "depth": 1,
@@ -869,7 +869,7 @@
        ]
       ],
       "fav_bp": 143.27,
-      "last_ts": 1791255720.0,
+      "last_ts": 1791259620.0,
       "sched_end": 1791493949.9,
       "cut_why": null,
       "book_end": null,
@@ -882,8 +882,8 @@
       "book": null,
       "lev": 1.677,
       "margin": 29.7,
-      "mark_frac": -0.001052,
-      "mark_usd": -0.0312,
+      "mark_frac": 0.000938,
+      "mark_usd": 0.0279,
       "entry_px": 884.94,
       "avg": 884.94,
       "depth": 1,
@@ -895,7 +895,7 @@
        ]
       ],
       "fav_bp": 183.6,
-      "last_ts": 1791255720.0,
+      "last_ts": 1791259620.0,
       "sched_end": 1791497590.6,
       "cut_why": null,
       "book_end": null,
@@ -956,9 +956,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -0.03,
+    "mark_usd": 0.01,
     "priced": 2,
-    "at": 1791255788.3346395
+    "at": 1791259658.2701626
    }
   },
   "safe:1000": {
@@ -971,10 +971,10 @@
    "all": {
     "n": 531,
     "days": 54,
-    "usd": 130.81,
-    "final": 0.1308,
+    "usd": 131.1,
+    "final": 0.1311,
     "max_dd": -0.0269,
-    "day_median": 0.00035,
+    "day_median": 0.00037,
     "day_worst": -0.0236,
     "day_green": 0.648,
     "win": 0.674,
@@ -982,9 +982,9 @@
     "hold_med_h": 56.8,
     "bite": 16.4,
     "top_sym": "EIGENUSDT",
-    "usd_wo_top": 126.87,
+    "usd_wo_top": 127.16,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 33.6,
+    "usd_wo_top3d": 33.89,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0241,
     "max_dd_wo_top3d": -0.0269,
@@ -1523,10 +1523,10 @@
      },
      {
       "d": "2026-10-06",
-      "usd": 0.09,
+      "usd": 0.39,
       "n": 1,
       "bt": 0,
-      "long": 0.09,
+      "long": 0.39,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -1540,10 +1540,10 @@
    "forward": {
     "n": 111,
     "days": 24,
-    "usd": 45.12,
-    "final": 0.0451,
+    "usd": 45.41,
+    "final": 0.0454,
     "max_dd": -0.0031,
-    "day_median": 0.00024,
+    "day_median": 0.00028,
     "day_worst": -0.0014,
     "day_green": 0.667,
     "win": 0.685,
@@ -1551,9 +1551,9 @@
     "hold_med_h": 72.0,
     "bite": 1.7,
     "top_sym": "STRKUSDT",
-    "usd_wo_top": 40.97,
+    "usd_wo_top": 41.26,
     "top_day": "2026-09-21",
-    "usd_wo_top3d": 8.3,
+    "usd_wo_top3d": 8.6,
     "worst_day": "2026-09-30",
     "max_dd_wo_worst": -0.0017,
     "max_dd_wo_top3d": -0.0032,
@@ -1792,10 +1792,10 @@
      },
      {
       "d": "2026-10-06",
-      "usd": 0.09,
+      "usd": 0.39,
       "n": 1,
       "bt": 0,
-      "long": 0.09,
+      "long": 0.39,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -2149,12 +2149,12 @@
     "n": 531,
     "applied": 531,
     "not_measured": 0,
-    "no_funding": 11,
+    "no_funding": 0,
     "fee_usd": 8.67,
     "slip_usd": 3.91,
-    "fund_usd": 1.24,
+    "fund_usd": 1.53,
     "gross_usd": 142.15,
-    "net_usd": 130.81,
+    "net_usd": 131.1,
     "fee_bp": 4.1,
     "fee_mean_bp": 6.2,
     "fee_worst_bp": 1.3,
@@ -2162,9 +2162,9 @@
     "slip_mean_bp": 2.8,
     "slip_worst_bp": 1.1,
     "fund_bp": -0.4,
-    "fund_mean_bp": 0.8,
+    "fund_mean_bp": 1.0,
     "fund_worst_bp": -38.2,
-    "cost_usd": 11.34
+    "cost_usd": 11.05
    },
    "n_forward": 111,
    "n_restored": 420,
@@ -2186,8 +2186,8 @@
       "book": null,
       "lev": 1.0,
       "margin": 28.4536,
-      "mark_frac": -9.1e-05,
-      "mark_usd": -0.0026,
+      "mark_frac": -0.000577,
+      "mark_usd": -0.0164,
       "entry_px": 41.18,
       "avg": 41.18,
       "depth": 1,
@@ -2199,7 +2199,7 @@
        ]
       ],
       "fav_bp": 143.27,
-      "last_ts": 1791255720.0,
+      "last_ts": 1791259620.0,
       "sched_end": 1791493949.9,
       "cut_why": null,
       "book_end": null,
@@ -2212,8 +2212,8 @@
       "book": null,
       "lev": 1.677,
       "margin": 28.4536,
-      "mark_frac": -0.001052,
-      "mark_usd": -0.0299,
+      "mark_frac": 0.000938,
+      "mark_usd": 0.0267,
       "entry_px": 884.94,
       "avg": 884.94,
       "depth": 1,
@@ -2225,7 +2225,7 @@
        ]
       ],
       "fav_bp": 183.6,
-      "last_ts": 1791255720.0,
+      "last_ts": 1791259620.0,
       "sched_end": 1791497590.6,
       "cut_why": null,
       "book_end": null,
@@ -2312,9 +2312,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -0.03,
+    "mark_usd": 0.01,
     "priced": 2,
-    "at": 1791255788.3346395
+    "at": 1791259658.2701626
    }
   },
   "safe:10000": {
@@ -2327,10 +2327,10 @@
    "all": {
     "n": 1804,
     "days": 54,
-    "usd": 857.59,
+    "usd": 857.87,
     "final": 0.0858,
     "max_dd": -0.0026,
-    "day_median": 3e-05,
+    "day_median": 4e-05,
     "day_worst": -0.0025,
     "day_green": 0.611,
     "win": 0.779,
@@ -2340,7 +2340,7 @@
     "top_sym": "SANDUSDT",
     "usd_wo_top": 849.5,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 85.05,
+    "usd_wo_top3d": 85.33,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0025,
     "max_dd_wo_top3d": -0.0027,
@@ -2879,10 +2879,10 @@
      },
      {
       "d": "2026-10-06",
-      "usd": 0.09,
+      "usd": 0.37,
       "n": 1,
       "bt": 0,
-      "long": 0.09,
+      "long": 0.37,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -2896,10 +2896,10 @@
    "forward": {
     "n": 111,
     "days": 24,
-    "usd": 44.65,
+    "usd": 44.93,
     "final": 0.0045,
     "max_dd": -0.0003,
-    "day_median": 2e-05,
+    "day_median": 3e-05,
     "day_worst": -0.0001,
     "day_green": 0.667,
     "win": 0.685,
@@ -2907,9 +2907,9 @@
     "hold_med_h": 72.0,
     "bite": 1.7,
     "top_sym": "STRKUSDT",
-    "usd_wo_top": 40.52,
+    "usd_wo_top": 40.8,
     "top_day": "2026-09-21",
-    "usd_wo_top3d": 8.28,
+    "usd_wo_top3d": 8.56,
     "worst_day": "2026-09-30",
     "max_dd_wo_worst": -0.0002,
     "max_dd_wo_top3d": -0.0003,
@@ -3148,10 +3148,10 @@
      },
      {
       "d": "2026-10-06",
-      "usd": 0.09,
+      "usd": 0.37,
       "n": 1,
       "bt": 0,
-      "long": 0.09,
+      "long": 0.37,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -3505,12 +3505,12 @@
     "n": 1804,
     "applied": 1804,
     "not_measured": 0,
-    "no_funding": 12,
+    "no_funding": 1,
     "fee_usd": 34.56,
     "slip_usd": 13.41,
-    "fund_usd": -6.25,
+    "fund_usd": -5.97,
     "gross_usd": 911.81,
-    "net_usd": 857.59,
+    "net_usd": 857.87,
     "fee_bp": 5.8,
     "fee_mean_bp": 7.4,
     "fee_worst_bp": 1.3,
@@ -3518,9 +3518,9 @@
     "slip_mean_bp": 2.9,
     "slip_worst_bp": 1.1,
     "fund_bp": -1.0,
-    "fund_mean_bp": -1.4,
+    "fund_mean_bp": -1.3,
     "fund_worst_bp": -40.0,
-    "cost_usd": 54.22
+    "cost_usd": 53.94
    },
    "n_forward": 111,
    "n_restored": 1693,
@@ -3542,8 +3542,8 @@
       "book": null,
       "lev": 1.0,
       "margin": 27.2696,
-      "mark_frac": -9.1e-05,
-      "mark_usd": -0.0025,
+      "mark_frac": -0.000577,
+      "mark_usd": -0.0157,
       "entry_px": 41.18,
       "avg": 41.18,
       "depth": 1,
@@ -3555,7 +3555,7 @@
        ]
       ],
       "fav_bp": 143.27,
-      "last_ts": 1791255720.0,
+      "last_ts": 1791259620.0,
       "sched_end": 1791493949.9,
       "cut_why": null,
       "book_end": null,
@@ -3568,8 +3568,8 @@
       "book": null,
       "lev": 1.677,
       "margin": 27.2696,
-      "mark_frac": -0.001052,
-      "mark_usd": -0.0287,
+      "mark_frac": 0.000938,
+      "mark_usd": 0.0256,
       "entry_px": 884.94,
       "avg": 884.94,
       "depth": 1,
@@ -3581,7 +3581,7 @@
        ]
       ],
       "fav_bp": 183.6,
-      "last_ts": 1791255720.0,
+      "last_ts": 1791259620.0,
       "sched_end": 1791497590.6,
       "cut_why": null,
       "book_end": null,
@@ -3668,9 +3668,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -0.03,
+    "mark_usd": 0.01,
     "priced": 2,
-    "at": 1791255788.3346395
+    "at": 1791259658.2701626
    }
   },
   "safe:100000": {
@@ -3683,8 +3683,8 @@
    "all": {
     "n": 1871,
     "days": 54,
-    "usd": 5224.29,
-    "final": 0.0522,
+    "usd": 5225.87,
+    "final": 0.0523,
     "max_dd": -0.0015,
     "day_median": 2e-05,
     "day_worst": -0.0015,
@@ -3694,9 +3694,9 @@
     "hold_med_h": 24.0,
     "bite": 13.3,
     "top_sym": "SANDUSDT",
-    "usd_wo_top": 5177.88,
+    "usd_wo_top": 5177.87,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 441.58,
+    "usd_wo_top3d": 443.15,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0014,
     "max_dd_wo_top3d": -0.0015,
@@ -4225,20 +4225,20 @@
      },
      {
       "d": "2026-10-05",
-      "usd": -1.56,
+      "usd": -1.57,
       "n": 10,
       "bt": 0,
-      "long": -1.56,
+      "long": -1.57,
       "short": null,
       "n_long": 10,
       "n_short": 0
      },
      {
       "d": "2026-10-06",
-      "usd": 0.5,
+      "usd": 2.08,
       "n": 1,
       "bt": 0,
-      "long": 0.5,
+      "long": 2.08,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -4252,10 +4252,10 @@
    "forward": {
     "n": 111,
     "days": 24,
-    "usd": 250.89,
+    "usd": 252.46,
     "final": 0.0025,
     "max_dd": -0.0002,
-    "day_median": 1e-05,
+    "day_median": 2e-05,
     "day_worst": -0.0001,
     "day_green": 0.667,
     "win": 0.685,
@@ -4263,9 +4263,9 @@
     "hold_med_h": 72.0,
     "bite": 1.7,
     "top_sym": "STRKUSDT",
-    "usd_wo_top": 227.67,
+    "usd_wo_top": 229.25,
     "top_day": "2026-09-21",
-    "usd_wo_top3d": 46.55,
+    "usd_wo_top3d": 48.12,
     "worst_day": "2026-09-30",
     "max_dd_wo_worst": -0.0001,
     "max_dd_wo_top3d": -0.0002,
@@ -4494,20 +4494,20 @@
      },
      {
       "d": "2026-10-05",
-      "usd": -1.56,
+      "usd": -1.57,
       "n": 10,
       "bt": 0,
-      "long": -1.56,
+      "long": -1.57,
       "short": null,
       "n_long": 10,
       "n_short": 0
      },
      {
       "d": "2026-10-06",
-      "usd": 0.5,
+      "usd": 2.08,
       "n": 1,
       "bt": 0,
-      "long": 0.5,
+      "long": 2.08,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -4861,12 +4861,12 @@
     "n": 1871,
     "applied": 1871,
     "not_measured": 0,
-    "no_funding": 12,
+    "no_funding": 1,
     "fee_usd": 206.62,
     "slip_usd": 78.85,
-    "fund_usd": -36.73,
+    "fund_usd": -35.15,
     "gross_usd": 5546.49,
-    "net_usd": 5224.29,
+    "net_usd": 5225.87,
     "fee_bp": 5.8,
     "fee_mean_bp": 7.5,
     "fee_worst_bp": 1.3,
@@ -4876,7 +4876,7 @@
     "fund_bp": -1.0,
     "fund_mean_bp": -1.3,
     "fund_worst_bp": -40.0,
-    "cost_usd": 322.2
+    "cost_usd": 320.62
    },
    "n_forward": 111,
    "n_restored": 1760,
@@ -4898,8 +4898,8 @@
       "book": null,
       "lev": 1.0,
       "margin": 153.0101,
-      "mark_frac": -9.1e-05,
-      "mark_usd": -0.0139,
+      "mark_frac": -0.000577,
+      "mark_usd": -0.0882,
       "entry_px": 41.18,
       "avg": 41.18,
       "depth": 1,
@@ -4911,7 +4911,7 @@
        ]
       ],
       "fav_bp": 143.27,
-      "last_ts": 1791255720.0,
+      "last_ts": 1791259620.0,
       "sched_end": 1791493949.9,
       "cut_why": null,
       "book_end": null,
@@ -4924,8 +4924,8 @@
       "book": null,
       "lev": 1.677,
       "margin": 153.0101,
-      "mark_frac": -0.001052,
-      "mark_usd": -0.1609,
+      "mark_frac": 0.000938,
+      "mark_usd": 0.1435,
       "entry_px": 884.94,
       "avg": 884.94,
       "depth": 1,
@@ -4937,7 +4937,7 @@
        ]
       ],
       "fav_bp": 183.6,
-      "last_ts": 1791255720.0,
+      "last_ts": 1791259620.0,
       "sched_end": 1791497590.6,
       "cut_why": null,
       "book_end": null,
@@ -5024,9 +5024,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -0.17,
+    "mark_usd": 0.06,
     "priced": 2,
-    "at": 1791255788.3346395
+    "at": 1791259658.2701626
    }
   },
   "optimal:100": {
@@ -5844,8 +5844,8 @@
       "book": null,
       "lev": 1.0,
       "margin": 64.7149,
-      "mark_frac": -9.1e-05,
-      "mark_usd": -0.0059,
+      "mark_frac": -0.000577,
+      "mark_usd": -0.0373,
       "entry_px": 41.18,
       "avg": 41.18,
       "depth": 1,
@@ -5857,7 +5857,7 @@
        ]
       ],
       "fav_bp": 143.27,
-      "last_ts": 1791255720.0,
+      "last_ts": 1791259620.0,
       "sched_end": 1791493949.9,
       "cut_why": null,
       "book_end": null,
@@ -5892,9 +5892,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -0.01,
+    "mark_usd": -0.04,
     "priced": 1,
-    "at": 1791255788.3346395
+    "at": 1791259658.2701626
    }
   },
   "optimal:1000": {
@@ -5907,8 +5907,8 @@
    "all": {
     "n": 553,
     "days": 55,
-    "usd": 202.23,
-    "final": 0.2022,
+    "usd": 203.99,
+    "final": 0.204,
     "max_dd": -0.0673,
     "day_median": 0.00014,
     "day_worst": -0.042,
@@ -5916,11 +5916,11 @@
     "win": 0.675,
     "hold_h": 43.0,
     "hold_med_h": 48.5,
-    "bite": 15.6,
+    "bite": 13.7,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 120.67,
+    "usd_wo_top": 122.42,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": -49.9,
+    "usd_wo_top3d": -48.15,
     "worst_day": "2026-09-15",
     "max_dd_wo_worst": -0.0498,
     "max_dd_wo_top3d": -0.0762,
@@ -6459,20 +6459,20 @@
      },
      {
       "d": "2026-10-05",
-      "usd": 0.18,
+      "usd": 0.17,
       "n": 10,
       "bt": 0,
-      "long": 0.18,
+      "long": 0.17,
       "short": null,
       "n_long": 10,
       "n_short": 0
      },
      {
       "d": "2026-10-06",
-      "usd": 0.97,
+      "usd": 2.73,
       "n": 1,
       "bt": 0,
-      "long": 0.97,
+      "long": 2.73,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -6486,20 +6486,20 @@
    "forward": {
     "n": 117,
     "days": 25,
-    "usd": 113.43,
-    "final": 0.1134,
+    "usd": 115.19,
+    "final": 0.1152,
     "max_dd": -0.0583,
-    "day_median": 0.00018,
+    "day_median": 0.00017,
     "day_worst": -0.042,
     "day_green": 0.6,
     "win": 0.667,
     "hold_h": 51.3,
     "hold_med_h": 72.0,
-    "bite": 30.9,
+    "bite": 22.3,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 31.87,
+    "usd_wo_top": 33.62,
     "top_day": "2026-09-19",
-    "usd_wo_top3d": -54.31,
+    "usd_wo_top3d": -52.56,
     "worst_day": "2026-09-15",
     "max_dd_wo_worst": -0.0163,
     "max_dd_wo_top3d": -0.0592,
@@ -6738,20 +6738,20 @@
      },
      {
       "d": "2026-10-05",
-      "usd": 0.18,
+      "usd": 0.17,
       "n": 10,
       "bt": 0,
-      "long": 0.18,
+      "long": 0.17,
       "short": null,
       "n_long": 10,
       "n_short": 0
      },
      {
       "d": "2026-10-06",
-      "usd": 0.97,
+      "usd": 2.73,
       "n": 1,
       "bt": 0,
-      "long": 0.97,
+      "long": 2.73,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -7105,12 +7105,12 @@
     "n": 553,
     "applied": 553,
     "not_measured": 0,
-    "no_funding": 11,
+    "no_funding": 0,
     "fee_usd": 18.71,
     "slip_usd": 7.44,
-    "fund_usd": 20.13,
+    "fund_usd": 21.88,
     "gross_usd": 208.26,
-    "net_usd": 202.23,
+    "net_usd": 203.99,
     "fee_bp": 5.3,
     "fee_mean_bp": 12.8,
     "fee_worst_bp": 1.3,
@@ -7118,9 +7118,9 @@
     "slip_mean_bp": 5.1,
     "slip_worst_bp": 1.1,
     "fund_bp": -0.5,
-    "fund_mean_bp": 13.5,
+    "fund_mean_bp": 14.3,
     "fund_worst_bp": -92.7,
-    "cost_usd": 6.02
+    "cost_usd": 4.27
    },
    "n_forward": 117,
    "n_restored": 436,
@@ -7142,8 +7142,8 @@
       "book": null,
       "lev": 1.0,
       "margin": 30.1616,
-      "mark_frac": -9.1e-05,
-      "mark_usd": -0.0027,
+      "mark_frac": -0.000577,
+      "mark_usd": -0.0174,
       "entry_px": 41.18,
       "avg": 41.18,
       "depth": 1,
@@ -7155,7 +7155,7 @@
        ]
       ],
       "fav_bp": 143.27,
-      "last_ts": 1791255720.0,
+      "last_ts": 1791259620.0,
       "sched_end": 1791493949.9,
       "cut_why": null,
       "book_end": null,
@@ -7168,8 +7168,8 @@
       "book": null,
       "lev": 3.33,
       "margin": 30.1616,
-      "mark_frac": -0.002088,
-      "mark_usd": -0.063,
+      "mark_frac": 0.001862,
+      "mark_usd": 0.0562,
       "entry_px": 884.94,
       "avg": 884.94,
       "depth": 1,
@@ -7181,7 +7181,7 @@
        ]
       ],
       "fav_bp": 183.6,
-      "last_ts": 1791255720.0,
+      "last_ts": 1791259620.0,
       "sched_end": 1791497590.6,
       "cut_why": null,
       "book_end": null,
@@ -7242,9 +7242,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -0.07,
+    "mark_usd": 0.04,
     "priced": 2,
-    "at": 1791255788.3346395
+    "at": 1791259658.2701626
    }
   },
   "optimal:10000": {
@@ -7257,8 +7257,8 @@
    "all": {
     "n": 1819,
     "days": 55,
-    "usd": 1819.46,
-    "final": 0.1819,
+    "usd": 1821.19,
+    "final": 0.1821,
     "max_dd": -0.0059,
     "day_median": 2e-05,
     "day_worst": -0.0046,
@@ -7268,9 +7268,9 @@
     "hold_med_h": 23.9,
     "bite": 10.2,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 1730.01,
+    "usd_wo_top": 1731.75,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 203.15,
+    "usd_wo_top3d": 204.89,
     "worst_day": "2026-09-15",
     "max_dd_wo_worst": -0.0059,
     "max_dd_wo_top3d": -0.0068,
@@ -7819,10 +7819,10 @@
      },
      {
       "d": "2026-10-06",
-      "usd": 0.96,
+      "usd": 2.69,
       "n": 1,
       "bt": 0,
-      "long": 0.96,
+      "long": 2.69,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -7836,8 +7836,8 @@
    "forward": {
     "n": 117,
     "days": 25,
-    "usd": 128.29,
-    "final": 0.0128,
+    "usd": 130.03,
+    "final": 0.013,
     "max_dd": -0.0063,
     "day_median": 2e-05,
     "day_worst": -0.0046,
@@ -7845,11 +7845,11 @@
     "win": 0.667,
     "hold_h": 51.3,
     "hold_med_h": 72.0,
-    "bite": 34.1,
+    "bite": 24.7,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 38.84,
+    "usd_wo_top": 40.58,
     "top_day": "2026-09-19",
-    "usd_wo_top3d": -56.99,
+    "usd_wo_top3d": -55.25,
     "worst_day": "2026-09-15",
     "max_dd_wo_worst": -0.0017,
     "max_dd_wo_top3d": -0.0063,
@@ -8098,10 +8098,10 @@
      },
      {
       "d": "2026-10-06",
-      "usd": 0.96,
+      "usd": 2.69,
       "n": 1,
       "bt": 0,
-      "long": 0.96,
+      "long": 2.69,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -8455,12 +8455,12 @@
     "n": 1819,
     "applied": 1819,
     "not_measured": 0,
-    "no_funding": 12,
+    "no_funding": 1,
     "fee_usd": 76.58,
     "slip_usd": 27.86,
-    "fund_usd": 7.34,
+    "fund_usd": 9.08,
     "gross_usd": 1916.55,
-    "net_usd": 1819.46,
+    "net_usd": 1821.19,
     "fee_bp": 9.0,
     "fee_mean_bp": 15.7,
     "fee_worst_bp": 1.3,
@@ -8468,9 +8468,9 @@
     "slip_mean_bp": 5.7,
     "slip_worst_bp": 1.1,
     "fund_bp": -1.6,
-    "fund_mean_bp": 1.1,
+    "fund_mean_bp": 1.4,
     "fund_worst_bp": -110.9,
-    "cost_usd": 97.1
+    "cost_usd": 95.36
    },
    "n_forward": 117,
    "n_restored": 1702,
@@ -8492,8 +8492,8 @@
       "book": null,
       "lev": 1.0,
       "margin": 29.7878,
-      "mark_frac": -9.1e-05,
-      "mark_usd": -0.0027,
+      "mark_frac": -0.000577,
+      "mark_usd": -0.0172,
       "entry_px": 41.18,
       "avg": 41.18,
       "depth": 1,
@@ -8505,7 +8505,7 @@
        ]
       ],
       "fav_bp": 143.27,
-      "last_ts": 1791255720.0,
+      "last_ts": 1791259620.0,
       "sched_end": 1791493949.9,
       "cut_why": null,
       "book_end": null,
@@ -8518,8 +8518,8 @@
       "book": null,
       "lev": 3.33,
       "margin": 29.7878,
-      "mark_frac": -0.002088,
-      "mark_usd": -0.0622,
+      "mark_frac": 0.001862,
+      "mark_usd": 0.0555,
       "entry_px": 884.94,
       "avg": 884.94,
       "depth": 1,
@@ -8531,7 +8531,7 @@
        ]
       ],
       "fav_bp": 183.6,
-      "last_ts": 1791255720.0,
+      "last_ts": 1791259620.0,
       "sched_end": 1791497590.6,
       "cut_why": null,
       "book_end": null,
@@ -8592,9 +8592,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -0.06,
+    "mark_usd": 0.04,
     "priced": 2,
-    "at": 1791255788.3346395
+    "at": 1791259658.2701626
    }
   },
   "optimal:100000": {
@@ -8607,8 +8607,8 @@
    "all": {
     "n": 1886,
     "days": 55,
-    "usd": 10947.25,
-    "final": 0.1095,
+    "usd": 10956.67,
+    "final": 0.1096,
     "max_dd": -0.0034,
     "day_median": 1e-05,
     "day_worst": -0.0026,
@@ -8618,9 +8618,9 @@
     "hold_med_h": 23.8,
     "bite": 10.5,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 10459.13,
+    "usd_wo_top": 10468.55,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 1035.32,
+    "usd_wo_top3d": 1044.74,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0034,
     "max_dd_wo_top3d": -0.0037,
@@ -9159,20 +9159,20 @@
      },
      {
       "d": "2026-10-05",
-      "usd": 0.94,
+      "usd": 0.93,
       "n": 10,
       "bt": 0,
-      "long": 0.94,
+      "long": 0.93,
       "short": null,
       "n_long": 10,
       "n_short": 0
      },
      {
       "d": "2026-10-06",
-      "usd": 5.19,
+      "usd": 14.63,
       "n": 1,
       "bt": 0,
-      "long": 5.19,
+      "long": 14.63,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -9186,8 +9186,8 @@
    "forward": {
     "n": 117,
     "days": 25,
-    "usd": 701.06,
-    "final": 0.007,
+    "usd": 710.48,
+    "final": 0.0071,
     "max_dd": -0.0034,
     "day_median": 1e-05,
     "day_worst": -0.0025,
@@ -9195,11 +9195,11 @@
     "win": 0.667,
     "hold_h": 51.3,
     "hold_med_h": 72.0,
-    "bite": 34.3,
+    "bite": 24.8,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 212.93,
+    "usd_wo_top": 222.35,
     "top_day": "2026-09-19",
-    "usd_wo_top3d": -310.35,
+    "usd_wo_top3d": -300.93,
     "worst_day": "2026-09-15",
     "max_dd_wo_worst": -0.0009,
     "max_dd_wo_top3d": -0.0034,
@@ -9438,20 +9438,20 @@
      },
      {
       "d": "2026-10-05",
-      "usd": 0.94,
+      "usd": 0.93,
       "n": 10,
       "bt": 0,
-      "long": 0.94,
+      "long": 0.93,
       "short": null,
       "n_long": 10,
       "n_short": 0
      },
      {
       "d": "2026-10-06",
-      "usd": 5.19,
+      "usd": 14.63,
       "n": 1,
       "bt": 0,
-      "long": 5.19,
+      "long": 14.63,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -9805,12 +9805,12 @@
     "n": 1886,
     "applied": 1886,
     "not_measured": 0,
-    "no_funding": 12,
+    "no_funding": 1,
     "fee_usd": 450.17,
     "slip_usd": 161.32,
-    "fund_usd": 34.53,
+    "fund_usd": 43.95,
     "gross_usd": 11524.21,
-    "net_usd": 10947.25,
+    "net_usd": 10956.67,
     "fee_bp": 9.0,
     "fee_mean_bp": 15.8,
     "fee_worst_bp": 1.3,
@@ -9818,9 +9818,9 @@
     "slip_mean_bp": 5.6,
     "slip_worst_bp": 1.1,
     "fund_bp": -1.6,
-    "fund_mean_bp": 1.0,
+    "fund_mean_bp": 1.3,
     "fund_worst_bp": -110.9,
-    "cost_usd": 576.96
+    "cost_usd": 567.54
    },
    "n_forward": 117,
    "n_restored": 1769,
@@ -9842,8 +9842,8 @@
       "book": null,
       "lev": 1.0,
       "margin": 161.6988,
-      "mark_frac": -9.1e-05,
-      "mark_usd": -0.0147,
+      "mark_frac": -0.000577,
+      "mark_usd": -0.0933,
       "entry_px": 41.18,
       "avg": 41.18,
       "depth": 1,
@@ -9855,7 +9855,7 @@
        ]
       ],
       "fav_bp": 143.27,
-      "last_ts": 1791255720.0,
+      "last_ts": 1791259620.0,
       "sched_end": 1791493949.9,
       "cut_why": null,
       "book_end": null,
@@ -9868,8 +9868,8 @@
       "book": null,
       "lev": 3.33,
       "margin": 161.6988,
-      "mark_frac": -0.002088,
-      "mark_usd": -0.3377,
+      "mark_frac": 0.001862,
+      "mark_usd": 0.3011,
       "entry_px": 884.94,
       "avg": 884.94,
       "depth": 1,
@@ -9881,7 +9881,7 @@
        ]
       ],
       "fav_bp": 183.6,
-      "last_ts": 1791255720.0,
+      "last_ts": 1791259620.0,
       "sched_end": 1791497590.6,
       "cut_why": null,
       "book_end": null,
@@ -9942,9 +9942,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -0.35,
+    "mark_usd": 0.21,
     "priced": 2,
-    "at": 1791255788.3346395
+    "at": 1791259658.2701626
    }
   },
   "aggr:100": {
@@ -10549,7 +10549,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1791255788.3346395
+    "at": 1791259658.2701626
    }
   },
   "aggr:1000": {
@@ -11183,7 +11183,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1791255788.3346395
+    "at": 1791259658.2701626
    }
   },
   "aggr:10000": {
@@ -11817,7 +11817,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1791255788.3346395
+    "at": 1791259658.2701626
    }
   },
   "aggr:100000": {
@@ -12451,7 +12451,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1791255788.3346395
+    "at": 1791259658.2701626
    }
   }
  },
@@ -12478,13 +12478,13 @@
   ],
   "applied": 34263,
   "no_fills": 34499,
-  "no_funding": 80,
+  "no_funding": 13,
   "fee_usd": 5876.67,
   "slip_usd": 2068.05,
-  "fund_usd": -650.18,
-  "n_funding_rows": 34183,
+  "fund_usd": -634.82,
+  "n_funding_rows": 34250,
   "taker_fallback": 3461,
-  "cost_usd": 8594.9,
+  "cost_usd": 8579.54,
   "cover": 0.498,
   "error": null,
   "n_funding": 1091
@@ -12507,7 +12507,7 @@
    "no_cash": 1802,
    "too_small": 0,
    "take_share": 0.0394,
-   "final": 0.1888,
+   "final": 0.1892,
    "max_dd": -0.0394,
    "day_median": 4e-05,
    "day_worst": -0.0175,
@@ -16181,18 +16181,22 @@
     ],
     [
      1791252000,
-     -0.04
+     -0.06
+    ],
+    [
+     1791255600,
+     -0.01
     ]
    ],
    "slots": 4,
    "ticket": null,
    "share_by_source": true,
    "fp": "b35726afcbda",
-   "pnl_taken": 0.722,
+   "pnl_taken": 0.7235,
    "names": 66,
    "top_sym": "STRKUSDT",
    "top_pnl": 4.19,
-   "final_wo_top": 0.1469,
+   "final_wo_top": 0.1473,
    "top_trade": 4.19,
    "open_n": 2,
    "cut_n": 2
@@ -16202,7 +16206,7 @@
    "no_cash": 1340,
    "too_small": 0,
    "take_share": 0.2857,
-   "final": 0.1382,
+   "final": 0.1383,
    "max_dd": -0.086,
    "day_median": 0.00015,
    "day_worst": -0.0216,
@@ -19932,14 +19936,18 @@
     ],
     [
      1791252000,
-     -0.04
+     -0.06
+    ],
+    [
+     1791255600,
+     -0.01
     ]
    ],
    "slots": 40,
    "ticket": null,
    "share_by_source": true,
    "fp": "f2b2294356d4",
-   "pnl_taken": 5.2993,
+   "pnl_taken": 5.3008,
    "names": 356,
    "top_sym": "MORPHOUSDT",
    "top_pnl": 6.34,
@@ -19959,7 +19967,7 @@
    "day_worst": -0.0096,
    "day_green": 0.61,
    "days": 59,
-   "open_mean": 50.1,
+   "open_mean": 50.0,
    "open_median": 14.0,
    "open_max": 411,
    "open_dd": -379.88,
@@ -23663,14 +23671,18 @@
     ],
     [
      1791252000,
-     -0.04
+     -0.05
+    ],
+    [
+     1791255600,
+     -0.01
     ]
    ],
    "slots": 400,
    "ticket": null,
    "share_by_source": true,
    "fp": "1ae50bcc13d9",
-   "pnl_taken": 35.3473,
+   "pnl_taken": 35.3488,
    "names": 635,
    "top_sym": "SKLUSDT",
    "top_pnl": 9.95,
@@ -23690,7 +23702,7 @@
    "day_worst": -0.0054,
    "day_green": 0.61,
    "days": 59,
-   "open_mean": 51.6,
+   "open_mean": 51.5,
    "open_median": 14.0,
    "open_max": 474,
    "open_dd": -2194.72,
@@ -27394,14 +27406,18 @@
     ],
     [
      1791252000,
-     -0.23
+     -0.3
+    ],
+    [
+     1791255600,
+     -0.03
     ]
    ],
    "slots": 689,
    "ticket": null,
    "share_by_source": true,
    "fp": "c2051e18db0e",
-   "pnl_taken": 37.4893,
+   "pnl_taken": 37.4908,
    "names": 651,
    "top_sym": "SKLUSDT",
    "top_pnl": 56.75,
@@ -27415,7 +27431,7 @@
    "no_cash": 1830,
    "too_small": 0,
    "take_share": 0.0317,
-   "final": 1.5885,
+   "final": 1.5882,
    "max_dd": -0.1708,
    "day_median": -1e-05,
    "day_worst": -0.0903,
@@ -30997,18 +31013,22 @@
     ],
     [
      1791252000,
-     -0.01
+     -0.04
+    ],
+    [
+     1791255600,
+     -0.03
     ]
    ],
    "slots": 4,
    "ticket": null,
    "share_by_source": true,
    "fp": "3b47a3cc1bb8",
-   "pnl_taken": 5.0374,
+   "pnl_taken": 5.0369,
    "names": 54,
    "top_sym": "BRUSDT",
    "top_pnl": 140.77,
-   "final_wo_top": 0.1808,
+   "final_wo_top": 0.1805,
    "top_trade": 125.54,
    "open_n": 1,
    "cut_n": 1
@@ -31018,7 +31038,7 @@
    "no_cash": 1334,
    "too_small": 0,
    "take_share": 0.2942,
-   "final": 0.2074,
+   "final": 0.2075,
    "max_dd": -0.2628,
    "day_median": 0.00045,
    "day_worst": -0.1151,
@@ -34560,18 +34580,22 @@
     ],
     [
      1791252000,
-     -0.09
+     -0.1
+    ],
+    [
+     1791255600,
+     -0.0
     ]
    ],
    "slots": 40,
    "ticket": null,
    "share_by_source": true,
    "fp": "507abe31e3fd",
-   "pnl_taken": 8.4756,
+   "pnl_taken": 8.4791,
    "names": 360,
    "top_sym": "BRUSDT",
    "top_pnl": 82.45,
-   "final_wo_top": 0.125,
+   "final_wo_top": 0.1251,
    "top_trade": 96.69,
    "open_n": 2,
    "cut_n": 2
@@ -34587,7 +34611,7 @@
    "day_worst": -0.0288,
    "day_green": 0.61,
    "days": 59,
-   "open_mean": 50.0,
+   "open_mean": 49.9,
    "open_median": 14.0,
    "open_max": 412,
    "open_dd": -917.18,
@@ -38115,14 +38139,18 @@
     ],
     [
      1791252000,
-     -0.08
+     -0.1
+    ],
+    [
+     1791255600,
+     -0.0
     ]
    ],
    "slots": 400,
    "ticket": null,
    "share_by_source": true,
    "fp": "980eb6b4ed8f",
-   "pnl_taken": 72.6171,
+   "pnl_taken": 72.6206,
    "names": 635,
    "top_sym": "BRUSDT",
    "top_pnl": 90.41,
@@ -38142,7 +38170,7 @@
    "day_worst": -0.016,
    "day_green": 0.61,
    "days": 59,
-   "open_mean": 51.5,
+   "open_mean": 51.4,
    "open_median": 14.0,
    "open_max": 474,
    "open_dd": -5141.41,
@@ -41670,14 +41698,18 @@
     ],
     [
      1791252000,
-     -0.46
+     -0.53
+    ],
+    [
+     1791255600,
+     -0.0
     ]
    ],
    "slots": 689,
    "ticket": null,
    "share_by_source": true,
    "fp": "72f656027ae5",
-   "pnl_taken": 76.9161,
+   "pnl_taken": 76.9196,
    "names": 651,
    "top_sym": "BRUSDT",
    "top_pnl": 493.38,
@@ -45907,7 +45939,7 @@
   "open": 4,
   "cut": 7
  },
- "data_end": 1791255720.0,
+ "data_end": 1791259620.0,
  "live": {
   "safe:100": {
    "positions": [
@@ -45918,8 +45950,8 @@
      "book": null,
      "lev": 1.0,
      "margin": 29.7,
-     "mark_frac": -9.1e-05,
-     "mark_usd": -0.0027,
+     "mark_frac": -0.000577,
+     "mark_usd": -0.0171,
      "entry_px": 41.18,
      "avg": 41.18,
      "depth": 1,
@@ -45931,7 +45963,7 @@
       ]
      ],
      "fav_bp": 143.27,
-     "last_ts": 1791255720.0,
+     "last_ts": 1791259620.0,
      "sched_end": 1791493949.9,
      "cut_why": null,
      "book_end": null,
@@ -45944,8 +45976,8 @@
      "book": null,
      "lev": 1.677,
      "margin": 29.7,
-     "mark_frac": -0.001052,
-     "mark_usd": -0.0312,
+     "mark_frac": 0.000938,
+     "mark_usd": 0.0279,
      "entry_px": 884.94,
      "avg": 884.94,
      "depth": 1,
@@ -45957,7 +45989,7 @@
       ]
      ],
      "fav_bp": 183.6,
-     "last_ts": 1791255720.0,
+     "last_ts": 1791259620.0,
      "sched_end": 1791497590.6,
      "cut_why": null,
      "book_end": null,
@@ -46018,9 +46050,9 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -0.03,
+   "mark_usd": 0.01,
    "priced": 2,
-   "at": 1791255788.3346395
+   "at": 1791259658.2701626
   },
   "safe:1000": {
    "positions": [
@@ -46031,8 +46063,8 @@
      "book": null,
      "lev": 1.0,
      "margin": 28.4536,
-     "mark_frac": -9.1e-05,
-     "mark_usd": -0.0026,
+     "mark_frac": -0.000577,
+     "mark_usd": -0.0164,
      "entry_px": 41.18,
      "avg": 41.18,
      "depth": 1,
@@ -46044,7 +46076,7 @@
       ]
      ],
      "fav_bp": 143.27,
-     "last_ts": 1791255720.0,
+     "last_ts": 1791259620.0,
      "sched_end": 1791493949.9,
      "cut_why": null,
      "book_end": null,
@@ -46057,8 +46089,8 @@
      "book": null,
      "lev": 1.677,
      "margin": 28.4536,
-     "mark_frac": -0.001052,
-     "mark_usd": -0.0299,
+     "mark_frac": 0.000938,
+     "mark_usd": 0.0267,
      "entry_px": 884.94,
      "avg": 884.94,
      "depth": 1,
@@ -46070,7 +46102,7 @@
       ]
      ],
      "fav_bp": 183.6,
-     "last_ts": 1791255720.0,
+     "last_ts": 1791259620.0,
      "sched_end": 1791497590.6,
      "cut_why": null,
      "book_end": null,
@@ -46157,9 +46189,9 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -0.03,
+   "mark_usd": 0.01,
    "priced": 2,
-   "at": 1791255788.3346395
+   "at": 1791259658.2701626
   },
   "safe:10000": {
    "positions": [
@@ -46170,8 +46202,8 @@
      "book": null,
      "lev": 1.0,
      "margin": 27.2696,
-     "mark_frac": -9.1e-05,
-     "mark_usd": -0.0025,
+     "mark_frac": -0.000577,
+     "mark_usd": -0.0157,
      "entry_px": 41.18,
      "avg": 41.18,
      "depth": 1,
@@ -46183,7 +46215,7 @@
       ]
      ],
      "fav_bp": 143.27,
-     "last_ts": 1791255720.0,
+     "last_ts": 1791259620.0,
      "sched_end": 1791493949.9,
      "cut_why": null,
      "book_end": null,
@@ -46196,8 +46228,8 @@
      "book": null,
      "lev": 1.677,
      "margin": 27.2696,
-     "mark_frac": -0.001052,
-     "mark_usd": -0.0287,
+     "mark_frac": 0.000938,
+     "mark_usd": 0.0256,
      "entry_px": 884.94,
      "avg": 884.94,
      "depth": 1,
@@ -46209,7 +46241,7 @@
       ]
      ],
      "fav_bp": 183.6,
-     "last_ts": 1791255720.0,
+     "last_ts": 1791259620.0,
      "sched_end": 1791497590.6,
      "cut_why": null,
      "book_end": null,
@@ -46296,9 +46328,9 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -0.03,
+   "mark_usd": 0.01,
    "priced": 2,
-   "at": 1791255788.3346395
+   "at": 1791259658.2701626
   },
   "safe:100000": {
    "positions": [
@@ -46309,8 +46341,8 @@
      "book": null,
      "lev": 1.0,
      "margin": 153.0101,
-     "mark_frac": -9.1e-05,
-     "mark_usd": -0.0139,
+     "mark_frac": -0.000577,
+     "mark_usd": -0.0882,
      "entry_px": 41.18,
      "avg": 41.18,
      "depth": 1,
@@ -46322,7 +46354,7 @@
       ]
      ],
      "fav_bp": 143.27,
-     "last_ts": 1791255720.0,
+     "last_ts": 1791259620.0,
      "sched_end": 1791493949.9,
      "cut_why": null,
      "book_end": null,
@@ -46335,8 +46367,8 @@
      "book": null,
      "lev": 1.677,
      "margin": 153.0101,
-     "mark_frac": -0.001052,
-     "mark_usd": -0.1609,
+     "mark_frac": 0.000938,
+     "mark_usd": 0.1435,
      "entry_px": 884.94,
      "avg": 884.94,
      "depth": 1,
@@ -46348,7 +46380,7 @@
       ]
      ],
      "fav_bp": 183.6,
-     "last_ts": 1791255720.0,
+     "last_ts": 1791259620.0,
      "sched_end": 1791497590.6,
      "cut_why": null,
      "book_end": null,
@@ -46435,9 +46467,9 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -0.17,
+   "mark_usd": 0.06,
    "priced": 2,
-   "at": 1791255788.3346395
+   "at": 1791259658.2701626
   },
   "optimal:100": {
    "positions": [
@@ -46448,8 +46480,8 @@
      "book": null,
      "lev": 1.0,
      "margin": 64.7149,
-     "mark_frac": -9.1e-05,
-     "mark_usd": -0.0059,
+     "mark_frac": -0.000577,
+     "mark_usd": -0.0373,
      "entry_px": 41.18,
      "avg": 41.18,
      "depth": 1,
@@ -46461,7 +46493,7 @@
       ]
      ],
      "fav_bp": 143.27,
-     "last_ts": 1791255720.0,
+     "last_ts": 1791259620.0,
      "sched_end": 1791493949.9,
      "cut_why": null,
      "book_end": null,
@@ -46496,9 +46528,9 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -0.01,
+   "mark_usd": -0.04,
    "priced": 1,
-   "at": 1791255788.3346395
+   "at": 1791259658.2701626
   },
   "optimal:1000": {
    "positions": [
@@ -46509,8 +46541,8 @@
      "book": null,
      "lev": 1.0,
      "margin": 30.1616,
-     "mark_frac": -9.1e-05,
-     "mark_usd": -0.0027,
+     "mark_frac": -0.000577,
+     "mark_usd": -0.0174,
      "entry_px": 41.18,
      "avg": 41.18,
      "depth": 1,
@@ -46522,7 +46554,7 @@
       ]
      ],
      "fav_bp": 143.27,
-     "last_ts": 1791255720.0,
+     "last_ts": 1791259620.0,
      "sched_end": 1791493949.9,
      "cut_why": null,
      "book_end": null,
@@ -46535,8 +46567,8 @@
      "book": null,
      "lev": 3.33,
      "margin": 30.1616,
-     "mark_frac": -0.002088,
-     "mark_usd": -0.063,
+     "mark_frac": 0.001862,
+     "mark_usd": 0.0562,
      "entry_px": 884.94,
      "avg": 884.94,
      "depth": 1,
@@ -46548,7 +46580,7 @@
       ]
      ],
      "fav_bp": 183.6,
-     "last_ts": 1791255720.0,
+     "last_ts": 1791259620.0,
      "sched_end": 1791497590.6,
      "cut_why": null,
      "book_end": null,
@@ -46609,9 +46641,9 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -0.07,
+   "mark_usd": 0.04,
    "priced": 2,
-   "at": 1791255788.3346395
+   "at": 1791259658.2701626
   },
   "optimal:10000": {
    "positions": [
@@ -46622,8 +46654,8 @@
      "book": null,
      "lev": 1.0,
      "margin": 29.7878,
-     "mark_frac": -9.1e-05,
-     "mark_usd": -0.0027,
+     "mark_frac": -0.000577,
+     "mark_usd": -0.0172,
      "entry_px": 41.18,
      "avg": 41.18,
      "depth": 1,
@@ -46635,7 +46667,7 @@
       ]
      ],
      "fav_bp": 143.27,
-     "last_ts": 1791255720.0,
+     "last_ts": 1791259620.0,
      "sched_end": 1791493949.9,
      "cut_why": null,
      "book_end": null,
@@ -46648,8 +46680,8 @@
      "book": null,
      "lev": 3.33,
      "margin": 29.7878,
-     "mark_frac": -0.002088,
-     "mark_usd": -0.0622,
+     "mark_frac": 0.001862,
+     "mark_usd": 0.0555,
      "entry_px": 884.94,
      "avg": 884.94,
      "depth": 1,
@@ -46661,7 +46693,7 @@
       ]
      ],
      "fav_bp": 183.6,
-     "last_ts": 1791255720.0,
+     "last_ts": 1791259620.0,
      "sched_end": 1791497590.6,
      "cut_why": null,
      "book_end": null,
@@ -46722,9 +46754,9 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -0.06,
+   "mark_usd": 0.04,
    "priced": 2,
-   "at": 1791255788.3346395
+   "at": 1791259658.2701626
   },
   "optimal:100000": {
    "positions": [
@@ -46735,8 +46767,8 @@
      "book": null,
      "lev": 1.0,
      "margin": 161.6988,
-     "mark_frac": -9.1e-05,
-     "mark_usd": -0.0147,
+     "mark_frac": -0.000577,
+     "mark_usd": -0.0933,
      "entry_px": 41.18,
      "avg": 41.18,
      "depth": 1,
@@ -46748,7 +46780,7 @@
       ]
      ],
      "fav_bp": 143.27,
-     "last_ts": 1791255720.0,
+     "last_ts": 1791259620.0,
      "sched_end": 1791493949.9,
      "cut_why": null,
      "book_end": null,
@@ -46761,8 +46793,8 @@
      "book": null,
      "lev": 3.33,
      "margin": 161.6988,
-     "mark_frac": -0.002088,
-     "mark_usd": -0.3377,
+     "mark_frac": 0.001862,
+     "mark_usd": 0.3011,
      "entry_px": 884.94,
      "avg": 884.94,
      "depth": 1,
@@ -46774,7 +46806,7 @@
       ]
      ],
      "fav_bp": 183.6,
-     "last_ts": 1791255720.0,
+     "last_ts": 1791259620.0,
      "sched_end": 1791497590.6,
      "cut_why": null,
      "book_end": null,
@@ -46835,47 +46867,47 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -0.35,
+   "mark_usd": 0.21,
    "priced": 2,
-   "at": 1791255788.3346395
+   "at": 1791259658.2701626
   },
   "aggr:100": {
    "positions": [],
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1791255788.3346395
+   "at": 1791259658.2701626
   },
   "aggr:1000": {
    "positions": [],
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1791255788.3346395
+   "at": 1791259658.2701626
   },
   "aggr:10000": {
    "positions": [],
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1791255788.3346395
+   "at": 1791259658.2701626
   },
   "aggr:100000": {
    "positions": [],
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1791255788.3346395
+   "at": 1791259658.2701626
   }
  },
  "tail": {
-  "syms": 4,
-  "minutes": 23,
-  "dry": 2,
+  "syms": 5,
+  "minutes": 52,
+  "dry": 1,
   "span_med_h": 25.32,
   "zero_vol_tape": 0,
   "entry_dropped": 0,
-  "marked": 8,
+  "marked": 10,
   "cut_why": {
    "книга кончилась раньше планового конца": 6,
    "книги в хвосте нет вовсе": 1
@@ -46883,8 +46915,8 @@
   "closed_tail": 1079,
   "closed_all": 10494
  },
- "computed_at": "2026-10-06 03:03",
- "secs": 204.0,
+ "computed_at": "2026-10-06 04:07",
+ "secs": 170.7,
  "rules": {
   "RULES": 6,
   "TICKET": 25.0,
