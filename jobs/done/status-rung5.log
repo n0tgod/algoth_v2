@@ -1,0 +1,42 @@
+== задание status-rung5 ==
+строка: status
+начало: 2026-10-06T17:20:19Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   73G   72G  51% /
+/dev/sdb        147G   77G   63G  55% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 669148 3700354 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.
+3513073   33651 .venv/bin/python research/b1_book/collect.py --http 8765
+3513339   33618 .venv/bin/python research/s8_loop/train.py
+--- убийства ядра по памяти за сутки ---
+0 (подробно: run tools/memtop.py)
+--- обучение S8 ---
+обучение S8: веса от 2026-10-06 07:50 UTC, 9.5 ч назад (каденция 24, тревога с 36 ч); последний цикл 17:11 UTC: весам 9.3 ч при каденции 24
+--- идущие прогоны ---
+3621476 bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"                     # В git уходит ХВОСТ: зонд печатает прогресс                     # тысячами строк, и целиком он там не нужен.                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"                     tools/publish.sh "job: $(basename "$log" .log)" \                         >> "$log" 2>&1                  _ jobs/done/short-rung-5.log research/dca_paper/short_rung.py --group 0.5
+3621480 .venv/bin/python research/dca_paper/short_rung.py --group 0.5
+--- статус сбора ---
+{"t": 1791307217.8, "uptime_sec": 33649.0, "rss_mb": 1571, "messages": 130986599, "trades": 12307310, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 19226694, "snapshot_errors": 1, "last_snap_age_sec": 5.4, "snap_pass_sec": 0.472, "writes": {"book": 19226694, "trades": 12307291, "raw": 760212, "liq": 3397, "metrics": 86020}, "write_age_sec": {"book": 5.4, "trades": 5.0, "raw": 4.8, "liq": 17.9, "metrics": 131.0}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.3158, "ask": 0.3159, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0004069, "ask": 0.0004071, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1198, "ask": 0.1199, "resets": 0}, "10000NEXUSDT": {"ready": true
+--- живой исполнитель ---
+{
+  "at_ms": 1791307216944,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 284.21345292,
+    "equity": 284.21345292
+  }
+}
+конец: 2026-10-06T17:20:19Z
