@@ -2619,7 +2619,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L669 `publish(name)`
 - L675 `main(argv=None)`
 
-## research/dca_paper/short_rung.py · 560 строк
+## research/dca_paper/short_rung.py · 563 строк
 
 Вторая ступень по повторному выбору модели — в ЯДРЕ лестницы, реплей по барам.
 

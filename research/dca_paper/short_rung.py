@@ -544,14 +544,17 @@ def main(argv=None):
     smoke = a.limit is not None
     out_dir = os.path.join(R.OUT, "short-rung-smoke") if smoke else None
     name = f"{ART}-smoke" if smoke else ART
+    # Лог — построчно: вывод в файл очереди буферизуется блоками, и за
+    # полчаса прогона в логе не было ни строки прогресса (06.10).
+    say = lambda *x: print(*x, flush=True)                          # noqa: E731
     if a.assemble:
         s = assemble(out_dir=out_dir, seeds=a.seeds)
     else:
         groups = [float(x) for x in a.group] if a.group else None
-        s = run(limit=a.limit, log=print, seeds=a.seeds, groups=groups, out_dir=out_dir)
+        s = run(limit=a.limit, log=say, seeds=a.seeds, groups=groups, out_dir=out_dir)
     if s.get("error"):
         print(s["error"])
-    G.write(s, name, report, log=print)
+    G.write(s, name, report, log=say)
     if not a.no_publish:
         publish("вторая ступень по повторному выбору: ядро лестницы, общий пол, нуль-перестановка")
 
