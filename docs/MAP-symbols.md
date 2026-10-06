@@ -2142,6 +2142,41 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L598 `publish(name)`
 - L604 `main(argv=None)`
 
+## research/dca_paper/pick_rule.py · 340 строк
+
+Правило выбора позиций при полной кассе: кто получает место, когда кандидатов больше, чем денег.
+
+- L42 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L43 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L60 `ART = 'DCA-pick-rule'`
+- L61 `MAIN_DEP = 10000`
+- L62 `BOOK_KEYS = list(S.BOOKS)`
+- L63 `SEEDS = 200`
+- L64 `JUDGE_BOOKS = ('optimal_h', 'aggr_h')`
+- L65 `BEAT_MAX = 0.05`
+- L68 `fund_key(r, ctx)` — Ставка funding на входе: выгоднее шорту (больше) — первым; нет ряда — в конец очереди, а не в начало.
+- L79 `RULES = {'fwd': lambda r, ctx: -float(r.get('fw…`
+- L87 `TITLES = {'fwd': 'как сейчас: больший прогноз пе…`
+- L95 `rec_key(r)`
+- L100 `with_queue(key_fn)` — Подменить ключ очереди ядра на время счёта и вернуть обратно.
+- L113 `random_key(packed, seed)` — Случайный, но воспроизводимый ключ на запись: одно зерно — один порядок.
+- L121 `candidates_by_second(recs, book)` — Кандидаты книги по секундам решения — после гейта плеча.
+- L134 `contested(recs, rows, book)` — Мера спора: секунды, где кандидатов больше взятых; доля взятых в них.
+- L150 `taken_edge(rows)` — Эдж взятых в цене, равный вес: нетто $ на нотионал, б.п.
+- L163 `cell_rows(packed, ctx, launch, now=None, dep=MAIN_DEP)` — Строки кассы по книгам (нетто) — тем же порядком, что `cell_stats`.
+- L176 `run(log=print, now=None, launch=None, ctx=None, mem_limit=None,…`
+- L233 `_median(xs)`
+- L238 `verdict(beat_rule)` — Рычаг — случайный порядок не хуже правила ≤ 5 % зёрен по обеим величинам у ОБЕИХ судимых книг; иначе — словам…
+- L258 `_p(x, d=1)` — ---------------------------------------------------------------- отчёт
+- L262 `_f(x, d=2)`
+- L266 `_b(x, d=1)`
+- L270 `_n(x)`
+- L274 `_share(x)`
+- L278 `_title(bk)`
+- L282 `report(s)`
+- L320 `publish(name)`
+- L326 `main(argv=None)`
+
 ## research/dca_paper/probe_exit.py · 168 строк
 
 Разбор одного выхода: где стояла цена по записи и что видит график.

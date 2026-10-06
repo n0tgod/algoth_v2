@@ -1410,6 +1410,21 @@
 - L166 `test_anatomy_calibration_planted_separation_found_noise_silent()`
 - L195 `test_report_names_the_hour_caveat_the_control_and_prints_no_non…`
 
+## research/dca_paper/test_pick_rule.py · 121 строк
+
+Проверки замера «правило выбора при полной кассе»: подмена очереди ядра меняет взятых и возвращается; случайн…
+
+- L10 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `AT = TP.AT`
+- L17 `H = 3600.0`
+- L20 `_rec(sym, at, lev, fwd, pnl=0.05, rr=1.0)`
+- L28 `_taken(recs, key_fn=None, share=0.5)`
+- L38 `test_queue_swap_changes_who_gets_the_money_and_restores()`
+- L56 `test_random_key_is_reproducible_and_differs_by_seed()`
+- L68 `test_contested_measure()`
+- L83 `test_fund_key_prefers_rate_good_for_shorts_and_sends_unknown_la…`
+- L94 `test_verdict_threshold_and_report()`
+
 ## research/dca_paper/test_short.py · 419 строк
 
 Проверки коротких книг на сигнале h24 и общей статистики.
