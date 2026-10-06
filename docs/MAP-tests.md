@@ -453,7 +453,7 @@
 - L17 `check(name, cond, detail='')`
 - L23 `main()`
 
-## research/b1_book/test_remote.py · 272 строк
+## research/b1_book/test_remote.py · 325 строк
 
 Проверки чтения часа из хранилища: промах на диске → архив дня скачан, сверен по md5 и распакован в кэш; сосе…
 
@@ -464,15 +464,21 @@
   - L38 `NoKey.__init__(self)`
 - L43 `class FakeS3`
   - L44 `FakeS3.__init__(self, objs, lie=False)`
-  - L47 `FakeS3.get_object(self, Bucket, Key)`
-- L57 `class BrokenBody` — Поток, который рвётся на первом чтении — как `IncompleteRead`.
-  - L60 `BrokenBody.read(self, n=-1)`
-- L64 `class FlakyS3` — Первые `break_first` запросов отдают рвущийся поток, дальше — целый.
-  - L67 `FlakyS3.__init__(self, objs, break_first=2)`
-  - L71 `FlakyS3.get_object(self, Bucket, Key)`
-- L78 `gz(rows)`
-- L86 `tar_of(members)` — Архив дня, как его пишет выгрузка: {имя члена: байты}.
-- L97 `main()`
+  - L47 `FakeS3.get_object(self, Bucket, Key, Range=None)`
+- L61 `class CutBody` — Поток, который отдаёт `n` байт и рвётся — как хранилище на границе блока.
+  - L64 `CutBody.__init__(self, data, n)`
+  - L67 `CutBody.read(self, k=-1)`
+- L77 `class CuttingS3` — Каждый запрос отдаёт не больше `block` байт и рвёт поток: докачка обязана продолжать.
+  - L80 `CuttingS3.__init__(self, objs, block)`
+  - L84 `CuttingS3.get_object(self, Bucket, Key, Range=None)`
+- L94 `class BrokenBody` — Поток, который рвётся на первом чтении — как `IncompleteRead`.
+  - L97 `BrokenBody.read(self, n=-1)`
+- L101 `class FlakyS3` — Первые `break_first` запросов отдают рвущийся поток, дальше — целый.
+  - L104 `FlakyS3.__init__(self, objs, break_first=2)`
+  - L108 `FlakyS3.get_object(self, Bucket, Key)`
+- L115 `gz(rows)`
+- L123 `tar_of(members)` — Архив дня, как его пишет выгрузка: {имя члена: байты}.
+- L134 `main()`
 
 ## research/d1_seconds/test_detect.py · 803 строк
 

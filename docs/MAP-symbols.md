@@ -947,37 +947,37 @@ A3 — кандидаты в пары на момент окна.
 - L89 `by_rule(trades)` — Сводка по каждому правилу отдельно.
 - L95 `equity(trades)` — Кривая счёта по времени закрытия: `(момент, б.п., R)`.
 
-## research/b1_book/remote.py · 339 строк
+## research/b1_book/remote.py · 350 строк
 
 Чтение часа записи из объектного хранилища, когда на диске его нет.
 
-- L46 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L47 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L50 `ROOT_B1 = os.path.join(HERE, 'out')`
-- L51 `SUBS = ('book', 'trades', 'raw', 'liq', 'metri…`
-- L52 `PREFIX = 'b1'`
-- L53 `CACHE_GB = 2.0`
-- L54 `ATTEMPTS = 4`
-- L55 `BACKOFF_S = (2.0, 4.0, 8.0)`
-- L56 `PREFETCH_WORKERS = 6`
-- L57 `MISSING_CODES = ('NoSuchKey', '404', 'NotFound')`
-- L60 `class RemoteFetchError` — Архив не скачан за все попытки: отказ ВСЛУХ, а не пустой час.
-- L64 `class Remote`
-  - L65 `Remote.__init__(self, s3, bucket, root=ROOT_B1, cache_gb=CACHE_GB, pre…`
-  - L79 `Remote.key(self, dirpath, hour)` — Ключ АРХИВА дня в бакете по каталогу часа; None — не запись.
-  - L89 `Remote.get(self, dirpath, hour)` — Местный путь часа из кэша или None (нет / не сошёлся / отказ).
-  - L121 `Remote._members(dest, day)` — Состав скачанного архива дня — маркер в кэше; None — не тянули.
-  - L130 `Remote._fetch_archive(self, key, dest)` — Скачать архив дня, сверить md5, распаковать в `dest`. True — есть.
-  - L138 `Remote._code(e)`
-  - L141 `Remote._download(self, key)` — Скачать архив во временный файл и сверить md5. Потокобезопасно: трогает только клиента, свой файл и счётчики…
-  - L198 `Remote._rm(path)`
-  - L204 `Remote._install(self, key, dest, tmp)` — Распаковать скачанный архив в кэш, записать маркер дня, учесть размер, вытеснить лишнее. Только в потоке вызы…
-  - L240 `Remote.prefetch(self, dirpath, hours, workers=PREFETCH_WORKERS)` — Скачать архивы дней этих часов параллельно, установить в кэш последовательно. Возвращает число установленных…
-  - L277 `Remote._walk(self)` — --- кэш ---------------------------------------------------------------
-  - L289 `Remote._cache_size(self)`
-  - L292 `Remote._evict(self)` — Снять самые старые по обращению до 90 % предела.
-  - L323 `Remote.stats(self)`
-- L329 `from_env(env_path=None, root=ROOT_B1, cache_gb=CACHE_GB, log=No…` — Хранилище по ключам сервера; None и одна строка — если ключей нет.
+- L49 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L50 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L53 `ROOT_B1 = os.path.join(HERE, 'out')`
+- L54 `SUBS = ('book', 'trades', 'raw', 'liq', 'metri…`
+- L55 `PREFIX = 'b1'`
+- L56 `CACHE_GB = 2.0`
+- L57 `ATTEMPTS = 4`
+- L58 `BACKOFF_S = (2.0, 4.0, 8.0)`
+- L59 `PREFETCH_WORKERS = 4`
+- L60 `MISSING_CODES = ('NoSuchKey', '404', 'NotFound')`
+- L63 `class RemoteFetchError` — Архив не скачан за все попытки: отказ ВСЛУХ, а не пустой час.
+- L67 `class Remote`
+  - L68 `Remote.__init__(self, s3, bucket, root=ROOT_B1, cache_gb=CACHE_GB, pre…`
+  - L82 `Remote.key(self, dirpath, hour)` — Ключ АРХИВА дня в бакете по каталогу часа; None — не запись.
+  - L92 `Remote.get(self, dirpath, hour)` — Местный путь часа из кэша или None (нет / не сошёлся / отказ).
+  - L124 `Remote._members(dest, day)` — Состав скачанного архива дня — маркер в кэше; None — не тянули.
+  - L133 `Remote._fetch_archive(self, key, dest)` — Скачать архив дня, сверить md5, распаковать в `dest`. True — есть.
+  - L141 `Remote._code(e)`
+  - L144 `Remote._download(self, key)` — Скачать архив во временный файл и сверить md5. Потокобезопасно: трогает только клиента, свой файл и счётчики…
+  - L209 `Remote._rm(path)`
+  - L215 `Remote._install(self, key, dest, tmp)` — Распаковать скачанный архив в кэш, записать маркер дня, учесть размер, вытеснить лишнее. Только в потоке вызы…
+  - L251 `Remote.prefetch(self, dirpath, hours, workers=PREFETCH_WORKERS)` — Скачать архивы дней этих часов параллельно, установить в кэш последовательно. Возвращает число установленных…
+  - L288 `Remote._walk(self)` — --- кэш ---------------------------------------------------------------
+  - L300 `Remote._cache_size(self)`
+  - L303 `Remote._evict(self)` — Снять самые старые по обращению до 90 % предела.
+  - L334 `Remote.stats(self)`
+- L340 `from_env(env_path=None, root=ROOT_B1, cache_gb=CACHE_GB, log=No…` — Хранилище по ключам сервера; None и одна строка — если ключей нет.
 
 ## research/b1_book/replay.py · 360 строк
 

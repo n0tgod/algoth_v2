@@ -25,8 +25,11 @@
 - ключей нет — хранилища нет: читатель говорит это ОДИН раз словами и
   живёт как прежде (`from_env` отдаёт None);
 - сеть ИКАЕТ: обрыв потока или отказ запроса повторяются с отступом
-  (`ATTEMPTS`, `BACKOFF_S`), а после исчерпания попыток читатель падает
-  ВСЛУХ (`RemoteFetchError`), не подменяя час пустотой — 06.10 одна
+  (`ATTEMPTS`, `BACKOFF_S`), причём оборванный поток ДОКАЧИВАЕТСЯ с
+  места обрыва (`Range: bytes=N-`), а не с нуля — хранилище рвёт поток
+  на кратных одного и того же блока, и повтор с нуля рвался там же
+  (06.10, три раза подряд); после исчерпания попыток читатель падает
+  ВСЛУХ (`RemoteFetchError`), не подменяя час пустотой — одна
   `IncompleteRead` без повтора убила 2.4 часа реплея, а молчаливый
   пустой час сделал бы позицию с дырой (отказ, неотличимый от тишины);
 - архивы ДНЕЙ одного имени качаются ПАРАЛЛЕЛЬНО (`prefetch`,
@@ -53,7 +56,7 @@ PREFIX = "b1"
 CACHE_GB = 2.0
 ATTEMPTS = 4                      # попыток скачать архив
 BACKOFF_S = (2.0, 4.0, 8.0)       # отступ между попытками, секунд
-PREFETCH_WORKERS = 6              # параллельных скачиваний архивов дней
+PREFETCH_WORKERS = 4              # параллельных скачиваний архивов дней
 MISSING_CODES = ("NoSuchKey", "404", "NotFound")
 
 
@@ -143,20 +146,24 @@ class Remote:
         трогает только клиента, свой файл и счётчики под замком.
 
         Возвращает путь к файлу; None — в хранилище нет (запомнено) или
-        md5 не сошёлся за все попытки. Сеть икает — попытки с отступом;
-        все исчерпаны — `RemoteFetchError`, вслух.
+        md5 не сошёлся за все попытки. Сеть икает — попытки с отступом и
+        ДОКАЧКОЙ с места обрыва; все исчерпаны — `RemoteFetchError`, вслух.
         """
-        err = None
+        err, tmp, got, h, want = None, None, 0, hashlib.md5(), None
         for attempt in range(ATTEMPTS):
             if attempt:
                 with self._lock:
                     self.retries += 1
-                self.log(f"хранилище: повтор {attempt}/{ATTEMPTS - 1} для {key}: {str(err)[:120]}")
+                self.log(f"хранилище: повтор {attempt}/{ATTEMPTS - 1} для {key}"
+                         f"{f' с байта {got}' if got else ''}: {str(err)[:120]}")
                 time.sleep(BACKOFF_S[min(attempt - 1, len(BACKOFF_S) - 1)])
+            kw = {"Bucket": self.bucket, "Key": key}
+            if got:
+                kw["Range"] = f"bytes={got}-"
             try:
-                r = self.s3.get_object(Bucket=self.bucket, Key=key)
+                r = self.s3.get_object(**kw)
             except Exception as e:                                  # noqa: BLE001
-                if self._code(e) in MISSING_CODES:
+                if self._code(e) in MISSING_CODES and not got:
                     with self._lock:
                         self.missing.add(key)
                         self.misses += 1
@@ -165,33 +172,37 @@ class Remote:
                 with self._lock:
                     self.errors += 1
                 continue
-            fd, tmp = tempfile.mkstemp(prefix="b1-", suffix=".tar")
-            os.close(fd)
+            if want is None:
+                want = str((r.get("Metadata") or {}).get("md5") or "").lower() \
+                    or str(r.get("ETag", "")).strip('"').lower()
+            if tmp is None:
+                fd, tmp = tempfile.mkstemp(prefix="b1-", suffix=".tar")
+                os.close(fd)
             try:
-                h = hashlib.md5()
-                with open(tmp, "wb") as f:
+                with open(tmp, "ab") as f:
                     body = r["Body"]
                     for chunk in iter(lambda: body.read(1 << 20), b""):
                         h.update(chunk)
                         f.write(chunk)
+                        got += len(chunk)
             except Exception as e:                                  # noqa: BLE001
-                err = e                                   # обрыв потока — повтор
+                err = e                          # обрыв потока — докачка с `got`
                 with self._lock:
                     self.errors += 1
-                self._rm(tmp)
                 continue
-            want = str((r.get("Metadata") or {}).get("md5") or "").lower() \
-                or str(r.get("ETag", "")).strip('"').lower()
             if want and want != h.hexdigest():
-                self._rm(tmp)
                 err = ValueError("md5 не сошёлся")
                 if attempt == ATTEMPTS - 1:
                     with self._lock:
                         self.bad += 1
                     self.log(f"хранилище: {key} не сошёлся по md5 за {ATTEMPTS} попытки — не взят")
+                    self._rm(tmp)
                     return None
+                self._rm(tmp)                    # с нуля: докачивать нечего
+                tmp, got, h = None, 0, hashlib.md5()
                 continue
             return tmp
+        self._rm(tmp)
         raise RemoteFetchError(f"хранилище: {key} не скачан за {ATTEMPTS} попытки: {str(err)[:160]}")
 
     @staticmethod

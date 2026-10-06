@@ -42,16 +42,53 @@ class NoKey(Exception):
 
 class FakeS3:
     def __init__(self, objs, lie=False):
-        self.objs, self.lie, self.gets = objs, lie, 0
+        self.objs, self.lie, self.gets, self.ranges = objs, lie, 0, []
 
-    def get_object(self, Bucket, Key):
+    def get_object(self, Bucket, Key, Range=None):
         self.gets += 1
         if Key not in self.objs:
             raise NoKey()
         data = self.objs[Key]
         md5 = hashlib.md5(data).hexdigest()
-        return {"Body": io.BytesIO(data), "ETag": f'"{"0" * 32 if self.lie else md5}"',
-                "Metadata": {}}
+        start = 0
+        if Range:
+            self.ranges.append(Range)
+            start = int(Range.split("=", 1)[1].rstrip("-"))
+        return {"Body": io.BytesIO(data[start:]), "ETag": f'"{"0" * 32 if self.lie else md5}"',
+                "Metadata": {}, "ContentLength": len(data) - start}
+
+
+class CutBody:
+    """Поток, который отдаёт `n` байт и рвётся — как хранилище на границе блока."""
+
+    def __init__(self, data, n):
+        self.buf, self.n, self.done = io.BytesIO(data), n, 0
+
+    def read(self, k=-1):
+        if self.done >= self.n:
+            raise OSError("Connection broken: IncompleteRead")
+        chunk = self.buf.read(min(k, self.n - self.done) if k and k > 0 else self.n - self.done)
+        self.done += len(chunk)
+        if not chunk:
+            raise OSError("Connection broken: IncompleteRead")
+        return chunk
+
+
+class CuttingS3(FakeS3):
+    """Каждый запрос отдаёт не больше `block` байт и рвёт поток: докачка обязана продолжать."""
+
+    def __init__(self, objs, block):
+        super().__init__(objs)
+        self.block = block
+
+    def get_object(self, Bucket, Key, Range=None):
+        r = super().get_object(Bucket, Key, Range=Range)
+        data = r["Body"].read()
+        if len(data) > self.block:
+            r["Body"] = CutBody(data, self.block)
+        else:
+            r["Body"] = io.BytesIO(data)
+        return r
 
 
 class BrokenBody:
@@ -204,6 +241,22 @@ def main():
             check("вечный обрыв — отказ вслух после всех попыток, кэш без битого файла",
                   raised is not None and "не скачан за 4 попытки" in raised and dead.gets == RM.ATTEMPTS
                   and leftovers == [], (raised, dead.gets, leftovers))
+            # --- докачка: поток рвётся на каждом блоке, архив собирается кусками по Range ---
+            big_rows = gz([{"z": "q" * 300}] * 400)
+            cut_objs = {"b1/trades/HHHUSDT/2026-09-05.tar": tar_of({"2026-09-05-00.jsonl.gz": big_rows})}
+            total = len(cut_objs["b1/trades/HHHUSDT/2026-09-05.tar"])
+            block = total // 3 + 7                     # три обрыва на архив — четыре запроса
+            cutter = CuttingS3(cut_objs, block=block)
+            rm8 = RM.Remote(cutter, "b", root=root, log=lambda m: None)
+            store.use_remote(rm8)
+            dh = os.path.join(root, "trades", "HHHUSDT")
+            os.makedirs(dh, exist_ok=True)
+            rows = store.read_hour(dh, "2026-09-05-00")
+            st8 = rm8.stats()
+            check("докачка с места обрыва: архив собран кусками, md5 сошёлся, запросов — по числу кусков",
+                  rows == [{"z": "q" * 300}] * 400 and cutter.gets == 3 and len(cutter.ranges) == 2
+                  and cutter.ranges[0] == f"bytes={block}-" and cutter.ranges[1] == f"bytes={2 * block}-"
+                  and st8["retries"] == 2 and st8["bad_md5"] == 0, (len(rows), cutter.gets, cutter.ranges, st8))
             # --- предвыборка: архивы дней параллельно, установка по одному, часы с диска не тянутся ---
             days = {f"b1/trades/EEEUSDT/2026-09-1{dd}.tar": tar_of({f"2026-09-1{dd}-00.jsonl.gz": gz([{"e": dd}]),
                                                                     f"2026-09-1{dd}-01.jsonl.gz": gz([{"e": dd, "h": 1}])})
