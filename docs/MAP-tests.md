@@ -1425,6 +1425,19 @@
 - L83 `test_fund_key_prefers_rate_good_for_shorts_and_sends_unknown_la…`
 - L94 `test_verdict_threshold_and_report()`
 
+## research/dca_paper/test_repeat_entry.py · 86 строк
+
+Проверки замера «пропустить первый вход»: разметка номера входа по имени (как «одна на имя»), склейка двух ру…
+
+- L8 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L13 `AT = TP.AT`
+- L14 `H = 3600.0`
+- L17 `_rec(sym, at, pnl=0.05, fwd=10.0, hold_h=6, lev=10.0)`
+- L24 `test_label_counts_repeats_while_first_is_open_and_resets_after_…`
+- L34 `test_two_arms_same_second_are_one_record_with_bigger_forecast()`
+- L43 `test_bands_subsets_and_stats()`
+- L56 `test_verdict_and_report_have_no_holes()`
+
 ## research/dca_paper/test_short.py · 419 строк
 
 Проверки коротких книг на сигнале h24 и общей статистики.

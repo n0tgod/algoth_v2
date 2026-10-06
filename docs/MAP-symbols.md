@@ -2190,6 +2190,40 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L57 `candidates(bars, boundary)` — Три цены на границе часа из списка баров [t, o, h, l, c, v].
 - L67 `main(argv=None)`
 
+## research/dca_paper/repeat_entry.py · 307 строк
+
+Пропустить первый вход: насколько «ювелирны» второй, третий, четвёртый выбор имени моделью — и что это даёт к…
+
+- L40 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L41 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L57 `ART = 'DCA-repeat-entry'`
+- L58 `MAIN_DEP = 10000`
+- L59 `BOOK_KEYS = list(S.BOOKS)`
+- L60 `SEEDS = 200`
+- L61 `JUDGE_BOOKS = ('optimal_h', 'aggr_h')`
+- L62 `BEAT_MAX = 0.05`
+- L63 `K_BANDS = ('1', '2', '3', '4', '5+')`
+- L64 `CELLS = (('k1', 'как сейчас: первый выбор имени…`
+- L69 `band_of(k)`
+- L73 `label(recs)` — Записи книги с номером входа `k` по имени (см. модуль).
+- L103 `by_k(labeled, book)` — Статистика записей по номеру входа — тем же `trade_stats`, что у потолка плеча.
+- L114 `subset(packed, pred)` — Записи книг, чей номер входа проходит `pred` — состав для кассы.
+- L122 `random_subsets(packed, sizes, ctx, launch, seeds=SEEDS, dep=MAI…` — Случайные подмножества записей ТОГО ЖЕ размера на книгу — нуль фильтра.
+- L143 `cash_cell(sub, ctx, launch, dep=MAIN_DEP, now=None)`
+- L148 `ratio_of(c)`
+- L153 `verdict(cells, beat)` — Из чисел: «пропустить первый» против книги как сейчас и против случайных.
+- L174 `run(log=print, now=None, launch=None, ctx=None, mem_limit=None,…`
+- L215 `_median(xs)`
+- L221 `_p(x, d=1)` — ---------------------------------------------------------------- отчёт
+- L225 `_pp(x)`
+- L229 `_f(x, d=2)`
+- L233 `_bp(x)`
+- L237 `_n(x)`
+- L241 `_title(bk)`
+- L245 `report(s)`
+- L287 `publish(name)`
+- L293 `main(argv=None)`
+
 ## research/dca_paper/rules.py · 1319 строк
 
 Правила бумажных DCA-книг: три депозита, одни правила.
