@@ -2608,6 +2608,52 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L669 `publish(name)`
 - L675 `main(argv=None)`
 
+## research/dca_paper/short_rung.py · 433 строк
+
+Вторая ступень по повторному выбору модели — в ЯДРЕ лестницы, реплей по барам.
+
+- L56 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L57 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L72 `ART = 'DCA-short-rung'`
+- L73 `MAIN_DEP = 10000`
+- L74 `NULL_SEEDS = 10`
+- L75 `JUDGE = ('optimal_h', 'aggr_h')`
+- L76 `BOOK_KEYS = list(S.BOOKS)`
+- L77 `BASE = S.CELL`
+- L78 `ADD_W = float(D2.WEIGHTS[1])`
+- L79 `MAX_ADDS = int(D2.N_RUNGS) - 1`
+- L80 `HOUR = 3600.0`
+- L81 `KILL_EXITS = ('пол', 'ликвидация')`
+- L82 `CELLS = (('ref', 'как книга: без доливов'), ('r…`
+- L86 `MAIN_CELL = 'r2'`
+- L89 `null_name(i)`
+- L93 `cell_key(name)`
+- L97 `name_of(key)`
+- L101 `cells_for(seeds=NULL_SEEDS)` — Ячейки прохода ядра: одна геометрия, разные политики долива.
+- L107 `pkey(sym, at)`
+- L111 `repeats_of(legs, hold_h=None)` — {(имя, момент): [моменты повторов]} — выборы того же имени в срок позиции.
+- L128 `null_offsets(reps, seed)` — Нуль: смещение первого повтора каждой позиции отдаётся ЧУЖОЙ позиции (перестановка среди позиций с повтором)…
+- L138 `policy(name, key, reps, nulls)` — Политика долива ячейки для позиции `key` — словарь для ядра или None.
+- L155 `make_adds_of(reps, nulls)`
+- L161 `slip_adds_usd(row, slip_bp=None)` — Проскальзывание доливов: рыночный ордер по ставке входа на долю нотионала каждого долива (последние `adds` за…
+- L175 `packed_of(cell_recs)` — {(линейка, имя, момент): запись} → {книга: [записи]} картой прогона.
+- L183 `ref_check(ref_recs, cache, tol=1e-09)` — Сверка ячейки `ref` с кэшем книги по закрытым записям обоих.
+- L202 `_p5(xs)`
+- L207 `position_stats(cell_recs, ref_recs, book)` — Приращение денег позиции от долива (нетто круга) — у позиций книги, где долив исполнился; гейт плеча книги —…
+- L236 `cash_of(cell_recs, ctx, launch, dep=MAIN_DEP, now=None)`
+- L250 `ratio_of(c)`
+- L255 `null_summary(cash, seeds, bk, main)` — Нуль по кассе книги: медиана/мин/макс итога и отношения по зёрнам, доля зёрен не хуже главной ячейки.
+- L271 `verdict(cash, nulls_summ, judge=JUDGE)`
+- L290 `run(limit=None, src=None, log=print, legs_=None, ctx=None, laun…`
+- L343 `_p(x, d=1)` — ---------------------------------------------------------------- отчёт
+- L347 `_pp(x)`
+- L351 `_f(x, d=2)`
+- L355 `_n(x)`
+- L359 `_title(bk)`
+- L363 `report(s)`
+- L411 `publish(name)`
+- L417 `main(argv=None)`
+
 ## research/dca_paper/short_size.py · 218 строк
 
 Стабильность безопасной короткой книги: размер билета и плечо забора — кассой.

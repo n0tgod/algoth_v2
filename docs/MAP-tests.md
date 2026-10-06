@@ -1541,6 +1541,23 @@
 - L32 `test_floor_of_safe_stays_and_the_cache_signature_is_untouched_b…` — Пол 0.75 у безопасной ОТВЕРГНУТ реплеем 03.10 (+9.9 % против +31.0 %, просадка −14.9 против −11.3): пол остаё…
 - L44 `test_versions_day_and_page_text()`
 
+## research/dca_paper/test_short_rung.py · 191 строк
+
+Проверки замера «вторая ступень по повторному выбору» (ядро, общий пол): повторы в срок позиции и склейка рук…
+
+- L10 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L11 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L23 `H = 3600.0`
+- L24 `AT = 1700000000.0 + 1440 * 60`
+- L27 `_leg(sym, at, fwd=40.0, arm='nn')`
+- L33 `test_repeats_are_same_name_picks_within_the_term_and_arms_colla…`
+- L43 `test_null_permutes_first_repeat_offsets_between_positions()`
+- L65 `test_cell_policies_follow_the_declared_axes()`
+- L85 `test_slippage_of_adds_is_market_on_each_add_share()`
+- L106 `test_position_stats_use_the_book_gate_and_count_kills()`
+- L123 `test_verdict_needs_better_than_book_and_every_null_seed()`
+- L137 `test_end_to_end_on_core_shaped_bars()` — Обе дороги — реплей ядра с политиками и касса — на подставных барах: шорт-неудачник (рост к 24 ч) и шорт-побе…
+
 ## research/dca_paper/test_short_size.py · 66 строк
 
 Проверки замера «билет и плечо забора» безопасной короткой книги.
