@@ -908,6 +908,24 @@ A3 — кандидаты в пары на момент окна.
 - L349 `report(res)`
 - L381 `main(argv=None)`
 
+## research/b1_book/memsize.py · 238 строк
+
+Перепись памяти сборщика: кто сколько держит — числом, по структурам.
+
+- L29 `SAMPLE = 256`
+- L30 `MAX_DEPTH = 14`
+- L31 `TRACE_RSS_MAX_MB = 2500`
+- L32 `TRACE_AUTO_STOP_SEC = 20 * 60`
+- L35 `rss_mb()`
+- L46 `deep_size(obj, seen=None, sample=SAMPLE, depth=0)` — Байты объекта с содержимым — оценка с выборкой у длинных контейнеров.
+- L92 `PARTS = (('signals.by (детектор: кольца секунд,…` — Что переписывается у сборщика: имя для отчёта → атрибут. Список держится здесь, а не в `collect.py`: перепись…
+- L126 `_get(obj, dotted)`
+- L135 `_count(v)`
+- L142 `census(c, deep=False)` — Перепись структур сборщика `c`: части, сумма, RSS, неучтённое.
+- L187 `_TRACE = {'since': None}`
+- L190 `trace_state()`
+- L199 `trace_control(cmd, top=25, now=None, rss=None)` — `start` / `top` / `stop` для tracemalloc — с отказом, когда тесно.
+
 ## research/b1_book/paper.py · 111 строк
 
 Разбор бумажных сделок: история и сводка.

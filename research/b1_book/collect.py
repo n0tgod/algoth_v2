@@ -95,6 +95,7 @@ from common import universe_filter as UF                   # noqa: E402
 # он не тянет ни numpy, ни математику признаков.
 import books as BK                                        # noqa: E402
 import stall as ST                                        # noqa: E402
+import memsize as MS                                      # noqa: E402
 import web                                                # noqa: E402
 
 WS_URL = "wss://stream.bybit.com/v5/public/linear"
@@ -968,6 +969,18 @@ class Collector:
                          f"{TR.pct(tr['pnl_bp'])} ({tr['r']:+.2f} R), "
                          f"держали {tr['held']} с")
                 self.w.write("signals", tr["sym"], dict(tr, ev="close"), ts=now)
+
+    def mem_report(self, deep=False, trace=None):
+        """Кто держит память процесса — по структурам (`memsize.census`).
+
+        06.10: 2.4 ГБ RSS пять суток стояли без ответа «что внутри»;
+        виновник нашёлся опытом на стенде. Теперь перепись — маршрут
+        `/mem` живого процесса.
+        """
+        out = MS.census(self, deep=deep)
+        if trace:
+            out["trace"] = MS.trace_control(trace)
+        return out
 
     def health(self):
         """Здоровье сбора — ОДНО определение на страницу и на файл.

@@ -441,6 +441,15 @@
 - L77 `test_measure_on_a_synthetic_day()`
 - L109 `test_without_zstd_the_variants_are_unmeasured_not_zero()`
 
+## research/b1_book/test_memsize.py · 103 строк
+
+Проверка переписи памяти: оценка размеров, выборка, циклы, трассировка.
+
+- L10 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L14 `FAILED = []`
+- L17 `check(name, cond, detail='')`
+- L23 `main()`
+
 ## research/b1_book/test_remote.py · 162 строк
 
 Проверки чтения часа из хранилища: промах на диске → архив дня скачан, сверен по md5 и распакован в кэш; сосе…

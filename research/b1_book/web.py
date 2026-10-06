@@ -12014,6 +12014,15 @@ def serve(collector, port, token, log):
                                             end=end),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
+            if u.path == "/mem":
+                # Перепись памяти сборщика: кто сколько держит, по
+                # структурам (`memsize.py`); `deep=1` — гистограмма типов,
+                # `trace=start|top|stop` — tracemalloc на короткое окно.
+                return self._ok(json.dumps(
+                    collector.mem_report(deep=q.get("deep", ["0"])[0] == "1",
+                                         trace=q.get("trace", [None])[0]),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
             if u.path == "/heat":
                 # Тепловая карта лесенки под свечи: окно и потолок — те же,
                 # что у `/candles`, иначе карта кончалась бы не там, где бары.
