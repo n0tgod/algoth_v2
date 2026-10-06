@@ -1830,6 +1830,35 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L315 `publish(name)`
 - L321 `main(argv=None)`
 
+## research/dca_paper/cost_gap.py · 309 строк
+
+Куда уходят 30 б.п.: разрыв между эджем решения в цене и кассой коротких книг.
+
+- L38 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L39 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L55 `ART = 'DCA-cost-gap'`
+- L56 `MAIN_DEP = 10000`
+- L57 `BOOK_KEYS = list(S.BOOKS)`
+- L59 `BANDS = ((0.0, 3.0, '≤3×'), (3.0, 6.0, '3–6×'),…` — Полосы плеча забора — объявлены до прогона; верхняя граница входит.
+- L61 `STEPS = ('S0', 'S1', 'S2', 'S3')`
+- L64 `band_of(lev)`
+- L72 `rec_key(r)`
+- L76 `closed_recs(recs, book)` — Закрытые записи книги с её гейтом плеча — как `short_levcap.record_pairs`.
+- L90 `costed_rows(rows)` — Строки кассы с измеренными издержками (комиссия и проскальзывание есть).
+- L97 `join(rows, recs)` — Строки кассы → записи реплея по (имя, момент решения). Возвращает (пары (строка, запись), число строк без зап…
+- L111 `_mean(xs)`
+- L115 `_bp(x)`
+- L119 `chain(recs, rows, book)` — Цепочка S0 → S3 и дельты, в б.п. нотионала, плюс состав по полосам.
+- L177 `verdict(c)` — Фраза из чисел: наибольшая по модулю ось разрыва.
+- L190 `run(log=print, now=None, launch=None, ctx=None, mem_limit=None,…`
+- L222 `_b(x, d=1)` — ---------------------------------------------------------------- отчёт
+- L226 `_n(x)`
+- L230 `_h(x)`
+- L234 `_title(bk)`
+- L238 `report(s)`
+- L290 `publish(name)`
+- L296 `main(argv=None)`
+
 ## research/dca_paper/costs.py · 815 строк
 
 Издержки бумажных DCA-книг: комиссия площадки, funding, гейт по знаку ставки.

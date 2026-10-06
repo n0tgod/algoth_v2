@@ -1040,6 +1040,22 @@
 - L139 `test_report_names_the_unmeasured_full_share_cell()` — Строка «1 сделка» без причины — молчаливая ложь ячейки.
 - L158 `main()`
 
+## research/dca_paper/test_cost_gap.py · 141 строк
+
+Проверки разложения разрыва издержек: полосы, стыковка строк с записями, тождество цепочки, вес долларами про…
+
+- L8 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L13 `AT = TP.AT`
+- L14 `H = 3600.0`
+- L17 `_rec(sym, at, lev, pnl, flat=0.0011, hours=12)`
+- L24 `_row(rec, margin, fee_bp=5.5, slip_bp=4.4, fund_bp=None, ruler=…`
+- L34 `test_bands()`
+- L39 `test_join_matches_by_name_and_moment()`
+- L48 `test_chain_identity_and_axes()`
+- L86 `test_weighting_axis_is_real()`
+- L108 `test_rows_without_costs_are_not_mixed_in()`
+- L116 `test_verdict_names_largest_axis_and_report_has_no_holes()`
+
 ## research/dca_paper/test_costs.py · 496 строк
 
 Проверки замера издержек DCA-книг (`costs.py`).
