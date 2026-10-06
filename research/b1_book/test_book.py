@@ -2033,6 +2033,69 @@ def test_model_state_carries_training_stall():
           and st.get("note"), str(st))
 
 
+def test_brake_recomputes_only_when_journals_or_day_change():
+    """Тормоз не пересчитывает реализованный день при неизменных входах.
+
+    06.10: пересчёт каждые пять минут разбирал заново все журналы книг
+    и вытеснял из кеша файлы сторожа ситуационной книги — 56 полных
+    разборов за восемь минут. Входы тормоза — журналы и день UTC; без
+    их изменения ответ тот же, и считать его заново незачем.
+    """
+    import json as _json
+    import tempfile
+    import time as _time
+
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    here_was, books_was = C.HERE, C.Collector.BOOKS
+    C.HERE = os.path.join(root, "b1_book")
+    os.makedirs(C.HERE)
+    mdir = os.path.join(root, "s8_loop", "out", "model_h4")
+    os.makedirs(mdir)
+    with open(os.path.join(mdir, "picks.jsonl"), "w") as f:
+        f.write(_json.dumps({"i": 1}) + "\n")
+    try:
+        C.Collector.BOOKS = [("h4", "model_h4")]
+        c = C.Collector(["TEST"], [], root, lambda m: None)
+        calls = []
+        day0 = 1791244800.0                       # 2026-10-06 00:00 UTC
+        c.closed_rows = lambda: (calls.append(1) or
+                                 ([{"at": day0 + 100, "pnl": -5.0, "hz": "h4"}], [], [], []))
+        class TRf:
+            @staticmethod
+            def day_realized(pairs, now):
+                return sum(p for _a, p in pairs)
+        path = os.path.join(root, "day_brake.json")
+        mem = {}
+        st1 = c._brake_step(TRf, path, 10.0, mem, now=day0 + 300)
+        st2 = c._brake_step(TRf, path, 10.0, mem, now=day0 + 600)
+        check("второй шаг без изменений не считает заново, но метка свежая",
+              len(calls) == 1 and st2["realized"] == -5.0 and st2["at"] == day0 + 600
+              and st2["computed_at"] == day0 + 300, f"{len(calls)} {st2}")
+        with open(os.path.join(mdir, "picks.jsonl"), "a") as f:
+            f.write(_json.dumps({"i": 2}) + "\n")
+        c._brake_step(TRf, path, 10.0, mem, now=day0 + 900)
+        check("дописанный журнал — пересчёт", len(calls) == 2, str(len(calls)))
+        c._brake_step(TRf, path, 10.0, mem, now=day0 + 86400 + 60)
+        check("новый день UTC — пересчёт", len(calls) == 3, str(len(calls)))
+        written = _json.load(open(path))
+        check("состояние пишется в файл каждым шагом", written["at"] == day0 + 86400 + 60)
+        # ошибка счёта не запоминается: при тех же входах следующий шаг
+        # считает снова (входы меняются дописью, чтобы счёт вообще пошёл)
+        with open(os.path.join(mdir, "picks.jsonl"), "a") as f:
+            f.write(_json.dumps({"i": 3}) + "\n")
+        c.closed_rows = lambda: (_ for _ in ()).throw(RuntimeError("журнал бит"))
+        bad = c._brake_step(TRf, path, 10.0, mem, now=day0 + 86400 + 120)
+        c.closed_rows = lambda: (calls.append(1) or ([], [], [], []))
+        st = c._brake_step(TRf, path, 10.0, mem, now=day0 + 86400 + 180)
+        check("ошибка счёта названа и не запоминается: следующий шаг считает заново",
+              "журнал бит" in bad.get("error", "") and len(calls) == 4 and "error" not in st,
+              f"{bad} | {len(calls)} | {st}")
+    finally:
+        C.HERE, C.Collector.BOOKS = here_was, books_was
+
+
 def test_jsonl_cache_budget_counts_objects_not_file_bytes():
     """Бюджет кеша журналов меряется памятью объектов, а не байтами файла.
 
@@ -8649,6 +8712,7 @@ def main():
     test_disk_rate_compares_same_phase_of_hour()
     test_shrunken_run_announces_dropped_symbols()
     test_nofile_covers_every_kind()
+    test_brake_recomputes_only_when_journals_or_day_change()
     test_jsonl_cache_budget_counts_objects_not_file_bytes()
     test_second_ring_matches_deque_bit_for_bit()
     test_health_is_one_definition()

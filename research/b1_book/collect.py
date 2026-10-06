@@ -5975,7 +5975,10 @@ class Collector:
     # 1.3 ГБ RSS (06.10: 6.9 млн списков в процессе, сборщик 2.2 ГБ
     # через шесть минут после подъёма — первый же тормоз дня читал все
     # журналы книг). Класс ошибки — бюджет в чужих единицах.
-    _JSONL_BUDGET = 384 * 1024 * 1024
+    # 640 МБ объектов: при 384 рабочий набор страниц и сторожей не
+    # помещался (06.10: 56 полных разборов за 8 минут), при прежних
+    # ~1.3 ГБ не оставалось места обучению. Оборот виден в `/mem`.
+    _JSONL_BUDGET = 640 * 1024 * 1024
 
     # Счётчики кеша — для переписи памяти (`/mem`): по ним подбирается
     # бюджет. Выброс, за которым через минуту следует полный разбор того
@@ -6840,6 +6843,68 @@ class Collector:
 
     BRAKE_TTL = 300           # период пересчёта тормоза, секунд
 
+    BRAKE_FILES = ("manifest.json", "picks.jsonl", "review.jsonl",
+                   "books.jsonl", "exits_live.jsonl", "entries_live.jsonl")
+
+    def _brake_sig(self, now):
+        """Подпись входов тормоза: журналы торгуемых книг и день UTC.
+
+        Реализованный день меняется только с журналом (новая закрытая
+        сделка, дописанная циклом) или с наступлением нового дня.
+        Пересчитывать его каждые пять минут при неизменных файлах значило
+        разбирать заново все журналы книг — 06.10 при бюджете кеша
+        384 МБ это дало 56 полных разборов за восемь минут и 1.5 ГБ
+        выброшенных объектов: сторож тормоза вытеснял из кеша файлы
+        сторожа ситуационной книги, тот через минуту разбирал их снова.
+        """
+        s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
+        sig = [time.strftime("%Y-%m-%d", time.gmtime(now))]
+        for _hz, name in self.BOOKS:
+            for fn in self.BRAKE_FILES:
+                p = os.path.join(s8, name, fn)
+                try:
+                    st = os.stat(p)
+                    sig.append((p, st.st_mtime_ns, st.st_size))
+                except OSError:
+                    sig.append((p, None))
+        return tuple(sig)
+
+    def _brake_step(self, TR, path, limit, mem, now=None):
+        """Один шаг тормоза: счёт при изменившихся входах, иначе прежнее
+        состояние со свежей меткой. Ошибка счёта не запоминается —
+        следующий шаг считает заново."""
+        now = now if now is not None else time.time()
+        sig = self._brake_sig(now)
+        if sig == mem.get("sig") and mem.get("st") \
+                and "error" not in mem["st"]:
+            st = dict(mem["st"], at=round(now, 1), skips=self.brake_skips)
+        else:
+            try:
+                rows, _err, _sc, _op = self.closed_rows()
+                realized = TR.day_realized(
+                    ((r["at"], r["pnl"]) for r in rows
+                     if r["hz"] not in self.ECHO_BOOKS), now)
+                st = {"at": round(now, 1), "computed_at": round(now, 1),
+                      "limit": limit,
+                      "realized": round(realized, 2),
+                      "on": realized <= -limit,
+                      "skips": self.brake_skips}
+            except Exception as e:                    # noqa: BLE001
+                # Ошибка счёта — не молчание: состояние несёт причину,
+                # тормоз при этом не действует (fail-open), и страница
+                # обязана это показать.
+                st = {"at": round(now, 1), "limit": limit,
+                      "error": f"{type(e).__name__}: {e}"}
+            mem["sig"], mem["st"] = sig, st
+        self._brake = st
+        try:
+            with open(path + ".tmp", "w", encoding="utf-8") as f:
+                json.dump(st, f, ensure_ascii=False)
+            os.replace(path + ".tmp", path)
+        except OSError as e:
+            self.log(f"тормоз: состояние не записано: {e}")
+        return st
+
     def brake_watch(self):
         """Дневной тормоз: реализованный день торгуемых книг против
         порога −1 % суммарного капитала (`trades.DAY_BRAKE_SHARE`).
@@ -6865,30 +6930,9 @@ class Collector:
                        if k not in self.ECHO_BOOKS])
         limit = TR.day_brake_limit(n_books)
         said = None
+        mem = {}
         while not self.stop.wait(self.BRAKE_TTL):
-            now = time.time()
-            try:
-                rows, _err, _sc, _op = self.closed_rows()
-                realized = TR.day_realized(
-                    ((r["at"], r["pnl"]) for r in rows
-                     if r["hz"] not in self.ECHO_BOOKS), now)
-                st = {"at": round(now, 1), "limit": limit,
-                      "realized": round(realized, 2),
-                      "on": realized <= -limit,
-                      "skips": self.brake_skips}
-            except Exception as e:                    # noqa: BLE001
-                # Ошибка счёта — не молчание: состояние несёт причину,
-                # тормоз при этом не действует (fail-open), и страница
-                # обязана это показать.
-                st = {"at": round(now, 1), "limit": limit,
-                      "error": f"{type(e).__name__}: {e}"}
-            self._brake = st
-            try:
-                with open(path + ".tmp", "w", encoding="utf-8") as f:
-                    json.dump(st, f, ensure_ascii=False)
-                os.replace(path + ".tmp", path)
-            except OSError as e:
-                self.log(f"тормоз: состояние не записано: {e}")
+            st = self._brake_step(TR, path, limit, mem)
             state = (st.get("on"), st.get("error") is not None)
             if state != said:
                 # Печать при СМЕНЕ состояния, не каждый тик: тревога,
