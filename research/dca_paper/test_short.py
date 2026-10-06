@@ -406,6 +406,42 @@ def test_short_record_carries_the_promise_from_birth_and_the_cache_keeps_it():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def test_replay_cells_runs_only_the_groups_of_the_asked_rulers():
+    """`replay_cells(rulers=…)` считает только группы пола этих линеек и
+    только их самих; без фильтра — все группы, каждая только со своими."""
+    import run_d2 as D2
+    lo, at = T9._rise_then_fall()
+    wn, _ = T9._drift_down()
+
+    class Spy(T3._Src):
+        def __init__(self, data):
+            super().__init__(data)
+            self.saw = []
+
+        def bars(self, sym, a, b):
+            self.saw.append(D2.FLOOR_FRAC)
+            return super().bars(sym, a, b)
+
+    legs = T10._legs(at, "SSSUSDT")
+    src = Spy({"SSSUSDT": lo, "TTTUSDT": wn})
+    out, _t = T10._with_levels(lambda: S.replay_cells(
+        legs, [S.CELL], src=src, log=lambda *a: None, rulers=["optimal_s"]))
+    assert set(src.saw) == {0.50}, src.saw
+    rulers = {rk for (rk, _s, _a) in out[S.CELL[0]]}
+    assert rulers == {"optimal_s"}, rulers
+    src2 = Spy({"SSSUSDT": lo, "TTTUSDT": wn})
+    both, _t2 = T10._with_levels(lambda: S.replay_cells(
+        legs, [S.CELL], src=src2, log=lambda *a: None))
+    assert set(src2.saw) == {0.10, 0.50}, src2.saw
+    assert {rk for (rk, _s, _a) in both[S.CELL[0]]} == {"safe_s", "optimal_s"}
+    # записи линейки optimal_s совпадают с полным проходом бит в бит
+    for key, r in out[S.CELL[0]].items():
+        b = both[S.CELL[0]][key]
+        assert r["pnl"] == b["pnl"] and r["exit"] == b["exit"] and r["exit_ts"] == b["exit_ts"], key
+    print(f"ok  replay_cells по линейке: симуляция видела {sorted(set(src.saw))}, "
+          f"записей {len(out[S.CELL[0]])}; без фильтра — обе группы, числа те же")
+
+
 if __name__ == "__main__":
     test_cache_signature_follows_the_cell_and_the_hold()
     test_legs_come_from_both_arms_in_time_order()
@@ -416,4 +452,5 @@ if __name__ == "__main__":
     test_replay_gives_each_ruler_its_own_floor()
     test_report_shows_what_the_money_is_made_of()
     test_short_record_carries_the_promise_from_birth_and_the_cache_keeps_it()
-    print("\nвсе 9 проверок прошли")
+    test_replay_cells_runs_only_the_groups_of_the_asked_rulers()
+    print("\nвсе 10 проверок прошли")

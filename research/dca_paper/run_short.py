@@ -168,7 +168,7 @@ def floor_groups():
 
 
 def replay_cells(need, cells, src=None, log=print, ckpt_hours=None,
-                 adds_of=None):
+                 adds_of=None, rulers=None):
     """Досчёт решений на НЕСКОЛЬКО ячеек одной геометрии: отметки и
     заполнения, пол — по группам книг.
 
@@ -182,9 +182,13 @@ def replay_cells(need, cells, src=None, log=print, ckpt_hours=None,
     книги отдал бы двум из трёх чужой пол.
 
     `adds_of` — политика доливов по времени на ячейку (`run_d10`); книга
-    её не передаёт. Возвращает ({ключ ячейки: {(линейка, имя, момент):
-    запись}}, хвост ленты).
+    её не передаёт. `rulers` — какие линейки считать (умолчание — все);
+    каждый проход по группе пола считает только линейки СВОЕЙ группы —
+    так память и время прохода не тратятся на линейку, которую группа
+    выбрасывает (06.10). Возвращает ({ключ ячейки: {(линейка, имя,
+    момент): запись}}, хвост ленты).
     """
+    want = set(rulers) if rulers is not None else None
     if not need:
         return {c[0]: {} for c in cells}, {}
     was = D11.configure(R.H24_HOLD_H)
@@ -193,15 +197,20 @@ def replay_cells(need, cells, src=None, log=print, ckpt_hours=None,
         got = {"recs": {}}
         was_floor = D2.FLOOR_FRAC
         try:
-            for frac, rulers in sorted(floor_groups().items()):
+            for frac, group in sorted(floor_groups().items()):
+                mine = [rk for rk in group if want is None or rk in want]
+                if not mine:
+                    continue
                 D2.FLOOR_FRAC = float(frac)
                 log(f"пол капитуляции {frac:g} — линейки "
-                    + ", ".join(rulers))
+                    + ", ".join(mine))
                 part = D10.collect(legs=need, cells=list(cells), rich=True,
                                    raw=True, src=src, log=log,
-                                   ckpt_hours=ckpt_hours, adds_of=adds_of)
-                for rk in rulers:
+                                   ckpt_hours=ckpt_hours, adds_of=adds_of,
+                                   rulers=mine)
+                for rk in mine:
                     got["recs"][rk] = (part.get("recs") or {}).get(rk) or {}
+                del part
         finally:
             D2.FLOOR_FRAC = was_floor
         # Хвост ленты — правило книги, и применяется он там, где источник

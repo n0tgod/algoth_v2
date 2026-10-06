@@ -163,10 +163,14 @@ def test_end_to_end_on_core_shaped_bars():
     # позиция без повтора — без долива во всех ячейках
     k_last = (rk, "SSSUSDT", round(at + 2 * H, 3))
     assert r2[k_last]["adds"] == 0 and r4[k_last]["adds"] == 0
-    # сквозной прогон: касса, нуль, сверка, отчёт
-    s = T10._with_levels(lambda: SR.run(legs_=legs, src=src, log=lambda *a: None, ctx={"error": "рядов нет"},
+    # сквозной прогон: касса, нуль, сверка, отчёт — по группам пола, каждая только своими линейками
+    said = []
+    s = T10._with_levels(lambda: SR.run(legs_=legs, src=src, log=said.append, ctx={"error": "рядов нет"},
                                         launch={}, now=at + 400 * H, seeds=2, cache={}, mem_limit=10 ** 6))
     assert not s.get("error"), s.get("error")
+    floors = [x for x in said if x.startswith("пол капитуляции")]
+    assert floors == ["пол капитуляции 0.1 — линейки safe_s", "пол капитуляции 0.5 — линейки optimal_s"], floors
+    assert all(set(s["cash"][nm]) == set(SR.BOOK_KEYS) for nm in s["cash"]), {nm: sorted(v) for nm, v in s["cash"].items()}
     assert s["with_repeat"] == 3 and s["positions"] == 5 and s["ref_check"]["compared"] == 0
     for nm in ("ref", "r2", "r2p", "r4", "n01", "n02"):
         c = s["cash"][nm]["optimal_h"]

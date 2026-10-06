@@ -404,14 +404,24 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
 
 
 def collect(limit=None, src=None, log=print, legs=None, cells=None,
-            rich=False, raw=False, ckpt_hours=None, adds_of=None):
+            rich=False, raw=False, ckpt_hours=None, adds_of=None,
+            rulers=None):
     """Дорогой проход: бары символа читаются ОДИН раз на все ячейки.
 
     `cells` сужает сетку (книги `h24` считают одну ячейку в час), `rich`
     добавляет отметки и заполнения, `raw` отдаёт записи словарями вместо
     колонок: колоночное хранение заведено ради памяти замера (63 тысячи
     ног × 36 ячеек), а книге нужны поля, которых в колонках нет.
+
+    `rulers` сужает линейки (умолчание — все): проход по группе пола
+    считает только СВОИ линейки, а не обе с выбросом половины — на
+    14 ячейках × 5.5 тысячи решений лишняя линейка стоила 450 МБ и
+    половину времени (06.10). Записи оставленных линеек те же бит в бит.
     """
+    rulers = list(rulers) if rulers is not None else list(RULERS)
+    for rk in rulers:
+        if rk not in RULERS:
+            raise ValueError(f"неизвестная линейка {rk}")
     get = src.bars if src else (lambda s, a, b: D6.SW.read_bars(
         D6.ROOT_B1, s, a, b))
     tiers_all = D2.instruments_tiers()
@@ -429,7 +439,7 @@ def collect(limit=None, src=None, log=print, legs=None, cells=None,
         log(f"окно решений {win['from']} … {win['to']} UTC "
             f"({win['span_d']:g} суток, дат {win['dates']})")
     keys = [c[0] for c in (cells if cells is not None else CELLS)]
-    recs = {rk: {k: ([] if raw else Store()) for k in keys} for rk in RULERS}
+    recs = {rk: {k: ([] if raw else Store()) for k in keys} for rk in rulers}
     mem_guard("ноги загружены", log=log)
     n, skipped = 0, 0
     said, done = time.time(), 0
@@ -454,7 +464,8 @@ def collect(limit=None, src=None, log=print, legs=None, cells=None,
             t, notl)
         for g in glist:
             got = 0
-            for rk, (rule, param) in RULERS.items():
+            for rk in rulers:
+                rule, param = RULERS[rk]
                 cps = ([float(g["at"]) + k * HOUR for k in ckpt_hours]
                        if ckpt_hours else None)
                 o = one_position(g, bars, ts, look, rule, param,

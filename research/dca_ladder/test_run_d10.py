@@ -505,7 +505,39 @@ def _control_wrong_side_promise_accepted():
                    test_wrong_side_promise_drops_the_decision, D10)
 
 
+def test_collect_rulers_subset_is_bit_for_bit_and_only_those():
+    """Проход по подмножеству линеек отдаёт ТОЛЬКО их, записи те же бит в
+    бит, чужую линейку отвергает словами (06.10: память прохода по группе)."""
+    lo, at = T9._rise_then_fall()
+    src = T3._Src({"SSSUSDT": lo})
+    legs = _legs(at, "SSSUSDT", n=3)
+    cells = [D10.CELLS[0]]
+    full = _with_levels(lambda: D10.collect(src=src, legs=legs, cells=cells, raw=True,
+                                            rich=True, log=lambda *a: None))
+    only = _with_levels(lambda: D10.collect(src=src, legs=legs, cells=cells, raw=True,
+                                            rich=True, log=lambda *a: None, rulers=["optimal_s"]))
+    assert set(full["recs"]) == set(D10.RULERS) and set(only["recs"]) == {"optimal_s"}, (
+        sorted(full["recs"]), sorted(only["recs"]))
+    a = full["recs"]["optimal_s"][cells[0][0]]
+    b = only["recs"]["optimal_s"][cells[0][0]]
+    assert a and len(a) == len(b), (len(a), len(b))
+    for ra, rb in zip(a, b):
+        for k in ("at", "exit", "exit_ts", "pnl", "pnl_net", "lev", "fills", "marks", "state"):
+            assert ra[k] == rb[k], (k, ra[k], rb[k])
+    assert full["positions"] == only["positions"] and full["data_end"] == only["data_end"]
+    try:
+        _with_levels(lambda: D10.collect(src=src, legs=legs, cells=cells, raw=True,
+                                         log=lambda *a: None, rulers=["nope_s"]))
+    except ValueError as e:
+        assert "неизвестная линейка" in str(e), e
+    else:
+        raise AssertionError("чужая линейка принята молча")
+    print(f"ok  проход по одной линейке: {len(b)} записей optimal_s бит в бит с полным, "
+          f"чужая линейка отвергнута словами")
+
+
 TESTS = [
+    test_collect_rulers_subset_is_bit_for_bit_and_only_those,
     test_grid_is_declared_before_the_run,
     test_gate_of_splits_legs_by_ratio_and_edge,
     test_ref_cell_reproduces_the_book_short_leg_bit_for_bit,

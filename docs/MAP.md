@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 537, строк: 236262, каталогов: 86.
+Модулей кода: 537, строк: 236378, каталогов: 86.
 
 
 ## корень — память проекта, идеи, README
@@ -146,7 +146,7 @@
 ## research/dca_ladder — DCA D0–D9 — лестница с забором по марже: реплеи, хеджи, тейк, выходы
 
 - `ladder.py` · 736 строк — DCA-лестница с забором по §5 — ЯДРО (спека 14).
-- `run_d10.py` · 976 строк — D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: плечо, доливы, цель, гейт.
+- `run_d10.py` · 987 строк — D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: плечо, доливы, цель, гейт.
 - `run_d11.py` · 195 строк — D11 — DCA-лестница на сигнале книги `h24` (24 ч, рука по выбору), шорт.
 - `run_d12.py` · 264 строк — D12 — билет от СОБСТВЕННОГО пика: сколько даёт сигнал h24 (шорт), когда депозит делится на места ЭТОЙ книги,…
 - `run_d13.py` · 376 строк — D13 — короткая книга РЯДОМ с длинной: что даёт пара, а не половина.
@@ -159,7 +159,7 @@
 - `run_d8.py` · 657 строк — D8 — замер ТЕЙКА DCA-книги (вопрос владельца 2026-09-05).
 - `run_d9.py` · 684 строк — D9 — варианты ВЫХОДА коротких DCA-книг (вопрос владельца 2026-09-05).
 - `run_dca.py` · 406 строк — D1 (спека 14) — дешёвый потолок DCA-лестницы: реплей по хранилищу A2.
-- тесты: `test_ladder.py` (1460), `test_run_d10.py` (553), `test_run_d11.py` (112), `test_run_d12.py` (72), `test_run_d13.py` (137), `test_run_d2.py` (207), `test_run_d3.py` (427), `test_run_d4.py` (266), `test_run_d5.py` (486), `test_run_d6.py` (667), `test_run_d7.py` (283), `test_run_d8.py` (365), `test_run_d9.py` (518), `test_run_dca.py` (141)
+- тесты: `test_ladder.py` (1460), `test_run_d10.py` (585), `test_run_d11.py` (112), `test_run_d12.py` (72), `test_run_d13.py` (137), `test_run_d2.py` (207), `test_run_d3.py` (427), `test_run_d4.py` (266), `test_run_d5.py` (486), `test_run_d6.py` (667), `test_run_d7.py` (283), `test_run_d8.py` (365), `test_run_d9.py` (518), `test_run_dca.py` (141)
 - документы: `RUNBOOK.md` — D1 — потолок DCA-лестницы: как прогонять
 - отчёты в `out/` (20): D1-dca-1m.md, D1-dca-smoke-1m.md, D10-short-1m.md, D11-h24-gbm-h72-1m.md, D11-h24-nn-h24-1m.md, D11-h24-nn-h72-1m.md, D12-own-nn-h24-1m.md, D12-own-nn-h72-1m.md, D13-pair-nn-h24-1m.md, D2-dca-1m.md, D2-dca-smoke.md, D3-fence-1m.md, D4-bookhedge-1m.md, D5-ruler-1m.md, D6-cash-1m-d10000.md, D6-cash-1m.md, D7-hold-1m.md, D8-take-1m.md, D8-take-smoke-1m.md, D9-exit-1m.md
 
@@ -193,13 +193,13 @@
 - `rules.py` · 1319 строк — Правила бумажных DCA-книг: три депозита, одни правила.
 - `run_pair.py` · 563 строк — Общий счёт: длинная книга и короткая на ОДНОМ депозите.
 - `run_paper.py` · 1612 строк — Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
-- `run_short.py` · 441 строк — Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
+- `run_short.py` · 450 строк — Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
 - `short_adds.py` · 560 строк — Доливы в прибыльный шорт: заполнить зарезервированные ступени по триггеру.
 - `short_age.py` · 411 строк — Правила общего счёта на ОТДЕЛЬНЫХ коротких книгах: возраст и билет.
 - `short_grid.py` · 198 строк — Общая машинерия замеров ОСИ на коротком листе `h24`.
 - `short_levcap.py` · 460 строк — Потолок плеча у коротких книг: держится ли эдж НА СДЕЛКУ без мотора.
 - `short_levers.py` · 699 строк — Рычаги коротких книг, которых стенд ещё не мерил: один скрин, оси до прогона.
-- `short_rung.py` · 433 строк — Вторая ступень по повторному выбору модели — в ЯДРЕ лестницы, реплей по барам.
+- `short_rung.py` · 456 строк — Вторая ступень по повторному выбору модели — в ЯДРЕ лестницы, реплей по барам.
 - `short_size.py` · 218 строк — Стабильность безопасной короткой книги: размер билета и плечо забора — кассой.
 - `short_stop.py` · 225 строк — Пол капитуляции как СТОП: где резать позицию против хода.
 - `short_supply.py` · 123 строк — Сколько ШОРТОВ вообще есть в журнале листов под теми же гейтами.
@@ -212,7 +212,7 @@
 - `tail_screen.py` · 495 строк — Портрет хвоста коротких книг: что общего у минусовых сделок.
 - `wave.py` · 280 строк — Волна рынка и охрана рынком — ОДНА библиотека для книг и замеров.
 - `wave_guard.py` · 488 строк — Охрана рынком для коротких книг h24: концентрация, состав выходов, депозиты, равенство ядру.
-- тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (152), `test_backfill_exit_px.py` (80), `test_boost.py` (174), `test_cost_gap.py` (141), `test_costs.py` (496), `test_cut.py` (297), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_guard.py` (201), `test_guard_fill.py` (75), `test_guard_forward.py` (67), `test_names.py` (227), `test_pair.py` (571), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (3148), `test_path_screen.py` (247), `test_pick_rule.py` (121), `test_repeat_entry.py` (234), `test_short.py` (419), `test_short_adds.py` (189), `test_short_age.py` (148), `test_short_levcap.py` (193), `test_short_levers.py` (225), `test_short_rules_1003.py` (62), `test_short_rung.py` (191), `test_short_size.py` (66), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_why.py` (158), `test_slip_x3.py` (76), `test_tail_screen.py` (198), `test_wave_guard.py` (166)
+- тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (152), `test_backfill_exit_px.py` (80), `test_boost.py` (174), `test_cost_gap.py` (141), `test_costs.py` (496), `test_cut.py` (297), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_guard.py` (201), `test_guard_fill.py` (75), `test_guard_forward.py` (67), `test_names.py` (227), `test_pair.py` (571), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (3148), `test_path_screen.py` (247), `test_pick_rule.py` (121), `test_repeat_entry.py` (234), `test_short.py` (456), `test_short_adds.py` (189), `test_short_age.py` (148), `test_short_levcap.py` (193), `test_short_levers.py` (225), `test_short_rules_1003.py` (62), `test_short_rung.py` (195), `test_short_size.py` (66), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_why.py` (158), `test_slip_x3.py` (76), `test_tail_screen.py` (198), `test_wave_guard.py` (166)
 - отчёты в `out/` (40): DCA-agree-book.md, DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-boost-100.md, DCA-cost-gap.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-entry-gate.md, DCA-fund-check.md, DCA-fund-probe.md, DCA-guard-fill.md, DCA-guard-forward.md, DCA-names.md, DCA-pair-age-why.md, DCA-pair-age.md, DCA-pair-gate.md, DCA-pair.md, DCA-paper.md, DCA-path-screen.md, DCA-pick-rule.md, DCA-repeat-entry.md, DCA-short-adds.md, DCA-short-age.md, DCA-short-levcap.md, DCA-short-levers-hold.md, DCA-short-levers.md, DCA-short-size.md, DCA-short-stop.md, DCA-short-supply-1m.md, DCA-short-supply.md, DCA-short-take.md, DCA-short-why.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md, DCA-tail-screen.md, DCA-wave-guard-faith.md, DCA-wave-guard.md
 
 ## research/f1_carry — F1 — carry на funding: разложение брутто (гипотеза 3)

@@ -46,6 +46,7 @@
 """
 import argparse
 import bisect
+import gc
 import os
 import random
 import statistics
@@ -234,10 +235,12 @@ def position_stats(cell_recs, ref_recs, book):
 
 
 def cash_of(cell_recs, ctx, launch, dep=MAIN_DEP, now=None):
-    st = G.cell_stats(packed_of(cell_recs), ctx, launch, now=now, keys=BOOK_KEYS,
+    packed = packed_of(cell_recs)
+    keys = [bk for bk in BOOK_KEYS if packed.get(bk)]
+    st = G.cell_stats({bk: packed[bk] for bk in keys}, ctx, launch, now=now, keys=keys,
                       deps=[dep], extra_usd=slip_adds_usd)
     out = {}
-    for bk in BOOK_KEYS:
+    for bk in keys:
         c = st.get(f"{bk}:{int(dep)}") or {}
         d = L.summ(c)
         ex = c.get("exits") or {}
@@ -304,21 +307,41 @@ def run(limit=None, src=None, log=print, legs_=None, ctx=None, launch=None, now=
         f"({with_rep / max(1, len(reps)):.0%}); медиана задержки первого повтора "
         f"{(offs_h[len(offs_h) // 2] if offs_h else float('nan')):.1f} ч")
     cells = cells_for(seeds)
-    got, tail = S.replay_cells(legs_, cells, src=src, log=log, adds_of=make_adds_of(reps, nulls))
-    ref_recs = got.get(cell_key("ref")) or {}
+    names = [c[0] for c in CELLS] + [null_name(i) for i in range(1, int(seeds) + 1)]
     if cache is None:
         cache, _why = S.read_cache(log=log)
-    check = ref_check(ref_recs, cache or {})
-    log(f"сверка ref с кэшем книги: закрытых у обоих {check['compared']}, расхождений {check['mismatch']}")
-    names = [c[0] for c in CELLS] + [null_name(i) for i in range(1, int(seeds) + 1)]
-    cash, pos = {}, {}
-    for nm in names:
-        recs = got.get(cell_key(nm)) or {}
-        cash[nm] = cash_of(recs, ctx, launch, dep=dep, now=now)
-        pos[nm] = {bk: position_stats(recs, ref_recs, bk) for bk in BOOK_KEYS}
-        if not nm.startswith("n"):
-            log(f"{nm}: " + ", ".join(f"{bk} {ratio_of(cash[nm][bk])} (сделок {cash[nm][bk].get('n')})"
-                                      for bk in BOOK_KEYS) + f" ({time.time() - t0:.0f} с)")
+    cache = cache or {}
+    adds_of = make_adds_of(reps, nulls)
+    # По группам пола: проход считает только линейки своей группы, касса и
+    # статистика позиций её книг считаются СРАЗУ, записи освобождаются —
+    # первый прогон (06.10) держал 14 ячеек × 2 линейки разом и снял себя
+    # по памяти на второй группе. Память считается составом до счёта.
+    cash = {nm: {} for nm in names}
+    pos = {nm: {} for nm in names}
+    check = {"compared": 0, "mismatch": 0, "sample": []}
+    tail = None
+    for frac, group in sorted(S.floor_groups().items()):
+        books = [bk for bk in BOOK_KEYS if S.BOOKS[bk] in group]
+        got, t = S.replay_cells(legs_, cells, src=src, log=log, adds_of=adds_of, rulers=group)
+        tail = tail if tail is not None else t
+        ref_recs = got.get(cell_key("ref")) or {}
+        c = ref_check(ref_recs, cache)
+        check["compared"] += c["compared"]
+        check["mismatch"] += c["mismatch"]
+        check["sample"] = (check["sample"] + c["sample"])[:5]
+        log(f"пол {frac:g}: сверка ref с кэшем книги — закрытых у обоих {c['compared']}, "
+            f"расхождений {c['mismatch']}")
+        for nm in names:
+            recs = got.get(cell_key(nm)) or {}
+            st = cash_of(recs, ctx, launch, dep=dep, now=now)
+            for bk in books:
+                cash[nm][bk] = st[bk]
+                pos[nm][bk] = position_stats(recs, ref_recs, bk)
+            if not nm.startswith("n"):
+                log(f"пол {frac:g} {nm}: " + ", ".join(f"{bk} {ratio_of(cash[nm][bk])} (сделок {cash[nm][bk].get('n')})"
+                                                     for bk in books) + f" ({time.time() - t0:.0f} с)")
+        del got, ref_recs
+        gc.collect()
     nulls_summ = {bk: null_summary(cash, int(seeds), bk, cash[MAIN_CELL][bk]) for bk in BOOK_KEYS}
     # нуль по позициям: доля зёрен, у которых среднее приращение не хуже главной ячейки
     pos_null = {}
