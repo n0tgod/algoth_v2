@@ -163,13 +163,42 @@ def test_end_to_end_on_core_shaped_bars():
     # позиция без повтора — без долива во всех ячейках
     k_last = (rk, "SSSUSDT", round(at + 2 * H, 3))
     assert r2[k_last]["adds"] == 0 and r4[k_last]["adds"] == 0
-    # сквозной прогон: касса, нуль, сверка, отчёт — по группам пола, каждая только своими линейками
-    said = []
-    s = T10._with_levels(lambda: SR.run(legs_=legs, src=src, log=said.append, ctx={"error": "рядов нет"},
-                                        launch={}, now=at + 400 * H, seeds=2, cache={}, mem_limit=10 ** 6))
-    assert not s.get("error"), s.get("error")
-    floors = [x for x in said if x.startswith("пол капитуляции")]
-    assert floors == ["пол капитуляции 0.1 — линейки safe_s", "пол капитуляции 0.5 — линейки optimal_s"], floors
+    # сквозной прогон: касса, нуль, сверка, отчёт — по группам пола, каждая только своими линейками,
+    # части на диске, сборка из частей; группы считаются и порознь, и разом — итог один
+    import tempfile
+    import shutil
+    td = tempfile.mkdtemp(prefix="short-rung-")
+    try:
+        said = []
+        kw = dict(legs_=legs, src=src, ctx={"error": "рядов нет"}, launch={}, now=at + 400 * H,
+                  seeds=2, cache={}, mem_limit=10 ** 6, out_dir=td)
+        half = T10._with_levels(lambda: SR.run(log=said.append, groups=[0.5], **kw))
+        assert not half.get("error"), half.get("error")
+        floors = [x for x in said if x.startswith("пол капитуляции")]
+        assert floors == ["пол капитуляции 0.5 — линейки optimal_s"], floors
+        assert half["books"] == ["optimal_h", "aggr_h"] and half["books_missing"] == ["safe_h"], (half["books"], half["books_missing"])
+        assert half["missing"] and half["missing"][0]["frac"] == 0.1, half["missing"]
+        assert half["verdict"].startswith(("РЫЧАГ", "не рычаг")), half["verdict"]       # судимые книги есть — вердикт есть
+        md_half = SR.report(half)
+        assert "НЕ ПОСЧИТАНА" in md_half and "безопасная" in md_half and "None" not in md_half, md_half[:800]
+        assert os.path.exists(SR.part_path(0.5, td)) and not os.path.exists(SR.part_path(0.1, td))
+        said.clear()
+        s = T10._with_levels(lambda: SR.run(log=said.append, groups=[0.1], **kw))
+        floors = [x for x in said if x.startswith("пол капитуляции")]
+        assert floors == ["пол капитуляции 0.1 — линейки safe_s"], floors
+        assert s["books"] == SR.BOOK_KEYS and not s["missing"], (s["books"], s["missing"])
+        # сборка только из частей даёт то же, что вернул прогон
+        asm = SR.assemble(out_dir=td, seeds=2)
+        assert asm["cash"] == s["cash"] and asm["verdict"] == s["verdict"]
+        # разом — те же деньги, что по частям
+        td2 = tempfile.mkdtemp(prefix="short-rung-all-")
+        try:
+            both = T10._with_levels(lambda: SR.run(log=lambda *a: None, **dict(kw, out_dir=td2)))
+            assert both["cash"] == s["cash"], "группы порознь и разом разошлись"
+        finally:
+            shutil.rmtree(td2, ignore_errors=True)
+    finally:
+        shutil.rmtree(td, ignore_errors=True)
     assert all(set(s["cash"][nm]) == set(SR.BOOK_KEYS) for nm in s["cash"]), {nm: sorted(v) for nm, v in s["cash"].items()}
     assert s["with_repeat"] == 3 and s["positions"] == 5 and s["ref_check"]["compared"] == 0
     for nm in ("ref", "r2", "r2p", "r4", "n01", "n02"):
@@ -186,6 +215,19 @@ def test_end_to_end_on_core_shaped_bars():
     fake[bad_key]["pnl"] = float(fake[bad_key]["pnl"]) + 0.01
     chk = SR.ref_check(ref, fake)
     assert chk["mismatch"] == 1 and chk["sample"], chk
+
+
+def test_assemble_without_parts_says_so():
+    import tempfile
+    import shutil
+    td = tempfile.mkdtemp(prefix="short-rung-empty-")
+    try:
+        s = SR.assemble(out_dir=td, seeds=2)
+        assert s["books"] == [] and len(s["missing"]) == 2 and s["verdict"].startswith("не измерено"), s["verdict"]
+        md = SR.report(s)
+        assert "Ни одна группа пола не посчитана" in md and "None" not in md
+    finally:
+        shutil.rmtree(td, ignore_errors=True)
 
 
 if __name__ == "__main__":

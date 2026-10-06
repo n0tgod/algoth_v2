@@ -41,12 +41,24 @@
 не судится (05.10: её пол далеко, ступень там добавляет размер без
 защиты). Правила книг не меняются. Право на итерацию одно.
 
-    run research/dca_paper/short_rung.py              # вся ось, ~1–1.5 ч
-    run research/dca_paper/short_rung.py --limit 200  # смоук
+Память и время. Записи 14 ячеек одной группы пола весят ~800 МБ, чтение
+ленты за 59 суток (старые часы — из бакета) занимает ~2 ч на проход, а
+память первой группы Python системе не возвращает (первые два прогона
+06.10 сняли себя сами на второй группе). Поэтому группы пола считаются
+ОТДЕЛЬНЫМИ процессами: `--group 0.5` (линейка оптимальной и агрессивной —
+судимые книги) и `--group 0.1` (безопасная); каждая пишет ЧАСТИЧНЫЙ
+артефакт сразу по счёту, а итоговый отчёт собирается из частей
+(`--assemble`) и называет, какой группы ещё нет.
+
+    run research/dca_paper/short_rung.py --group 0.5   # ~2 ч, ≤ 0.9 ГБ
+    run research/dca_paper/short_rung.py --group 0.1
+    run research/dca_paper/short_rung.py --assemble    # собрать отчёт из частей
+    run research/dca_paper/short_rung.py --limit 200   # смоук обеих групп
 """
 import argparse
 import bisect
 import gc
+import json
 import os
 import random
 import statistics
@@ -290,8 +302,38 @@ def verdict(cash, nulls_summ, judge=JUDGE):
     return ("РЫЧАГ: " if ok else "не рычаг: ") + "; ".join(parts)
 
 
+def part_path(frac, out_dir=None):
+    return os.path.join(out_dir or R.OUT, f"{ART}-part-{float(frac):g}.json")
+
+
+def write_part(part, out_dir=None):
+    """Частичный артефакт группы пола — сразу по счёту, атомарно."""
+    os.makedirs(out_dir or R.OUT, exist_ok=True)
+    path = part_path(part["frac"], out_dir)
+    with open(path + ".tmp", "w", encoding="utf-8") as f:
+        json.dump(part, f, ensure_ascii=False)
+    os.replace(path + ".tmp", path)
+    return path
+
+
+def read_parts(out_dir=None):
+    out = {}
+    for frac in S.floor_groups():
+        path = part_path(frac, out_dir)
+        if not os.path.exists(path):
+            continue
+        try:
+            with open(path, encoding="utf-8") as f:
+                out[float(frac)] = json.load(f)
+        except (OSError, ValueError) as e:
+            out[float(frac)] = {"error": f"часть не читается: {e}"}
+    return out
+
+
 def run(limit=None, src=None, log=print, legs_=None, ctx=None, launch=None, now=None,
-        seeds=NULL_SEEDS, cache=None, mem_limit=None, dep=MAIN_DEP):
+        seeds=NULL_SEEDS, cache=None, mem_limit=None, dep=MAIN_DEP, groups=None, out_dir=None):
+    """Посчитать группы пола `groups` (умолчание — все), записать части,
+    собрать итог из ВСЕХ частей на диске."""
     t0 = time.time()
     log = AB.guarded(log, limit=(G.MEM_LIMIT_MB if mem_limit is None else mem_limit))
     ctx = ctx if ctx is not None else CO.context()
@@ -316,36 +358,76 @@ def run(limit=None, src=None, log=print, legs_=None, ctx=None, launch=None, now=
     # статистика позиций её книг считаются СРАЗУ, записи освобождаются —
     # первый прогон (06.10) держал 14 ячеек × 2 линейки разом и снял себя
     # по памяти на второй группе. Память считается составом до счёта.
-    cash = {nm: {} for nm in names}
-    pos = {nm: {} for nm in names}
-    check = {"compared": 0, "mismatch": 0, "sample": []}
-    tail = None
+    want = (set(float(x) for x in groups) if groups is not None else None)
     for frac, group in sorted(S.floor_groups().items()):
+        if want is not None and float(frac) not in want:
+            continue
         books = [bk for bk in BOOK_KEYS if S.BOOKS[bk] in group]
         got, t = S.replay_cells(legs_, cells, src=src, log=log, adds_of=adds_of, rulers=group)
-        tail = tail if tail is not None else t
         ref_recs = got.get(cell_key("ref")) or {}
         c = ref_check(ref_recs, cache)
-        check["compared"] += c["compared"]
-        check["mismatch"] += c["mismatch"]
-        check["sample"] = (check["sample"] + c["sample"])[:5]
         log(f"пол {frac:g}: сверка ref с кэшем книги — закрытых у обоих {c['compared']}, "
             f"расхождений {c['mismatch']}")
+        part = {"frac": float(frac), "rulers": list(group), "books": books,
+                "cash": {nm: {} for nm in names}, "pos": {nm: {} for nm in names},
+                "ref_check": c, "tail": t, "legs": len(legs_), "positions": len(reps),
+                "with_repeat": with_rep, "offset_med_h": (offs_h[len(offs_h) // 2] if offs_h else None),
+                "seeds": int(seeds), "dep": dep, "computed_at": G.stamp()}
         for nm in names:
             recs = got.get(cell_key(nm)) or {}
             st = cash_of(recs, ctx, launch, dep=dep, now=now)
             for bk in books:
-                cash[nm][bk] = st[bk]
-                pos[nm][bk] = position_stats(recs, ref_recs, bk)
+                part["cash"][nm][bk] = st[bk]
+                part["pos"][nm][bk] = position_stats(recs, ref_recs, bk)
             if not nm.startswith("n"):
-                log(f"пол {frac:g} {nm}: " + ", ".join(f"{bk} {ratio_of(cash[nm][bk])} (сделок {cash[nm][bk].get('n')})"
-                                                     for bk in books) + f" ({time.time() - t0:.0f} с)")
+                log(f"пол {frac:g} {nm}: " + ", ".join(f"{bk} {ratio_of(part['cash'][nm][bk])} "
+                                                     f"(сделок {part['cash'][nm][bk].get('n')})" for bk in books)
+                    + f" ({time.time() - t0:.0f} с)")
+        part["secs"] = round(time.time() - t0, 1)
+        log(f"часть записана: {write_part(part, out_dir)}")
         del got, ref_recs
         gc.collect()
-    nulls_summ = {bk: null_summary(cash, int(seeds), bk, cash[MAIN_CELL][bk]) for bk in BOOK_KEYS}
-    # нуль по позициям: доля зёрен, у которых среднее приращение не хуже главной ячейки
+    s_all = assemble(out_dir=out_dir, seeds=seeds, dep=dep)
+    s_all["secs_run"] = round(time.time() - t0, 1)
+    return s_all
+
+
+def assemble(out_dir=None, seeds=NULL_SEEDS, dep=MAIN_DEP):
+    """Итог из частей на диске: книги берутся у своей группы; чего нет —
+    названо, а не подменено нулём."""
+    parts = read_parts(out_dir)
+    names = [c[0] for c in CELLS] + [null_name(i) for i in range(1, int(seeds) + 1)]
+    cash = {nm: {} for nm in names}
+    pos = {nm: {} for nm in names}
+    check = {"compared": 0, "mismatch": 0, "sample": []}
+    missing, meta, tail = [], {}, None
+    for frac, group in sorted(S.floor_groups().items()):
+        p = parts.get(float(frac))
+        books = [bk for bk in BOOK_KEYS if S.BOOKS[bk] in group]
+        if not p or p.get("error"):
+            missing.append({"frac": float(frac), "books": books, "why": (p or {}).get("error") or "часть не посчитана"})
+            continue
+        meta[f"{float(frac):g}"] = {"computed_at": p.get("computed_at"), "secs": p.get("secs"),
+                                     "legs": p.get("legs"), "positions": p.get("positions"),
+                                     "with_repeat": p.get("with_repeat"), "offset_med_h": p.get("offset_med_h"),
+                                     "books": books}
+        tail = tail if tail is not None else p.get("tail")
+        c = p.get("ref_check") or {}
+        check["compared"] += int(c.get("compared") or 0)
+        check["mismatch"] += int(c.get("mismatch") or 0)
+        check["sample"] = (check["sample"] + list(c.get("sample") or []))[:5]
+        for nm in names:
+            for bk in books:
+                v = (p.get("cash") or {}).get(nm, {}).get(bk)
+                if v is not None:
+                    cash[nm][bk] = v
+                q = (p.get("pos") or {}).get(nm, {}).get(bk)
+                if q is not None:
+                    pos[nm][bk] = q
+    have = [bk for bk in BOOK_KEYS if all(bk in cash[nm] for nm in names)]
+    nulls_summ = {bk: null_summary(cash, int(seeds), bk, cash[MAIN_CELL][bk]) for bk in have}
     pos_null = {}
-    for bk in BOOK_KEYS:
+    for bk in have:
         means = [pos[null_name(i)][bk].get("mean") for i in range(1, int(seeds) + 1)]
         means = [float(x) for x in means if x is not None]
         m = pos[MAIN_CELL][bk].get("mean")
@@ -353,13 +435,18 @@ def run(limit=None, src=None, log=print, legs_=None, ctx=None, launch=None, now=
                         "beat": (sum(1 for x in means if m is not None and x >= float(m)) / len(means)
                                  if means and m is not None else None),
                         "adds_med": statistics.median([pos[null_name(i)][bk]["adds"] for i in range(1, int(seeds) + 1)])}
-    return {"dep": dep, "seeds": int(seeds), "legs": len(legs_), "positions": len(reps),
-            "with_repeat": with_rep, "offset_med_h": (offs_h[len(offs_h) // 2] if offs_h else None),
+    judge_ok = all(bk in have for bk in JUDGE)
+    verd = (verdict(cash, nulls_summ) if judge_ok
+            else "не измерено: нет группы пола судимых книг (" + ", ".join(bk for bk in JUDGE if bk not in have) + ")")
+    any_meta = next(iter(meta.values()), {})
+    return {"dep": dep, "seeds": int(seeds), "legs": any_meta.get("legs"), "positions": any_meta.get("positions"),
+            "with_repeat": any_meta.get("with_repeat"), "offset_med_h": any_meta.get("offset_med_h"),
             "cells": [list(c) for c in CELLS], "main_cell": MAIN_CELL, "judge": list(JUDGE),
-            "books": BOOK_KEYS, "cash": cash, "positions_stats": pos, "null": nulls_summ,
-            "pos_null": pos_null, "ref_check": check, "tail": tail,
-            "slip_bp": CO.SLIP_BP, "verdict": verdict(cash, nulls_summ),
-            "window": None, "computed_at": G.stamp(), "secs": round(time.time() - t0, 1)}
+            "books": have, "books_missing": [bk for bk in BOOK_KEYS if bk not in have],
+            "cash": cash, "positions_stats": pos, "null": nulls_summ,
+            "pos_null": pos_null, "ref_check": check, "tail": tail, "parts": meta, "missing": missing,
+            "slip_bp": CO.SLIP_BP, "verdict": verd,
+            "computed_at": G.stamp()}
 
 
 # ---------------------------------------------------------------- отчёт
@@ -387,15 +474,23 @@ def report(s):
     if s.get("error"):
         return f"# Вторая ступень по повторному выбору\n\nОШИБКА: {s['error']}\n"
     chk = s["ref_check"]
-    L_ = ["# Вторая ступень по повторному выбору модели: ядро лестницы, реплей по барам, общий пол",
-          "",
-          f"Решений {s['legs']}, позиций {s['positions']}, с повтором в срок {s['with_repeat']} "
-          f"({s['with_repeat'] / max(1, s['positions']):.0%}); медиана задержки первого повтора "
-          f"{_f(s['offset_med_h'], 1)} ч. Касса ${s['dep']:,} нетто; нулевых зёрен {s['seeds']}; "
-          f"проскальзывание доливов {s['slip_bp']} б.п.; посчитано {s['computed_at']} за {s['secs']} с.",
-          "",
+    L_ = ["# Вторая ступень по повторному выбору модели: ядро лестницы, реплей по барам, общий пол", ""]
+    if s.get("legs") is None:
+        L_ += ["Ни одна группа пола не посчитана — частей артефакта нет.", ""]
+    else:
+        L_ += [f"Решений {s['legs']}, позиций {s['positions']}, с повтором в срок {s['with_repeat']} "
+               f"({s['with_repeat'] / max(1, s['positions']):.0%}); медиана задержки первого повтора "
+               f"{_f(s['offset_med_h'], 1)} ч. Касса ${s['dep']:,} нетто; нулевых зёрен {s['seeds']}; "
+               f"проскальзывание доливов {s['slip_bp']} б.п.; собрано {s['computed_at']}.", ""]
+    for frac, m in sorted((s.get("parts") or {}).items(), key=lambda kv: float(kv[0])):
+        L_.append(f"- группа пола {frac} ({', '.join(_title(b) for b in m.get('books') or [])}): "
+                  f"посчитана {m.get('computed_at')} за {_n(m.get('secs'))} с.")
+    for m in s.get("missing") or []:
+        L_.append(f"- группа пола {m['frac']:g} ({', '.join(_title(b) for b in m['books'])}): НЕ ПОСЧИТАНА — {m['why']}.")
+    L_ += [
           f"Сверка ячейки «как книга» с кэшем книги: закрытых у обоих {chk['compared']}, расхождений {chk['mismatch']}"
-          + (" — РЕПЛЕЙ РАСХОДИТСЯ С КНИГОЙ, числа ниже под вопросом." if chk["mismatch"] else "."),
+          + (f" ({chk['mismatch'] / chk['compared']:.1%}; примеры в артефакте) — записи, чей исход разошёлся с кэшем, "
+             "названы числом, а не спрятаны." if chk.get("mismatch") and chk.get("compared") else "."),
           "",
           "Долив — рыночно по открытию бара повтора, 0.25 нотионала из зарезервированной маржи; позиция одна: "
           "общий пол, плавающая ТВХ, цель от неё. Нуль — тот же долив по задержке ЧУЖОЙ позиции (перестановка).",
@@ -439,14 +534,23 @@ def publish(name):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--limit", type=int, default=None, help="смоук: столько решений, обе группы, свой каталог")
     ap.add_argument("--seeds", type=int, default=NULL_SEEDS)
+    ap.add_argument("--group", action="append", default=None,
+                    help="группа пола (0.5 — оптимальная и агрессивная, 0.1 — безопасная); можно несколько")
+    ap.add_argument("--assemble", action="store_true", help="только собрать отчёт из частей на диске")
     ap.add_argument("--no-publish", action="store_true")
     a = ap.parse_args(argv)
-    s = run(limit=a.limit, log=print, seeds=a.seeds)
+    smoke = a.limit is not None
+    out_dir = os.path.join(R.OUT, "short-rung-smoke") if smoke else None
+    name = f"{ART}-smoke" if smoke else ART
+    if a.assemble:
+        s = assemble(out_dir=out_dir, seeds=a.seeds)
+    else:
+        groups = [float(x) for x in a.group] if a.group else None
+        s = run(limit=a.limit, log=print, seeds=a.seeds, groups=groups, out_dir=out_dir)
     if s.get("error"):
         print(s["error"])
-    name = ART if a.limit is None else f"{ART}-smoke"
     G.write(s, name, report, log=print)
     if not a.no_publish:
         publish("вторая ступень по повторному выбору: ядро лестницы, общий пол, нуль-перестановка")
