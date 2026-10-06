@@ -1425,18 +1425,22 @@
 - L83 `test_fund_key_prefers_rate_good_for_shorts_and_sends_unknown_la…`
 - L94 `test_verdict_threshold_and_report()`
 
-## research/dca_paper/test_repeat_entry.py · 86 строк
+## research/dca_paper/test_repeat_entry.py · 234 строк
 
 Проверки замера «пропустить первый вход»: разметка номера входа по имени (как «одна на имя»), склейка двух ру…
 
-- L8 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L13 `AT = TP.AT`
-- L14 `H = 3600.0`
-- L17 `_rec(sym, at, pnl=0.05, fwd=10.0, hold_h=6, lev=10.0)`
-- L24 `test_label_counts_repeats_while_first_is_open_and_resets_after_…`
-- L34 `test_two_arms_same_second_are_one_record_with_bigger_forecast()`
-- L43 `test_bands_subsets_and_stats()`
-- L56 `test_verdict_and_report_have_no_holes()`
+- L10 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `AT = TP.AT`
+- L17 `H = 3600.0`
+- L20 `_rec(sym, at, pnl=0.05, fwd=10.0, hold_h=6, lev=10.0)`
+- L27 `_long(sym, at, pnl=0.05, fwd=10.0, hold_h=30, lev=5.0, weights=…` — Длинная запись ядра `run_d6`: нетто не записано, есть заполнения (момент, цена, доля).
+- L36 `test_label_counts_repeats_while_first_is_open_and_resets_after_…`
+- L46 `test_two_arms_same_second_are_one_record_with_bigger_forecast()`
+- L59 `test_long_record_net_is_core_formula_from_fills_and_check_catch…`
+- L82 `test_bands_subsets_and_stats()`
+- L101 `test_sides_are_declared_from_registries()`
+- L108 `test_verdict_and_report_have_no_holes()`
+- L160 `test_run_both_sides_offline_smoke_on_core_shaped_records()` — Обе стороны проходят свою дорогу кассы целиком на подставных кэшах: короткие — записи ядра `run_d10` (с `pnl_…
 
 ## research/dca_paper/test_short.py · 419 строк
 

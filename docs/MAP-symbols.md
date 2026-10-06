@@ -2190,39 +2190,47 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L57 `candidates(bars, boundary)` — Три цены на границе часа из списка баров [t, o, h, l, c, v].
 - L67 `main(argv=None)`
 
-## research/dca_paper/repeat_entry.py · 307 строк
+## research/dca_paper/repeat_entry.py · 449 строк
 
 Пропустить первый вход: насколько «ювелирны» второй, третий, четвёртый выбор имени моделью — и что это даёт к…
 
-- L40 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L41 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L57 `ART = 'DCA-repeat-entry'`
-- L58 `MAIN_DEP = 10000`
-- L59 `BOOK_KEYS = list(S.BOOKS)`
-- L60 `SEEDS = 200`
-- L61 `JUDGE_BOOKS = ('optimal_h', 'aggr_h')`
-- L62 `BEAT_MAX = 0.05`
-- L63 `K_BANDS = ('1', '2', '3', '4', '5+')`
-- L64 `CELLS = (('k1', 'как сейчас: первый выбор имени…`
-- L69 `band_of(k)`
-- L73 `label(recs)` — Записи книги с номером входа `k` по имени (см. модуль).
-- L103 `by_k(labeled, book)` — Статистика записей по номеру входа — тем же `trade_stats`, что у потолка плеча.
-- L114 `subset(packed, pred)` — Записи книг, чей номер входа проходит `pred` — состав для кассы.
-- L122 `random_subsets(packed, sizes, ctx, launch, seeds=SEEDS, dep=MAI…` — Случайные подмножества записей ТОГО ЖЕ размера на книгу — нуль фильтра.
-- L143 `cash_cell(sub, ctx, launch, dep=MAIN_DEP, now=None)`
-- L148 `ratio_of(c)`
-- L153 `verdict(cells, beat)` — Из чисел: «пропустить первый» против книги как сейчас и против случайных.
-- L174 `run(log=print, now=None, launch=None, ctx=None, mem_limit=None,…`
-- L215 `_median(xs)`
-- L221 `_p(x, d=1)` — ---------------------------------------------------------------- отчёт
-- L225 `_pp(x)`
-- L229 `_f(x, d=2)`
-- L233 `_bp(x)`
-- L237 `_n(x)`
-- L241 `_title(bk)`
-- L245 `report(s)`
-- L287 `publish(name)`
-- L293 `main(argv=None)`
+- L59 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L60 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L78 `ART = 'DCA-repeat-entry'`
+- L79 `MAIN_DEP = 10000`
+- L80 `SEEDS = 200`
+- L81 `BEAT_MAX = 0.05`
+- L82 `K_BANDS = ('1', '2', '3', '4', '5+')`
+- L83 `CELLS = (('k1', 'как сейчас: первый выбор имени…`
+- L88 `SIDES = {'short': {'title': 'короткие сделки — …` — Стороны — семейства книг. Ключи книг, судимые книги, кэш и упаковка — из реестров прогонов, не своей копией.
+- L98 `SIDE_ORDER = ('short', 'long')`
+- L100 `BOOK_KEYS = SIDES['short']['keys']` — Прежние имена — для совместимости с проверками первой версии.
+- L101 `JUDGE_BOOKS = SIDES['short']['judge']`
+- L104 `band_of(k)`
+- L108 `filled_of(r)` — Заполненный нотионал долей маржи — из заполнений, как у ядра: `filled_notional` = Σ долей × плечо (капитал 1).
+- L118 `net_of(r)` — Нетто записи долей маржи: записанное ядром `pnl_net`, а без него — та же формула ядра из заполнений (`run_d10…
+- L131 `net_check(recs, tol=1e-06)` — Сверка формулы нетто с ядром: у записей с `filled` И `fills` заполненный нотионал из заполнений обязан совпас…
+- L149 `label(recs)` — Записи книги с номером входа `k` по имени (см. модуль).
+- L187 `by_k(labeled, book)` — Статистика записей по номеру входа — тем же `trade_stats`, что у потолка плеча.
+- L198 `subset(packed, pred)` — Записи книг, чей номер входа проходит `pred` — состав для кассы.
+- L206 `random_subsets(packed, sizes, ctx, launch, keys, seeds=SEEDS, d…` — Случайные подмножества записей ТОГО ЖЕ размера на книгу — нуль фильтра.
+- L228 `cash_cell(sub, ctx, launch, keys, dep=MAIN_DEP, now=None)`
+- L233 `ratio_of(c)`
+- L238 `verdict(cells, beat, judge=JUDGE_BOOKS)` — Из чисел: «пропустить первый» против книги как сейчас и против случайных.
+- L259 `run_side(side, log=print, now=None, launch=None, ctx=None, dep=…` — Одна сторона: записи по k, касса по ячейкам, случайные того же размера, вердикт.
+- L306 `run(log=print, now=None, launch=None, ctx=None, mem_limit=None,…`
+- L327 `_median(xs)`
+- L333 `_p(x, d=1)` — ---------------------------------------------------------------- отчёт
+- L337 `_pp(x)`
+- L341 `_f(x, d=2)`
+- L345 `_bp(x)`
+- L349 `_n(x)`
+- L353 `_title(bk)`
+- L358 `_side_name(side)`
+- L362 `report_side(side, sd, s)`
+- L407 `report(s)`
+- L427 `publish(name)`
+- L433 `main(argv=None)`
 
 ## research/dca_paper/rules.py · 1319 строк
 
