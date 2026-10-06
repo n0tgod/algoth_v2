@@ -1,0 +1,43 @@
+== задание status-0510c ==
+строка: status
+начало: 2026-10-05T23:04:41Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   73G   71G  51% /
+/dev/sdb        147G   77G   63G  56% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 669148 3634616 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.
+3140733   89380 .venv/bin/python research/s8_loop/train.py
+3403378     265 .venv/bin/python research/b1_book/collect.py --http 8765
+--- убийства ядра по памяти за сутки ---
+0 (подробно: run tools/memtop.py)
+--- обучение S8 ---
+ТРЕВОГА обучение S8: веса от 2026-09-30 08:37 UTC, 134.4 ч назад (каденция 24, тревога с 36 ч) — обучение стоит; последний цикл 22:13 UTC: память: доступно 2403 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час — просьба уже стоит
+--- идущие прогоны ---
+нет
+--- статус сбора ---
+{"t": 1791241480.9, "uptime_sec": 263.2, "rss_mb": 706, "messages": 924403, "trades": 64400, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 187679, "snapshot_errors": 0, "last_snap_age_sec": 0.1, "snap_pass_sec": 0.384, "writes": {"book": 187679, "trades": 64397, "raw": 4664, "liq": 12}, "write_age_sec": {"book": 0.1, "trades": 0.2, "raw": 0.9, "liq": 55.3}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.3059, "ask": 0.306, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0004163, "ask": 0.0004166, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1225, "ask": 0.1226, "resets": 0}, "10000NEXUSDT": {"ready": true, "bid": 0.00828, "ask": 0.0083, "resets": 0}, "10000SATS
+--- живой исполнитель ---
+{
+  "at_ms": 1791241477877,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 284.21345292,
+    "equity": 284.21345292
+  }
+}
+конец: 2026-10-05T23:04:41Z
+ОТКАЗ: в публикуемых файлах остались маркеры конфликта (3).
+Разберите руками: git diff --cached | grep -n '<<<<<<<'
