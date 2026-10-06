@@ -183,6 +183,7 @@ def census(c, deep=False):
         parts["_JSONL_CACHE (разобранные журналы книг, класс)"] = {
             "n": len(ents), "mb": round(tot / 2 ** 20, 1),
             "budget_mb": round(getattr(type(c), "_JSONL_BUDGET", 0) / 2 ** 20),
+            "stats": dict(getattr(type(c), "_JSONL_STATS", {}) or {}),
             "top": [{"file": "/".join(p.rsplit("/", 2)[-2:]),
                      "rows": len(e.get("rows") or ()),
                      "mb": round(est / 2 ** 20, 1),

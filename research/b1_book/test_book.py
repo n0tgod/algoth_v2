@@ -2070,6 +2070,11 @@ def test_jsonl_cache_budget_counts_objects_not_file_bytes():
             C.Collector._jsonl(p)
         check("по бюджету объектов остаются два последних файла из трёх",
               set(cache) == set(paths[1:]), str([x.rsplit("/", 2)[-2] for x in cache]))
+        st = C.Collector._JSONL_STATS
+        C.Collector._jsonl(paths[1])
+        check("счётчики кеша: выброс посчитан, попадание посчитано, разобранные МБ растут",
+              st["evict"] >= 1 and st["hit"] >= 1 and st["full"] >= 4
+              and st["parsed_mb"] > 0 and st["evicted_mb"] > 0, str(st))
         # Контроль: счёт байтами файла (как было) оставил бы все три.
         cost_was = C.Collector._jsonl_cost
         C.Collector._jsonl_cost = staticmethod(lambda e: e["sig"][1])

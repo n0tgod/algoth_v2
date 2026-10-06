@@ -5977,6 +5977,13 @@ class Collector:
     # журналы книг). Класс ошибки — бюджет в чужих единицах.
     _JSONL_BUDGET = 384 * 1024 * 1024
 
+    # Счётчики кеша — для переписи памяти (`/mem`): по ним подбирается
+    # бюджет. Выброс, за которым через минуту следует полный разбор того
+    # же файла, — это сжигание процессора ради памяти, и его видно
+    # только числом: «выброшено» против «разобрано целиком».
+    _JSONL_STATS = {"hit": 0, "tail": 0, "full": 0, "evict": 0,
+                    "parsed_mb": 0.0, "evicted_mb": 0.0}
+
     @staticmethod
     def _jsonl_cost(entry):
         """Сколько памяти держит запись кеша — байты объектов."""
@@ -5996,8 +6003,10 @@ class Collector:
         # значит.
         sig = (st.st_mtime_ns, st.st_size, st.st_ino)
         hit = cache.get(path)
+        stats = Collector._JSONL_STATS
         if hit is not None and hit["sig"] == sig:
             hit["used"] = time.time()
+            stats["hit"] += 1
             return hit["rows"]
         rows, offset, head = [], 0, b""
         if (hit is not None and st.st_size > hit["sig"][1]
@@ -6037,6 +6046,8 @@ class Collector:
         cache[path] = {"sig": sig, "head": head, "offset": offset + cut,
                        "rows": rows, "used": time.time(),
                        "est": MS.deep_size(rows)}
+        stats["tail" if offset else "full"] += 1
+        stats["parsed_mb"] = round(stats["parsed_mb"] + len(buf) / 2 ** 20, 2)
         Collector._jsonl_trim()
         return rows
 
@@ -6047,8 +6058,12 @@ class Collector:
         total = sum(cost(v) for v in cache.values())
         if total <= Collector._JSONL_BUDGET:
             return
+        stats = Collector._JSONL_STATS
         for path, _ in sorted(cache.items(), key=lambda kv: kv[1]["used"]):
-            total -= cost(cache.pop(path))
+            gone = cost(cache.pop(path))
+            total -= gone
+            stats["evict"] += 1
+            stats["evicted_mb"] = round(stats["evicted_mb"] + gone / 2 ** 20, 1)
             if total <= Collector._JSONL_BUDGET:
                 break
 
