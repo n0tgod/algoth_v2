@@ -3,4 +3,20 @@
 начало: 2026-10-06T07:59:14Z
 перезапуск сборщика и циклов
 == останавливаю прежний ==
-жду закрытия файлов...........
+жду закрытия файлов............
+== обновляю код ==
+warning: fetch updated the current branch head.
+fast-forwarding your working tree from
+commit d763ed2ca4062eefa76d5ca51cfd439a6e06ad19.
+error: Your local changes to the following files would be overwritten by merge:
+	docs/MAP.md
+Please commit your changes or stash them before you merge.
+Aborting
+fatal: Cannot fast-forward your working tree.
+After making sure that you saved anything precious from
+$ git diff d763ed2ca4062eefa76d5ca51cfd439a6e06ad19
+output, run
+$ git reset --hard
+to recover.
+ВНИМАНИЕ: git pull не прошёл — запускаю на текущем коде
+== запускаю ==
