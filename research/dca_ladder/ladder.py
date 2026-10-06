@@ -430,7 +430,8 @@ def simulate_single(bars, capital, leverage, mmr, take_px=None, stop_px=None,
 
 def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
                  take_px=None, floor_frac=None, track=False,
-                 checkpoints=None, take_rule=None, side="long"):
+                 checkpoints=None, take_rule=None, side="long",
+                 adds=None, adds_max=None, adds_if_profit=False):
     """DCA на РЕАЛЬНЫХ барах: доливы против хода, тейк по ходу, пол.
 
     Вход в `bars[0][1]` (открытие первого бара после решения, next_open) —
@@ -508,9 +509,24 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     Значит одинаковые правила дают РАЗНЫЙ хвост, и сравнивать книги надо
     по форме, а не только по итогу.
 
+    `adds` — доливы ПО ВРЕМЕНИ, а не по цене (замер «вторая ступень по
+    повторному выбору», 2026-10-06): список `(момент, доля нотионала)`.
+    Долив исполняется РЫНОЧНО по открытию первого бара с `t ≥ момент` —
+    так же, как база (`bars[0][1]`), — из той же зарезервированной маржи:
+    сумма долей позиции не превышает 1 (резерв исчерпан — долив не
+    ставится). Он идёт в `fills` и в `filled_notional`, двигает среднюю,
+    цену ликвидации и пол — позиция ОДНА, с общим полом (урок 05.10:
+    долив с ограниченным убытком и неограниченной прибылью делает
+    победителем любой триггер). Уровень тейка этого бара по-прежнему
+    считается по ТВХ на его НАЧАЛО. `adds_max` — не больше стольких
+    доливов; `adds_if_profit` — кандидат исполняется, только если
+    позиция в плюсе по открытию бара (иначе пропускается, ход — к
+    следующему кандидату). Умолчание `None` не меняет ни одного числа —
+    закреплено тестом. В ответе — `adds` (сколько исполнено).
+
     Возвращает: exit ("тейк"/"трейл"/"пол"/"ликвидация"/"срок"), pnl_frac
     (доля капитала позиции; ликвидация = −1.0), depth, avg,
-    filled_notional.
+    filled_notional, adds.
     """
     d = 1.0 if side == "long" else -1.0
     n = len(rung_prices)
@@ -531,6 +547,8 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     # и «плавающую ТВХ» (среднюю цену, ступенькой уходящую вниз) неоткуда
     # взять. Числа сделки от списка не зависят.
     fills = [(float(bars[0][0]), entry, float(weights[0]))]
+    pend = sorted((float(t), float(w)) for t, w in (adds or ()))
+    pi, n_adds = 0, 0
     if take_rule is not None:
         if take_px is not None:
             raise ValueError("take_px и take_rule вместе неоднозначны")
@@ -559,6 +577,7 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     def _ret(res, bt):
         res["fills"] = fills
         res["entry_px"] = entry
+        res["adds"] = n_adds
         if tr is not None:
             _mark(bt, res["pnl_frac"])
             res["track"] = tr
@@ -574,6 +593,24 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
         while ck_i < len(cps) and cps[ck_i] < bt:
             ck[ck_i] = (cps[ck_i], last[0], last[1]) if last else None
             ck_i += 1
+        # Доливы по времени — РЫНОЧНО по открытию бара, до лимиток и
+        # проверок этого бара: добранный размер участвует в ликвидации и
+        # поле уже на этой минуте (неблагоприятное раньше благоприятного).
+        while (pi < len(pend) and pend[pi][0] <= bt
+               and (adds_max is None or n_adds < int(adds_max))):
+            t_add, w_add = pend[pi]
+            pi += 1
+            op = float(_o)
+            if not (op > 0 and w_add > 0):
+                continue
+            if adds_if_profit and not (d * (qty * op - cash) / capital > 0):
+                continue                       # не в плюсе — кандидат пропущен
+            if cash + w_add * notional > notional * (1.0 + 1e-9):
+                continue                       # резерв маржи исчерпан
+            cash += w_add * notional
+            qty += w_add * notional / op
+            fills.append((float(bt), op, float(w_add)))
+            n_adds += 1
         # ЛИМИТКУ ИСПОЛНЯЕТ ЧУЖОЙ ПРИНТ. Бар с нулевым объёмом означает
         # минуту без единой сделки: рунг и тейк на ней не заполняются —
         # цену КОТИРОВАЛИ, но никто по ней не торговал, и засчитать себе

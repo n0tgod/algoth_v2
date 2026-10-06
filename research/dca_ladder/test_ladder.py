@@ -1253,6 +1253,121 @@ def _control_short_fence_compares_downwards():
         test_short_rungs_and_fence_mirror)
 
 
+# ------------------------------------------------ доливы по времени (06.10)
+def _add_bars(entry=100.0, n=8, step=-1.0, hour=3600.0):
+    """Шорт-победитель: цена идёт вниз по 1 за бар; бары на часовой сетке,
+    объём есть, открытие = закрытие предыдущего."""
+    bars, px = [], entry
+    for i in range(n):
+        op = px
+        px = px + step
+        bars.append((1_000_000.0 + i * hour, op, max(op, px) + 0.2, min(op, px) - 0.2, px, 1000.0))
+    return bars
+
+
+def test_time_adds_default_changes_nothing_bit_for_bit():
+    """Умолчание `adds=None` и пустой список дают прежний счёт дословно."""
+    bars = _add_bars()
+    base = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short",
+                          take_rule={"anchor": "avg", "frac": 0.5}, floor_frac=0.5, track=True)
+    same = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short",
+                          take_rule={"anchor": "avg", "frac": 0.5}, floor_frac=0.5, track=True,
+                          adds=[], adds_max=None, adds_if_profit=False)
+    for k in ("exit", "pnl_frac", "depth", "avg", "filled_notional", "exit_ts", "exit_px", "fills", "track"):
+        assert base[k] == same[k], (k, base[k], same[k])
+    assert base["adds"] == 0 and same["adds"] == 0
+    print(f"ok  доливы по времени: умолчание бит в бит ({base['exit']} {base['pnl_frac']:+.4f})")
+
+
+def test_time_add_fills_at_the_open_and_moves_the_average():
+    """Долив исполняется по ОТКРЫТИЮ первого бара с t ≥ момент, идёт в
+    заполнения и нотионал, двигает среднюю; pnl после него идёт вдвое."""
+    bars = _add_bars()
+    t_add = bars[3][0] - 1.0                 # между барами 2 и 3 → бар 3
+    r = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short", adds=[(t_add, 0.25)])
+    assert r["adds"] == 1 and len(r["fills"]) == 2, r["fills"]
+    (t_f, px_f, w_f) = r["fills"][1]
+    assert t_f == bars[3][0] and px_f == bars[3][1] and w_f == 0.25, r["fills"]
+    assert abs(r["filled_notional"] - 0.5 * 4.0) < 1e-12, r["filled_notional"]
+    # средняя — между входом 100 и ценой долива 97 (по нотионалу поровну)
+    assert 97.0 < r["avg"] < 100.0, r["avg"]
+    base = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short")
+    # шорт-победитель: с доливом денег больше, чем без
+    assert r["pnl_frac"] > base["pnl_frac"] > 0, (r["pnl_frac"], base["pnl_frac"])
+    # вклад долива: четверть нотионала × ход от 97 до закрытия последнего бара
+    exp = base["pnl_frac"] + 0.25 * 4.0 * (97.0 - bars[-1][4]) / 97.0
+    assert abs(r["pnl_frac"] - exp) < 1e-9, (r["pnl_frac"], exp)
+    print(f"ok  долив по открытию бара: средняя {r['avg']:.3f}, pnl {base['pnl_frac']:+.4f} → {r['pnl_frac']:+.4f}")
+
+
+def test_time_add_shares_the_floor_and_can_kill_the_position():
+    """Общий пол: позиция, доживающая до срока без долива, с доливом
+    добивается полом — убыток долива не ограничен его долей."""
+    hour = 3600.0
+    # шорт против хода: цена растёт по 3 за бар; плечо 4×, пол 0.5
+    bars, px = [], 100.0
+    for i in range(10):
+        op = px
+        px = px + 3.0
+        bars.append((2_000_000.0 + i * hour, op, px + 0.2, op - 0.2, px, 1000.0))
+    kw = dict(side="short", floor_frac=0.5)
+    base = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, **kw)
+    with_add = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, adds=[(bars[1][0], 0.75)], **kw)
+    assert base["exit"] == "срок", base["exit"]
+    assert with_add["exit"] in ("пол", "ликвидация"), with_add["exit"]
+    assert with_add["pnl_frac"] < base["pnl_frac"] < 0, (with_add["pnl_frac"], base["pnl_frac"])
+    # отрицательный контроль: без общего пола (floor_frac=None) та же позиция живёт до срока
+    no_floor = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, adds=[(bars[1][0], 0.75)], side="short")
+    assert no_floor["exit"] in ("срок", "ликвидация"), no_floor["exit"]
+    print(f"ok  общий пол: без долива {base['exit']} {base['pnl_frac']:+.3f}, "
+          f"с доливом {with_add['exit']} {with_add['pnl_frac']:+.3f}")
+
+
+def test_time_adds_respect_profit_gate_max_and_reserve():
+    """`adds_if_profit` пропускает кандидата в минусе и берёт следующего;
+    `adds_max` ограничивает число; резерв маржи не превышается."""
+    hour = 3600.0
+    # шорт: сначала против (вверх), потом в пользу (вниз)
+    path = [100.0, 102.0, 104.0, 103.0, 101.0, 99.0, 97.0, 95.0, 93.0]
+    bars = []
+    for i in range(1, len(path)):
+        op, cl = path[i - 1], path[i]
+        bars.append((3_000_000.0 + (i - 1) * hour, op, max(op, cl) + 0.1, min(op, cl) - 0.1, cl, 1000.0))
+    cands = [(bars[1][0], 0.25), (bars[2][0], 0.25), (bars[5][0], 0.25), (bars[6][0], 0.25)]
+    # в плюсе шорт только когда открытие ниже 100: бары 5 (откр. 99) и 6 (97)
+    r = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short", adds=cands, adds_if_profit=True)
+    assert r["adds"] == 2 and [f[0] for f in r["fills"][1:]] == [bars[5][0], bars[6][0]], r["fills"]
+    r1 = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short", adds=cands, adds_if_profit=True, adds_max=1)
+    assert r1["adds"] == 1 and r1["fills"][1][0] == bars[5][0], r1["fills"]
+    # без гейта по плюсу берутся первые кандидаты
+    r_all = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short", adds=cands)
+    assert r_all["adds"] == 3, r_all["adds"]        # 0.25 + 3 × 0.25 = 1.0 — четвёртый не влезает
+    assert abs(r_all["filled_notional"] - 1.0 * 4.0) < 1e-12, r_all["filled_notional"]
+    print(f"ok  гейт плюса взял доливы {[int((f[0]-3_000_000.0)//3600) for f in r['fills'][1:]]}, "
+          f"предел 1 → {r1['adds']}, резерв держит {r_all['adds']} доливов")
+
+
+def test_time_add_take_level_uses_the_average_of_the_bar_start():
+    """Уровень тейка бара долива — по ТВХ на его начало; со следующего бара
+    цель едет со средней."""
+    hour = 3600.0
+    bars = _add_bars(entry=100.0, n=6, step=-1.0, hour=hour)
+    # цель 2.5 % от ТВХ: от 100 → 97.5; долив в баре 2 (откр. 98) сдвигает среднюю к ~99
+    tr = {"anchor": "avg", "frac": 0.025}
+    base = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short", take_rule=tr)
+    assert base["exit"] == "тейк" and abs(base["exit_px"] - 97.5) < 1e-9, base
+    # долив в баре 1 (откр. 99): средняя ≈ 99.5, со следующего бара цель ≈ 97.0 — тейк ниже и в тот же бар 2
+    r = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short", take_rule=tr, adds=[(bars[1][0], 0.25)])
+    assert r["exit"] == "тейк" and r["adds"] == 1, r
+    assert r["exit_px"] < base["exit_px"] and abs(r["exit_px"] - r["avg"] * 0.975) < 1e-9, (r["exit_px"], base["exit_px"], r["avg"])
+    assert r["exit_ts"] == base["exit_ts"]
+    # долив В БАРЕ ТЕЙКА (бар 2, откр. 98): уровень этого бара — по ТВХ на его начало (100 → 97.5), долив его не сдвигает
+    same = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short", take_rule=tr, adds=[(bars[2][0], 0.25)])
+    assert same["exit"] == "тейк" and same["adds"] == 1 and abs(same["exit_px"] - 97.5) < 1e-9, same
+    print(f"ok  тейк с доливом: уровень {base['exit_px']:.3f} → {r['exit_px']:.3f} (ТВХ {r['avg']:.3f}); "
+          f"долив в баре тейка уровень не двигает ({same['exit_px']:.2f})")
+
+
 TESTS = [
     test_open_mark_equals_the_simulation_pnl,
     test_liq_price_matches_spec5_table,
@@ -1271,6 +1386,11 @@ TESTS = [
     test_short_take_rule_walks_with_the_average,
     test_short_rungs_and_fence_mirror,
     test_short_open_mark_mirrors_the_sign,
+    test_time_adds_default_changes_nothing_bit_for_bit,
+    test_time_add_fills_at_the_open_and_moves_the_average,
+    test_time_add_shares_the_floor_and_can_kill_the_position,
+    test_time_adds_respect_profit_gate_max_and_reserve,
+    test_time_add_take_level_uses_the_average_of_the_bar_start,
     test_ladder_beats_hold_on_recovery,
     test_ladder_partial_fill,
     test_liquidation_on_gap,

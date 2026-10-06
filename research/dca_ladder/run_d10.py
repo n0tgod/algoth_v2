@@ -293,7 +293,7 @@ def take_for(g, tk):
 
 
 def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
-                 rich=False, checkpoints=None):
+                 rich=False, checkpoints=None, adds_of=None):
     """Исход одного КОРОТКОГО решения во всех ячейках. None — нечем мерить.
 
     Геометрия считается один раз на решение; между ячейками различаются
@@ -303,6 +303,12 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
     книгам семейства `h24`: им нужна ОДНА ячейка каждый час, и считать
     ради неё все 36 значило бы тратить на книгу тридцать шесть проходов
     вместо одного. Умолчание — вся сетка, как у замера.
+
+    `adds_of(g, key)` — политика доливов ПО ВРЕМЕНИ для ячейки `key`
+    (замер «вторая ступень по повторному выбору», 2026-10-06): словарь
+    `{"adds": [(момент, доля)], "max": n|None, "if_profit": bool}` либо
+    None — тогда ядро считает как книга. Записи ячейки несут число
+    исполненных доливов полем `adds`. Умолчание — прежний счёт.
 
     `rich` добавляет то, что нужно КНИГЕ и не нужно замеру: почасовые
     отметки (из них касса строит дневную кривую и просадку) и заполнения
@@ -359,10 +365,13 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
         # `checkpoints` — абсолютные метки времени: ядро отдаёт на каждой
         # исход усечённой до неё симуляции (замер выхода по времени
         # считается одним проходом, а не проходом на каждый час)
+        pol = adds_of(g, key) if adds_of is not None else None
+        kw = ({"adds": list(pol.get("adds") or ()), "adds_max": pol.get("max"),
+               "adds_if_profit": bool(pol.get("if_profit"))} if pol else {})
         r = L.simulate_dca(hold, rungs, w, 1.0, lev, look(1.0 * lev),
                            take_rule=tr, floor_frac=D2.FLOOR_FRAC,
                            side="short", track=bool(rich),
-                           checkpoints=checkpoints)
+                           checkpoints=checkpoints, **kw)
         marks, prev = [], 0.0
         for (hr, _cash, pnl) in (r.get("track") or ()):
             marks.append((hr, pnl - prev))
@@ -385,6 +394,7 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
             "end_ts": float(hold[-1][0]),
             "sched_end": float(g["at"]) + D2.HOLD_H * HOUR,
             "depth": int(r["depth"]), "n_rungs": len(rungs),
+            "adds": int(r.get("adds") or 0),
             "avg": float(r["avg"]), "entry_px": entry,
             "exit_px": float(r["exit_px"]), "filled": filled,
             "fills": ([[float(a), float(b), float(c)]
@@ -394,7 +404,7 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
 
 
 def collect(limit=None, src=None, log=print, legs=None, cells=None,
-            rich=False, raw=False, ckpt_hours=None):
+            rich=False, raw=False, ckpt_hours=None, adds_of=None):
     """Дорогой проход: бары символа читаются ОДИН раз на все ячейки.
 
     `cells` сужает сетку (книги `h24` считают одну ячейку в час), `rich`
@@ -449,7 +459,7 @@ def collect(limit=None, src=None, log=print, legs=None, cells=None,
                        if ckpt_hours else None)
                 o = one_position(g, bars, ts, look, rule, param,
                                  lev_look=lev_look, cells=cells, rich=rich,
-                                 checkpoints=cps)
+                                 checkpoints=cps, adds_of=adds_of)
                 if not o:
                     continue
                 got = 1

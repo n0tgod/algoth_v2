@@ -553,7 +553,7 @@
 - L231 `test_reading_is_written_from_numbers()` — Вывод собирается из чисел, а не из надежды.
 - L247 `main()`
 
-## research/dca_ladder/test_ladder.py · 1340 строк
+## research/dca_ladder/test_ladder.py · 1460 строк
 
 Тесты ядра забора — цена ликвидации закреплена таблицей §5 спеки 01.
 
@@ -630,9 +630,15 @@
 - L1232 `_control_short_take_level_not_mirrored()` — Уровень цели считается вверх у обеих сторон.
 - L1240 `_control_short_pnl_sign_not_mirrored()` — Знак исхода не зеркалится — падение цены у шорта в минус.
 - L1248 `_control_short_fence_compares_downwards()` — Забор шорта требует ликвидации СНИЗУ — плечо выходит любым.
-- L1256 `TESTS = [test_open_mark_equals_the_simulation_p…`
-- L1300 `CONTROLS = [('доливы шорта по правилу лонга', _con…`
-- L1330 `main()`
+- L1257 `_add_bars(entry=100.0, n=8, step=-1.0, hour=3600.0)` — Шорт-победитель: цена идёт вниз по 1 за бар; бары на часовой сетке, объём есть, открытие = закрытие предыдуще…
+- L1268 `test_time_adds_default_changes_nothing_bit_for_bit()` — Умолчание `adds=None` и пустой список дают прежний счёт дословно.
+- L1282 `test_time_add_fills_at_the_open_and_moves_the_average()` — Долив исполняется по ОТКРЫТИЮ первого бара с t ≥ момент, идёт в заполнения и нотионал, двигает среднюю; pnl п…
+- L1303 `test_time_add_shares_the_floor_and_can_kill_the_position()` — Общий пол: позиция, доживающая до срока без долива, с доливом добивается полом — убыток долива не ограничен е…
+- L1326 `test_time_adds_respect_profit_gate_max_and_reserve()` — `adds_if_profit` пропускает кандидата в минусе и берёт следующего; `adds_max` ограничивает число; резерв марж…
+- L1350 `test_time_add_take_level_uses_the_average_of_the_bar_start()` — Уровень тейка бара долива — по ТВХ на его начало; со следующего бара цель едет со средней.
+- L1371 `TESTS = [test_open_mark_equals_the_simulation_p…`
+- L1420 `CONTROLS = [('доливы шорта по правилу лонга', _con…`
+- L1450 `main()`
 
 ## research/dca_ladder/test_run_d10.py · 553 строк
 

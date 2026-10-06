@@ -167,8 +167,10 @@ def floor_groups():
     return out
 
 
-def replay(need, src=None, log=print, ckpt_hours=None):
-    """Досчёт недостающих решений: одна ячейка, отметки и заполнения.
+def replay_cells(need, cells, src=None, log=print, ckpt_hours=None,
+                 adds_of=None):
+    """Досчёт решений на НЕСКОЛЬКО ячеек одной геометрии: отметки и
+    заполнения, пол — по группам книг.
 
     Срок и гейт отсчёта ставятся НА ВРЕМЯ прогона (`run_d11.configure`) и
     возвращаются обратно: те же модули читает замер, и оставленный
@@ -178,9 +180,13 @@ def replay(need, src=None, log=print, ckpt_hours=None):
     а в симуляции он глобален — поэтому проход идёт по группам пола, и
     в каждой группе считаются только СВОИ линейки. Один проход на все
     книги отдал бы двум из трёх чужой пол.
+
+    `adds_of` — политика доливов по времени на ячейку (`run_d10`); книга
+    её не передаёт. Возвращает ({ключ ячейки: {(линейка, имя, момент):
+    запись}}, хвост ленты).
     """
     if not need:
-        return {}, {}
+        return {c[0]: {} for c in cells}, {}
     was = D11.configure(R.H24_HOLD_H)
     try:
         src = src or TL.TailBars(log=log)
@@ -191,9 +197,9 @@ def replay(need, src=None, log=print, ckpt_hours=None):
                 D2.FLOOR_FRAC = float(frac)
                 log(f"пол капитуляции {frac:g} — линейки "
                     + ", ".join(rulers))
-                part = D10.collect(legs=need, cells=[CELL], rich=True,
+                part = D10.collect(legs=need, cells=list(cells), rich=True,
                                    raw=True, src=src, log=log,
-                                   ckpt_hours=ckpt_hours)
+                                   ckpt_hours=ckpt_hours, adds_of=adds_of)
                 for rk in rulers:
                     got["recs"][rk] = (part.get("recs") or {}).get(rk) or {}
         finally:
@@ -201,20 +207,35 @@ def replay(need, src=None, log=print, ckpt_hours=None):
         # Хвост ленты — правило книги, и применяется он там, где источник
         # умеет его отдать. Источник без хвоста (проверка на подставных
         # барах) не превращается в «хвост не сработал»: причина называется.
-        if hasattr(src, "stats") and hasattr(src, "last_tape"):
-            tail = dict(src.stats(), **TL.apply(
-                {k: v[CELL[0]] for k, v in got["recs"].items()},
-                src.last_tape, src.last_book))
-        else:
-            tail = {"why": "источник баров без хвоста ленты"}
+        tail = None
+        for c in cells:
+            if hasattr(src, "stats") and hasattr(src, "last_tape"):
+                t = dict(src.stats(), **TL.apply(
+                    {k: v[c[0]] for k, v in got["recs"].items()},
+                    src.last_tape, src.last_book))
+            else:
+                t = {"why": "источник баров без хвоста ленты"}
+            tail = tail if tail is not None else t
         out = {}
-        for rk, byk in got["recs"].items():
-            for r in byk[CELL[0]]:
-                out[(rk, r["sym"], round(float(r["at"]), 3))] = r
-        log(f"досчитано записей {len(out)} по {len(need)} решениям")
+        for c in cells:
+            cell_out = {}
+            for rk, byk in got["recs"].items():
+                for r in byk[c[0]]:
+                    cell_out[(rk, r["sym"], round(float(r["at"]), 3))] = r
+            out[c[0]] = cell_out
+        log(f"досчитано записей {sum(len(v) for v in out.values())} "
+            f"по {len(need)} решениям, ячеек {len(cells)}")
         return out, tail
     finally:
         D11.restore(was)
+
+
+def replay(need, src=None, log=print, ckpt_hours=None):
+    """Досчёт недостающих решений книги: одна ячейка (`CELL`), отметки и
+    заполнения — через `replay_cells`, одной дорогой с замерами."""
+    out, tail = replay_cells(need, [CELL], src=src, log=log,
+                             ckpt_hours=ckpt_hours)
+    return out.get(CELL[0], {}), tail
 
 
 def run(limit=None, src=None, log=print, legs_=None, journal=None,

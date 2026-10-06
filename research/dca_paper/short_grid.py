@@ -58,12 +58,17 @@ def pack(recs, key):
 
 
 def cell_stats(packed, ctx, launch, now=None, log=lambda *a: None,
-               keys=None, deps=None):
+               keys=None, deps=None, extra_usd=None):
     """Книги семейства на этих записях: деньги НЕТТО, состав исходов.
 
     Правила книги применяются ТЕ ЖЕ и в том же порядке, что в прогоне
     (`run_paper.age_shorts` → `build_rows`): замер, торгующий другими
     правилами, отвечал бы на другой вопрос.
+
+    `extra_usd(row)` — издержка, которой модель издержек не знает, в
+    долларах на строку (замер доливов: рыночный долив платит
+    проскальзывание, а `costs` считает рунги лимитными). Вычитается
+    ПОСЛЕ настоящих издержек, пишется в `usd_extra`; None — ничего.
     """
     packed = dict(packed)
     for bk in list(packed):
@@ -81,6 +86,10 @@ def cell_stats(packed, ctx, launch, now=None, log=lambda *a: None,
                     and int(r.get("dep", 0)) == int(dep)]
             if ctx is not None and not ctx.get("error"):
                 mine, _c = CO.apply_to_rows(mine, ctx)
+            if extra_usd is not None:
+                mine = [dict(r, usd=round(float(r.get("usd") or 0.0) - float(x), 4),
+                             usd_extra=float(x)) if x else r
+                        for r, x in ((r, extra_usd(r)) for r in mine)]
             st = RP._stats(mine, dep) or {}
             fin, dd = st.get("final"), st.get("max_dd")
             by = collections.Counter(r.get("exit") or "—" for r in mine)
