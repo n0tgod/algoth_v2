@@ -1,0 +1,95 @@
+== задание memtop-0610 ==
+строка: run tools/memtop.py --tail 3
+начало: 2026-10-06T04:24:25Z
+запускаю: .venv/bin/python tools/memtop.py --tail 3
+(хвосты логов — первыми, таблицы памяти — в конце: очередь заданий хранит последние 400 строк)
+
+== research/s8_loop/out/train.log (хвост 3) ==
+  строк всего 77987
+  [10-06 04:00:39] память 1816 МБ, пик 3942 (прежние веса оценены)
+  [10-06 04:11:41] канарейка (перемешанные цели, fwd_4h): медианный IC -0.0000
+  [10-06 04:21:16] канарейка (перемешанные цели, fwd_4h): медианный IC +0.0068
+
+== research/dca_paper/out/short.log (хвост 3) ==
+  строк всего 59527
+     b9613243..d54d62f1  main -> main
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+
+== research/dca_paper/out/daily.log (хвост 3) ==
+  строк всего 163406
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+  
+
+== research/dca_paper/out/pair.log (хвост 3) ==
+  строк всего 77786
+     d54d62f1..aca28c55  main -> main
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+
+== research/b1_book/out/collect.log (хвост 3) ==
+  строк всего 1092968
+      self._sock.sendall(b)
+  BrokenPipeError: [Errno 32] Broken pipe
+  ----------------------------------------
+
+== research/b1_book/out/watchdog.log (хвост 3) ==
+  строк всего 8613
+  [2026-10-06T04:10:01Z] общий счёт: книги-источники свежее — прогон
+  ТРЕВОГА обучение S8: веса от 2026-09-30 08:37 UTC, 139.6 ч назад (каденция 24, тревога с 36 ч) — обучение стоит; последний цикл 03:40 UTC: память: доступно 2689 МБ при пороге 3072 — рядом другие прогоны, обучение отложен
+  ТРЕВОГА обучение S8: веса от 2026-09-30 08:37 UTC, 139.7 ч назад (каденция 24, тревога с 36 ч) — обучение стоит; последний цикл 03:40 UTC: память: доступно 2689 МБ при пороге 3072 — рядом другие прогоны, обучение отложен
+
+== research/b1_book/out/ship.log (хвост 3) ==
+  строк всего 201
+  [03:15:09] снятие местных копий старше 21 сут:
+  [03:15:09] после: /root/algoth_v2/research/b1_book/out: свободно 65.8 ГБ; /root: свободно 70.9 ГБ; 6 с
+  [03:15:09] итого отправлено 0.01 ГБ, дней закрыто 1 из 1
+
+== research/a1_universe/out/refresh.log (хвост 3) ==
+  строк всего 17256
+  
+  Отказов нет.
+  
+
+== research/a1_universe/out/instruments.log (хвост 3) ==
+  строк всего 533
+     3aea3094..0a6af8db  main -> main
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+
+== research/s8_loop/out/model/train_log.jsonl (хвост 3) ==
+  строк всего 622
+  {"kind": "books", "seq": 529, "hour": "2026-10-06-02", "at": "10-06 03:11", "sections": 1430, "symbols": 790, "train_why": "память: доступно 1452 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час", "ste
+  {"kind": "books", "seq": 529, "hour": "2026-10-06-02", "at": "10-06 03:19", "sections": 1430, "symbols": 790, "train_why": "память: доступно 2945 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час", "ste
+  {"kind": "books", "seq": 529, "hour": "2026-10-06-02", "at": "10-06 03:40", "sections": 1430, "symbols": 790, "train_why": "память: доступно 2689 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час", "ste
+
+== убийства ядра с 2026-10-06 00:00 UTC ==
+  строк 0, убийств 0
+
+== free -m (2026-10-06 04:24:27 UTC) ==
+                 total        used        free      shared  buff/cache   available
+  Mem:            7745        5104         646           4        2316        2641
+  Swap:              0           0           0
+
+== процессы по памяти (RSS, МБ; возраст чч:мм; первые 18) ==
+  всего памяти у первых 18: 4664 МБ
+   3462931        1   2788   00:34  .venv/bin/python research/s8_loop/train.py
+   3462584        1   1382   00:39  .venv/bin/python research/b1_book/collect.py --http 8765
+     21675    14604    298 1685:46  claude --continue
+   3470413  3470412     56   00:00  python3 /root/algoth_v2/tools/project_map.py
+   3470106  3470104     30   00:00  .venv/bin/python tools/memtop.py --tail 3
+   2637243        1     26  573:36  /sbin/multipathd -d -s
+   2329852        1     19  118:00  /usr/lib/systemd/systemd-journald
+       961        1      9 1694:40  /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+   3469771  2329848      9   00:00  sshd: root [priv]
+         1        0      8 1694:40  /usr/lib/systemd/systemd --system --deserialize=89
+   3470397  3470211      7   00:00  git commit -q -m job: gate-0610
+   3469875  3469771      6   00:00  sshd: root [net]
+    691277        1      5  309:39  /usr/sbin/rsyslogd -n -iNONE
+   2329846        1      5  118:00  /usr/lib/systemd/systemd-resolved
+   1496656        1      4  214:21  /usr/lib/polkit-1/polkitd --no-debug
+   2329847        1      4  118:00  /usr/lib/systemd/systemd-timesyncd
+   2329848        1      4  118:00  sshd: /usr/sbin/sshd -D [listener] 1 of 10-100 startups
+   2329858        1      4  118:00  /usr/lib/systemd/systemd-networkd
+конец: 2026-10-06T04:24:27Z, код 0
