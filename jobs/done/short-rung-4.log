@@ -56,3 +56,14 @@ Traceback (most recent call last):
     raise RemoteFetchError(f"хранилище: {key} не скачан за {ATTEMPTS} попытки: {str(err)[:160]}")
 remote.RemoteFetchError: хранилище: b1/book/TUTUSDT/2026-08-24.tar не скачан за 4 попытки: An error occurred while reading from response stream: ('Connection broken: IncompleteRead(4165632 bytes read, 10917888 more expected)', IncompleteRead(4165632 b
 конец: 2026-10-06T16:46:11Z, код 1
+публикуется в ветку main:
+ jobs/done/short-rung-3.log          |  7 +++++
+ jobs/done/short-rung-4.done         |  1 +
+ jobs/done/short-rung-4.log          | 58 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  3 ++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 70 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   c3ce4d57..89e4a60e  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
