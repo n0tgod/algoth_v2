@@ -2,3 +2,198 @@
 строка: run research/dca_paper/short_rung.py --group 0.5
 начало: 2026-10-06T14:07:38Z
 запускаю: .venv/bin/python research/dca_paper/short_rung.py --group 0.5
+h24/gbm: часов 956, коротких выборов 2868, ног под краем 2852, отброшено (нет полей / знак) 10
+h24/nn: часов 956, коротких выборов 2868, ног под краем 2670, отброшено (нет полей / знак) 186
+ног обеих рук: 5522
+решений 5522, уникальных позиций 4803, с повтором в срок 3933 (82%); медиана задержки первого повтора 1.0 ч
+пол капитуляции 0.5 — линейки optimal_s
+коротких ног (край ≥ 33) 5522: rr2 437, lo 4663, any 5522; символов 402
+окно решений 2026-08-08 10:00 … 2026-10-06 13:00 UTC (59.1 суток, дат 60)
+память: 198.6 МБ (ноги загружены; предел 1200)
+  символ 5/402  решений 95
+  символ 6/402  решений 160
+память: 448.8 МБ (символ 10/402; предел 1200)
+  символ 17/402  решений 241
+память: 442.0 МБ (символ 20/402; предел 1200)
+  символ 22/402  решений 290
+  символ 27/402  решений 408
+  символ 29/402  решений 430
+  символ 30/402  решений 530
+память: 458.8 МБ (символ 30/402; предел 1200)
+  символ 31/402  решений 582
+  символ 39/402  решений 689
+память: 469.1 МБ (символ 40/402; предел 1200)
+  символ 45/402  решений 775
+  символ 47/402  решений 806
+  символ 48/402  решений 830
+память: 477.9 МБ (символ 50/402; предел 1200)
+  символ 53/402  решений 860
+  символ 59/402  решений 1023
+память: 506.8 МБ (символ 60/402; предел 1200)
+  символ 62/402  решений 1077
+  символ 63/402  решений 1165
+  символ 69/402  решений 1208
+память: 600.7 МБ (символ 70/402; предел 1200)
+  символ 72/402  решений 1329
+  символ 74/402  решений 1407
+  символ 76/402  решений 1492
+кэш хранилища: снято 6276 файлов, осталось 1.80 ГБ при пределе 2
+  символ 80/402  решений 1619
+память: 694.9 МБ (символ 80/402; предел 1200)
+  символ 81/402  решений 1678
+  символ 83/402  решений 1726
+  символ 85/402  решений 1807
+  символ 86/402  решений 1857
+кэш хранилища: снято 1911 файлов, осталось 1.80 ГБ при пределе 2
+  символ 89/402  решений 1950
+память: 694.9 МБ (символ 90/402; предел 1200)
+  символ 91/402  решений 1998
+  символ 97/402  решений 2050
+  символ 100/402  решений 2083
+память: 694.9 МБ (символ 100/402; предел 1200)
+  символ 102/402  решений 2097
+кэш хранилища: снято 1466 файлов, осталось 1.80 ГБ при пределе 2
+  символ 103/402  решений 2155
+  символ 104/402  решений 2193
+кэш хранилища: снято 2048 файлов, осталось 1.80 ГБ при пределе 2
+  символ 106/402  решений 2291
+  символ 110/402  решений 2358
+память: 737.2 МБ (символ 110/402; предел 1200)
+хранилище: отказ на b1/trades/REDUSDT/2026-08-20.tar: An error occurred (MethodNotAllowed) when calling the GetObject operation: None
+  символ 113/402  решений 2395
+  символ 115/402  решений 2449
+кэш хранилища: снято 13859 файлов, осталось 1.80 ГБ при пределе 2
+  символ 118/402  решений 2466
+  символ 120/402  решений 2483
+память: 741.9 МБ (символ 120/402; предел 1200)
+хранилище: отказ на b1/trades/TRIAUSDT/2026-08-31.tar: An error occurred (GatewayTimeout) when calling the GetObject operation (reached max retries: 5): The server did not respond in time.
+хранилище: отказ на b1/trades/TRIAUSDT/2026-09-01.tar: An error occurred (GatewayTimeout) when calling the GetObject operation (reached max retries: 5): The server did not respond in time.
+  символ 128/402  решений 2557
+память: 741.9 МБ (символ 130/402; предел 1200)
+  символ 131/402  решений 2585
+  символ 133/402  решений 2593
+  символ 138/402  решений 2611
+память: 741.9 МБ (символ 140/402; предел 1200)
+  символ 141/402  решений 2682
+кэш хранилища: снято 7832 файлов, осталось 1.80 ГБ при пределе 2
+  символ 142/402  решений 2686
+  символ 144/402  решений 2725
+  символ 150/402  решений 2757
+память: 736.8 МБ (символ 150/402; предел 1200)
+  символ 153/402  решений 2769
+  символ 154/402  решений 2775
+  символ 157/402  решений 2794
+  символ 158/402  решений 2828
+кэш хранилища: снято 7000 файлов, осталось 1.80 ГБ при пределе 2
+память: 736.8 МБ (символ 160/402; предел 1200)
+  символ 164/402  решений 2888
+  символ 165/402  решений 2894
+кэш хранилища: снято 1869 файлов, осталось 1.80 ГБ при пределе 2
+  символ 167/402  решений 2916
+память: 736.8 МБ (символ 170/402; предел 1200)
+  символ 173/402  решений 2982
+  символ 175/402  решений 2984
+память: 736.8 МБ (символ 180/402; предел 1200)
+  символ 183/402  решений 3051
+  символ 188/402  решений 3115
+кэш хранилища: снято 4848 файлов, осталось 1.80 ГБ при пределе 2
+  символ 189/402  решений 3153
+память: 736.8 МБ (символ 190/402; предел 1200)
+  символ 192/402  решений 3164
+  символ 197/402  решений 3183
+  символ 198/402  решений 3185
+память: 736.8 МБ (символ 200/402; предел 1200)
+  символ 203/402  решений 3229
+  символ 205/402  решений 3234
+  символ 210/402  решений 3252
+память: 736.8 МБ (символ 210/402; предел 1200)
+  символ 214/402  решений 3329
+кэш хранилища: снято 6092 файлов, осталось 1.80 ГБ при пределе 2
+  символ 217/402  решений 3361
+  символ 220/402  решений 3413
+память: 736.8 МБ (символ 220/402; предел 1200)
+  символ 224/402  решений 3436
+  символ 226/402  решений 3579
+  символ 228/402  решений 3699
+память: 736.2 МБ (символ 230/402; предел 1200)
+кэш хранилища: снято 6375 файлов, осталось 1.80 ГБ при пределе 2
+  символ 235/402  решений 3742
+  символ 239/402  решений 3769
+память: 743.9 МБ (символ 240/402; предел 1200)
+  символ 241/402  решений 3782
+  символ 247/402  решений 3796
+  символ 248/402  решений 4044
+память: 743.9 МБ (символ 250/402; предел 1200)
+кэш хранилища: снято 6216 файлов, осталось 1.80 ГБ при пределе 2
+  символ 252/402  решений 4245
+  символ 256/402  решений 4331
+память: 743.9 МБ (символ 260/402; предел 1200)
+  символ 263/402  решений 4360
+  символ 265/402  решений 4363
+  символ 266/402  решений 4368
+  символ 267/402  решений 4375
+  символ 269/402  решений 4407
+память: 743.9 МБ (символ 270/402; предел 1200)
+  символ 271/402  решений 4439
+Traceback (most recent call last):
+  File "/root/algoth_v2/.venv/lib/python3.12/site-packages/urllib3/response.py", line 929, in _error_catcher
+    yield
+  File "/root/algoth_v2/.venv/lib/python3.12/site-packages/urllib3/response.py", line 1067, in _raw_read
+    raise IncompleteRead(self._fp_bytes_read, self.length_remaining)
+urllib3.exceptions.IncompleteRead: IncompleteRead(12496896 bytes read, 4122624 more expected)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/algoth_v2/.venv/lib/python3.12/site-packages/botocore/response.py", line 98, in read
+    chunk = self._raw_stream.read(amt)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/.venv/lib/python3.12/site-packages/urllib3/response.py", line 1134, in read
+    data = self._raw_read(amt)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/.venv/lib/python3.12/site-packages/urllib3/response.py", line 1045, in _raw_read
+    with self._error_catcher():
+  File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/root/algoth_v2/.venv/lib/python3.12/site-packages/urllib3/response.py", line 949, in _error_catcher
+    raise ProtocolError(arg, e) from e
+urllib3.exceptions.ProtocolError: ('Connection broken: IncompleteRead(12496896 bytes read, 4122624 more expected)', IncompleteRead(12496896 bytes read, 4122624 more expected))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/root/algoth_v2/research/dca_paper/short_rung.py", line 560, in <module>
+    main()
+  File "/root/algoth_v2/research/dca_paper/short_rung.py", line 551, in main
+    s = run(limit=a.limit, log=print, seeds=a.seeds, groups=groups, out_dir=out_dir)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/short_rung.py", line 366, in run
+    got, t = S.replay_cells(legs_, cells, src=src, log=log, adds_of=adds_of, rulers=group)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/run_short.py", line 207, in replay_cells
+    part = D10.collect(legs=need, cells=list(cells), rich=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_ladder/run_d10.py", line 455, in collect
+    bars = get(sym, a0, b1)
+           ^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/tail.py", line 157, in bars
+    add = book_minute_bars(self.root, sym, last + MINUTE, t1,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/tail.py", line 90, in book_minute_bars
+    rows = read_hour(os.path.join(root, "book", sym), hh, log=log,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/b1_book/store.py", line 243, in read_hour
+    got = REMOTE.get(dirpath, hour)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/b1_book/remote.py", line 88, in get
+    if not self._fetch_archive(key, dest):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/b1_book/remote.py", line 130, in _fetch_archive
+    for chunk in iter(lambda: body.read(1 << 20), b""):
+  File "/root/algoth_v2/research/b1_book/remote.py", line 130, in <lambda>
+    for chunk in iter(lambda: body.read(1 << 20), b""):
+                              ^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/.venv/lib/python3.12/site-packages/botocore/response.py", line 103, in read
+    raise ResponseStreamingError(error=e)
+botocore.exceptions.ResponseStreamingError: An error occurred while reading from response stream: ('Connection broken: IncompleteRead(12496896 bytes read, 4122624 more expected)', IncompleteRead(12496896 bytes read, 4122624 more expected))
+конец: 2026-10-06T16:31:46Z, код 1
