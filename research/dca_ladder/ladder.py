@@ -432,7 +432,7 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
                  take_px=None, floor_frac=None, track=False,
                  checkpoints=None, take_rule=None, side="long",
                  adds=None, adds_max=None, adds_if_profit=False,
-                 adds_min_profit=None):
+                 adds_min_profit=None, take_events=None):
     """DCA на РЕАЛЬНЫХ барах: доливы против хода, тейк по ходу, пол.
 
     Вход в `bars[0][1]` (открытие первого бара после решения, next_open) —
@@ -528,6 +528,14 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     Умолчание `None` не меняет ни одного числа — закреплено тестом. В
     ответе — `adds` (сколько исполнено).
 
+    `take_events` — ПЕРЕНОС ЦЕЛИ по событию (замер «повтор как время»,
+    07.10): список `(момент, доля)`; на первом баре с `t ≥ момент` цель
+    становится НЕПОДВИЖНЫМ уровнем от открытия этого бара —
+    `open × (1 + d × доля)` — и дальше не едет со средней (новое обещание
+    модели отсчитывается от текущей цены, как у входа). Проверяется с
+    того же бара. Умолчание `None` — прежний счёт; в ответе —
+    `take_moves` (сколько переносов исполнено).
+
     Возвращает: exit ("тейк"/"трейл"/"пол"/"ликвидация"/"срок"), pnl_frac
     (доля капитала позиции; ликвидация = −1.0), depth, avg,
     filled_notional, adds.
@@ -555,6 +563,9 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     pi, n_adds = 0, 0
     add_gate = (float(adds_min_profit) if adds_min_profit is not None
                 else (0.0 if adds_if_profit else None))
+    moves = sorted((float(t), float(f)) for t, f in (take_events or ()))
+    mi, n_moves = 0, 0
+    cur_px, cur_rule = take_px, take_rule     # действующая цель: уровень или правило
     if take_rule is not None:
         if take_px is not None:
             raise ValueError("take_px и take_rule вместе неоднозначны")
@@ -584,6 +595,7 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
         res["fills"] = fills
         res["entry_px"] = entry
         res["adds"] = n_adds
+        res["take_moves"] = n_moves
         if tr is not None:
             _mark(bt, res["pnl_frac"])
             res["track"] = tr
@@ -617,6 +629,15 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
             qty += w_add * notional / op
             fills.append((float(bt), op, float(w_add)))
             n_adds += 1
+        # Перенос цели по событию — от открытия бара события, дальше
+        # уровень неподвижен (новое обещание отсчитано от текущей цены).
+        while mi < len(moves) and moves[mi][0] <= bt:
+            _t_mv, f_mv = moves[mi]
+            mi += 1
+            op = float(_o)
+            if op > 0 and f_mv > 0:
+                cur_px, cur_rule = op * (1.0 + d * f_mv), None
+                n_moves += 1
         # ЛИМИТКУ ИСПОЛНЯЕТ ЧУЖОЙ ПРИНТ. Бар с нулевым объёмом означает
         # минуту без единой сделки: рунг и тейк на ней не заполняются —
         # цену КОТИРОВАЛИ, но никто по ней не торговал, и засчитать себе
@@ -639,9 +660,9 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
         avg = cash / qty
         # Уровень тейка — по ТВХ на НАЧАЛО бара (`avg_prev`), а не по той,
         # что сложилась доливом ЭТОЙ минуты (см. докстроку).
-        lvl = (take_px if take_rule is None else
-               (entry if take_rule["anchor"] == "entry" else avg_prev)
-               * (1.0 + d * float(take_rule["frac"])))
+        lvl = (cur_px if cur_rule is None else
+               (entry if cur_rule["anchor"] == "entry" else avg_prev)
+               * (1.0 + d * float(cur_rule["frac"])))
         mark = d * (qty * cl - cash) / capital
         if tr is not None:
             _mark(bt, mark)
@@ -664,8 +685,8 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
                              "exit_ts": bt, "exit_px": cl,
                              "depth": sum(filled), "avg": avg,
                              "filled_notional": cash}, bt)
-        trail = (float(take_rule.get("trail") or 0.0)
-                 if take_rule is not None else 0.0)
+        trail = (float(cur_rule.get("trail") or 0.0)
+                 if cur_rule is not None else 0.0)
         if trail > 0:
             if peak is not None:
                 stop = peak * (1.0 - d * trail)

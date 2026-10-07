@@ -570,7 +570,55 @@ def test_cell_policy_floor_and_sink_do_not_retain_records():
           f"sink отдал {len(sunk)} записей, в памяти 0")
 
 
+def test_cell_hold_inside_a_longer_window_matches_the_short_window_bit_for_bit():
+    """Ячейка со сроком 24 ч внутри окна 48 ч считает те же бары, что проход
+    с окном 24 ч: исход, отметки, конец окна и плановый конец совпадают; ячейка
+    48 ч живёт дольше; перенос цели ячейки едет в запись."""
+    lo, at = T9._rise_then_fall()
+    wn, _ = T9._drift_down()                      # победитель: −0.5 % к 24 ч, цели книги (−10 %) не достигает
+    src = T3._Src({"SSSUSDT": lo, "TTTUSDT": wn})
+    legs = _legs(at, "SSSUSDT", n=2) + _legs(at, "TTTUSDT", n=1)
+    base = ("fence:none:t2", "fence", "none", "t2")
+    was = D2.HOLD_H
+    try:
+        D2.HOLD_H = 24
+        short = _with_levels(lambda: D10.collect(src=src, legs=legs, cells=[base], raw=True, rich=True,
+                                                 log=lambda *a: None, rulers=["optimal_s"]))
+        D2.HOLD_H = 48
+        cells = [base, (base[0] + "#h24", *base[1:]), (base[0] + "#mv", *base[1:])]
+
+        def adds_of(g, key):
+            if key.endswith("#h24"):
+                return {"adds": [], "hold_h": 24.0}
+            if key.endswith("#mv"):
+                # цель переносится на −0.2 % от открытия бара через час: дрейф вниз её достигает
+                return {"adds": [], "hold_h": 24.0, "take_events": [(float(g["at"]) + 3600.0, 0.002)]}
+            return None
+        long_ = _with_levels(lambda: D10.collect(src=src, legs=legs, cells=cells, raw=True, rich=True,
+                                                 log=lambda *a: None, rulers=["optimal_s"], adds_of=adds_of))
+    finally:
+        D2.HOLD_H = was
+    a = short["recs"]["optimal_s"][base[0]]
+    b = long_["recs"]["optimal_s"][base[0] + "#h24"]
+    c = long_["recs"]["optimal_s"][base[0]]
+    m = long_["recs"]["optimal_s"][base[0] + "#mv"]
+    assert a and len(a) == len(b) == len(c) == len(m)
+    for ra, rb in zip(a, b):
+        for k in ("exit", "exit_ts", "pnl", "pnl_net", "marks", "fills", "end_ts", "sched_end", "state"):
+            assert ra[k] == rb[k], (k, ra[k], rb[k])
+        assert rb["hold_h"] == 24.0
+    assert all(rc["hold_h"] == 48.0 and rc["sched_end"] == rc["at"] + 48 * 3600 for rc in c)
+    assert any(rc["exit_ts"] > rb["exit_ts"] for rb, rc in zip(b, c)), "окно 48 ч не дало ни одной позиции дольше"
+    assert all(rm["take_moves"] == 1 for rm in m), [rm["take_moves"] for rm in m]
+    win_b = [rb for rb in b if rb["sym"] == "TTTUSDT"]
+    win_m = [rm for rm in m if rm["sym"] == "TTTUSDT"]
+    assert win_b and win_b[0]["exit"] == "срок" and win_m[0]["exit"] == "тейк", (win_b[0]["exit"], win_m[0]["exit"])
+    print(f"ok  срок ячейки 24 ч внутри окна 48 ч = окно 24 ч бит в бит ({len(a)} записей); "
+          f"ячейка 48 ч дольше; перенос цели записан (победитель: {win_b[0]['exit']} → {win_m[0]['exit']})")
+
+
 TESTS = [
+    test_cell_hold_inside_a_longer_window_matches_the_short_window_bit_for_bit,
     test_cell_policy_floor_and_sink_do_not_retain_records,
     test_collect_rulers_subset_is_bit_for_bit_and_only_those,
     test_grid_is_declared_before_the_run,

@@ -168,7 +168,7 @@ def floor_groups():
 
 
 def replay_cells(need, cells, src=None, log=print, ckpt_hours=None,
-                 adds_of=None, rulers=None, sink=None):
+                 adds_of=None, rulers=None, sink=None, hold_h=None):
     """Досчёт решений на НЕСКОЛЬКО ячеек одной геометрии: отметки и
     заполнения, пол — по группам книг.
 
@@ -184,7 +184,9 @@ def replay_cells(need, cells, src=None, log=print, ckpt_hours=None,
     `adds_of` — политика доливов по времени на ячейку (`run_d10`); книга
     её не передаёт. `sink(rk, key, rec)` — записи сразу получателю, в
     памяти не держатся (ответ тогда пуст, `data_end` — в хвосте).
-    `rulers` — какие линейки считать (умолчание — все);
+    `hold_h` — срок ОКНА прохода (умолчание — срок книги); ячейка может
+    резать его до своего срока политикой (`run_d10`). `rulers` — какие
+    линейки считать (умолчание — все);
     каждый проход по группе пола считает только линейки СВОЕЙ группы —
     так память и время прохода не тратятся на линейку, которую группа
     выбрасывает (06.10). Возвращает ({ключ ячейки: {(линейка, имя,
@@ -193,7 +195,7 @@ def replay_cells(need, cells, src=None, log=print, ckpt_hours=None,
     want = set(rulers) if rulers is not None else None
     if not need:
         return {c[0]: {} for c in cells}, {}
-    was = D11.configure(R.H24_HOLD_H)
+    was = D11.configure(int(hold_h) if hold_h else R.H24_HOLD_H)
     try:
         src = src or TL.TailBars(log=log)
         got = {"recs": {}}

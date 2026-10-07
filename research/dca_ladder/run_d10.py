@@ -309,9 +309,12 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
     "max": n|None, "if_profit": bool, "min_profit": доля|None,
     "floor_frac": доля|None}` либо None — тогда ядро считает как книга.
     `floor_frac` ячейки заменяет пол книги (`D2.FLOOR_FRAC`) — ось пола
-    (замер трёх осей, 06.10). Записи ячейки несут число исполненных
-    доливов полем `adds` и свой пол полем `floor_frac`. Умолчание —
-    прежний счёт.
+    (замер трёх осей, 06.10). `hold_h` ячейки — её СРОК внутри окна
+    прохода (окно читается на `D2.HOLD_H`, ячейка режет его до своего
+    срока включительно, как `split_window`; срок короче окна даёт те же
+    бары и тот же исход бит в бит); `take_events` — переносы цели ядра.
+    Записи ячейки несут `adds`, `floor_frac`, `hold_h`, `take_moves`.
+    Умолчание — прежний счёт.
 
     `rich` добавляет то, что нужно КНИГЕ и не нужно замеру: почасовые
     отметки (из них касса строит дневную кривую и просадку) и заполнения
@@ -371,10 +374,19 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
         pol = adds_of(g, key) if adds_of is not None else None
         kw = ({"adds": list(pol.get("adds") or ()), "adds_max": pol.get("max"),
                "adds_if_profit": bool(pol.get("if_profit")),
-               "adds_min_profit": pol.get("min_profit")} if pol else {})
+               "adds_min_profit": pol.get("min_profit"),
+               "take_events": list(pol.get("take_events") or ())} if pol else {})
         floor = (float(pol["floor_frac"]) if pol and pol.get("floor_frac") is not None
                  else D2.FLOOR_FRAC)
-        r = L.simulate_dca(hold, rungs, w, 1.0, lev, look(1.0 * lev),
+        hold_h = (float(pol["hold_h"]) if pol and pol.get("hold_h") is not None
+                  else float(D2.HOLD_H))
+        hold_c = hold
+        if hold_h < float(D2.HOLD_H):
+            lim = float(g["at"]) + hold_h * HOUR
+            hold_c = [bb for bb in hold if bb[0] <= lim]
+            if len(hold_c) < 2:
+                continue                      # нет баров после входа в этот срок
+        r = L.simulate_dca(hold_c, rungs, w, 1.0, lev, look(1.0 * lev),
                            take_rule=tr, floor_frac=floor,
                            side="short", track=bool(rich),
                            checkpoints=checkpoints, **kw)
@@ -397,10 +409,11 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
             "rr": g.get("rr"), "gates": sorted(gate_of(g)),
             "exit": r["exit"], "marks": marks,
             "ckpt": (r.get("ckpt") if checkpoints else None),
-            "end_ts": float(hold[-1][0]),
-            "sched_end": float(g["at"]) + D2.HOLD_H * HOUR,
+            "end_ts": float(hold_c[-1][0]),
+            "sched_end": float(g["at"]) + hold_h * HOUR,
             "depth": int(r["depth"]), "n_rungs": len(rungs),
             "adds": int(r.get("adds") or 0), "floor_frac": float(floor),
+            "hold_h": hold_h, "take_moves": int(r.get("take_moves") or 0),
             "avg": float(r["avg"]), "entry_px": entry,
             "exit_px": float(r["exit_px"]), "filled": filled,
             "fills": ([[float(a), float(b), float(c)]

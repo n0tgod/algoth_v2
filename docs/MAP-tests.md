@@ -564,7 +564,7 @@
 - L231 `test_reading_is_written_from_numbers()` — Вывод собирается из чисел, а не из надежды.
 - L247 `main()`
 
-## research/dca_ladder/test_ladder.py · 1486 строк
+## research/dca_ladder/test_ladder.py · 1517 строк
 
 Тесты ядра забора — цена ликвидации закреплена таблицей §5 спеки 01.
 
@@ -648,11 +648,12 @@
 - L1326 `test_time_adds_respect_profit_gate_max_and_reserve()` — `adds_if_profit` пропускает кандидата в минусе и берёт следующего; `adds_max` ограничивает число; резерв марж…
 - L1350 `test_time_add_take_level_uses_the_average_of_the_bar_start()` — Уровень тейка бара долива — по ТВХ на его начало; со следующего бара цель едет со средней.
 - L1371 `test_time_adds_min_profit_threshold_gates_candidates()` — Порог прибыли: кандидат исполняется только когда pnl по открытию бара выше порога; порог 0 тождествен `adds_i…
-- L1396 `TESTS = [test_open_mark_equals_the_simulation_p…`
-- L1446 `CONTROLS = [('доливы шорта по правилу лонга', _con…`
-- L1476 `main()`
+- L1396 `test_take_events_move_the_target_from_the_bar_open_and_default_…` — Перенос цели по событию: с бара события цель — неподвижный уровень от его открытия; дальше цель назначается;…
+- L1426 `TESTS = [test_open_mark_equals_the_simulation_p…`
+- L1477 `CONTROLS = [('доливы шорта по правилу лонга', _con…`
+- L1507 `main()`
 
-## research/dca_ladder/test_run_d10.py · 620 строк
+## research/dca_ladder/test_run_d10.py · 668 строк
 
 Проверки замера D10 — короткие DCA-книги: плечо, доливы, цель, гейт.
 
@@ -691,10 +692,11 @@
 - L502 `_control_wrong_side_promise_accepted()`
 - L508 `test_collect_rulers_subset_is_bit_for_bit_and_only_those()` — Проход по подмножеству линеек отдаёт ТОЛЬКО их, записи те же бит в бит, чужую линейку отвергает словами (06.1…
 - L539 `test_cell_policy_floor_and_sink_do_not_retain_records()` — Пол ячейки заменяет пол книги и едет в запись; `sink` отдаёт записи сразу и в памяти не держит, конец записи…
-- L573 `TESTS = [test_cell_policy_floor_and_sink_do_not…`
-- L593 `_control_memory_guard_never_stops()`
-- L598 `CONTROLS = [('сторож памяти не останавливает', _co…`
-- L610 `main()`
+- L573 `test_cell_hold_inside_a_longer_window_matches_the_short_window_…` — Ячейка со сроком 24 ч внутри окна 48 ч считает те же бары, что проход с окном 24 ч: исход, отметки, конец окн…
+- L620 `TESTS = [test_cell_hold_inside_a_longer_window_…`
+- L641 `_control_memory_guard_never_stops()`
+- L646 `CONTROLS = [('сторож памяти не останавливает', _co…`
+- L658 `main()`
 
 ## research/dca_ladder/test_run_d11.py · 112 строк
 
@@ -1462,7 +1464,7 @@
 - L108 `test_verdict_and_report_have_no_holes()`
 - L160 `test_run_both_sides_offline_smoke_on_core_shaped_records()` — Обе стороны проходят свою дорогу кассы целиком на подставных кэшах: короткие — записи ядра `run_d10` (с `pnl_…
 
-## research/dca_paper/test_short.py · 470 строк
+## research/dca_paper/test_short.py · 491 строк
 
 Проверки коротких книг на сигнале h24 и общей статистики.
 
@@ -1483,6 +1485,7 @@
 - L346 `test_short_record_carries_the_promise_from_birth_and_the_cache_…` — Обещание модели (`fav_bp`) едет В ЗАПИСИ короткой позиции и в КЭШЕ.
 - L409 `test_replay_cells_runs_only_the_groups_of_the_asked_rulers()` — `replay_cells(rulers=…)` считает только группы пола этих линеек и только их самих; без фильтра — все группы,…
 - L445 `test_replay_cells_sink_passes_records_through_and_reports_data_…`
+- L458 `test_replay_cells_hold_h_sets_the_pass_window_and_restores_it()`
 
 ## research/dca_paper/test_short_adds.py · 189 строк
 
@@ -1588,6 +1591,20 @@
 - L55 `test_null_uses_all_offsets_of_the_donor()`
 - L76 `test_judge_and_verdict()`
 - L107 `test_end_to_end_with_disk_sink()`
+
+## research/dca_paper/test_short_rung_time.py · 144 строк
+
+Проверки замера «повтор как время»: ячейки из реестра, первый повтор в первые 24 ч, обещание повтора при двух…
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L12 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L23 `H = 3600.0`
+- L24 `AT = 1700000000.0 + 1440 * 60`
+- L27 `_leg(sym, at, fwd=40.0, fav=-500.0, arm='nn')`
+- L33 `test_cells_first_repeat_and_favs()`
+- L47 `test_policies_follow_axes_and_null_takes_the_donor()`
+- L74 `test_judge_requires_book_null_and_blanket()`
+- L101 `test_end_to_end_with_disk_sink_window_48()`
 
 ## research/dca_paper/test_short_size.py · 66 строк
 

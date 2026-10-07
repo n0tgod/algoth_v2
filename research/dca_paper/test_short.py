@@ -455,6 +455,26 @@ def test_replay_cells_sink_passes_records_through_and_reports_data_end():
     print(f"ok  replay_cells с sink: {len(sunk)} записей ушли получателю, ответ пуст, конец записи в хвосте")
 
 
+def test_replay_cells_hold_h_sets_the_pass_window_and_restores_it():
+    import run_d2 as D2
+    lo, at = T9._rise_then_fall()
+    src = T3._Src({"SSSUSDT": lo})
+    legs = T10._legs(at, "SSSUSDT", n=2)
+    seen = []
+
+    class Spy(T3._Src):
+        def bars(self, sym, a, b):
+            seen.append((D2.HOLD_H, round((b - max(g["at"] for g in legs)) / 3600)))
+            return super().bars(sym, a, b)
+    was = D2.HOLD_H
+    out, tail = T10._with_levels(lambda: S.replay_cells(
+        legs, [S.CELL], src=Spy({"SSSUSDT": lo}), log=lambda *a: None, rulers=["optimal_s"], hold_h=48))
+    assert D2.HOLD_H == was and seen and all(h == 48 and span == 48 for h, span in seen), (seen, D2.HOLD_H)
+    recs = list(out[S.CELL[0]].values())
+    assert recs and all(r["hold_h"] == 48.0 and r["sched_end"] == r["at"] + 48 * 3600 for r in recs)
+    print(f"ok  replay_cells(hold_h=48): окно прохода 48 ч ({len(recs)} записей), срок книги после прохода на месте ({was})")
+
+
 if __name__ == "__main__":
     test_cache_signature_follows_the_cell_and_the_hold()
     test_legs_come_from_both_arms_in_time_order()
@@ -467,4 +487,5 @@ if __name__ == "__main__":
     test_short_record_carries_the_promise_from_birth_and_the_cache_keeps_it()
     test_replay_cells_runs_only_the_groups_of_the_asked_rulers()
     test_replay_cells_sink_passes_records_through_and_reports_data_end()
-    print("\nвсе 11 проверок прошли")
+    test_replay_cells_hold_h_sets_the_pass_window_and_restores_it()
+    print("\nвсе 12 проверок прошли")

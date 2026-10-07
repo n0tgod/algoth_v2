@@ -1177,7 +1177,7 @@ def _poison_ladder(lit, sub, fn):
 def _control_take_anchor_ignored():
     """Якорь не читается — тейк всегда от входа."""
     return _poison_ladder(
-        '(entry if take_rule["anchor"] == "entry" else avg_prev)',
+        '(entry if cur_rule["anchor"] == "entry" else avg_prev)',
         "entry",
         test_avg_anchor_follows_the_ladder_and_pays_filled_leverage)
 
@@ -1185,8 +1185,8 @@ def _control_take_anchor_ignored():
 def _control_take_level_uses_this_bar_average():
     """Уровень считается по ТВХ ПОСЛЕ долива этого же бара."""
     return _poison_ladder(
-        '(entry if take_rule["anchor"] == "entry" else avg_prev)',
-        '(entry if take_rule["anchor"] == "entry" else avg)',
+        '(entry if cur_rule["anchor"] == "entry" else avg_prev)',
+        '(entry if cur_rule["anchor"] == "entry" else avg)',
         test_take_level_uses_the_average_at_the_bar_start)
 
 
@@ -1232,8 +1232,8 @@ def _control_short_rungs_fill_by_long_rule():
 def _control_short_take_level_not_mirrored():
     """Уровень цели считается вверх у обеих сторон."""
     return _poison_ladder(
-        '               * (1.0 + d * float(take_rule["frac"])))',
-        '               * (1.0 + float(take_rule["frac"])))',
+        '               * (1.0 + d * float(cur_rule["frac"])))',
+        '               * (1.0 + float(cur_rule["frac"])))',
         test_short_take_rule_walks_with_the_average)
 
 
@@ -1393,6 +1393,36 @@ def test_time_adds_min_profit_threshold_gates_candidates():
           f"7 % → бар {int((r25['fills'][1][0]-bars[0][0])//hour)}, 99 % → без долива")
 
 
+def test_take_events_move_the_target_from_the_bar_open_and_default_is_bit_for_bit():
+    """Перенос цели по событию: с бара события цель — неподвижный уровень от его
+    открытия; дальше цель назначается; без переноса — прежний счёт дословно."""
+    hour = 3600.0
+    # шорт: 100 → 97 за три бара, потом 97 → 94 за три бара
+    path = [100.0, 99.0, 98.0, 97.0, 96.0, 95.0, 94.0]
+    bars = []
+    for i in range(1, len(path)):
+        op, cl = path[i - 1], path[i]
+        bars.append((5_000_000.0 + (i - 1) * hour, op, max(op, cl) + 0.1, min(op, cl) - 0.1, cl, 1000.0))
+    tr = {"anchor": "avg", "frac": 0.02}                       # цель 98.0 → тейк в баре 1 (low 97.9)
+    base = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short", take_rule=tr)
+    same = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short", take_rule=tr, take_events=[])
+    assert base["exit"] == "тейк" and abs(base["exit_px"] - 98.0) < 1e-9, base
+    for k in ("exit", "pnl_frac", "exit_ts", "exit_px", "fills"):
+        assert base[k] == same[k], k
+    assert base["take_moves"] == 0
+    # перенос в баре 1 (откр. 99): новая доля 4 % → уровень 95.04; старая цель 98.0 в этом баре уже не действует
+    mv = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short", take_rule=tr,
+                        take_events=[(bars[1][0], 0.04)])
+    assert mv["take_moves"] == 1 and mv["exit"] == "тейк" and abs(mv["exit_px"] - 99.0 * 0.96) < 1e-9, mv
+    assert mv["exit_ts"] == bars[4][0] and mv["pnl_frac"] > base["pnl_frac"], (mv["exit_ts"], mv["pnl_frac"], base["pnl_frac"])
+    # перенос БЛИЖЕ (доля 0.5 %) — тейк раньше базового уровня
+    near = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short", take_rule=tr,
+                          take_events=[(bars[0][0] + 1.0, 0.005)])
+    assert near["take_moves"] == 1 and near["exit"] == "тейк" and abs(near["exit_px"] - 99.0 * 0.995) < 1e-9, near
+    print(f"ok  перенос цели: 98.00 → {mv['exit_px']:.2f} (тейк в баре {int((mv['exit_ts']-bars[0][0])//hour)}), "
+          f"ближе → {near['exit_px']:.3f}; без переноса бит в бит")
+
+
 TESTS = [
     test_open_mark_equals_the_simulation_pnl,
     test_liq_price_matches_spec5_table,
@@ -1417,6 +1447,7 @@ TESTS = [
     test_time_adds_respect_profit_gate_max_and_reserve,
     test_time_add_take_level_uses_the_average_of_the_bar_start,
     test_time_adds_min_profit_threshold_gates_candidates,
+    test_take_events_move_the_target_from_the_bar_open_and_default_is_bit_for_bit,
     test_ladder_beats_hold_on_recovery,
     test_ladder_partial_fill,
     test_liquidation_on_gap,
