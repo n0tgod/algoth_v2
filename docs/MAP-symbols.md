@@ -2505,6 +2505,39 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L363 `publish(name)`
 - L368 `main(argv=None)`
 
+## research/dca_paper/short_floor.py · 371 строк
+
+Пол капитуляции коротких книг как ОСЬ — ядро лестницы, один проход на группу пола, записи на диск.
+
+- L46 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L47 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L65 `ART = 'DCA-short-floor'`
+- L66 `FLOORS = (0.1, 0.15, 0.25, 0.35, 0.5, 0.65, 0.75)`
+- L67 `MAIN_FLOOR = 0.25`
+- L68 `DEPS = (1000.0, 10000.0, 100000.0)`
+- L69 `MAIN_DEP = 10000.0`
+- L70 `JUDGE = ('optimal_h', 'aggr_h')`
+- L71 `BASE = S.CELL`
+- L72 `BOOK_KEYS = list(S.BOOKS)`
+- L75 `cell_name(f)`
+- L79 `cells_for()`
+- L83 `floor_of_name(name)`
+- L87 `policy(name)` — Пол ячейки — явно у каждой, включая пол книги: окно и ядро глобал не трогают.
+- L92 `adds_of(_g, key)`
+- L96 `book_floor(bk)`
+- L100 `halves(days, dep)` — Две половины окна по ДАТЕ (первая и вторая половина дней кассы): итог, просадка, доход/просадка — формулой ка…
+- L118 `cash_of(cell_recs, ctx, launch, books, now=None)` — Касса ячейки на трёх депозитах по книгам группы + половины окна на $10k.
+- L143 `judge(cash, books)` — Главная ячейка 0.25 против пола книги: $10k, обе половины, все депозиты, обе книги.
+- L166 `verdict(jd)`
+- L182 `part_path(frac, out_dir=None)` — ---------------------------------------------------------------- части и сборка
+- L186 `write_part(part, out_dir=None)`
+- L195 `read_parts(out_dir=None)`
+- L208 `run(limit=None, src=None, log=print, legs_=None, ctx=None, laun…`
+- L258 `assemble(out_dir=None)`
+- L291 `report(s)`
+- L341 `publish(name)`
+- L347 `main(argv=None)`
+
 ## research/dca_paper/short_grid.py · 198 строк
 
 Общая машинерия замеров ОСИ на коротком листе `h24`.

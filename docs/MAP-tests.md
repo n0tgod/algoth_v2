@@ -1521,6 +1521,19 @@
 - L66 `test_age_filter_cuts_the_book_and_control_takes_the_same_count()`
 - L96 `test_supply_separates_a_quiet_sheet_from_a_biting_rule()` — Две тишины различимы числом: подачи нет — или правило режет.
 
+## research/dca_paper/test_short_floor.py · 125 строк
+
+Проверки замера «пол как ось»: ячейки и политики (пол явно у каждой), половины окна формулой кассы, суд (глав…
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L12 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L22 `H = 3600.0`
+- L25 `test_cells_and_policies_carry_the_floor_explicitly()`
+- L36 `test_halves_split_by_date_and_use_the_cash_drawdown()`
+- L47 `_cash(ratio, halves=(2.0, 2.0), deps=(2.0, 2.0, 2.0))`
+- L59 `test_judge_demands_all_three_for_both_books()`
+- L84 `test_end_to_end_with_disk_and_parts()`
+
 ## research/dca_paper/test_short_levcap.py · 193 строк
 
 Проверки замера «потолок плеча у коротких книг».
