@@ -83,3 +83,16 @@ h24/nn: часов 999, коротких выборов 2997, ног под кр
 
 Порядок суда объявлен до прогона: во второй половине у обеих судимых книг взятые хуже невзятых с p ≤ 0.05 — отбор системный, и называется причина с наибольшей массой эджа; иначе — в шуме. Порог возраста книг безопасная 7 сут, оптимальная 7 сут, агрессивная 7 сут; гейт плеча агрессивная 4.0. Правила не менялись, ячейки не выбирались; окно одно.
 
+публикуется в ветку main:
+ jobs/done/short-select-1.done                |  1 +
+ jobs/done/short-select-1.log                 | 85 ++++++++++++++++++++++++++++
+ jobs/poke.log                                |  3 +
+ research/dca_paper/out/DCA-short-select.json |  1 +
+ research/dca_paper/out/DCA-short-select.md   | 64 +++++++++++++++++++++
+ research/s8_loop/out/day_brake.json          |  2 +-
+ 6 files changed, 155 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   35dce1f4..25cc43e9  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-08T11:54:31Z, код 0
