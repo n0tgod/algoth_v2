@@ -180,11 +180,10 @@ struct RatingScreen: View {
                         HStack { Spacer(); ProgressView().tint(.white).padding(40); Spacer() }
                     }
                 }
-                .padding(.horizontal, hsc == .regular ? 24 : 12)
                 .padding(.vertical, 12)
-                .frame(maxWidth: 1100)
-                .frame(maxWidth: .infinity)
+                .pageColumn(hsc == .regular ? 24 : 12, maxWidth: 1100)
             }
+            .pageScroll()
             .refreshable { await m.load() }
             .background(Theme.bg.ignoresSafeArea())
             .navigationTitle("Рейтинг стратегий")

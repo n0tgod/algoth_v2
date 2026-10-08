@@ -380,13 +380,14 @@ struct EquityCurve: View {
             Text(money)
                 .font(.system(size: 20, weight: .heavy, design: .monospaced))
                 .foregroundStyle(tone)
+                .lineLimit(1).minimumScaleFactor(0.6)
             Text(share)
                 .font(.system(size: 12, design: .monospaced))
                 .foregroundStyle(tone)
             Spacer(minLength: 4)
             VStack(alignment: .trailing, spacing: 1) {
-                Text(bal)
-                Text(pos)
+                Text(bal).lineLimit(1).minimumScaleFactor(0.6)
+                Text(pos).lineLimit(1).minimumScaleFactor(0.6)
             }
             .font(.system(size: 11, design: .monospaced))
             .foregroundStyle(Theme.muted)

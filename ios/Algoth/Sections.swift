@@ -29,7 +29,7 @@ struct DaysSection: View {
                         .buttonStyle(.bordered).controlSize(.small)
                     }
                 }
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 10)],
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 280), spacing: 10)],
                           spacing: 10) {
                     ForEach(all.prefix(cut)) { x in dayCard(x) }
                 }
@@ -153,7 +153,7 @@ struct PositionsSection: View {
                 Note(text: "В выбранном состоянии позиций нет. Это измерено, а не "
                      + "пропуск показа: счётчик в переключателе говорит, где они есть.")
             } else {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 320), spacing: 10)],
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 280), spacing: 10)],
                           spacing: 10) {
                     ForEach(win) { p in
                         PosCard(p: p, mark: mark(for: p))
@@ -208,36 +208,37 @@ struct PosCard: View {
             HStack(spacing: 6) {
                 SideChip(side: r["side"].string)
                 Text(r["sym"].text).font(.system(size: 16, weight: .bold))
+                    .lineLimit(1).minimumScaleFactor(0.7)
                 if r["bt"].truthy { Tag(text: "бэктест") }
                 if r["tail"].truthy { Tag(text: "по котировке") }
                 Spacer(minLength: 4)
                 Text(F.usd(money)).font(.system(size: 15, weight: .bold,
                                                 design: .monospaced))
                     .foregroundStyle(tone.color)
+                    .lineLimit(1).minimumScaleFactor(0.7)
             }
             Divider().overlay(Theme.rule)
-            Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 4) {
-                GridRow {
+            // Две колонки РАВНОЙ доли ширины карточки. `Grid` здесь не
+            // годился: он берёт ширину по самому длинному значению («вход
+            // 2026-10-08 18:07») и раздвигал страницу шире экрана.
+            HStack(alignment: .top, spacing: 14) {
+                VStack(alignment: .leading, spacing: 4) {
                     KV(label: "вход", value: F.tsq(r["at"].double))
-                    KV(label: "выход", value: p.live ? F.dash : F.tsq(r["exit_ts"].double))
-                }
-                GridRow {
                     KV(label: "плечо", value: r["lev"].double.map {
                         String(format: "%.2f×", $0) } ?? F.dash)
-                    KV(label: "маржа", value: F.fixed(r["margin"].double, 2, suffix: " $"))
-                }
-                GridRow {
                     KV(label: "цена входа", value: F.px(r["entry_px"].double))
-                    KV(label: "ТВХ", value: F.px(r["avg"].double))
-                }
-                GridRow {
                     KV(label: "выход по", value: p.live ? F.dash : F.px(r["exit_px"].double))
-                    KV(label: "контрактов", value: F.qty(qty))
-                }
-                GridRow {
                     KV(label: "ход", value: F.fpct(frac), tone: frac == nil ? .plain : tone)
+                }
+                .frame(maxWidth: .infinity)
+                VStack(alignment: .leading, spacing: 4) {
+                    KV(label: "выход", value: p.live ? F.dash : F.tsq(r["exit_ts"].double))
+                    KV(label: "маржа", value: F.fixed(r["margin"].double, 2, suffix: " $"))
+                    KV(label: "ТВХ", value: F.px(r["avg"].double))
+                    KV(label: "контрактов", value: F.qty(qty))
                     KV(label: "рунгов", value: String(r["fills"].array.count))
                 }
+                .frame(maxWidth: .infinity)
             }
             HStack(spacing: 6) {
                 stateChip

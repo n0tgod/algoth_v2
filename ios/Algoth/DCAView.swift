@@ -19,11 +19,10 @@ struct DCAView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         content
                     }
-                    .padding(.horizontal, hsc == .regular ? 24 : 12)
                     .padding(.vertical, 12)
-                    .frame(maxWidth: 1500)
-                    .frame(maxWidth: .infinity)
+                    .pageColumn(hsc == .regular ? 24 : 12, maxWidth: 1500)
                 }
+                .pageScroll()
                 .refreshable {
                     await m.load()
                     await m.loadMarks()
@@ -354,6 +353,7 @@ struct BottomBar: View {
                      + (st["final"].isNil ? "" : " (" + F.fpct(st["final"].double) + ")"))
                     .font(.system(size: 14, weight: .bold, design: .monospaced))
                     .foregroundStyle(Tone(st["usd"].double).color)
+                    .lineLimit(1).minimumScaleFactor(0.6)
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text("ОТКРЫТО / МЕСТ").font(.system(size: 9)).tracking(1)
@@ -362,6 +362,7 @@ struct BottomBar: View {
                      + " / " + slotsText(b))
                     .font(.system(size: 14, weight: .bold, design: .monospaced))
                     .foregroundStyle(Theme.ink)
+                    .lineLimit(1).minimumScaleFactor(0.6)
             }
             Spacer()
             Button("журнал") { Haptic.tap(); jump() }.buttonStyle(.bordered).controlSize(.small)

@@ -27,8 +27,10 @@ struct PositionDetail: View {
                         finalLeg(r, walk.last?["qty"].double, short)
                     }
                 }
-                .padding(16)
+                .padding(.vertical, 16)
+                .pageColumn(16)
             }
+            .pageScroll()
             .background(Theme.bg.ignoresSafeArea())
             .task { await cm.load(p: p, book: m.bookKey) }
             .fullScreenCover(isPresented: $full) { TradeChartScreen(p: p, cm: cm) }
@@ -164,8 +166,10 @@ struct IntroView: View {
                            value: r["ONE_PER_NAME"].truthy ? "да" : "нет")
                     }
                 }
-                .padding(16)
+                .padding(.vertical, 16)
+                .pageColumn(16)
             }
+            .pageScroll()
             .background(Theme.bg.ignoresSafeArea())
             .navigationTitle("Что это")
             .navigationBarTitleDisplayMode(.inline)

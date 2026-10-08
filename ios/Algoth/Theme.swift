@@ -12,6 +12,23 @@ enum Haptic {
     }
 }
 
+/// Колонка страницы — ровно по ширине экрана. Ширину задаёт экран, а не
+/// содержимое: без этого один блок шире экрана (на 10 пт) раздвигал всю
+/// страницу, и её можно было таскать вбок (жалоба владельца 08.10).
+/// На iPad колонка не шире `maxWidth` и стоит по центру.
+extension View {
+    func pageColumn(_ pad: CGFloat, maxWidth: CGFloat = .infinity) -> some View {
+        self.padding(.horizontal, pad)
+            .frame(maxWidth: maxWidth)
+            .containerRelativeFrame(.horizontal)
+    }
+
+    /// Вертикальная страница, которая вбок не ездит ни при каком содержимом.
+    func pageScroll() -> some View {
+        self.scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+    }
+}
+
 /// Палитра страницы DCA (макеты владельца): тот же фон, карточки, неон.
 enum Theme {
     static let bg = Color(hex: 0x080a0f)
@@ -236,10 +253,12 @@ struct KV: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(label).font(.system(size: 11)).foregroundStyle(Theme.dim)
+                .lineLimit(1)
             Spacer(minLength: 4)
+            // Значение сжимается шрифтом, а не раздвигает карточку.
             Text(value).font(.system(size: 13, design: .monospaced))
                 .foregroundStyle(tone.color)
-                .multilineTextAlignment(.trailing)
+                .lineLimit(1).minimumScaleFactor(0.6)
         }
     }
 }
