@@ -307,6 +307,9 @@ def judge(hv, null, cash, judge_books=JUDGE, p_limit=P_LIMIT, gap_bp=CASH_GAP_BP
     a, b = hv
     if not a or not b:
         return {"kind": "unmeasured", "why": "половины окна не набираются"}
+    if a.get("edge_xs") is None or b.get("edge_xs") is None:
+        return {"kind": "unmeasured", "why": "кросс-секция не измерена хотя бы в одной половине "
+                                             f"(часов с < {MIN_XS} именами слишком много)"}
     d_xs, d_e = null.get("edge_xs") or {}, null.get("edge") or {}
     fell_xs = (a.get("edge_xs") is not None and b.get("edge_xs") is not None
                and b["edge_xs"] < a["edge_xs"] and d_xs.get("p") is not None and d_xs["p"] <= p_limit)
@@ -354,7 +357,7 @@ def verdict(j):
 # ------------------------------------------------------------ прогон
 
 def run(log=print, legs_=None, names=None, mkt=None, cache=None, ctx=None, launch=None,
-        now=None, seeds=SEEDS, mem_limit=None, hold_h=HOLD_H, with_cash=True):
+        now=None, seeds=SEEDS, mem_limit=None, hold_h=HOLD_H, with_cash=True, min_xs=MIN_XS):
     t0 = time.time()
     log = AB.guarded(log, limit=(G.MEM_LIMIT_MB if mem_limit is None else mem_limit))
     legs_ = S.legs(log=log) if legs_ is None else legs_
@@ -363,7 +366,7 @@ def run(log=print, legs_=None, names=None, mkt=None, cache=None, ctx=None, launc
     names = universe() if names is None else list(names)
     log(f"имён со сводками {len(names)}")
     mkt = W.Market() if mkt is None else mkt
-    rows, hours, miss = measure(decs, mkt, names, hold_h=hold_h, seeds=seeds, log=log)
+    rows, hours, miss = measure(decs, mkt, names, hold_h=hold_h, seeds=seeds, min_xs=min_xs, log=log)
     if not rows:
         return {"error": "ни один выбор не измерен: нет цен в сводках", "miss": miss,
                 "computed_at": G.stamp(), "secs": round(time.time() - t0, 1)}
@@ -387,7 +390,7 @@ def run(log=print, legs_=None, names=None, mkt=None, cache=None, ctx=None, launc
     j = judge(hv, null, cash)
     log(f"вердикт: {verdict(j)}")
     return {"hold_h": hold_h, "seeds": seeds, "p_limit": P_LIMIT, "cash_gap_bp": CASH_GAP_BP,
-            "min_xs": MIN_XS, "dep": MAIN_DEP, "books": list(BOOKS), "judge_books": list(JUDGE),
+            "min_xs": min_xs, "dep": MAIN_DEP, "books": list(BOOKS), "judge_books": list(JUDGE),
             "n_legs": len(legs_), "n_decisions": len(decs), "n_names": len(names), "miss": miss,
             "total": total, "weeks": wk, "halves": hv, "cut": cut, "null": null,
             "cash": cash, "judge": j, "computed_at": G.stamp(), "secs": round(time.time() - t0, 1)}

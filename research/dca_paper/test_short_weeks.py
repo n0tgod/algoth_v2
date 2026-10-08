@@ -168,10 +168,13 @@ def test_end_to_end_report_without_cash_has_every_surface():
         legs = []
         for k in range(0, 24 * 10, 8):
             legs += [_leg(NAMES[8], AT0 + k * H, -20.0, "nn"), _leg(NAMES[9], AT0 + k * H, -15.0, "gbm")]
-        s = SW.run(log=lambda *a: None, legs_=legs, names=NAMES, mkt=mkt, seeds=20, with_cash=False)
+        s = SW.run(log=lambda *a: None, legs_=legs, names=NAMES, mkt=mkt, seeds=20, with_cash=False, min_xs=5)
         assert not s.get("error") and s["n_decisions"] == 60 and s["total"]["n"] == 60
         assert len(s["weeks"]) >= 2 and s["halves"][0]["edge"] > s["halves"][1]["edge"]
         assert s["judge"]["kind"] in ("signal", "market"), s["judge"]      # спад подсажен
+        # кросс-секции нет (имён меньше порога) — вердикт «не измерено», а не «рынок»
+        s2 = SW.run(log=lambda *a: None, legs_=legs, names=NAMES, mkt=mkt, seeds=5, with_cash=False, min_xs=50)
+        assert s2["judge"]["kind"] == "unmeasured" and "кросс-секция" in SW.verdict(s2["judge"]), s2["judge"]
         txt = SW.report(s)
         for must in ("| неделя |", "всё окно", "Половины окна", "Нуль половин", "Вердикт (из чисел)", s["cut"]):
             assert must in txt, must

@@ -2850,7 +2850,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L210 `publish(name)`
 - L216 `main(argv=None)`
 
-## research/dca_paper/short_weeks.py · 500 строк
+## research/dca_paper/short_weeks.py · 503 строк
 
 Эдж коротких выборов h24 по неделям: сигнал ослаб, рынок режет или касса?
 
@@ -2880,18 +2880,18 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L243 `null_halves(rows, cut, seeds=SEEDS, fields=('edge', 'edge_xs'))` — Нуль: метка половины переставляется по ЧАСОВЫМ блокам, число часов в половинах то же. Возвращает на поле: наб…
 - L277 `cash_weeks(cache, ctx, launch, now=None, dep=MAIN_DEP, cut=None)` — Взятые кассой позиции по книгам: неделя входа → число, $ нетто, цена в б.п. нотионала; то же по половинам.
 - L305 `judge(hv, null, cash, judge_books=JUDGE, p_limit=P_LIMIT, gap_b…` — Вердикт из чисел по объявленному порядку.
-- L335 `verdict(j)`
-- L356 `run(log=print, legs_=None, names=None, mkt=None, cache=None, ct…`
-- L398 `_b(x)`
-- L402 `_pc(x)`
-- L406 `_p2(x)`
-- L410 `_usd(x)`
-- L414 `_title(bk)`
-- L418 `_cash_week(s, bk, wk)`
-- L423 `_cash_total(s, bk)`
-- L430 `report(s)`
-- L480 `publish(name)`
-- L486 `main(argv=None)`
+- L338 `verdict(j)`
+- L359 `run(log=print, legs_=None, names=None, mkt=None, cache=None, ct…`
+- L401 `_b(x)`
+- L405 `_pc(x)`
+- L409 `_p2(x)`
+- L413 `_usd(x)`
+- L417 `_title(bk)`
+- L421 `_cash_week(s, bk, wk)`
+- L426 `_cash_total(s, bk)`
+- L433 `report(s)`
+- L483 `publish(name)`
+- L489 `main(argv=None)`
 
 ## research/dca_paper/short_why.py · 358 строк
 
