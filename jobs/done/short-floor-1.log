@@ -381,3 +381,14 @@ h24/nn: часов 986, коротких выборов 2958, ног под кр
 
 Чего замер не делает: правил книг не меняет; окно одно, веса модели эти часы видели; лучшая ячейка кривой правилом не назначается — судится объявленная 0.25; у безопасной пол книги 0.10, её строка печатается, не судится.
 
+публикуется в ветку main:
+ jobs/done/short-floor-1.log                        | 66 ++++++++++++++++++++++
+ .../dca_paper/out/DCA-short-floor-part-0.5.json    |  1 +
+ research/dca_paper/out/DCA-short-floor.json        |  1 +
+ research/dca_paper/out/DCA-short-floor.md          | 40 +++++++++++++
+ 4 files changed, 108 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   92319163..705c337f  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-08T00:29:57Z, код 0
