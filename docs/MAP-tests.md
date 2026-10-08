@@ -1619,6 +1619,23 @@
 - L74 `test_judge_requires_book_null_and_blanket()`
 - L101 `test_end_to_end_with_disk_sink_window_48()`
 
+## research/dca_paper/test_short_select.py · 143 строк
+
+Проверки замера отбора кассы: разметка «взято / причина» в порядке кассы, «имя занято» по времени позиции, по…
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L18 `H = T.H`
+- L19 `AT0 = T.AT0`
+- L20 `DAY = 86400.0`
+- L23 `_dec(sym, at, edge)`
+- L27 `_cache(entries)` — entries: (book, sym, at, lev) → кэш реплея семейства по ключу линейки.
+- L32 `test_reason_follows_cash_order_and_held_name_by_time()`
+- L51 `_labeled(worse_taken, hours=40, per_hour=6, seed=1)` — Решения: в каждом часе `per_hour`, взяты 2; при worse_taken взятые хуже на 150 б.п.
+- L67 `test_null_within_hour_calibration_pair()`
+- L76 `test_half_summary_masses_and_judge_order()`
+- L92 `test_end_to_end_report_on_synthetic_world()`
+- L130 `TESTS = [v for k, v in sorted(globals().items()…`
+
 ## research/dca_paper/test_short_size.py · 66 строк
 
 Проверки замера «билет и плечо забора» безопасной короткой книги.

@@ -2779,6 +2779,42 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L347 `publish(name)`
 - L353 `main(argv=None)`
 
+## research/dca_paper/short_select.py · 366 строк
+
+Отбор кассы коротких книг: какие выборы листа касса НЕ берёт и что они стоят.
+
+- L53 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L54 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L72 `ART = 'DCA-short-select'`
+- L73 `H = SW.H`
+- L74 `HOLD_H = SW.HOLD_H`
+- L75 `SEEDS = 200`
+- L76 `P_LIMIT = 0.05`
+- L77 `MAIN_DEP = SW.MAIN_DEP`
+- L78 `BOOKS = tuple(R.H24_ORDER)`
+- L79 `JUDGE = ('optimal_h', 'aggr_h')`
+- L80 `REASONS = ('возраст', 'нет записи', 'плечо', 'имя…`
+- L81 `TAKEN = 'взято'`
+- L86 `taken_index(rows_by_book)` — Книга → {(имя, час): (at, exit_ts)} взятых позиций.
+- L102 `held_at(taken, sym, at)` — Держит ли книга имя в момент `at` другой позицией (вход раньше, выход позже).
+- L110 `reason_of(dec, bk, taken, cache, launch, min_age, min_lev)` — Взято или первая причина отказа в порядке кассы.
+- L131 `label(rows, cache, rows_by_book, launch, books=BOOKS)` — Каждому измеренному решению листа — полоса возраста и исход по книге.
+- L146 `_agg(xs)`
+- L155 `by_reason(labeled, bk)`
+- L162 `by_band(labeled)`
+- L169 `null_within_hour(labeled, flag_fn, seeds=SEEDS, worse=True)` — Перестановка метки внутри часа. `flag_fn(d)` → True у помеченных. worse=True: p — доля перестановок, где сред…
+- L201 `half_summary(labeled, seeds=SEEDS, books=BOOKS, judge_books=JUD…`
+- L215 `judge(halves, judge_books=JUDGE, p_limit=P_LIMIT)`
+- L237 `verdict(j)`
+- L254 `run(log=print, legs_=None, names=None, mkt=None, cache=None, ct…`
+- L290 `_b(x)`
+- L294 `_pc(x)`
+- L298 `_p2(x)`
+- L302 `_title(bk)`
+- L306 `report(s)`
+- L347 `publish(name)`
+- L353 `main(argv=None)`
+
 ## research/dca_paper/short_size.py · 218 строк
 
 Стабильность безопасной короткой книги: размер билета и плечо забора — кассой.
