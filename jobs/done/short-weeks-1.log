@@ -53,3 +53,25 @@ h24/nn: часов 997, коротких выборов 2991, ног под кр
 
 Порядок суда объявлен до прогона: над кросс-секцией упало с p ≤ 0.05 — сигнал; иначе сырой упал с p ≤ 0.05 — рынок; иначе разрыв взятых кассой против листа расширился на ≥ 5 б.п. у обеих судимых книг — касса; иначе шум. Окно одно, веса модели эти часы видели; замер правил не меняет и ячеек не выбирает.
 
+публикуется в ветку main:
+ jobs/done/short-weeks-1.done                |  1 +
+ jobs/done/short-weeks-1.log                 | 55 +++++++++++++++++++++++++++++
+ jobs/poke.log                               |  3 ++
+ research/dca_paper/out/DCA-short-weeks.json |  1 +
+ research/dca_paper/out/DCA-short-weeks.md   | 33 +++++++++++++++++
+ research/s8_loop/out/day_brake.json         |  2 +-
+ 6 files changed, 94 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+ ! [rejected]          main -> main (fetch first)
+error: failed to push some refs to 'github.com:n0tgod/algoth_v2.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+push не прошёл, подтягиваю ветку и пробую снова 
+(попытка 1 из 4)
+From github.com:n0tgod/algoth_v2
+ * branch              main       -> FETCH_HEAD
+   439be625..f5eabe43  main       -> origin/main
+конец: 2026-10-08T09:46:36Z, код 0
