@@ -1,0 +1,46 @@
+== задание status-floor2 ==
+строка: status
+начало: 2026-10-08T03:04:46Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   74G   71G  51% /
+/dev/sdb        147G   77G   63G  56% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 669148 3821821 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.
+4025097    6569 .venv/bin/python research/b1_book/collect.py --http 8765
+4025155    6557 .venv/bin/python research/s8_loop/train.py
+--- убийства ядра по памяти за сутки ---
+0 (подробно: run tools/memtop.py)
+--- обучение S8 ---
+обучение S8: веса от 2026-10-07 11:47 UTC, 15.3 ч назад (каденция 24, тревога с 36 ч); последний цикл 02:11 UTC: весам 14.4 ч при каденции 24
+--- идущие прогоны ---
+4016590 bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"                     # В git уходит ХВОСТ: зонд печатает прогресс                     # тысячами строк, и целиком он там не нужен.                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"                     tools/publish.sh "job: $(basename "$log" .log)" \                         >> "$log" 2>&1                  _ jobs/done/short-floor-2.log research/dca_paper/short_floor.py --group 0.1
+4016594 .venv/bin/python research/dca_paper/short_floor.py --group 0.1
+4043204 /root/algoth_v2/.venv/bin/python /root/algoth_v2/research/factory/mech_run.py judge 1791427501.695 -- /root/algoth_v2/.venv/bin/python research/factory/run_day.py --tag 1m --no-declare
+4043212 /root/algoth_v2/.venv/bin/python research/factory/run_day.py --tag 1m --no-declare
+4046113 bash -c              nice -n 10 .venv/bin/python research/dca_paper/run_short.py                 >> research/dca_paper/out/short.log 2>&1
+4046115 .venv/bin/python research/dca_paper/run_short.py
+--- статус сбора ---
+{"t": 1791428684.0, "uptime_sec": 6565.4, "rss_mb": 1248, "messages": 21651021, "trades": 1673503, "resets": 0, "last_msg_age_sec": 0.2, "snapshots": 3579880, "snapshot_errors": 1, "last_snap_age_sec": 4.3, "snap_pass_sec": 0.068, "writes": {"book": 3579880, "trades": 1673493, "raw": 105321, "liq": 262, "metrics": 16422}, "write_age_sec": {"book": 4.3, "trades": 20.6, "raw": 10.4, "liq": 49.5, "metrics": 91.1}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.2987, "ask": 0.2989, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0003908, "ask": 0.000391, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1137, "ask": 0.1138, "resets": 0}, "10000NEXUSDT": {"ready": true, "bid"
+--- живой исполнитель ---
+{
+  "at_ms": 1791428682470,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 284.21345292,
+    "equity": 284.21345292
+  }
+}
+конец: 2026-10-08T03:04:47Z
