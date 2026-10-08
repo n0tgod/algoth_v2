@@ -274,30 +274,52 @@ def null_halves(rows, cut, seeds=SEEDS, fields=("edge", "edge_xs")):
 
 # ------------------------------------------------------------ касса
 
-def cash_weeks(cache, ctx, launch, now=None, dep=MAIN_DEP, cut=None):
-    """Взятые кассой позиции по книгам: неделя входа → число, $ нетто,
-    цена в б.п. нотионала; то же по половинам."""
-    packed = AG.packed_short(cache)
-    rows = LC.cash_rows(packed, ctx, launch, now=now, dep=dep)
+def cash_agg(items):
+    """Сводка взятых позиций: число, $ нетто, нотионал, цена позиции в б.п.
+    нотионала (средняя по позициям и взвешенная нотионалом = $ / нотионал),
+    сырой ход имени за срок (та же мера, что у листа) — он отделяет ОТБОР
+    (какие выборы касса взяла) от ВЫХОДОВ и издержек (что с ними стало)."""
+    if not items:
+        return None
+    notl = sum(x["notl"] for x in items)
+    raw = [x["raw_bp"] for x in items if x.get("raw_bp") is not None]
+    return {"n": len(items), "usd": sum(x["usd"] for x in items), "notl": notl,
+            "px_bp": _mean([x["px_bp"] for x in items]),
+            "px_w": (sum(x["usd"] for x in items) / notl * 1e4) if notl > 0 else None,
+            "raw_bp": _mean(raw), "raw_n": len(raw)}
+
+
+def cash_summary(rows_by_book, cut=None, mkt=None, hold_h=HOLD_H):
+    """Взятые позиции по книгам: неделя входа → сводка; то же по половинам."""
     out = {}
     for bk in BOOKS:
         wk, hv = collections.defaultdict(list), [[], []]
-        for r in rows.get(bk) or []:
+        for r in rows_by_book.get(bk) or []:
             try:
                 m, lev, usd, at = float(r["margin"]), float(r["lev"]), float(r["usd"]), float(r["at"])
             except (TypeError, KeyError, ValueError):
                 continue
             if not (m > 0 and lev > 0):
                 continue
-            item = {"usd": usd, "px_bp": usd / (m * lev) * 1e4, "date": date_of(at)}
+            raw = None
+            if mkt is not None and r.get("sym"):
+                mv = mkt.move(r["sym"], at, at + hold_h * H)
+                raw = None if mv is None else -float(mv) * 1e4
+            item = {"usd": usd, "notl": m * lev, "px_bp": usd / (m * lev) * 1e4,
+                    "raw_bp": raw, "date": date_of(at)}
             wk[week_of(at)].append(item)
             if cut:
                 hv[0 if item["date"] < cut else 1].append(item)
-        agg = lambda xs: (None if not xs else {"n": len(xs), "usd": sum(x["usd"] for x in xs),   # noqa: E731
-                                               "px_bp": _mean([x["px_bp"] for x in xs])})
-        out[bk] = {"weeks": {k: agg(v) for k, v in sorted(wk.items())},
-                   "halves": [agg(hv[0]), agg(hv[1])]}
+        out[bk] = {"weeks": {k: cash_agg(v) for k, v in sorted(wk.items())},
+                   "halves": [cash_agg(hv[0]), cash_agg(hv[1])]}
     return out
+
+
+def cash_weeks(cache, ctx, launch, now=None, dep=MAIN_DEP, cut=None, mkt=None, hold_h=HOLD_H):
+    """Касса $dep нетто тем же ядром, что прогон книг, разложенная по неделям."""
+    packed = AG.packed_short(cache)
+    rows = LC.cash_rows(packed, ctx, launch, now=now, dep=dep)
+    return cash_summary(rows, cut=cut, mkt=mkt, hold_h=hold_h)
 
 
 # ------------------------------------------------------------ суд
@@ -314,11 +336,17 @@ def judge(hv, null, cash, judge_books=JUDGE, p_limit=P_LIMIT, gap_bp=CASH_GAP_BP
     fell_xs = (a.get("edge_xs") is not None and b.get("edge_xs") is not None
                and b["edge_xs"] < a["edge_xs"] and d_xs.get("p") is not None and d_xs["p"] <= p_limit)
     fell_e = (b["edge"] < a["edge"] and d_e.get("p") is not None and d_e["p"] <= p_limit)
-    gaps = {}
+    gaps, parts = {}, {}
     for bk in judge_books:
         ch = (cash.get(bk) or {}).get("halves") or [None, None]
         if ch[0] and ch[1] and ch[0].get("px_bp") is not None and ch[1].get("px_bp") is not None:
             gaps[bk] = [ch[0]["px_bp"] - a["edge"], ch[1]["px_bp"] - b["edge"]]
+            # разрыв = отбор (сырой ход взятых − лист) + выходы и издержки (цена позиции − сырой ход взятых)
+            if ch[0].get("raw_bp") is not None and ch[1].get("raw_bp") is not None:
+                parts[bk] = {"select": [ch[0]["raw_bp"] - a["edge"], ch[1]["raw_bp"] - b["edge"]],
+                             "exits": [ch[0]["px_bp"] - ch[0]["raw_bp"], ch[1]["px_bp"] - ch[1]["raw_bp"]],
+                             "px_w": [ch[0].get("px_w"), ch[1].get("px_w")],
+                             "n": [ch[0]["n"], ch[1]["n"]]}
     widened = bool(gaps) and len(gaps) == len(judge_books) and all(
         g[1] < g[0] - gap_bp for g in gaps.values())
     if fell_xs:
@@ -329,7 +357,7 @@ def judge(hv, null, cash, judge_books=JUDGE, p_limit=P_LIMIT, gap_bp=CASH_GAP_BP
         kind = "cash"
     else:
         kind = "noise"
-    return {"kind": kind, "fell_xs": fell_xs, "fell_raw": fell_e, "gaps": gaps,
+    return {"kind": kind, "fell_xs": fell_xs, "fell_raw": fell_e, "gaps": gaps, "parts": parts,
             "widened": widened, "p_xs": d_xs.get("p"), "p_raw": d_e.get("p"),
             "edge": [a["edge"], b["edge"]], "edge_xs": [a.get("edge_xs"), b.get("edge_xs")],
             "wave": [a.get("wave"), b.get("wave")]}
@@ -350,7 +378,13 @@ def verdict(j):
         return "сигнал жив, шорты режет рынок: " + base
     if k == "cash":
         gs = "; ".join(f"{bk} разрыв {f(g[0])} → {f(g[1])}" for bk, g in j["gaps"].items())
-        return "сигнал жив, убивает касса: " + base + f"; разрыв взятых против листа расширился ({gs})"
+        parts = j.get("parts") or {}
+        dec = "; ".join(
+            f"{bk}: отбор {f(v['select'][0])} → {f(v['select'][1])}, выходы и издержки {f(v['exits'][0])} → {f(v['exits'][1])}, "
+            f"позиций {v['n'][0]} → {v['n'][1]}, взвешенная нотионалом цена {f(v['px_w'][0])} → {f(v['px_w'][1])}"
+            for bk, v in parts.items())
+        return ("сигнал жив, убивает касса: " + base + f"; разрыв взятых против листа расширился ({gs})"
+                + (f"; из чего разрыв — {dec}" if dec else ""))
     return "второй половины как режима стенд не видит, разница в шуме: " + base
 
 
@@ -384,7 +418,7 @@ def run(log=print, legs_=None, names=None, mkt=None, cache=None, ctx=None, launc
         if cache:
             ctx = ctx if ctx is not None else CO.context()
             launch = IR.launches() if launch is None else launch
-            cash = cash_weeks(cache, ctx, launch, now=now, cut=cut)
+            cash = cash_weeks(cache, ctx, launch, now=now, cut=cut, mkt=mkt, hold_h=hold_h)
             log("касса посчитана: " + ", ".join(
                 f"{bk} позиций {sum((v or {}).get('n', 0) for v in cash[bk]['weeks'].values())}" for bk in BOOKS))
     j = judge(hv, null, cash)
@@ -456,19 +490,29 @@ def report(s):
               + "".join(f" {_usd(_cash_total(s, bk))} |" for bk in s["books"]))
     a, b = s["halves"]
     L_ += ["", f"## Половины окна (граница {s['cut']}, нуль — перестановка метки половины по часовым блокам, {s['seeds']} перестановок)", "",
-           "| половина | выборов | эдж, б.п. | попаданий | над кросс-секцией | случайные, медиана | волна 24 ч |"
-           + "".join(f" {_title(bk)}: цена взятых, б.п. | $ |" for bk in s["books"]),
-           "|---|--:|--:|--:|--:|--:|--:|" + "--:|--:|" * len(s["books"])]
+           "| половина | выборов | часов | эдж, б.п. | попаданий | над кросс-секцией | случайные, медиана | волна 24 ч |",
+           "|---|--:|--:|--:|--:|--:|--:|--:|"]
     for i, h in enumerate((a, b)):
         if not h:
-            L_.append(f"| {i + 1}-я | — | — | — | — | — | — |" + " — | — |" * len(s["books"]))
+            L_.append(f"| {i + 1}-я | — | — | — | — | — | — | — |")
             continue
-        cells = ""
+        L_.append(f"| {i + 1}-я ({h['from']} … {h['to']}) | {h['n']} | {h['hours']} | {_b(h['edge'])} | {_pc(h['hit'])} | "
+                  f"{_b(h['edge_xs'])} | {_b(h['rand_med'])} | {_b(h['wave'])} |")
+    if s.get("cash"):
+        L_ += ["", "Касса $10k нетто по половинам: «24 ч взятых» — сырой ход взятых позиций той же мерой, что лист (разница с листом есть ОТБОР); "
+                   "«цена позиции» — исход позиции с выходами книги и издержками, б.п. нотионала, средняя по позициям и взвешенная нотионалом ($ / нотионал).", "",
+               "| книга | половина | позиций | $ | нотионал, $ | 24 ч взятых, б.п. | лист, б.п. | отбор | цена позиции, ср. | взвешенная | выходы и издержки |",
+               "|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
         for bk in s["books"]:
-            ch = ((s["cash"].get(bk) or {}).get("halves") or [None, None])[i] or {}
-            cells += f" {_b(ch.get('px_bp'))} | {_usd(ch.get('usd'))} |"
-        L_.append(f"| {i + 1}-я ({h['from']} … {h['to']}) | {h['n']} | {_b(h['edge'])} | {_pc(h['hit'])} | {_b(h['edge_xs'])} | "
-                  f"{_b(h['rand_med'])} | {_b(h['wave'])} |" + cells)
+            for i, h in enumerate((a, b)):
+                ch = ((s["cash"].get(bk) or {}).get("halves") or [None, None])[i]
+                if not ch or not h:
+                    L_.append(f"| {_title(bk)} | {i + 1}-я | — | — | — | — | — | — | — | — | — |")
+                    continue
+                sel = None if ch.get("raw_bp") is None else ch["raw_bp"] - h["edge"]
+                ex = None if ch.get("raw_bp") is None or ch.get("px_bp") is None else ch["px_bp"] - ch["raw_bp"]
+                L_.append(f"| {_title(bk)} | {i + 1}-я | {ch['n']} | {_usd(ch.get('usd'))} | {_usd(ch.get('notl'))} | {_b(ch.get('raw_bp'))} | "
+                          f"{_b(h['edge'])} | {_b(sel)} | {_b(ch.get('px_bp'))} | {_b(ch.get('px_w'))} | {_b(ex)} |")
     nl = s.get("null") or {}
     L_ += ["", "Нуль половин: " + "; ".join(
         f"{'сырой эдж' if f == 'edge' else 'над кросс-секцией'} — разность 1-я − 2-я {_b((nl.get(f) or {}).get('diff'))} б.п., "

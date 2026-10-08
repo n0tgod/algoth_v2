@@ -144,6 +144,39 @@ def _cash(gaps):
             for bk, (px0, px1) in gaps.items()}
 
 
+def test_cash_summary_splits_gap_into_selection_and_exits():
+    with tempfile.TemporaryDirectory() as tmp:
+        _world(tmp, hours=2, fall=lambda k: NAMES[8:10])
+        mkt = _mkt(tmp)
+        rows = {"optimal_h": [
+            # взята упавшая на 2 % (сырой +200), позиция вышла по тейку с +100 б.п. нотионала: маржа 100, плечо 10 → $ +10
+            {"sym": NAMES[8], "at": AT0, "margin": 100.0, "lev": 10.0, "usd": 10.0},
+            # взята стоявшая (сырой 0), позиция −50 б.п.: маржа 200, плечо 5 → $ −5
+            {"sym": NAMES[0], "at": AT0 + H, "margin": 200.0, "lev": 5.0, "usd": -5.0},
+            {"sym": "GHOSTUSDT", "at": AT0 + H, "margin": 100.0, "lev": 1.0, "usd": 1.0},    # без цены: сырой не измерен
+            {"sym": NAMES[1], "at": AT0, "margin": 0.0, "lev": 5.0, "usd": 1.0}]}             # без маржи — мимо
+        cut = SW.date_of(AT0 + H)                        # первая половина — только AT0 (день тот же, граница по дате)
+        c = SW.cash_summary(rows, cut=SW.date_of(AT0 + 48 * H), mkt=mkt)
+        h = c["optimal_h"]["halves"][0]
+        assert h["n"] == 3 and abs(h["usd"] - 6.0) < 1e-9 and abs(h["notl"] - 2100.0) < 1e-9
+        assert abs(h["px_bp"] - (100.0 - 50.0 + 100.0) / 3) < 1e-9          # средняя по позициям
+        assert abs(h["px_w"] - 6.0 / 2100.0 * 1e4) < 1e-9                   # взвешенная нотионалом
+        assert h["raw_n"] == 2 and abs(h["raw_bp"] - 100.0) < 1e-9          # (+200 + 0) / 2, призрак не измерен
+        assert c["optimal_h"]["halves"][1] is None and c["safe_h"]["halves"] == [None, None]
+        assert list(c["optimal_h"]["weeks"]) == [SW.week_of(AT0)]
+        del cut
+    # разложение в суде: отбор и выходы считаются из тех же полей
+    hv = [_half(60, 40), _half(10, 0)]
+    nl = {"edge": {"p": 0.30}, "edge_xs": {"p": 0.40}}
+    cash = {bk: {"halves": [{"n": 5, "usd": 1.0, "px_bp": 50.0, "raw_bp": 55.0, "px_w": 48.0},
+                            {"n": 4, "usd": 1.0, "px_bp": -20.0, "raw_bp": 5.0, "px_w": -25.0}]}
+            for bk in ("optimal_h", "aggr_h")}
+    j = SW.judge(hv, nl, cash)
+    assert j["kind"] == "cash" and j["parts"]["optimal_h"]["select"] == [55.0 - 60, 5.0 - 10]
+    assert j["parts"]["optimal_h"]["exits"] == [50.0 - 55.0, -20.0 - 5.0]
+    assert "отбор" in SW.verdict(j) and "выходы и издержки" in SW.verdict(j)
+
+
 def test_judge_follows_declared_order():
     hv = [_half(60, 40), _half(10, 0)]
     nl = {"edge": {"p": 0.01}, "edge_xs": {"p": 0.01}}

@@ -2850,7 +2850,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L210 `publish(name)`
 - L216 `main(argv=None)`
 
-## research/dca_paper/short_weeks.py · 503 строк
+## research/dca_paper/short_weeks.py · 547 строк
 
 Эдж коротких выборов h24 по неделям: сигнал ослаб, рынок режет или касса?
 
@@ -2878,20 +2878,22 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L229 `cut_date(rows)`
 - L234 `halves(rows, hours, cut=None)`
 - L243 `null_halves(rows, cut, seeds=SEEDS, fields=('edge', 'edge_xs'))` — Нуль: метка половины переставляется по ЧАСОВЫМ блокам, число часов в половинах то же. Возвращает на поле: наб…
-- L277 `cash_weeks(cache, ctx, launch, now=None, dep=MAIN_DEP, cut=None)` — Взятые кассой позиции по книгам: неделя входа → число, $ нетто, цена в б.п. нотионала; то же по половинам.
-- L305 `judge(hv, null, cash, judge_books=JUDGE, p_limit=P_LIMIT, gap_b…` — Вердикт из чисел по объявленному порядку.
-- L338 `verdict(j)`
-- L359 `run(log=print, legs_=None, names=None, mkt=None, cache=None, ct…`
-- L401 `_b(x)`
-- L405 `_pc(x)`
-- L409 `_p2(x)`
-- L413 `_usd(x)`
-- L417 `_title(bk)`
-- L421 `_cash_week(s, bk, wk)`
-- L426 `_cash_total(s, bk)`
-- L433 `report(s)`
-- L483 `publish(name)`
-- L489 `main(argv=None)`
+- L277 `cash_agg(items)` — Сводка взятых позиций: число, $ нетто, нотионал, цена позиции в б.п. нотионала (средняя по позициям и взвешен…
+- L292 `cash_summary(rows_by_book, cut=None, mkt=None, hold_h=HOLD_H)` — Взятые позиции по книгам: неделя входа → сводка; то же по половинам.
+- L318 `cash_weeks(cache, ctx, launch, now=None, dep=MAIN_DEP, cut=None…` — Касса $dep нетто тем же ядром, что прогон книг, разложенная по неделям.
+- L327 `judge(hv, null, cash, judge_books=JUDGE, p_limit=P_LIMIT, gap_b…` — Вердикт из чисел по объявленному порядку.
+- L366 `verdict(j)`
+- L393 `run(log=print, legs_=None, names=None, mkt=None, cache=None, ct…`
+- L435 `_b(x)`
+- L439 `_pc(x)`
+- L443 `_p2(x)`
+- L447 `_usd(x)`
+- L451 `_title(bk)`
+- L455 `_cash_week(s, bk, wk)`
+- L460 `_cash_total(s, bk)`
+- L467 `report(s)`
+- L527 `publish(name)`
+- L533 `main(argv=None)`
 
 ## research/dca_paper/short_why.py · 358 строк
 

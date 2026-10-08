@@ -1656,7 +1656,7 @@
 - L83 `test_cell_stats_applies_the_book_rules_and_writes_nothing()`
 - L101 `test_merge_keeps_cells_of_earlier_runs_and_names_the_missing()` — Ось считается частями — артефакт сливается, а отчёт это говорит.
 
-## research/dca_paper/test_short_weeks.py · 197 строк
+## research/dca_paper/test_short_weeks.py · 230 строк
 
 Проверки замера «эдж коротких выборов по неделям»: склейка рук в одно решение, мера в цене и кросс-секция тог…
 
@@ -1676,9 +1676,10 @@
 - L125 `test_null_halves_calibration_pair_finds_planted_decline_and_is_…`
 - L137 `_half(edge, edge_xs, wave=0.0)`
 - L141 `_cash(gaps)`
-- L147 `test_judge_follows_declared_order()`
-- L164 `test_end_to_end_report_without_cash_has_every_surface()`
-- L184 `TESTS = [v for k, v in sorted(globals().items()…`
+- L147 `test_cash_summary_splits_gap_into_selection_and_exits()`
+- L180 `test_judge_follows_declared_order()`
+- L197 `test_end_to_end_report_without_cash_has_every_surface()`
+- L217 `TESTS = [v for k, v in sorted(globals().items()…`
 
 ## research/dca_paper/test_short_why.py · 158 строк
 
