@@ -2850,6 +2850,49 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L210 `publish(name)`
 - L216 `main(argv=None)`
 
+## research/dca_paper/short_weeks.py · 500 строк
+
+Эдж коротких выборов h24 по неделям: сигнал ослаб, рынок режет или касса?
+
+- L58 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L59 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L75 `ART = 'DCA-short-weeks'`
+- L76 `H = 3600.0`
+- L77 `HOLD_H = int(R.H24_HOLD_H)`
+- L78 `SEEDS = 200`
+- L79 `P_LIMIT = 0.05`
+- L80 `CASH_GAP_BP = 5.0`
+- L81 `MIN_XS = 50`
+- L82 `MAIN_DEP = 10000.0`
+- L83 `BOOKS = tuple(R.H24_ORDER)`
+- L84 `JUDGE = ('optimal_h', 'aggr_h')`
+- L89 `week_of(ts)`
+- L94 `date_of(ts)`
+- L98 `decisions(legs_)` — Одно решение на (имя, час): обе руки в одну секунду — одна запись, остаётся больший |прогноз| (та же склейка,…
+- L114 `universe(root=W.SUMMARY_DIR)`
+- L121 `measure(decs, mkt, names, hold_h=HOLD_H, seeds=SEEDS, min_xs=MI…` — Цена каждого выбора и контроли того же часа.
+- L184 `_mean(xs)`
+- L189 `_median(xs)`
+- L194 `summarize(rows, hours, ats=None)` — Сводка подмножества выборов (и их часов): эдж, попадания, над кросс-секцией, волна, случайные того же размера.
+- L222 `weekly(rows, hours)`
+- L229 `cut_date(rows)`
+- L234 `halves(rows, hours, cut=None)`
+- L243 `null_halves(rows, cut, seeds=SEEDS, fields=('edge', 'edge_xs'))` — Нуль: метка половины переставляется по ЧАСОВЫМ блокам, число часов в половинах то же. Возвращает на поле: наб…
+- L277 `cash_weeks(cache, ctx, launch, now=None, dep=MAIN_DEP, cut=None)` — Взятые кассой позиции по книгам: неделя входа → число, $ нетто, цена в б.п. нотионала; то же по половинам.
+- L305 `judge(hv, null, cash, judge_books=JUDGE, p_limit=P_LIMIT, gap_b…` — Вердикт из чисел по объявленному порядку.
+- L335 `verdict(j)`
+- L356 `run(log=print, legs_=None, names=None, mkt=None, cache=None, ct…`
+- L398 `_b(x)`
+- L402 `_pc(x)`
+- L406 `_p2(x)`
+- L410 `_usd(x)`
+- L414 `_title(bk)`
+- L418 `_cash_week(s, bk, wk)`
+- L423 `_cash_total(s, bk)`
+- L430 `report(s)`
+- L480 `publish(name)`
+- L486 `main(argv=None)`
+
 ## research/dca_paper/short_why.py · 358 строк
 
 Почему у короткой книги такая просадка и откуда минус у агрессивной.

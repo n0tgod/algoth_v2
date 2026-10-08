@@ -1656,6 +1656,30 @@
 - L83 `test_cell_stats_applies_the_book_rules_and_writes_nothing()`
 - L101 `test_merge_keeps_cells_of_earlier_runs_and_names_the_missing()` — Ось считается частями — артефакт сливается, а отчёт это говорит.
 
+## research/dca_paper/test_short_weeks.py · 194 строк
+
+Проверки замера «эдж коротких выборов по неделям»: склейка рук в одно решение, мера в цене и кросс-секция тог…
+
+- L12 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L17 `H = 3600.0`
+- L18 `AT0 = 1786000000.0 - 1786000000.0 % 3600`
+- L19 `NAMES = [f'N{i:02d}USDT' for i in range(12)]`
+- L20 `PROXIES = NAMES[:4]`
+- L23 `_summary(root, prices)` — prices: {sym: {hour_ts: mid_close}} → сводки s8 по дням.
+- L37 `_world(root, hours, fall=None, drift=0.0)` — Цены всем именам на `hours` часов + 24: имена из `fall(h)` падают на 2 % за 24 ч, остальные стоят (плюс общий…
+- L55 `_mkt(root)`
+- L59 `_leg(sym, at, fwd=-20.0, arm='nn')`
+- L63 `test_decisions_merge_two_arms_into_one_with_bigger_forecast()`
+- L71 `test_measure_prices_edge_against_same_hour_cross_section_and_co…`
+- L96 `test_summary_weekly_and_rand_share()`
+- L109 `_rows_for_null(decline, days=16, per_day=3, seed=0)` — Синтетические строки: первая половина эдж +50, вторая +50 − decline, шум по часам.
+- L125 `test_null_halves_calibration_pair_finds_planted_decline_and_is_…`
+- L137 `_half(edge, edge_xs, wave=0.0)`
+- L141 `_cash(gaps)`
+- L147 `test_judge_follows_declared_order()`
+- L164 `test_end_to_end_report_without_cash_has_every_surface()`
+- L181 `TESTS = [v for k, v in sorted(globals().items()…`
+
 ## research/dca_paper/test_short_why.py · 158 строк
 
 Проверки замера «почему у короткой книги просадка».
