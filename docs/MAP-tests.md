@@ -4574,7 +4574,7 @@ X1: исполнитель против подставной биржи.
 - L291 `такт_демона_пишет_статус_и_не_молчит_об_ошибке`
 - L375 `which_python`
 
-## tools/app_api/test_app_api.py · 316 строк
+## tools/app_api/test_app_api.py · 472 строк
 
 Проверки API приложения (спека 15 Y0): конверт открывается только приватной половиной и ломается от подмены;…
 
@@ -4597,7 +4597,10 @@ X1: исполнитель против подставной биржи.
 - L237 `test_http_routing_auth_and_stage_gates()`
 - L270 `test_init_is_idempotent_and_prints_pin()`
 - L280 `test_apple_verify_names_the_audience_and_accepts_listed_ones()`
-- L303 `TESTS = [v for k, v in sorted(globals().items()…`
+- L303 `_ec_pem()`
+- L314 `test_push_key_is_checked_by_signing_and_words_come_from_the_rec…` — Ключ APNs принимается только если им можно подписать; слова пуша — из записи сделки, деньги печатаются, а не…
+- L360 `test_devices_trades_ingest_and_push_chain()` — Журнал исполнителя → запись → пуш на устройства; повтор чтения не дублирует; мёртвый токен выключается; пробн…
+- L459 `TESTS = [v for k, v in sorted(globals().items()…`
 
 ## tools/test_disk_alarm.py · 64 строк
 

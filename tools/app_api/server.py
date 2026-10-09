@@ -31,12 +31,19 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 import db as DBM                                              # noqa: E402
-import sealed                                                 # noqa: E402
+import sealed
+import push as PUSH
+import trades as TRADES                                                 # noqa: E402
 import bybit                                                  # noqa: E402
 
 DEFAULT_SIZING = "compound"     # формат размера по умолчанию — как у бумаги
 SCHEMA = 1
 OUT = os.path.join(HERE, "out")
+# Журналы живого исполнителя по подпискам (спека 15 §7.6, §9): пишет
+# `bot dca` (Y2), читает приём `trades.ingest`; пробные — `_test_<акк>`.
+EXEC_ROOT = os.environ.get("ALGOTH_EXEC_ROOT") or os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "bot", "out", "dca")
+PUSH_TICK_S = 5
 SERVER_IP = "116.203.146.99"
 COLLECTOR = "http://127.0.0.1:8765"
 PAGE_TOKEN = os.path.join(ROOT, "research", "b1_book", "out", "token.txt")
@@ -73,7 +80,8 @@ class App:
     """Логика API без HTTP: её гоняют проверки напрямую."""
 
     def __init__(self, dbpath, pub, operator_token=None, venue=bybit, dca_fetch=None,
-                 apple_verify=None, server_ip=SERVER_IP, max_accounts=MAX_ACCOUNTS):
+                 apple_verify=None, server_ip=SERVER_IP, max_accounts=MAX_ACCOUNTS,
+                 out=None, exec_root=None, sender=None):
         self.db = DBM.DB(dbpath)
         self.pub = pub
         self.operator_token = operator_token
@@ -84,6 +92,9 @@ class App:
         self.max_accounts = max_accounts
         self.rate = RateLimiter()
         self._dca = {"at": 0.0, "data": None}
+        self.out = out or os.path.dirname(dbpath) or "."
+        self.exec_root = exec_root or EXEC_ROOT
+        self.sender = sender or PUSH.Sender(self.out)
 
     # ------------------------------------------------------------ вход
     def auth_operator(self, token, device=None):
@@ -396,6 +407,86 @@ class App:
             return 502, {"error": f"сервер книг не ответил: {e}"}
         return 200, d or {}
 
+    # ------------------------------------------------------------ устройства и пуши (§7.5)
+    def add_device(self, acc, token, env="prod", build=None):
+        tok = str(token or "").strip().lower()
+        if not tok or not all(c in "0123456789abcdef" for c in tok) or len(tok) < 32:
+            return 400, {"error": "токен устройства — hex-строка APNs"}
+        env = env if env in PUSH.HOSTS else "prod"
+        self.db.upsert_device(tok, acc["id"], env, (str(build) if build is not None else None))
+        return 200, {"ok": True, "devices": len(self.db.devices_of(acc["id"]))}
+
+    def list_devices(self, acc):
+        return 200, {"devices": [{"token": d["token"][:8] + "…", "token_tail": d["token"][-6:], "env": d["env"],
+                                  "build": d["build"], "status": d["status"], "last_error": d["last_error"],
+                                  "last_seen": d["last_seen"]} for d in self.db.devices_of(acc["id"], live_only=False)],
+                     "push": PUSH.public_config(self.out)}
+
+    def delete_device(self, acc, token):
+        self.db.drop_device(str(token or "").lower(), acc["id"])
+        return 200, {"ok": True}
+
+    def push_config(self, acc, team_id, key_id, p8, topic=None):
+        if acc["role"] != "operator":
+            return 403, {"error": "ключ APNs задаёт только оператор"}
+        try:
+            r = PUSH.save_config(self.out, team_id, key_id, p8, topic)
+        except ValueError as e:
+            return 400, {"error": str(e)}
+        self.sender._jwt = (0.0, None, None)
+        self.db.event(acc["id"], "push", f"ключ APNs задан: {r['key_id']}, тема {r['topic']}")
+        return 200, {"ok": True, **r}
+
+    def push_test(self, acc):
+        """Пробный пуш на устройства аккаунта — без записи сделки."""
+        devs = self.db.devices_of(acc["id"])
+        if not devs:
+            return 409, {"error": "у аккаунта нет зарегистрированных устройств: откройте приложение и разрешите уведомления"}
+        if PUSH.load_config(self.out) is None:
+            return 409, {"error": "ключ APNs не задан (оператор: Account → Push notifications)"}
+        payload = PUSH.payload_for({"kind": "test", "mode": "test", "reason": "push channel check",
+                                    "subscription_id": "test", "id": None}, book="Algoth")
+        res = []
+        for d in devs:
+            r = self.sender.send(d["token"], d["env"], payload)
+            if r["status"] != 200:
+                self.db.device_failed(d["token"], r["reason"], dead=r["dead"])
+            res.append({"token": d["token"][:8] + "…", "env": d["env"], **r})
+        return 200, {"devices": len(devs), "sent": sum(1 for r in res if r["status"] == 200), "results": res}
+
+    # ------------------------------------------------------------ сделки исполнителя (§7.6)
+    def list_trades(self, acc, since=0, limit=200):
+        try:
+            since, limit = int(since or 0), max(1, min(int(limit or 200), 500))
+        except (TypeError, ValueError):
+            return 400, {"error": "since и limit — числа"}
+        rows = [TRADES.view(r) for r in self.db.trades_of(acc["id"], since=since, limit=limit)]
+        by_mode = {}
+        for r in self.db.c.execute("SELECT mode, COUNT(*) AS n FROM trades WHERE account_id=? GROUP BY mode",
+                                   (acc["id"],)).fetchall():
+            by_mode[r["mode"]] = r["n"]
+        return 200, {"trades": rows, "by_mode": by_mode, "executor_running": False,
+                     "note": ("исполнитель DCA (этап Y2) ещё не запущен: записи вида test — проверка канала, "
+                              "в деньгах не участвуют")}
+
+    def trade_test(self, acc, text=None):
+        """Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой."""
+        if acc["role"] != "operator":
+            return 403, {"error": "пробное событие — только оператор"}
+        sid, ev = TRADES.test_event(self.exec_root, acc["id"], text)
+        n = TRADES.tick(self.db, self.exec_root, self.sender, log=log)
+        row = self.db.c.execute("SELECT * FROM trades WHERE subscription_id=? AND seq=?",
+                                (sid, ev["seq"])).fetchone()
+        return 200, {"ingested": n, "trade": (TRADES.view(row) if row else None)}
+
+    def push_tick(self):
+        """Такт фонового потока: новые строки журналов → записи → пуши."""
+        try:
+            return TRADES.tick(self.db, self.exec_root, self.sender, log=log)
+        except Exception as e:                                  # noqa: BLE001
+            log(f"такт приёма журнала исполнителя: {e}")
+            return 0
+
 
 # ------------------------------------------------------------ HTTP
 
@@ -501,6 +592,23 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self._send(*self.app.events(acc, (q.get("since") or ["0"])[0]))
         if rest == ["books"] and method == "GET":
             return self._send(*self.app.books((q.get("full") or [None])[0]))
+        if rest == ["devices"] and method == "GET":
+            return self._send(*self.app.list_devices(acc))
+        if rest == ["devices"] and method == "POST":
+            return self._send(*self.app.add_device(acc, body.get("token"), body.get("env", "prod"), body.get("build")))
+        if len(rest) == 2 and rest[0] == "devices" and method == "DELETE":
+            return self._send(*self.app.delete_device(acc, rest[1]))
+        if rest == ["push", "config"] and method == "GET":
+            return self._send(200, PUSH.public_config(self.app.out))
+        if rest == ["push", "config"] and method == "POST":
+            return self._send(*self.app.push_config(acc, body.get("team_id"), body.get("key_id"),
+                                                    body.get("p8"), body.get("topic")))
+        if rest == ["push", "test"] and method == "POST":
+            return self._send(*self.app.push_test(acc))
+        if rest == ["trades"] and method == "GET":
+            return self._send(*self.app.list_trades(acc, (q.get("since") or ["0"])[0], (q.get("limit") or ["200"])[0]))
+        if rest == ["trades", "test"] and method == "POST":
+            return self._send(*self.app.trade_test(acc, body.get("text")))
         return self._send(404, {"error": "нет такого адреса"})
 
     def do_GET(self):                                   # noqa: N802
@@ -549,7 +657,7 @@ def main(argv=None):
     import apple                                           # noqa: E402  (сеть — только при входе)
     app = App(os.path.join(out, "app.sqlite"), pub,
               operator_token=read_operator_token(os.path.join(out, "operator_token.txt")),
-              apple_verify=apple.verify)
+              apple_verify=apple.verify, out=out)
     if a.plain:
         srv = make_server(app, port=a.plain, tls_dir=None)
         log(f"API без TLS на {a.plain} (режим проверок)")
@@ -558,7 +666,17 @@ def main(argv=None):
         log(f"API на {a.port} с TLS")
     with open(os.path.join(out, "status.json"), "w", encoding="utf-8") as f:
         json.dump({"started": time.time(), "port": a.plain or a.port, "pid": os.getpid(),
-                   "host": socket.gethostname()}, f)
+                   "host": socket.gethostname(), "exec_root": app.exec_root,
+                   "push": PUSH.public_config(out)}, f)
+
+    def pusher():
+        # журнал исполнителя → записи → пуши, раз в PUSH_TICK_S; падение
+        # такта пишется в лог и не роняет API
+        while True:
+            app.push_tick()
+            time.sleep(PUSH_TICK_S)
+    threading.Thread(target=pusher, name="push-tick", daemon=True).start()
+    log(f"приём журнала исполнителя: {app.exec_root}, пуши {'настроены' if PUSH.load_config(out) else 'без ключа APNs'}")
     srv.serve_forever()
 
 

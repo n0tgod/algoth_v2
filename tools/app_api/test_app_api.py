@@ -300,6 +300,162 @@ def test_apple_verify_names_the_audience_and_accepts_listed_ones():
         assert APPLE.audiences(f) == ["pl.mdsauto.algoth", "pl.other.app"]
 
 
+def _ec_pem():
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+    k = ec.generate_private_key(ec.SECP256R1())
+    priv = k.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+                           serialization.NoEncryption()).decode()
+    pub = k.public_key().public_bytes(serialization.Encoding.PEM,
+                                      serialization.PublicFormat.SubjectPublicKeyInfo).decode()
+    return priv, pub
+
+
+def test_push_key_is_checked_by_signing_and_words_come_from_the_record():
+    """Ключ APNs принимается только если им можно подписать; слова пуша —
+    из записи сделки, деньги печатаются, а не считаются."""
+    import jwt
+    import push as PUSH
+    with tempfile.TemporaryDirectory() as tmp:
+        priv, pub = _ec_pem()
+        try:
+            PUSH.save_config(tmp, "TEAM123456", "KEY1234567", "-----BEGIN PRIVATE KEY-----\nнет\n-----END PRIVATE KEY-----")
+            assert False, "битый ключ принят"
+        except ValueError as e:
+            assert "не подписывает" in str(e)
+        try:
+            PUSH.save_config(tmp, "", "K", priv)
+            assert False
+        except ValueError:
+            pass
+        assert PUSH.load_config(tmp) is None and PUSH.public_config(tmp) == {"configured": False}
+        r = PUSH.save_config(tmp, "TEAM123456", "KEY1234567", priv)
+        assert r["key_id"] == "KEY1234567" and r["topic"] == "pl.mdsauto.algoth" and r["team_id"] == "TEA…"
+        assert oct(os.stat(PUSH.config_path(tmp)).st_mode)[-3:] == "600"
+        cfg = PUSH.load_config(tmp)
+        tok = PUSH.jwt_for(cfg["team_id"], cfg["key_id"], cfg["p8"], now=1_700_000_000)
+        claims = jwt.decode(tok, pub, algorithms=["ES256"])
+        assert claims == {"iss": "TEAM123456", "iat": 1_700_000_000}
+        assert jwt.get_unverified_header(tok)["kid"] == "KEY1234567"
+        assert PUSH.public_config(tmp)["configured"] is True and "p8" not in PUSH.public_config(tmp)
+        # слова
+        t = {"kind": "entry", "mode": "live", "sym": "KAITOUSDT", "side": "long", "margin_usd": 25.0,
+             "lev": 4.0, "px": 1.2345, "subscription_id": "sub_1", "id": 7}
+        pl = PUSH.payload_for(t, book="optimal · 100 $")
+        al = pl["aps"]["alert"]
+        assert al["title"] == "Entry · KAITO long" and al["body"] == "25.00 $ · ×4 · @ 1.2345", al
+        assert al["subtitle"] == "optimal · 100 $" and pl["aps"]["thread-id"] == "sub_1" and pl["trade_id"] == 7
+        r2 = PUSH.payload_for({"kind": "rung", "mode": "dry", "sym": "AUSDT", "side": "long", "margin_usd": 6.25,
+                               "px": 0.9, "avg": 0.95, "depth": "2/4"})
+        assert r2["aps"]["alert"]["title"] == "Averaging [dry] · A long"
+        assert r2["aps"]["alert"]["body"] == "6.25 $ · @ 0.9 · avg 0.95 · rung 2/4"
+        r3 = PUSH.payload_for({"kind": "take", "mode": "live", "sym": "BUSDT", "side": "short", "px": 2.0,
+                               "pnl_usd": 3.21, "pnl_bp": 128.4})
+        assert r3["aps"]["alert"]["body"] == "@ 2 · +3.21 $ · +128 bp", r3
+        assert "subtitle" not in r3["aps"]["alert"]            # нет книги — нет поля, не пустая строка
+        assert set(PUSH.PUSHED_KINDS) >= {"entry", "rung", "take", "floor", "term", "market", "cmd_close",
+                                           "reject", "halt", "mismatch"}
+
+
+def test_devices_trades_ingest_and_push_chain():
+    """Журнал исполнителя → запись → пуш на устройства; повтор чтения не
+    дублирует; мёртвый токен выключается; пробное событие идёт той же
+    дорогой и помечено test; чужая роль не задаёт ключ."""
+    import push as PUSH
+    calls = []
+    answer = {"code": 200, "text": ""}
+
+    def runner(url, headers, body):
+        calls.append((url, headers, json.loads(body)))
+        return answer["code"], answer["text"]
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = os.path.join(tmp, "dca")
+        app, _ = _app(tmp, out=tmp, exec_root=root, sender=SV.PUSH.Sender(tmp, runner=runner))
+        acc = _login(app)
+        # устройство
+        st, r = app.add_device(acc, "ZZZ", "prod", "115")
+        assert st == 400
+        st, r = app.add_device(acc, "ab" * 32, "prod", "115")
+        assert st == 200 and r["devices"] == 1
+        st, r = app.add_device(acc, "AB" * 32, "prod", "116")           # тот же токен — обновление
+        assert st == 200 and r["devices"] == 1
+        st, d = app.list_devices(acc)
+        assert d["devices"][0]["build"] == "116" and d["push"] == {"configured": False}
+        # пуш без ключа — отказ словами
+        st, r = app.push_test(acc)
+        assert st == 409 and "APNs" in r["error"]
+        # ключ задаёт только оператор
+        priv, _pub = _ec_pem()
+        uid = app.db.create_account("user")
+        user = app.db.account(uid)
+        st, r = app.push_config(user, "TEAM123456", "KEY1234567", priv)
+        assert st == 403
+        st, r = app.push_config(acc, "TEAM123456", "KEY1234567", priv)
+        assert st == 200 and r["key_id"] == "KEY1234567"
+        st, r = app.push_test(acc)
+        assert st == 200 and r["sent"] == 1 and r["results"][0]["status"] == 200, r
+        url, headers, body = calls[-1]
+        assert url.endswith("/3/device/" + "ab" * 32) and url.startswith(PUSH.HOSTS["prod"])
+        assert headers["apns-topic"] == "pl.mdsauto.algoth" and headers["authorization"].startswith("bearer ")
+        assert body["aps"]["alert"]["title"] == "Test event [test]"
+        # журнал подписки: ключ и подписка — как в приложении
+        st, k = app.add_key(acc, "bybit", "ABCD1234KEY", SECRET)
+        st, sub = app.add_subscription(acc, k["key_id"], "optimal_h", 1000)
+        sid = sub["subscription_id"]
+        os.makedirs(os.path.join(root, sid))
+        lines = [
+            {"seq": 1, "ts": 1_791_000_000.0, "ev": "entry", "mode": "dry", "sym": "KAITOUSDT", "side": "short",
+             "qty": 80.0, "px": 1.25, "margin_usd": 25.0, "lev": 4.0},
+            "{битая строка",
+            {"seq": 2, "ts": 1_791_000_600.0, "ev": "take_set", "mode": "dry", "sym": "KAITOUSDT", "side": "short",
+             "px": 1.20},
+            {"seq": 3, "ts": 1_791_003_600.0, "ev": "take", "mode": "dry", "sym": "KAITOUSDT", "side": "short",
+             "px": 1.20, "pnl_usd": 3.9, "pnl_bp": 390.0},
+        ]
+        with open(os.path.join(root, sid, "events.jsonl"), "w", encoding="utf-8") as f:
+            for ln in lines:
+                f.write((ln if isinstance(ln, str) else json.dumps(ln)) + "\n")
+        n0 = len(calls)
+        assert app.push_tick() == 3
+        assert len(calls) - n0 == 3                                   # пуш на КАЖДОЕ действие
+        assert app.push_tick() == 0 and len(calls) - n0 == 3          # повтор чтения — ничего
+        st, tr = app.list_trades(acc)
+        assert st == 200 and [t["seq"] for t in tr["trades"]] == [3, 2, 1] and tr["by_mode"] == {"dry": 3}
+        t3 = tr["trades"][0]
+        assert t3["kind"] == "take" and t3["words"] == "Closed at target" and t3["pnl_usd"] == 3.9
+        assert t3["pushed"]["sent"] == 1 and t3["pushed"]["results"][0]["env"] == "prod"
+        # лента по since — только новое
+        st, tr2 = app.list_trades(acc, since=tr["trades"][-1]["id"])
+        assert [t["seq"] for t in tr2["trades"]] == [3, 2]
+        # дописанная строка — новая запись; битые строки не роняют приём
+        with open(os.path.join(root, sid, "events-2026-10-10.jsonl"), "a", encoding="utf-8") as f:
+            f.write(json.dumps({"seq": 4, "ts": 1_791_010_000.0, "ev": "reject", "mode": "dry", "sym": "BUSDT",
+                                "side": "short", "reason": "price cap 30 bp"}) + "\n")
+        assert app.push_tick() == 1
+        assert calls[-1][2]["aps"]["alert"]["body"] == "price cap 30 bp"
+        # мёртвый токен: Apple отвечает 410 — устройство гаснет, следующий пуш его не ждёт
+        answer.update(code=410, text=json.dumps({"reason": "Unregistered"}))
+        st, r = app.push_test(acc)
+        assert st == 200 and r["sent"] == 0 and r["results"][0]["dead"] is True
+        st, d = app.list_devices(acc)
+        assert d["devices"][0]["status"] == "dead" and d["devices"][0]["last_error"] == "Unregistered"
+        answer.update(code=200, text="")
+        st, r = app.push_test(acc)
+        assert st == 409 and "нет зарегистрированных устройств" in r["error"]
+        # пробное событие: только оператор; идёт через журнал, помечено test
+        st, r = app.trade_test(user)
+        assert st == 403
+        app.add_device(acc, "cd" * 32, "sandbox", "116")
+        st, r = app.trade_test(acc, "hello")
+        assert st == 200 and r["ingested"] == 1 and r["trade"]["mode"] == "test" and r["trade"]["kind"] == "test"
+        assert r["trade"]["reason"] == "hello" and r["trade"]["pushed"]["sent"] == 1
+        assert calls[-1][0].startswith(PUSH.HOSTS["sandbox"])
+        st, tr = app.list_trades(acc)
+        assert tr["by_mode"] == {"dry": 4, "test": 1} and tr["executor_running"] is False
+        assert SECRET not in json.dumps(tr)
+
+
 TESTS = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
 
 if __name__ == "__main__":

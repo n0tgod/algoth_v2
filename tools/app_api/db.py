@@ -32,9 +32,27 @@ CREATE TABLE IF NOT EXISTS events (
   id INTEGER PRIMARY KEY AUTOINCREMENT, ts REAL NOT NULL, account_id TEXT,
   kind TEXT NOT NULL, text TEXT NOT NULL, data_json TEXT);
 CREATE TABLE IF NOT EXISTS nonces (nonce TEXT PRIMARY KEY, ts REAL NOT NULL);
+CREATE TABLE IF NOT EXISTS devices (
+  token TEXT PRIMARY KEY, account_id TEXT NOT NULL, env TEXT NOT NULL,
+  build TEXT, created REAL NOT NULL, last_seen REAL NOT NULL,
+  status TEXT NOT NULL DEFAULT 'ok', last_error TEXT);
+CREATE TABLE IF NOT EXISTS trades (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, ts REAL NOT NULL, account_id TEXT NOT NULL,
+  subscription_id TEXT NOT NULL, seq INTEGER NOT NULL, kind TEXT NOT NULL,
+  mode TEXT NOT NULL, sym TEXT, side TEXT, qty REAL, px REAL, margin_usd REAL,
+  lev REAL, avg REAL, depth TEXT, pnl_usd REAL, pnl_bp REAL, reason TEXT,
+  data_json TEXT, pushed_json TEXT, UNIQUE(subscription_id, seq));
+CREATE INDEX IF NOT EXISTS tr_acc ON trades(account_id, id);
 CREATE INDEX IF NOT EXISTS ev_acc ON events(account_id, id);
 """
 SESSION_DAYS = 30
+
+
+def _f(v):
+    try:
+        return None if v is None else float(v)
+    except (TypeError, ValueError):
+        return None
 
 
 def new_id(prefix):
@@ -164,6 +182,58 @@ class DB:
     def events_of(self, acc_id, since=0, limit=200):
         return self.c.execute("SELECT * FROM events WHERE account_id=? AND id>? ORDER BY id LIMIT ?",
                               (acc_id, int(since), int(limit))).fetchall()
+
+    # ------------------------------------------------------------ устройства (пуши)
+    def upsert_device(self, token, acc_id, env, build=None):
+        now = time.time()
+        self.c.execute("""INSERT INTO devices(token,account_id,env,build,created,last_seen,status,last_error)
+                          VALUES(?,?,?,?,?,?,'ok',NULL)
+                          ON CONFLICT(token) DO UPDATE SET account_id=excluded.account_id, env=excluded.env,
+                          build=excluded.build, last_seen=excluded.last_seen, status='ok', last_error=NULL""",
+                       (token, acc_id, env, build, now, now))
+
+    def devices_of(self, acc_id, live_only=True):
+        q = "SELECT * FROM devices WHERE account_id=?" + (" AND status='ok'" if live_only else "")
+        return self.c.execute(q + " ORDER BY created", (acc_id,)).fetchall()
+
+    def device_failed(self, token, why, dead=False):
+        self.c.execute("UPDATE devices SET last_error=?, status=? WHERE token=?",
+                       (str(why)[:200], "dead" if dead else "ok", token))
+
+    def drop_device(self, token, acc_id):
+        self.c.execute("DELETE FROM devices WHERE token=? AND account_id=?", (token, acc_id))
+
+    # ------------------------------------------------------------ сделки исполнителя
+    def add_trade(self, acc_id, sub_id, ev):
+        """Строка журнала исполнителя → запись; повтор (та же подписка и `seq`)
+        молча не дублируется — журнал write-ahead и читается с начала файла."""
+        try:
+            cur = self.c.execute(
+                """INSERT INTO trades(ts,account_id,subscription_id,seq,kind,mode,sym,side,qty,px,margin_usd,
+                   lev,avg,depth,pnl_usd,pnl_bp,reason,data_json)
+                   VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (float(ev.get("ts") or time.time()), acc_id, sub_id, int(ev["seq"]), str(ev["ev"]),
+                 str(ev.get("mode") or "dry"), ev.get("sym"), ev.get("side"), _f(ev.get("qty")),
+                 _f(ev.get("px")), _f(ev.get("margin_usd")), _f(ev.get("lev")), _f(ev.get("avg")),
+                 (None if ev.get("depth") is None else str(ev.get("depth"))), _f(ev.get("pnl_usd")),
+                 _f(ev.get("pnl_bp")), ev.get("reason"), json.dumps(ev, ensure_ascii=False)))
+            return cur.lastrowid
+        except sqlite3.IntegrityError:
+            return None
+
+    def trade(self, tid):
+        return self.c.execute("SELECT * FROM trades WHERE id=?", (tid,)).fetchone()
+
+    def trades_of(self, acc_id, since=0, limit=200):
+        return self.c.execute("SELECT * FROM trades WHERE account_id=? AND id>? ORDER BY id DESC LIMIT ?",
+                              (acc_id, int(since), int(limit))).fetchall()
+
+    def trade_pushed(self, tid, result):
+        self.c.execute("UPDATE trades SET pushed_json=? WHERE id=?", (json.dumps(result, ensure_ascii=False), tid))
+
+    def last_seq(self, sub_id):
+        r = self.c.execute("SELECT MAX(seq) AS m FROM trades WHERE subscription_id=?", (sub_id,)).fetchone()
+        return int(r["m"]) if r and r["m"] is not None else 0
 
     # ------------------------------------------------------------ nonce
     def nonce_once(self, nonce, window=120):
