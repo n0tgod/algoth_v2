@@ -9,3 +9,14 @@ me: 200 {'account_id': 'acc_05bccaa551a6df40', 'role': 'operator', 'email': None
 state: 200, подписок 0, live_enabled False
 ок
 конец: 2026-10-09T17:05:48Z, код 0
+публикуется в ветку main:
+ jobs/done/api-selftest-1.log        | 10 ++++++++++
+ jobs/done/api-selftest-2.done       |  1 +
+ jobs/done/api-selftest-2.log        | 11 +++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 26 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   92909ab4..3ad4e118  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
