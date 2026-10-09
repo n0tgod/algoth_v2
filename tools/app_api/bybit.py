@@ -86,7 +86,9 @@ def position_mode(key, secret, symbols=None, base=BASE):
     (пустая позиция у Bybit тоже несёт positionIdx)."""
     out = {}
     cursor = None
-    for _ in range(20):
+    # Не больше трёх страниц: добавление ключа ждёт этого ответа, а биржа
+    # отдаёт и пустые позиции — полный обход съедал таймаут телефона.
+    for _ in range(3):
         r = _get("/v5/position/list", key, secret,
                  {"category": "linear", "settleCoin": "USDT", "limit": 200,
                   "cursor": cursor}, base=base)
