@@ -102,9 +102,15 @@ class App:
         if self.apple_verify is None:
             return 503, {"error": "вход через Apple не настроен на сервере"}
         try:
-            who = self.apple_verify(identity_token)
+            who = self.apple_verify(identity_token or "")
         except ValueError as e:
+            # Причина — в журнал процесса (без токена): отказ, которого не
+            # видно ни в журнале, ни на телефоне, стоил вечера 09.10.
+            log("вход через Apple отвергнут:", str(e))
             return 401, {"error": str(e)}
+        except Exception as e:                                 # noqa: BLE001
+            log("вход через Apple: сбой проверки:", type(e).__name__, str(e)[:200])
+            return 503, {"error": f"проверка токена Apple не удалась: {type(e).__name__}"}
         acc = self.db.account_by_apple(who["sub"])
         if acc is None and current is not None and not current["apple_sub"]:
             # оператор привязывает свой Apple ID к уже существующему аккаунту
@@ -360,7 +366,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
     server_version = "AlgothAPI/0.1"
 
     def log_message(self, fmt, *a):                       # в журнал — без query и токенов
-        log(self.client_address[0], self.command, self.path.split("?")[0], fmt % a)
+        path = str(getattr(self, "path", "") or "").split("?")[0]
+        log(self.client_address[0], getattr(self, "command", "?"), path, fmt % a)
 
     def _send(self, code, obj):
         body = json.dumps(obj, ensure_ascii=False).encode("utf-8")

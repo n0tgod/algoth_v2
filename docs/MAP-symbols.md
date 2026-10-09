@@ -8607,6 +8607,15 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L64 `operator_token(out)`
 - L76 `main(out=OUT, ip=SERVER_IP)`
 
+## tools/app_api/restart.py · 32 строк
+
+Перезапуск процесса API приложения со свежим кодом (через очередь). Останавливает процесс и сразу поднимает н…
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L14 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L15 `OUT = os.path.join(HERE, 'out')`
+- L18 `main()`
+
 ## tools/app_api/sealed.py · 87 строк
 
 Запечатанный конверт для секретов ключей биржи (спека 15 §7a.2).
@@ -8629,7 +8638,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L17 `call(base, path, body=None, token=None, ctx=None)`
 - L26 `main()`
 
-## tools/app_api/server.py · 507 строк
+## tools/app_api/server.py · 514 строк
 
 HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 
@@ -8653,37 +8662,37 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
   - L74 `App.__init__(self, dbpath, pub, operator_token=None, venue=bybit, d…`
   - L88 `App.auth_operator(self, token, device=None)` — ------------------------------------------------------------ вход
   - L101 `App.auth_apple(self, identity_token, device=None, current=None)`
-  - L128 `App.logout(self, token)`
-  - L132 `App.me(self, acc)`
-  - L137 `App.add_key(self, acc, venue, key, secret)` — ------------------------------------------------------------ ключи
-  - L180 `App._key_view(self, r)`
-  - L187 `App.list_keys(self, acc)`
-  - L190 `App.delete_key(self, acc, kid)`
-  - L203 `App.dca(self)` — ------------------------------------------------------------ книги и ячейки
-  - L209 `App.strategies(self)`
-  - L230 `App.cell_cash(book, deposit)` — Касса ячейки сейчас: депозит плюс накопленный нетто бумаги (§2).
-  - L236 `App.add_subscription(self, acc, key_id, book, deposit)` — ------------------------------------------------------------ подписки
-  - L269 `App.venue_modes(self, k)` — Режим позиций по ключу. Секрет открыть этот процесс НЕ может: режим читается ключом только при добавлении (см…
-  - L276 `App._sub_view(self, s)`
-  - L283 `App.list_subscriptions(self, acc)`
-  - L286 `App.delete_subscription(self, acc, sid)`
-  - L297 `App.state(self, acc)` — ------------------------------------------------------------ состояние
-  - L332 `App.events(self, acc, since)`
-  - L335 `App.books(self, full=None)`
-- L345 `fetch_dca(full=None)`
-- L358 `class Handler`
-  - L362 `Handler.log_message(self, fmt, *a)`
-  - L365 `Handler._send(self, code, obj)`
-  - L374 `Handler._body(self)`
-  - L384 `Handler._acc(self)`
-  - L392 `Handler._route(self, method)`
-  - L447 `Handler.do_GET(self)`
-  - L450 `Handler.do_POST(self)`
-  - L453 `Handler.do_DELETE(self)`
-- L457 `class Server`
-- L462 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
-- L473 `read_operator_token(path)`
-- L481 `main(argv=None)`
+  - L134 `App.logout(self, token)`
+  - L138 `App.me(self, acc)`
+  - L143 `App.add_key(self, acc, venue, key, secret)` — ------------------------------------------------------------ ключи
+  - L186 `App._key_view(self, r)`
+  - L193 `App.list_keys(self, acc)`
+  - L196 `App.delete_key(self, acc, kid)`
+  - L209 `App.dca(self)` — ------------------------------------------------------------ книги и ячейки
+  - L215 `App.strategies(self)`
+  - L236 `App.cell_cash(book, deposit)` — Касса ячейки сейчас: депозит плюс накопленный нетто бумаги (§2).
+  - L242 `App.add_subscription(self, acc, key_id, book, deposit)` — ------------------------------------------------------------ подписки
+  - L275 `App.venue_modes(self, k)` — Режим позиций по ключу. Секрет открыть этот процесс НЕ может: режим читается ключом только при добавлении (см…
+  - L282 `App._sub_view(self, s)`
+  - L289 `App.list_subscriptions(self, acc)`
+  - L292 `App.delete_subscription(self, acc, sid)`
+  - L303 `App.state(self, acc)` — ------------------------------------------------------------ состояние
+  - L338 `App.events(self, acc, since)`
+  - L341 `App.books(self, full=None)`
+- L351 `fetch_dca(full=None)`
+- L364 `class Handler`
+  - L368 `Handler.log_message(self, fmt, *a)`
+  - L372 `Handler._send(self, code, obj)`
+  - L381 `Handler._body(self)`
+  - L391 `Handler._acc(self)`
+  - L399 `Handler._route(self, method)`
+  - L454 `Handler.do_GET(self)`
+  - L457 `Handler.do_POST(self)`
+  - L460 `Handler.do_DELETE(self)`
+- L464 `class Server`
+- L469 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
+- L480 `read_operator_token(path)`
+- L488 `main(argv=None)`
 
 ## tools/diag_cycle.py · 302 строк
 
