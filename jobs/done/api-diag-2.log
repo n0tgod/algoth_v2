@@ -1,0 +1,59 @@
+== задание api-diag-2 ==
+строка: run tools/app_api/diag.py
+начало: 2026-10-09T20:35:49Z
+запускаю: .venv/bin/python tools/app_api/diag.py 
+порт 443: слушает
+status.json: {"started": 1791577936.6234624, "port": 443, "pid": 350218, "host": "ubuntu-8gb-nbg1-2"}
+журнал запросов: строк 50, последние 40:
+  2026-10-09T17:20:19Z 20.115.50.184 GET / "GET / HTTP/1.1" 404 -
+  2026-10-09T17:24:40Z 40.119.40.27 GET /owa/auth/logon.aspx "GET /owa/auth/logon.aspx HTTP/1.1" 404 -
+  2026-10-09T17:42:14Z 18.218.118.203 GET /robots.txt "GET /robots.txt HTTP/1.1" 404 -
+  2026-10-09T18:57:34Z 167.99.203.215 GET /.git/config "GET /.git/config HTTP/1.1" 404 -
+  2026-10-09T20:16:07Z 172.93.215.8 GET /.env "GET /.env HTTP/1.1" 404 -
+  2026-10-09T20:20:01Z 66.132.195.62 GET / "GET / HTTP/1.1" 404 -
+  ----------------------------------------
+  Exception occurred during processing of request from ('66.132.195.62', 59746)
+  Traceback (most recent call last):
+    File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+      self.finish_request(request, client_address)
+    File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+      self.RequestHandlerClass(request, client_address, self)
+    File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+      self.handle()
+    File "/usr/lib/python3.12/http/server.py", line 436, in handle
+      self.handle_one_request()
+    File "/usr/lib/python3.12/http/server.py", line 414, in handle_one_request
+      if not self.parse_request():
+             ^^^^^^^^^^^^^^^^^^^^
+    File "/usr/lib/python3.12/http/server.py", line 316, in parse_request
+      self.send_error(
+    File "/usr/lib/python3.12/http/server.py", line 466, in send_error
+      self.log_error("code %d, message %s", code, message)
+    File "/usr/lib/python3.12/http/server.py", line 568, in log_error
+      self.log_message(format, *args)
+    File "/root/algoth_v2/tools/app_api/server.py", line 363, in log_message
+      log(self.client_address[0], self.command, self.path.split("?")[0], fmt % a)
+                                                ^^^^^^^^^
+  AttributeError: 'Handler' object has no attribute 'path'
+  ----------------------------------------
+  2026-10-09T20:20:17Z 66.132.195.62 GET /sellers.json "GET /sellers.json HTTP/1.1" 404 -
+  2026-10-09T20:27:26Z 185.247.137.114 GET / "GET / HTTP/1.1" 404 -
+  2026-10-09T20:27:34Z 46.125.141.3 POST /api/v1/auth/apple "POST /api/v1/auth/apple HTTP/1.1" 401 -
+  2026-10-09T20:27:48Z 46.125.141.3 POST /api/v1/auth/apple "POST /api/v1/auth/apple HTTP/1.1" 401 -
+  2026-10-09T20:32:16Z API на 443 с TLS
+  2026-10-09T20:35:05Z вход через Apple отвергнут: токен Apple отвергнут: Audience doesn't match
+  2026-10-09T20:35:05Z 46.125.141.3 POST /api/v1/auth/apple "POST /api/v1/auth/apple HTTP/1.1" 401 -
+  2026-10-09T20:35:17Z вход через Apple отвергнут: токен Apple отвергнут: Audience doesn't match
+  2026-10-09T20:35:17Z 46.125.141.3 POST /api/v1/auth/apple "POST /api/v1/auth/apple HTTP/1.1" 401 -
+accounts: 1
+sessions: 0
+exchange_keys: 0
+subscriptions: 0
+events: 2
+аккаунты (без секретов):
+   ('acc_05bccaa551a6df40', 'operator', 0, 'active', '2026-10-09 17:05:46')
+последние события:
+   ('2026-10-09 17:05:46', 'acc_05bccaa551a6df40', 'auth', 'вход оператора')
+   ('2026-10-09 17:05:46', 'acc_05bccaa551a6df40', 'account', 'аккаунт оператора создан')
+LIVE_ENABLED: False
+конец: 2026-10-09T20:35:49Z, код 0
