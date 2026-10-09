@@ -1,0 +1,62 @@
+== задание api-diag-3 ==
+строка: run tools/app_api/diag.py
+начало: 2026-10-09T20:46:37Z
+запускаю: .venv/bin/python tools/app_api/diag.py 
+порт 443: слушает
+status.json: {"started": 1791578239.5392976, "port": 443, "pid": 352550, "host": "ubuntu-8gb-nbg1-2"}
+журнал запросов: строк 64, последние 40:
+      self.handle()
+    File "/usr/lib/python3.12/http/server.py", line 436, in handle
+      self.handle_one_request()
+    File "/usr/lib/python3.12/http/server.py", line 414, in handle_one_request
+      if not self.parse_request():
+             ^^^^^^^^^^^^^^^^^^^^
+    File "/usr/lib/python3.12/http/server.py", line 316, in parse_request
+      self.send_error(
+    File "/usr/lib/python3.12/http/server.py", line 466, in send_error
+      self.log_error("code %d, message %s", code, message)
+    File "/usr/lib/python3.12/http/server.py", line 568, in log_error
+      self.log_message(format, *args)
+    File "/root/algoth_v2/tools/app_api/server.py", line 363, in log_message
+      log(self.client_address[0], self.command, self.path.split("?")[0], fmt % a)
+                                                ^^^^^^^^^
+  AttributeError: 'Handler' object has no attribute 'path'
+  ----------------------------------------
+  2026-10-09T20:20:17Z 66.132.195.62 GET /sellers.json "GET /sellers.json HTTP/1.1" 404 -
+  2026-10-09T20:27:26Z 185.247.137.114 GET / "GET / HTTP/1.1" 404 -
+  2026-10-09T20:27:34Z 46.125.141.3 POST /api/v1/auth/apple "POST /api/v1/auth/apple HTTP/1.1" 401 -
+  2026-10-09T20:27:48Z 46.125.141.3 POST /api/v1/auth/apple "POST /api/v1/auth/apple HTTP/1.1" 401 -
+  2026-10-09T20:32:16Z API на 443 с TLS
+  2026-10-09T20:35:05Z вход через Apple отвергнут: токен Apple отвергнут: Audience doesn't match
+  2026-10-09T20:35:05Z 46.125.141.3 POST /api/v1/auth/apple "POST /api/v1/auth/apple HTTP/1.1" 401 -
+  2026-10-09T20:35:17Z вход через Apple отвергнут: токен Apple отвергнут: Audience doesn't match
+  2026-10-09T20:35:17Z 46.125.141.3 POST /api/v1/auth/apple "POST /api/v1/auth/apple HTTP/1.1" 401 -
+  2026-10-09T20:37:19Z API на 443 с TLS
+  2026-10-09T20:41:58Z 46.125.141.3 POST /api/v1/auth/apple "POST /api/v1/auth/apple HTTP/1.1" 403 -
+  2026-10-09T20:44:57Z 46.125.141.3 POST /api/v1/auth/operator "POST /api/v1/auth/operator HTTP/1.1" 200 -
+  2026-10-09T20:45:35Z 46.125.141.3 GET /api/v1/me "GET /api/v1/me HTTP/1.1" 200 -
+  2026-10-09T20:45:36Z 46.125.141.3 GET /api/v1/keys "GET /api/v1/keys HTTP/1.1" 200 -
+  2026-10-09T20:45:36Z 46.125.141.3 GET /api/v1/strategies "GET /api/v1/strategies HTTP/1.1" 200 -
+  2026-10-09T20:45:36Z 46.125.141.3 GET /api/v1/subscriptions "GET /api/v1/subscriptions HTTP/1.1" 200 -
+  2026-10-09T20:45:36Z 46.125.141.3 GET /api/v1/state "GET /api/v1/state HTTP/1.1" 200 -
+  2026-10-09T20:45:49Z 46.125.141.3 POST /api/v1/auth/apple "POST /api/v1/auth/apple HTTP/1.1" 200 -
+  2026-10-09T20:45:49Z 46.125.141.3 GET /api/v1/me "GET /api/v1/me HTTP/1.1" 200 -
+  2026-10-09T20:45:49Z 46.125.141.3 GET /api/v1/keys "GET /api/v1/keys HTTP/1.1" 200 -
+  2026-10-09T20:45:49Z 46.125.141.3 GET /api/v1/strategies "GET /api/v1/strategies HTTP/1.1" 200 -
+  2026-10-09T20:45:49Z 46.125.141.3 GET /api/v1/subscriptions "GET /api/v1/subscriptions HTTP/1.1" 200 -
+  2026-10-09T20:45:49Z 46.125.141.3 GET /api/v1/state "GET /api/v1/state HTTP/1.1" 200 -
+accounts: 1
+sessions: 2
+exchange_keys: 0
+subscriptions: 0
+events: 5
+аккаунты (без секретов):
+   ('acc_05bccaa551a6df40', 'operator', 1, 'active', '2026-10-09 17:05:46')
+последние события:
+   ('2026-10-09 20:45:49', 'acc_05bccaa551a6df40', 'auth', 'вход через Apple')
+   ('2026-10-09 20:45:49', 'acc_05bccaa551a6df40', 'account', 'Apple ID привязан к аккаунту')
+   ('2026-10-09 20:44:57', 'acc_05bccaa551a6df40', 'auth', 'вход оператора')
+   ('2026-10-09 17:05:46', 'acc_05bccaa551a6df40', 'auth', 'вход оператора')
+   ('2026-10-09 17:05:46', 'acc_05bccaa551a6df40', 'account', 'аккаунт оператора создан')
+LIVE_ENABLED: False
+конец: 2026-10-09T20:46:37Z, код 0

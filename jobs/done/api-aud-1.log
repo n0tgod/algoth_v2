@@ -5,3 +5,13 @@
 аудитория 'algoth' добавлена
 список: ['algoth']
 конец: 2026-10-09T20:40:37Z, код 0
+публикуется в ветку main:
+ jobs/done/api-aud-1.done    |  1 +
+ jobs/done/api-aud-1.log     |  7 +++++++
+ jobs/done/api-restart-2.log | 11 +++++++++++
+ jobs/poke.log               |  3 +++
+ 4 files changed, 22 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   75841b69..042107bd  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
