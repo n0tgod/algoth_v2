@@ -57,3 +57,13 @@ events: 2
    ('2026-10-09 17:05:46', 'acc_05bccaa551a6df40', 'account', 'аккаунт оператора создан')
 LIVE_ENABLED: False
 конец: 2026-10-09T20:30:41Z, код 0
+публикуется в ветку main:
+ jobs/done/api-diag-1.done           |  1 +
+ jobs/done/api-diag-1.log            | 59 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  3 ++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 4 files changed, 64 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   e4e5f795..42e5eb6f  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
