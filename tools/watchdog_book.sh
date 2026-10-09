@@ -174,6 +174,26 @@ if [ -x "$BOT_BIN" ] && [ ! -f "$SHADOW_OFF" ]; then
     fi
 fi
 
+# --- API приложения (спека 15, этап Y0) --------------------------------
+# Поднимается только когда на сервере лежит подготовленное состояние
+# (`run tools/app_api/init.py`: конверты, токен оператора, TLS): без
+# него молчание — состояние, а не поломка. Ключей биржи процесс не
+# видит — только конверты; порт 443.
+API_OUT=tools/app_api/out
+API_STATUS=$API_OUT/status.json
+API_OFF=$API_OUT/API_OFF
+if [ -f "$API_OUT/master.pub" ] && [ -f "$API_OUT/tls/cert.pem" ] && [ ! -f "$API_OFF" ]; then
+    api_restart=""
+    if ! pgrep -f "app_api/server.py" >/dev/null; then
+        api_restart="процесс API не найден"
+    fi
+    if [ -n "$api_restart" ]; then
+        echo "[$(now)] ЗАПУСК API ПРИЛОЖЕНИЯ: $api_restart"
+        mkdir -p "$API_OUT"
+        setsid nohup .venv/bin/python tools/app_api/server.py >> "$API_OUT/server.log" 2>&1 < /dev/null &
+    fi
+fi
+
 # --- место на диске ---------------------------------------------------
 # Запись книги — единственные данные, которых нельзя докачать: архива
 # стакана не существует нигде. Заполненный диск не «замедляет», а

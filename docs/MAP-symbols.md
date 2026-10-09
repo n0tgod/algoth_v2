@@ -8523,6 +8523,160 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L247 `limit_hit()` — Откат на запасную модель — на ДВЕ причины и ровно один раз. Молчаливый перебор моделей превратил бы «роль отр…
 - L260 `model_unsupported()` — Отказ ИМЕННО модели, а не задания: CLI её не знает или не берёт. Условие узкое намеренно — «unsupported» вооб…
 
+## tools/app_api/__init__.py · 5 строк
+
+API приложения Algoth (спека 15 §7, §7a): аккаунты, ключи биржи, подписки на ячейки стратегий, состояние и со…
+
+
+## tools/app_api/apple.py · 46 строк
+
+Sign in with Apple: проверка identity token (JWT RS256) ключами Apple.
+
+- L14 `KEYS_URL = 'https://appleid.apple.com/auth/keys'`
+- L15 `ISSUER = 'https://appleid.apple.com'`
+- L16 `BUNDLE_ID = 'pl.mdsauto.algoth'`
+- L20 `_keys()`
+- L28 `verify(identity_token, audience=BUNDLE_ID, keys=None)` — → {'sub', 'email'} или ValueError словами.
+
+## tools/app_api/bybit.py · 104 строк
+
+Запросы к Bybit V5 от имени ключа аккаунта — только то, что нужно проверкам спеки 15 §7a: права ключа, эквити…
+
+- L15 `BASE = 'https://api.bybit.com'`
+- L16 `RECV = '5000'`
+- L17 `TIMEOUT = 15`
+- L18 `MONEY_MOVING = ('Withdraw', 'AccountTransfer', 'SubMem…`
+- L21 `class VenueError`
+- L25 `_get(path, key, secret, params=None, base=BASE)`
+- L44 `query_api(key, secret, base=BASE)` — Права ключа как их видит биржа: словарь прав, IP-список, только-чтение.
+- L49 `judge_permissions(info, server_ip)` — Из ответа `query-api` — вердикт по правилам §7a.2.
+- L72 `wallet_equity(key, secret, base=BASE)` — Эквити единого счёта в долларах. Нет поля — None, не ноль.
+- L83 `position_mode(key, secret, symbols=None, base=BASE)` — Режим позиций по именам: positionIdx 0 — односторонний, 1/2 — хедж. Возвращает {имя: 'hedge' | 'oneway'} по п…
+
+## tools/app_api/db.py · 176 строк
+
+Хранилище API приложения: SQLite с WAL (спека 15 §7a.1).
+
+- L14 `SCHEMA = <текст, 23 строк>`
+- L37 `SESSION_DAYS = 30`
+- L40 `new_id(prefix)`
+- L44 `token_hash(tok)`
+- L48 `class DB`
+  - L49 `DB.__init__(self, path)`
+  - L65 `DB.accounts_count(self)` — ------------------------------------------------------------ аккаунты
+  - L68 `DB.account(self, acc_id)`
+  - L71 `DB.account_by_apple(self, sub)`
+  - L74 `DB.operator(self)`
+  - L77 `DB.create_account(self, role, apple_sub=None, email=None)`
+  - L83 `DB.link_apple(self, acc_id, sub, email=None)`
+  - L88 `DB.new_session(self, acc_id, device=None)` — ------------------------------------------------------------ сессии
+  - L95 `DB.session(self, tok)`
+  - L104 `DB.drop_session(self, tok)`
+  - L108 `DB.add_key(self, acc_id, venue, prefix, cipher, perms, ip_ok, equi…` — ------------------------------------------------------------ ключи
+  - L117 `DB.keys_of(self, acc_id)`
+  - L121 `DB.key(self, kid, acc_id=None)`
+  - L126 `DB.set_equity(self, kid, equity)`
+  - L129 `DB.revoke_key(self, kid)`
+  - L133 `DB.add_subscription(self, acc_id, key_id, book, deposit, state=Non…` — ------------------------------------------------------------ подписки
+  - L141 `DB.subscriptions_of(self, acc_id)`
+  - L145 `DB.subscription(self, sid, acc_id)`
+  - L149 `DB.subs_on_key(self, key_id, live_only=False)`
+  - L153 `DB.set_sub_state(self, sid, state)`
+  - L156 `DB.close_subscription(self, sid)`
+  - L160 `DB.event(self, acc_id, kind, text, data=None)` — ------------------------------------------------------------ события
+  - L164 `DB.events_of(self, acc_id, since=0, limit=200)`
+  - L169 `DB.nonce_once(self, nonce, window=120)` — ------------------------------------------------------------ nonce
+
+## tools/app_api/init.py · 88 строк
+
+Разовая подготовка API на сервере: пара конвертов, токен оператора, самоподписанный сертификат. Существующее…
+
+- L19 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L23 `OUT = os.path.join(HERE, 'out')`
+- L24 `SERVER_IP = '116.203.146.99'`
+- L27 `certgen(tls_dir, ip=SERVER_IP, days=825)`
+- L57 `spki_pin(cert)`
+- L64 `operator_token(out)`
+- L76 `main(out=OUT, ip=SERVER_IP)`
+
+## tools/app_api/sealed.py · 87 строк
+
+Запечатанный конверт для секретов ключей биржи (спека 15 §7a.2).
+
+- L20 `MAGIC = b'ASB1'`
+- L21 `INFO = b'algoth-app-api sealed v1'`
+- L24 `keygen()` — (приватный PEM, публичный raw 32 байта).
+- L35 `_kdf(shared, eph_pub, pub)`
+- L40 `seal(pub, plaintext)`
+- L51 `open_box(priv_pem, blob)`
+- L65 `write_keypair(dirpath)` — Пара на диск: приватная — 600, публичная — рядом. Существующую не трогает: перезапись приватного ключа сделал…
+- L82 `read_pub(dirpath)`
+
+## tools/app_api/selftest.py · 64 строк
+
+Самопроверка API на сервере: процесс жив, TLS отвечает, вход оператора работает, книги читаются. Печатает сло…
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L14 `OUT = os.path.join(HERE, 'out')`
+- L17 `call(base, path, body=None, token=None, ctx=None)`
+- L26 `main()`
+
+## tools/app_api/server.py · 507 строк
+
+HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
+
+- L30 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L31 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L37 `SCHEMA = 1`
+- L38 `OUT = os.path.join(HERE, 'out')`
+- L39 `SERVER_IP = '116.203.146.99'`
+- L40 `COLLECTOR = 'http://127.0.0.1:8765'`
+- L41 `PAGE_TOKEN = os.path.join(ROOT, 'research', 'b1_book…`
+- L42 `MAX_ACCOUNTS = 1`
+- L43 `EQUITY_TTL = 60.0`
+- L44 `RATE = {'read': (60, 60.0), 'write': (10, 60.0…`
+- L45 `STAGE_NOT_BUILT = 'этап не построен: команды и перевод в …`
+- L46 `PAIR_PREFIX = 'pair_'`
+- L49 `log(*a)`
+- L53 `class RateLimiter`
+  - L54 `RateLimiter.__init__(self)`
+  - L58 `RateLimiter.allow(self, who, kind)`
+- L71 `class App` — Логика API без HTTP: её гоняют проверки напрямую.
+  - L74 `App.__init__(self, dbpath, pub, operator_token=None, venue=bybit, d…`
+  - L88 `App.auth_operator(self, token, device=None)` — ------------------------------------------------------------ вход
+  - L101 `App.auth_apple(self, identity_token, device=None, current=None)`
+  - L128 `App.logout(self, token)`
+  - L132 `App.me(self, acc)`
+  - L137 `App.add_key(self, acc, venue, key, secret)` — ------------------------------------------------------------ ключи
+  - L180 `App._key_view(self, r)`
+  - L187 `App.list_keys(self, acc)`
+  - L190 `App.delete_key(self, acc, kid)`
+  - L203 `App.dca(self)` — ------------------------------------------------------------ книги и ячейки
+  - L209 `App.strategies(self)`
+  - L230 `App.cell_cash(book, deposit)` — Касса ячейки сейчас: депозит плюс накопленный нетто бумаги (§2).
+  - L236 `App.add_subscription(self, acc, key_id, book, deposit)` — ------------------------------------------------------------ подписки
+  - L269 `App.venue_modes(self, k)` — Режим позиций по ключу. Секрет открыть этот процесс НЕ может: режим читается ключом только при добавлении (см…
+  - L276 `App._sub_view(self, s)`
+  - L283 `App.list_subscriptions(self, acc)`
+  - L286 `App.delete_subscription(self, acc, sid)`
+  - L297 `App.state(self, acc)` — ------------------------------------------------------------ состояние
+  - L332 `App.events(self, acc, since)`
+  - L335 `App.books(self, full=None)`
+- L345 `fetch_dca(full=None)`
+- L358 `class Handler`
+  - L362 `Handler.log_message(self, fmt, *a)`
+  - L365 `Handler._send(self, code, obj)`
+  - L374 `Handler._body(self)`
+  - L384 `Handler._acc(self)`
+  - L392 `Handler._route(self, method)`
+  - L447 `Handler.do_GET(self)`
+  - L450 `Handler.do_POST(self)`
+  - L453 `Handler.do_DELETE(self)`
+- L457 `class Server`
+- L462 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
+- L473 `read_operator_token(path)`
+- L481 `main(argv=None)`
+
 ## tools/diag_cycle.py · 302 строк
 
 Почему молчит цикл обучения: хвост журнала и состояние манифеста.
@@ -8848,7 +9002,7 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 488 строк
+## tools/watchdog_book.sh · 508 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 
