@@ -8587,6 +8587,14 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
   - L164 `DB.events_of(self, acc_id, since=0, limit=200)`
   - L169 `DB.nonce_once(self, nonce, window=120)` — ------------------------------------------------------------ nonce
 
+## tools/app_api/diag.py · 58 строк
+
+Диагностика API приложения на сервере, только чтение: слушает ли порт, хвост журнала запросов (адрес, метод,…
+
+- L16 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L17 `OUT = os.path.join(HERE, 'out')`
+- L20 `main()`
+
 ## tools/app_api/init.py · 88 строк
 
 Разовая подготовка API на сервере: пара конвертов, токен оператора, самоподписанный сертификат. Существующее…
