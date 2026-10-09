@@ -1,0 +1,7 @@
+== задание api-deps ==
+строка: run tools/venv_add.py cryptography PyJWT
+начало: 2026-10-09T17:01:11Z
+запускаю: .venv/bin/python tools/venv_add.py cryptography PyJWT
+пакет cryptography: версия 50.0.2
+пакет PyJWT: версия 2.15.1
+конец: 2026-10-09T17:01:13Z, код 0
