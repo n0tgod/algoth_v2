@@ -1,0 +1,64 @@
+== задание api-diag-5 ==
+строка: run tools/app_api/diag.py
+начало: 2026-10-09T22:37:46Z
+запускаю: .venv/bin/python tools/app_api/diag.py 
+порт 443: слушает
+status.json: {"started": 1791585434.6822753, "port": 443, "pid": 381959, "host": "ubuntu-8gb-nbg1-2", "exec_root": "/root/algoth_v2/bot/out/dca", "push": {"configured": false}}
+журнал запросов: строк 166, последние 40:
+  2026-10-09T22:20:15Z 46.125.141.3 GET /api/v1/state "GET /api/v1/state HTTP/1.1" 200 -
+  2026-10-09T22:21:20Z 18.97.5.42 GET / "GET / HTTP/1.1" 404 -
+  ----------------------------------------
+  Exception occurred during processing of request from ('18.97.5.42', 32882)
+  Traceback (most recent call last):
+    File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+      self.finish_request(request, client_address)
+    File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+      self.RequestHandlerClass(request, client_address, self)
+    File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+      self.handle()
+    File "/usr/lib/python3.12/http/server.py", line 436, in handle
+      self.handle_one_request()
+    File "/usr/lib/python3.12/http/server.py", line 404, in handle_one_request
+      self.raw_requestline = self.rfile.readline(65537)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/usr/lib/python3.12/socket.py", line 707, in readinto
+      return self._sock.recv_into(b)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+    File "/usr/lib/python3.12/ssl.py", line 1252, in recv_into
+      return self.read(nbytes, buffer)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/usr/lib/python3.12/ssl.py", line 1104, in read
+      return self._sslobj.read(len, buffer)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ssl.SSLError: [SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] sslv3 alert handshake failure (_ssl.c:2570)
+  ----------------------------------------
+  2026-10-09T22:23:50Z 66.132.224.94 GET / "GET / HTTP/1.1" 404 -
+  2026-10-09T22:23:52Z 66.132.224.94 None  code 505, message Invalid HTTP version (2.0)
+  2026-10-09T22:23:52Z 66.132.224.94 None  "PRI * HTTP/2.0" 505 -
+  2026-10-09T22:24:31Z 66.132.224.94 GET /sitemap.xml "GET /sitemap.xml HTTP/1.1" 404 -
+  2026-10-09T22:27:54Z 91.231.89.204 GET / "GET / HTTP/1.1" 404 -
+  2026-10-09T22:34:34Z 167.71.22.65 GET /.env "GET /.env HTTP/1.1" 404 -
+  2026-10-09T22:34:35Z 167.71.22.65 GET /.env.bak "GET /.env.bak HTTP/1.1" 404 -
+  2026-10-09T22:34:36Z 167.71.22.65 GET /.env.backup "GET /.env.backup HTTP/1.1" 404 -
+  2026-10-09T22:34:38Z 167.71.22.65 GET /app/.env "GET /app/.env HTTP/1.1" 404 -
+  2026-10-09T22:34:39Z 167.71.22.65 GET /.env.production "GET /.env.production HTTP/1.1" 404 -
+  2026-10-09T22:34:40Z 167.71.22.65 GET /src/.env "GET /src/.env HTTP/1.1" 404 -
+  2026-10-09T22:37:14Z API на 443 с TLS
+  2026-10-09T22:37:14Z приём журнала исполнителя: /root/algoth_v2/bot/out/dca, пуши без ключа APNs
+accounts: 1
+sessions: 2
+exchange_keys: 1
+subscriptions: 1
+events: 7
+аккаунты (без секретов):
+   ('acc_05bccaa551a6df40', 'operator', 1, 'active', '2026-10-09 17:05:46')
+последние события:
+   ('2026-10-09 21:55:14', 'acc_05bccaa551a6df40', 'subscription', 'подписка pair_aggr на 100 $ (сухой режим)')
+   ('2026-10-09 21:11:04', 'acc_05bccaa551a6df40', 'key', 'ключ AgSF… добавлен')
+   ('2026-10-09 20:45:49', 'acc_05bccaa551a6df40', 'auth', 'вход через Apple')
+   ('2026-10-09 20:45:49', 'acc_05bccaa551a6df40', 'account', 'Apple ID привязан к аккаунту')
+   ('2026-10-09 20:44:57', 'acc_05bccaa551a6df40', 'auth', 'вход оператора')
+   ('2026-10-09 17:05:46', 'acc_05bccaa551a6df40', 'auth', 'вход оператора')
+   ('2026-10-09 17:05:46', 'acc_05bccaa551a6df40', 'account', 'аккаунт оператора создан')
+LIVE_ENABLED: False
+конец: 2026-10-09T22:37:46Z, код 0
