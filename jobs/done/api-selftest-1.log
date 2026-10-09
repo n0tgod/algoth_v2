@@ -1,0 +1,7 @@
+== задание api-selftest-1 ==
+строка: run tools/app_api/selftest.py
+начало: 2026-10-09T17:03:09Z
+запускаю: .venv/bin/python tools/app_api/selftest.py 
+status.json нет — процесс API не стартовал ни разу
+API не отвечает на https://127.0.0.1:443: <urlopen error [Errno 111] Connection refused>
+конец: 2026-10-09T17:03:09Z, код 1
