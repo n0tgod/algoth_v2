@@ -8528,6 +8528,15 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 API приложения Algoth (спека 15 §7, §7a): аккаунты, ключи биржи, подписки на ячейки стратегий, состояние и со…
 
 
+## tools/app_api/add_audience.py · 39 строк
+
+Добавить допустимую аудиторию токена Apple (Bundle ID приложения) в `out/apple_audiences.txt` на сервере. Сер…
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L14 `PATH = os.path.join(HERE, 'out', 'apple_audien…`
+- L15 `OK = re.compile('^[A-Za-z0-9._-]{1,120}$')`
+- L18 `main(argv)`
+
 ## tools/app_api/apple.py · 68 строк
 
 Sign in with Apple: проверка identity token (JWT RS256) ключами Apple.
