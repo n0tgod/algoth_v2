@@ -1,0 +1,6 @@
+== задание api-restart-3 ==
+строка: run tools/app_api/restart.py
+начало: 2026-10-09T21:16:05Z
+запускаю: .venv/bin/python tools/app_api/restart.py 
+порт 443: слушает
+конец: 2026-10-09T21:16:10Z, код 0
