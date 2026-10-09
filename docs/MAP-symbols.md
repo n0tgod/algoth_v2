@@ -8649,7 +8649,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L17 `call(base, path, body=None, token=None, ctx=None)`
 - L26 `main()`
 
-## tools/app_api/server.py · 514 строк
+## tools/app_api/server.py · 540 строк
 
 HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 
@@ -8681,29 +8681,31 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
   - L196 `App.delete_key(self, acc, kid)`
   - L209 `App.dca(self)` — ------------------------------------------------------------ книги и ячейки
   - L215 `App.strategies(self)`
-  - L236 `App.cell_cash(book, deposit)` — Касса ячейки сейчас: депозит плюс накопленный нетто бумаги (§2).
-  - L242 `App.add_subscription(self, acc, key_id, book, deposit)` — ------------------------------------------------------------ подписки
-  - L275 `App.venue_modes(self, k)` — Режим позиций по ключу. Секрет открыть этот процесс НЕ может: режим читается ключом только при добавлении (см…
-  - L282 `App._sub_view(self, s)`
-  - L289 `App.list_subscriptions(self, acc)`
-  - L292 `App.delete_subscription(self, acc, sid)`
-  - L303 `App.state(self, acc)` — ------------------------------------------------------------ состояние
-  - L338 `App.events(self, acc, since)`
-  - L341 `App.books(self, full=None)`
-- L351 `fetch_dca(full=None)`
-- L364 `class Handler`
-  - L368 `Handler.log_message(self, fmt, *a)`
-  - L372 `Handler._send(self, code, obj)`
-  - L381 `Handler._body(self)`
-  - L391 `Handler._acc(self)`
-  - L399 `Handler._route(self, method)`
-  - L454 `Handler.do_GET(self)`
-  - L457 `Handler.do_POST(self)`
-  - L460 `Handler.do_DELETE(self)`
-- L464 `class Server`
-- L469 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
-- L480 `read_operator_token(path)`
-- L488 `main(argv=None)`
+  - L238 `App.paper_cash(book, deposit)` — Касса БУМАЖНОЙ книги сейчас: депозит плюс её накопленный нетто.
+  - L248 `App.ticket_of(book, deposit)` — Билет ячейки (маржа одной позиции на стартовом депозите), $.
+  - L259 `App.sub_cash(s, st)` — Касса ПОДПИСКИ: стартовый депозит плюс реализованный нетто её собственных живых позиций (`realized_usd` в сос…
+  - L267 `App.add_subscription(self, acc, key_id, book, deposit)` — ------------------------------------------------------------ подписки
+  - L300 `App.venue_modes(self, k)` — Режим позиций по ключу. Секрет открыть этот процесс НЕ может: режим читается ключом только при добавлении (см…
+  - L307 `App._sub_view(self, s)`
+  - L314 `App.list_subscriptions(self, acc)`
+  - L317 `App.delete_subscription(self, acc, sid)`
+  - L328 `App.state(self, acc)` — ------------------------------------------------------------ состояние
+  - L364 `App.events(self, acc, since)`
+  - L367 `App.books(self, full=None)`
+- L377 `fetch_dca(full=None)`
+- L390 `class Handler`
+  - L394 `Handler.log_message(self, fmt, *a)`
+  - L398 `Handler._send(self, code, obj)`
+  - L407 `Handler._body(self)`
+  - L417 `Handler._acc(self)`
+  - L425 `Handler._route(self, method)`
+  - L480 `Handler.do_GET(self)`
+  - L483 `Handler.do_POST(self)`
+  - L486 `Handler.do_DELETE(self)`
+- L490 `class Server`
+- L495 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
+- L506 `read_operator_token(path)`
+- L514 `main(argv=None)`
 
 ## tools/diag_cycle.py · 302 строк
 

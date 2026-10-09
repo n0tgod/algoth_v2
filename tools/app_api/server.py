@@ -227,16 +227,41 @@ class App:
                 b = (d.get("books") or {}).get(f"{key}:{int(float(dep))}") or {}
                 cells.append({"book": key, "deposit": float(dep), "side": side,
                               "title": (r.get("title") if isinstance(r, dict) else None) or key,
-                              "cash_usd": self.cell_cash(b, float(dep)),
+                              # касса БУМАГИ — справка: подписка стартует с депозита (§2)
+                              "paper_cash_usd": self.paper_cash(b, float(dep)),
+                              "ticket_usd": self.ticket_of(b, float(dep)),
                               "final": ((b.get("all") or {}).get("final")),
                               "n": ((b.get("all") or {}).get("n"))})
         return 200, {"cells": cells, "stale": d.get("stale"), "window": d.get("window")}
 
     @staticmethod
-    def cell_cash(book, deposit):
-        """Касса ячейки сейчас: депозит плюс накопленный нетто бумаги (§2)."""
+    def paper_cash(book, deposit):
+        """Касса БУМАЖНОЙ книги сейчас: депозит плюс её накопленный нетто.
+
+        Справочное число, не требование к счёту: подписка стартует со
+        стартового депозита ячейки (решение владельца 2026-10-09, §2),
+        и её касса растёт только её собственными живыми результатами."""
         usd = (book.get("all") or {}).get("usd")
         return None if usd is None else float(deposit) + float(usd)
+
+    @staticmethod
+    def ticket_of(book, deposit):
+        """Билет ячейки (маржа одной позиции на стартовом депозите), $."""
+        t = book.get("ticket")
+        if isinstance(t, dict):
+            t = t.get(str(int(deposit)))
+        try:
+            return None if t is None else float(t)
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def sub_cash(s, st):
+        """Касса ПОДПИСКИ: стартовый депозит плюс реализованный нетто её
+        собственных живых позиций (`realized_usd` в состоянии; Y0 — 0).
+        Размер живой позиции — доля ЭТОЙ кассы, та же доля, которой бумага
+        берёт от своего счёта (билет / депозит), §2."""
+        return float(s["deposit"]) + float(st.get("realized_usd") or 0.0)
 
     # ------------------------------------------------------------ подписки
     def add_subscription(self, acc, key_id, book, deposit):
@@ -307,7 +332,8 @@ class App:
             k = self.db.key(s["key_id"])
             st = json.loads(s["state_json"] or "{}")
             b = (d.get("books") or {}).get(f"{s['book']}:{int(s['deposit'])}") or {}
-            cash = self.cell_cash(b, s["deposit"])
+            cash = self.sub_cash(s, st)
+            paper = self.paper_cash(b, s["deposit"])
             equity = k["equity_usd"] if k else None
             eq_age = (time.time() - k["equity_at"]) if (k and k["equity_at"]) else None
             warnings = list(st.get("warnings") or [])
@@ -315,14 +341,14 @@ class App:
             if equity is not None and cash is not None:
                 equity_ok = equity >= cash
                 if not equity_ok:
-                    warnings.append(f"на счёте {equity:,.0f} $, стратегия требует {cash:,.0f} $ — входов не будет")
-            elif cash is None:
-                warnings.append("касса ячейки не измерена: книга без строк или сервер книг не отвечает")
+                    warnings.append(f"на счёте {equity:,.0f} $, подписка требует {cash:,.0f} $ — входов не будет")
             else:
                 warnings.append("эквити счёта не прочитано")
             subs.append({"subscription_id": s["id"], "book": s["book"], "deposit": s["deposit"],
                          "mode": s["mode"], "side": st.get("side"),
-                         "cash_usd": cash, "equity_usd": equity, "equity_age_s": eq_age,
+                         "cash_usd": cash, "realized_usd": float(st.get("realized_usd") or 0.0),
+                         "paper_cash_usd": paper, "ticket_usd": self.ticket_of(b, s["deposit"]),
+                         "equity_usd": equity, "equity_age_s": eq_age,
                          "equity_ok": equity_ok,
                          "idle_usd": (None if equity is None or cash is None else max(0.0, equity - cash)),
                          "shortfall_usd": (None if equity is None or cash is None else max(0.0, cash - equity)),

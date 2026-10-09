@@ -170,8 +170,8 @@ def test_subscriptions_cells_hedge_warning_and_state():
         st, cells = app.strategies()
         assert st == 200 and len(cells["cells"]) == 9
         c = next(x for x in cells["cells"] if x["book"] == "optimal_h" and x["deposit"] == 1000.0)
-        assert c["side"] == "short" and abs(c["cash_usd"] - 1123.4) < 1e-9
-        assert next(x for x in cells["cells"] if x["book"] == "optimal" and x["deposit"] == 10000.0)["cash_usd"] is None
+        assert c["side"] == "short" and abs(c["paper_cash_usd"] - 1123.4) < 1e-9
+        assert next(x for x in cells["cells"] if x["book"] == "optimal" and x["deposit"] == 10000.0)["paper_cash_usd"] is None
         st, k = app.add_key(acc, "bybit", "ABCD1234KEY", SECRET)
         kid = k["key_id"]
         st, r = app.add_subscription(acc, kid, "optimal_h", 7777)
@@ -188,10 +188,17 @@ def test_subscriptions_cells_hedge_warning_and_state():
         st, stt = app.state(acc)
         subs = {x["book"]: x for x in stt["subscriptions"]}
         a = subs["optimal_h"]
-        assert a["cash_usd"] == 1123.4 and a["equity_usd"] == 1100.0 and a["equity_ok"] is False
-        assert abs(a["shortfall_usd"] - 23.4) < 1e-9 and any("стратегия требует" in w for w in a["warnings"])
+        # касса подписки — стартовый депозит, не касса бумаги (решение 2026-10-09)
+        assert a["cash_usd"] == 1000.0 and a["paper_cash_usd"] == 1123.4 and a["realized_usd"] == 0.0
+        assert a["equity_usd"] == 1100.0 and a["equity_ok"] is True and a["idle_usd"] == 100.0
         b = subs["pair_optimal"]
-        assert b["cash_usd"] == 980.0 and b["equity_ok"] is True and b["idle_usd"] == 120.0
+        assert b["cash_usd"] == 1000.0 and b["paper_cash_usd"] == 980.0 and b["equity_ok"] is True
+        # живой реализованный результат подписки двигает ЕЁ кассу
+        app.db.set_sub_state(a["subscription_id"], {"side": "short", "realized_usd": 150.0})
+        st, stt = app.state(acc)
+        a2 = {x["book"]: x for x in stt["subscriptions"]}["optimal_h"]
+        assert a2["cash_usd"] == 1150.0 and a2["equity_ok"] is False
+        assert abs(a2["shortfall_usd"] - 50.0) < 1e-9 and any("подписка требует" in w for w in a2["warnings"])
         assert b["hedge_mode"] == "off" and a["min_order_share"] is None
         assert stt["live_enabled"] is False and len(stt["events_tail"]) >= 3
         st, ev = app.events(acc, 0)

@@ -4573,7 +4573,7 @@ X1: исполнитель против подставной биржи.
 - L291 `такт_демона_пишет_статус_и_не_молчит_об_ошибке`
 - L375 `which_python`
 
-## tools/app_api/test_app_api.py · 296 строк
+## tools/app_api/test_app_api.py · 303 строк
 
 Проверки API приложения (спека 15 Y0): конверт открывается только приватной половиной и ломается от подмены;…
 
@@ -4592,11 +4592,11 @@ X1: исполнитель против подставной биржи.
 - L125 `_login(app)`
 - L130 `test_key_add_rejects_money_moving_and_readonly_warns_on_ip_and_…`
 - L166 `test_subscriptions_cells_hedge_warning_and_state()`
-- L205 `_http(port, method, path, body=None, token=None)`
-- L217 `test_http_routing_auth_and_stage_gates()`
-- L250 `test_init_is_idempotent_and_prints_pin()`
-- L260 `test_apple_verify_names_the_audience_and_accepts_listed_ones()`
-- L283 `TESTS = [v for k, v in sorted(globals().items()…`
+- L212 `_http(port, method, path, body=None, token=None)`
+- L224 `test_http_routing_auth_and_stage_gates()`
+- L257 `test_init_is_idempotent_and_prints_pin()`
+- L267 `test_apple_verify_names_the_audience_and_accepts_listed_ones()`
+- L290 `TESTS = [v for k, v in sorted(globals().items()…`
 
 ## tools/test_disk_alarm.py · 64 строк
 
