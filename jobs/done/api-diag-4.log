@@ -1,0 +1,63 @@
+== задание api-diag-4 ==
+строка: run tools/app_api/diag.py
+начало: 2026-10-09T21:49:08Z
+запускаю: .venv/bin/python tools/app_api/diag.py 
+порт 443: слушает
+status.json: {"started": 1791582458.7724793, "port": 443, "pid": 367694, "host": "ubuntu-8gb-nbg1-2"}
+журнал запросов: строк 105, последние 40:
+  2026-10-09T20:50:15Z 46.125.141.3 GET /api/v1/keys "GET /api/v1/keys HTTP/1.1" 200 -
+  2026-10-09T20:50:20Z 46.125.141.3 GET /api/v1/strategies "GET /api/v1/strategies HTTP/1.1" 200 -
+  2026-10-09T20:50:20Z 46.125.141.3 GET /api/v1/subscriptions "GET /api/v1/subscriptions HTTP/1.1" 200 -
+  2026-10-09T20:50:20Z 46.125.141.3 GET /api/v1/state "GET /api/v1/state HTTP/1.1" 200 -
+  2026-10-09T21:08:40Z 46.125.141.3 POST /api/v1/keys "POST /api/v1/keys HTTP/1.1" 400 -
+  2026-10-09T21:09:19Z 46.125.141.3 POST /api/v1/keys "POST /api/v1/keys HTTP/1.1" 400 -
+  2026-10-09T21:09:22Z 46.125.141.3 POST /api/v1/keys "POST /api/v1/keys HTTP/1.1" 400 -
+  2026-10-09T21:11:04Z 46.125.141.3 POST /api/v1/keys "POST /api/v1/keys HTTP/1.1" 200 -
+  2026-10-09T21:11:05Z 46.125.141.3 GET /api/v1/me "GET /api/v1/me HTTP/1.1" 200 -
+  2026-10-09T21:11:05Z 46.125.141.3 GET /api/v1/keys "GET /api/v1/keys HTTP/1.1" 200 -
+  2026-10-09T21:11:25Z 46.125.141.3 GET /api/v1/strategies Request timed out: TimeoutError('timed out')
+  2026-10-09T21:12:29Z 185.77.221.73 GET / "GET / HTTP/1.1" 404 -
+  2026-10-09T21:12:29Z 185.77.221.73 GET /cdn-cgi/trace "GET /cdn-cgi/trace HTTP/1.1" 404 -
+  2026-10-09T21:15:44Z 46.125.141.3 GET /api/v1/me "GET /api/v1/me HTTP/1.1" 200 -
+  2026-10-09T21:15:45Z 46.125.141.3 GET /api/v1/keys "GET /api/v1/keys HTTP/1.1" 200 -
+  2026-10-09T21:15:46Z 46.125.141.3 GET /api/v1/strategies "GET /api/v1/strategies HTTP/1.1" 200 -
+  2026-10-09T21:15:46Z 46.125.141.3 GET /api/v1/subscriptions "GET /api/v1/subscriptions HTTP/1.1" 200 -
+  2026-10-09T21:15:46Z 46.125.141.3 GET /api/v1/state "GET /api/v1/state HTTP/1.1" 200 -
+  2026-10-09T21:16:08Z API на 443 с TLS
+  2026-10-09T21:24:30Z 46.125.141.3 GET /api/v1/me "GET /api/v1/me HTTP/1.1" 200 -
+  2026-10-09T21:24:31Z 46.125.141.3 GET /api/v1/keys "GET /api/v1/keys HTTP/1.1" 200 -
+  2026-10-09T21:24:31Z 46.125.141.3 GET /api/v1/strategies "GET /api/v1/strategies HTTP/1.1" 200 -
+  2026-10-09T21:24:31Z 46.125.141.3 GET /api/v1/subscriptions "GET /api/v1/subscriptions HTTP/1.1" 200 -
+  2026-10-09T21:24:31Z 46.125.141.3 GET /api/v1/state "GET /api/v1/state HTTP/1.1" 200 -
+  2026-10-09T21:32:38Z 46.125.141.3 GET /api/v1/me "GET /api/v1/me HTTP/1.1" 200 -
+  2026-10-09T21:32:39Z 46.125.141.3 GET /api/v1/keys "GET /api/v1/keys HTTP/1.1" 200 -
+  2026-10-09T21:32:43Z 46.125.141.3 GET /api/v1/strategies "GET /api/v1/strategies HTTP/1.1" 200 -
+  2026-10-09T21:32:43Z 46.125.141.3 GET /api/v1/subscriptions "GET /api/v1/subscriptions HTTP/1.1" 200 -
+  2026-10-09T21:32:43Z 46.125.141.3 GET /api/v1/state "GET /api/v1/state HTTP/1.1" 200 -
+  2026-10-09T21:39:51Z 46.125.141.3 GET /api/v1/me "GET /api/v1/me HTTP/1.1" 200 -
+  2026-10-09T21:39:51Z 46.125.141.3 GET /api/v1/keys "GET /api/v1/keys HTTP/1.1" 200 -
+  2026-10-09T21:39:52Z 46.125.141.3 GET /api/v1/strategies "GET /api/v1/strategies HTTP/1.1" 200 -
+  2026-10-09T21:39:52Z 46.125.141.3 GET /api/v1/subscriptions "GET /api/v1/subscriptions HTTP/1.1" 200 -
+  2026-10-09T21:39:52Z 46.125.141.3 GET /api/v1/state "GET /api/v1/state HTTP/1.1" 200 -
+  2026-10-09T21:42:32Z 46.125.141.3 GET /api/v1/me "GET /api/v1/me HTTP/1.1" 200 -
+  2026-10-09T21:42:32Z 46.125.141.3 GET /api/v1/keys "GET /api/v1/keys HTTP/1.1" 200 -
+  2026-10-09T21:42:33Z 46.125.141.3 GET /api/v1/strategies "GET /api/v1/strategies HTTP/1.1" 200 -
+  2026-10-09T21:42:33Z 46.125.141.3 GET /api/v1/subscriptions "GET /api/v1/subscriptions HTTP/1.1" 200 -
+  2026-10-09T21:42:33Z 46.125.141.3 GET /api/v1/state "GET /api/v1/state HTTP/1.1" 200 -
+  2026-10-09T21:47:38Z API на 443 с TLS
+accounts: 1
+sessions: 2
+exchange_keys: 1
+subscriptions: 0
+events: 6
+аккаунты (без секретов):
+   ('acc_05bccaa551a6df40', 'operator', 1, 'active', '2026-10-09 17:05:46')
+последние события:
+   ('2026-10-09 21:11:04', 'acc_05bccaa551a6df40', 'key', 'ключ AgSF… добавлен')
+   ('2026-10-09 20:45:49', 'acc_05bccaa551a6df40', 'auth', 'вход через Apple')
+   ('2026-10-09 20:45:49', 'acc_05bccaa551a6df40', 'account', 'Apple ID привязан к аккаунту')
+   ('2026-10-09 20:44:57', 'acc_05bccaa551a6df40', 'auth', 'вход оператора')
+   ('2026-10-09 17:05:46', 'acc_05bccaa551a6df40', 'auth', 'вход оператора')
+   ('2026-10-09 17:05:46', 'acc_05bccaa551a6df40', 'account', 'аккаунт оператора создан')
+LIVE_ENABLED: False
+конец: 2026-10-09T21:49:08Z, код 0
