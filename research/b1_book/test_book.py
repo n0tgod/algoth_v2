@@ -7808,9 +7808,22 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
               "Дублей нет." in page and "НЕ ПРОВЕРЯЛОСЬ" in page
               and "dupLine(b.dups)" in page,
               "нет разметки правила одной на имя")
-        check("DCA: книга ключуется линейкой и депозитом",
-              set(bs) == {f"{k}:1000" for k in DR.order_of("sit")},
-              str(sorted(bs)))
+        # две оси у книги: линейка и депозит, плюс формат размера у сестры
+        # фиксированного билета (решение владельца 2026-10-09)
+        want = {DR.cell_key(k, 1000, z) for k in DR.order_of("sit")
+                for z in DR.SIZINGS}
+        check("DCA: книга ключуется линейкой, депозитом и форматом размера",
+              set(bs) == want, str(sorted(bs)))
+        check("DCA: ключ сложного процента прежний, сестра — с хвостом",
+              all(f"{k}:1000" in bs and f"{k}:1000:fixed" in bs
+                  for k in DR.order_of("sit"))
+              and all(bs[f"{k}:1000"].get("sizing") == "compound"
+                      and bs[f"{k}:1000:fixed"].get("sizing") == "fixed"
+                      for k in DR.order_of("sit")),
+              str({k: b.get("sizing") for k, b in bs.items()}))
+        check("DCA: страница несёт вкладку формата размера",
+              'id="sztabs"' in page and "dcaSetSizing" in page
+              and "bookKey()" in page, "нет вкладки формата размера")
         # Список сделок ОДИН, и бэктест в нём помечен: кривая книги не
         # делится (решение владельца 2026-09-04), а числа групп стоят
         # рядом отдельно. Два списка означали бы два источника одной

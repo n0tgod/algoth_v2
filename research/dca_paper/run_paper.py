@@ -187,10 +187,11 @@ def _key(r):
     return f"{int(r['at'])}:{r['sym']}"
 
 
-def _cell(ruler, dep):
-    """Ключ книги: линейка и депозит. Одно решение живёт в обеих книгах,
-    и склеив их одним ключом, мы потеряли бы вторую целиком."""
-    return f"{ruler}:{int(dep)}"
+def _cell(ruler, dep, sizing=R.DEFAULT_SIZING):
+    """Ключ книги: линейка, депозит и формат размера (`rules.cell_key`).
+    Одно решение живёт во всех книгах, и склеив их одним ключом, мы
+    потеряли бы остальные целиком."""
+    return R.cell_key(ruler, dep, sizing)
 
 
 def age_shorts(shorts, pk, launch=None, log=print, now=None):
@@ -420,7 +421,11 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
         plan = [(dict(r, exit_ts=float(r.get("sched_end") or r["exit_ts"]))
                  if r.get("state") in ("open", "cut") else r)
                 for r in keep]
-        for dep in R.DEPOSITS:
+        # Два формата размера у КАЖДОЙ ячейки (решение владельца
+        # 2026-10-09): сложный процент и фиксированный билет. Решения
+        # одни, раздача кассы разная — и это РАЗНЫЕ книги: своя строка
+        # журнала, свой ключ ячейки, свой список открытых.
+        for dep, sizing in ((d, z) for d in R.DEPOSITS for z in R.SIZINGS):
             rows = []
             # Доля счёта — ПО ИСТОЧНИКУ записи: у общего счёта стороны
             # входят каждая своим билетом, а касса одна. Билет стороны
@@ -430,7 +435,8 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
             c = D6.ration(plan, (lambda r, _d=dep, _rk=rk:
                                  R.share_in(_rk, r.get("book") or _rk, _d)),
                           deposit=dep,
-                          min_notional=R.MIN_NOTIONAL, keep_rows=rows)
+                          min_notional=R.MIN_NOTIONAL, keep_rows=rows,
+                          sizing=sizing)
             c["slots"] = R.slots(dep, rk)
             op, cut = [], []
             for (r, margin) in rows:
@@ -463,6 +469,11 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
                         # и он ступенчатый — якорь у цели плавающая ТВХ
                         "fav_bp": r.get("fav_bp"),
                         "written_at": now, "rules": R.RULES}
+                    # формат размера — ТОЛЬКО у фиксированного билета:
+                    # журнал сложного процента формы не меняет, и строка
+                    # без поля читается прежним форматом (`sizing_of`)
+                    if sizing != R.DEFAULT_SIZING:
+                        row["sizing"] = sizing
                     # книга-источник пишется только там, где она НЕ равна
                     # книге строки: у обычной книги это было бы лишним
                     # полем в каждой строке журнала
@@ -503,12 +514,13 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
                         "state": st}
                 (op if st == "open" else cut).append(item)
             c["open_n"], c["cut_n"] = len(op), len(cut)
-            cells[_cell(rk, dep)] = c
-            live[_cell(rk, dep)] = {
+            cells[_cell(rk, dep, sizing)] = c
+            live[_cell(rk, dep, sizing)] = {
                 "positions": op, "cut": cut,
                 "mark_usd": round(sum(x["mark_usd"] for x in op), 2),
-                "priced": len(op), "at": now}
-            log(f"  депозит ${dep:,.0f}: мест {c['slots']}, "
+                "priced": len(op), "at": now, "sizing": sizing}
+            log(f"  депозит ${dep:,.0f}, {R.SIZING_TITLE[sizing]}: "
+                f"мест {c['slots']}, "
                 f"взято {c['taken']}, нет кассы {c['no_cash']}, "
                 f"мельче ${R.MIN_NOTIONAL:g} {c['too_small']}, "
                 f"открытых {len(op)}, оборванных записью {len(cut)}")
@@ -529,6 +541,28 @@ def append_journal(rows, path=None, log=print):
     живой журнал.
     """
     path = path or R.JOURNAL
+    # Формат размера — СВОЙ журнал (`rules.fixed_twin`): строки
+    # фиксированного билета в общем журнале удвоили бы книгу у каждого
+    # читателя, фильтрующего по линейке и депозиту.
+    by = {}
+    for r in rows:
+        by.setdefault(R.sizing_of(r), []).append(r)
+    if set(by) - {R.DEFAULT_SIZING} or not by:
+        tot = {"had": 0, "added": 0, "bad": 0, "shards": 0, "by_sizing": {}}
+        for z in R.SIZINGS:
+            if z not in by and z != R.DEFAULT_SIZING:
+                continue
+            p = path if z == R.DEFAULT_SIZING else R.fixed_twin(path)
+            st = _append_one(by.get(z) or [], p, log=log, what=R.SIZING_TITLE[z])
+            tot["by_sizing"][z] = st
+            for k in ("had", "added", "bad", "shards"):
+                tot[k] += st[k]
+        return tot
+    return _append_one(rows, path, log=log)
+
+
+def _append_one(rows, path, log=print, what=None):
+    """Дописать строки ОДНОГО формата размера в ОДИН журнал."""
     old, bad = R.read_journal(path)
     # Ключ дедупа несёт ЛИНЕЙКУ: одно решение живёт в обеих книгах, и без
     # неё вторая книга целиком читалась бы повтором первой и не писалась
@@ -561,7 +595,8 @@ def append_journal(rows, path=None, log=print):
         for sh in sorted(shards):
             with open(sh, "a", encoding="utf-8") as f:
                 f.write("".join(shards[sh]))
-    log(f"журнал: было {len(old)}, дописано {len(fresh)}"
+    log(f"журнал{(' (' + what + ')') if what else ''}: было {len(old)}, "
+        f"дописано {len(fresh)}"
         + (f" в {len(shards)} файлов записи" if shards else "")
         + (f", битых строк {bad}" if bad else ""))
     return {"had": len(old), "added": len(fresh), "bad": bad,
@@ -857,11 +892,20 @@ def summarize(path=None, live=None, keys=None, ctx=None):
     значит числа даёт пересборка, и «открытых нет» отличается от «мы не
     считали» полем `live_known`.
     """
-    rows, bad = R.read_journal(path or R.JOURNAL)
+    path = path or R.JOURNAL
+    rows, bad = R.read_journal(path)
+    # Книги фиксированного билета — из СВОЕГО журнала; строки несут
+    # поле `sizing`, и по нему же делятся ниже. Журнала нет — книг нет,
+    # и свод говорит это числом строк, а не подставляет сложный процент.
+    frows, fbad = R.read_journal(R.fixed_twin(path))
+    frows = [r for r in frows if R.sizing_of(r) == R.SIZING_FIXED]
+    rows = rows + frows
     live = live or {}
     keys = list(keys if keys is not None else R.RULER_ORDER)
-    out = {"bad_lines": bad, "books": {},
-           "rulers": keys, "deposits": list(R.DEPOSITS)}
+    out = {"bad_lines": bad, "fixed_bad_lines": fbad, "books": {},
+           "rulers": keys, "deposits": list(R.DEPOSITS),
+           "sizings": list(R.SIZINGS), "sizing_title": dict(R.SIZING_TITLE),
+           "sizing_plain": dict(R.SIZING_PLAIN)}
     # ИЗДЕРЖКИ УЧТЕНЫ В КАЖДОЙ СДЕЛКЕ (требование владельца 2026-09-07).
     # Деньги книги отсюда и до конца — нетто: комиссия тейкером на
     # каждом рунге и выходе, проскальзывание X3 на базовый вход и
@@ -889,12 +933,13 @@ def summarize(path=None, live=None, keys=None, ctx=None):
                         "n": len(rows), "applied": 0}
     cost_sum["n_funding"] = ctx.get("n_funding")
     out["costs"] = cost_sum
-    for rk in keys:
-        for dep in R.DEPOSITS:
-            key = _cell(rk, dep)
+    for rk, dep, sizing in ((k, d, z) for k in keys for d in R.DEPOSITS
+                            for z in R.SIZINGS):
+            key = _cell(rk, dep, sizing)
             mine = [r for r in rows if int(r.get("dep", 0)) == int(dep)
                     and R.is_current(r)
-                    and R.ruler_of(r) == rk]
+                    and R.ruler_of(r) == rk
+                    and R.sizing_of(r) == sizing]
             fwd, back = R.split_rows(mine)
             op = live.get(key)
             # Общий счёт собран из ДВУХ книг, и одного билета у него не
@@ -903,6 +948,9 @@ def summarize(path=None, live=None, keys=None, ctx=None):
             # расшифровкой по сторонам честнее.
             parts = R.parts_of(rk)
             b = {"deposit": dep, "ruler": rk, "ruler_title": R.ruler_title(rk),
+                 # формат размера — у КАЖДОЙ книги, и у прежней тоже:
+                 # читатель не вправе угадывать его по отсутствию поля
+                 "sizing": sizing, "sizing_title": R.SIZING_TITLE[sizing],
                  "slots": (None if parts else R.slots(dep, rk)),
                  # Билет книги — ТОТ, которым она торгует: с долей, если
                  # доля объявлена (`rules.SHORT_SHARE`). Показав здесь
@@ -1067,6 +1115,52 @@ def costs_block(s):
           "брутто: выхода ещё не было, и комиссию выхода вычитать не из "
           "чего.", ""]
     return L
+
+
+def sizing_block(s):
+    """Два формата размера рядом, ячейка к ячейке (решение владельца
+    2026-10-09). Книги фиксированного билета нет — прочерк с причиной,
+    а не ноль: журнала-близнеца ещё не было."""
+    books = s.get("books") or {}
+    titles = s.get("sizing_title") or dict(R.SIZING_TITLE)
+    plain = s.get("sizing_plain") or dict(R.SIZING_PLAIN)
+    rows = []
+    for k, b in sorted(books.items()):
+        if (b.get("sizing") or R.DEFAULT_SIZING) != R.DEFAULT_SIZING:
+            continue
+        f = books.get(R.cell_key(b.get("ruler") or "", b.get("deposit") or 0,
+                                 R.SIZING_FIXED)) or {}
+        rows.append((k, b.get("all") or None, f.get("all") or None,
+                     f.get("n_journal", None)))
+    if not rows:
+        return []
+
+    def cell(st, key, fmt):
+        return "—" if not st or st.get(key) is None else fmt(st[key])
+
+    L = ["## Формат размера: сложный процент против фиксированного билета", "",
+         "Решение владельца 2026-10-09: у КАЖДОЙ ячейки два формата "
+         "размера, и сравниваются они ячейка к ячейке. "
+         + "; ".join(f"**{titles[z]}** — {plain[z]}" for z in R.SIZINGS)
+         + ". Решения (имя, момент, плечо, уровни, выход) у форматов одни; "
+         "различается раздача кассы, поэтому и состав взятых позиций "
+         "может расходиться там, где свободных денег не хватило. "
+         "Книга фиксированного билета живёт в своём журнале; пока его нет "
+         "— прочерк, не ноль.", "",
+         "| книга | сделок (сл. % / фикс) | Σ $ (сл. % / фикс) | итог (сл. % / фикс) | "
+         "просадка (сл. % / фикс) |", "|---|--:|--:|--:|--:|"]
+    for k, c, f, _nj in rows:
+        L.append(f"| {k} | {cell(c, 'n', str)} / {cell(f, 'n', str)} | "
+                 f"{cell(c, 'usd', lambda v: f'{float(v):+.2f}')} / "
+                 f"{cell(f, 'usd', lambda v: f'{float(v):+.2f}')} | "
+                 f"{cell(c, 'final', _pct)} / {cell(f, 'final', _pct)} | "
+                 f"{cell(c, 'max_dd', _pct)} / {cell(f, 'max_dd', _pct)} |")
+    missing = [k for k, _c, f, _n in rows if f is None]
+    if missing:
+        L += ["", f"Книги фиксированного билета без записи: {len(missing)} из "
+              f"{len(rows)} — журнала-близнеца у них ещё нет (первый прогон "
+              "после 2026-10-09 его создаёт)."]
+    return L + [""]
 
 
 def report(s):
@@ -1317,6 +1411,7 @@ def report(s):
             L.append(f"| {d} | " + " | ".join(cells_) + " |")
         L += ["", "В скобках — число закрытых позиций этого дня.", ""]
     # Требование владельца 2026-09-07 («обе руки остаются, но сделки не
+    L += sizing_block(s)
     # дублируются») проверяется ЧИСЛОМ по записи, и вердикт выводится из
     # числа, а не стоит рядом с ним.
     dd = {k: (b.get("dups") or {}) for k, b in (s.get("books") or {}).items()

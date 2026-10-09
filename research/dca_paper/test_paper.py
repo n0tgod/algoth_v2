@@ -558,8 +558,10 @@ def test_open_position_is_not_a_closed_one():
                state="cut", exit_="срок")
     rows, cells, _one, lv = P.build_rows({"optimal": [done, live, cut]},
                                          now=t0 + 10 * H, log=lambda *_: None)
-    got = [r for r in rows if int(r["dep"]) == 1000]
-    assert [r["sym"] for r in got] == ["AAAUSDT"], got
+    # строки обоих форматов размера — у каждого ровно одна закрытая
+    for z in R.SIZINGS:
+        got = [r for r in rows if int(r["dep"]) == 1000 and R.sizing_of(r) == z]
+        assert [r["sym"] for r in got] == ["AAAUSDT"], (z, got)
     cell = lv[P._cell("optimal", 1000)]
     assert [x["sym"] for x in cell["positions"]] == ["BBBUSDT"], cell
     assert [x["sym"] for x in cell["cut"]] == ["CCCUSDT"], cell
@@ -575,6 +577,75 @@ def test_open_position_is_not_a_closed_one():
     assert "Открытые позиции" in txt and "оборвана записью" in txt, txt[-900:]
     print("ok  открытая позиция: в журнал не идёт, деньги заняты, "
           "отметка отдельно")
+
+
+def test_fixed_ticket_is_a_sister_book_in_its_own_journal():
+    """Два формата размера у каждой ячейки (решение владельца 2026-10-09).
+
+    Сложный процент: маржа — доля ТЕКУЩЕГО счёта, после прибыли позиция
+    крупнее. Фиксированный билет: маржа — билет в долларах от стартового
+    депозита, одна на всю запись. Решения те же, книги разные: своя
+    строка (с полем `sizing`), свой журнал (`rules.fixed_twin`), свой
+    ключ ячейки; книга сложного процента ни строкой, ни ключом, ни
+    журналом не меняется — иначе появление сестры переписало бы
+    опубликованную книгу.
+    """
+    t0 = T0
+    # первая позиция закрывается плюсом ДО входа второй: у сложного
+    # процента вторая маржа вырастет, у фиксированного — останется билетом
+    recs = [_rec(t0, hold_h=1.0, pnl=0.40, sym="AAAUSDT"),
+            _rec(t0 + 2 * H, hold_h=1.0, pnl=0.10, sym="BBBUSDT")]
+    rows, cells, _one, live = P.build_rows({"optimal": recs}, now=t0 + 10 * H,
+                                           log=lambda *_: None)
+    dep = 1000
+    tk = R.ticket(dep, "optimal")
+    comp = [r for r in rows if r["dep"] == dep and R.sizing_of(r) == R.SIZING_COMPOUND]
+    fix = [r for r in rows if r["dep"] == dep and R.sizing_of(r) == R.SIZING_FIXED]
+    assert [r["sym"] for r in comp] == [r["sym"] for r in fix] == ["AAAUSDT", "BBBUSDT"]
+    assert all("sizing" not in r for r in comp), "строка сложного процента сменила форму"
+    assert all(r["sizing"] == "fixed" for r in fix), fix
+    assert comp[0]["margin"] == fix[0]["margin"] == tk, (comp[0], fix[0])
+    assert fix[1]["margin"] == tk, fix[1]                 # билет не плывёт
+    assert comp[1]["margin"] > tk, comp[1]                # доля выросшего счёта
+    assert abs(comp[1]["margin"] - (dep + 0.40 * tk) * tk / dep) < 1e-6, comp[1]
+    # ключи ячеек: прежний — у сложного процента, с форматом — у билета
+    assert P._cell("optimal", dep) == f"optimal:{dep}"
+    assert P._cell("optimal", dep, R.SIZING_FIXED) == f"optimal:{dep}:fixed"
+    assert cells[f"optimal:{dep}"]["sizing"] == "compound"
+    assert cells[f"optimal:{dep}:fixed"]["sizing"] == "fixed"
+    assert live[f"optimal:{dep}:fixed"]["sizing"] == "fixed"
+    with tempfile.TemporaryDirectory() as td:
+        jp = os.path.join(td, "j.jsonl")
+        a = P.append_journal(rows, jp, log=lambda *_: None)
+        assert a["added"] == len(rows), a
+        assert a["by_sizing"]["compound"]["added"] == len(rows) // 2, a
+        # свой журнал у каждого формата; в общем — ТОЛЬКО сложный процент
+        jc, _ = R.read_journal(jp)
+        jf, _ = R.read_journal(R.fixed_twin(jp))
+        assert all(R.sizing_of(r) == "compound" for r in jc) and len(jc) == len(rows) // 2
+        assert all(R.sizing_of(r) == "fixed" for r in jf) and len(jf) == len(rows) // 2
+        assert os.path.basename(R.fixed_twin(jp)) == "fixed_j.jsonl"
+        # повтор не дописывает ничего ни туда, ни туда
+        assert P.append_journal(rows, jp, log=lambda *_: None)["added"] == 0
+        s = P.summarize(jp)
+        bc = s["books"][f"optimal:{dep}"]
+        bf = s["books"][f"optimal:{dep}:fixed"]
+        assert bc["sizing"] == "compound" and bf["sizing"] == "fixed"
+        assert bc["all"]["n"] == bf["all"]["n"] == 2, (bc["all"], bf["all"])
+        # деньги различаются ровно второй позицией
+        assert bc["all"]["usd"] > bf["all"]["usd"], (bc["all"]["usd"], bf["all"]["usd"])
+        # книга сложного процента бит в бит та же, что без сестры: свод
+        # по журналу, где журнала-близнеца нет
+        jp2 = os.path.join(td, "k.jsonl")
+        P.append_journal(comp, jp2, log=lambda *_: None)
+        assert not os.path.exists(R.fixed_twin(jp2))
+        s2 = P.summarize(jp2)
+        assert s2["books"][f"optimal:{dep}"]["all"] == bc["all"], "сестра сдвинула книгу"
+        assert s2["books"][f"optimal:{dep}:fixed"]["all"] is None, "нет журнала — нет книги, а не ноль"
+        txt = P.report(s)
+        assert "фиксированный билет" in txt, txt[-1500:]
+    print("ok  формат размера: фиксированный билет — сестра-книга в своём "
+          "журнале; сложный процент не сдвинулся")
 
 
 def test_journal_appends_only_new():
@@ -811,7 +882,7 @@ def test_two_rulers_are_two_books_and_optimal_is_untouched():
         assert one[k]["kept"] == 0 and one[k]["positions"] == 0, (k, one[k])
     # каждая строка несёт свой режим, и книг стало по числу режимов
     assert {r["ruler"] for r in both} == {"optimal", "safe"}, "нет метки"
-    assert len(cells) == len(R.RULER_ORDER) * len(R.DEPOSITS), sorted(cells)
+    assert len(cells) == len(R.RULER_ORDER) * len(R.DEPOSITS) * len(R.SIZINGS), sorted(cells)
     opt = [r for r in both if r["ruler"] == "optimal"]
     assert opt == [dict(r, ruler="optimal") for r in one_only], "оптимальная сдвинулась"
     with tempfile.TemporaryDirectory() as td:
@@ -869,8 +940,12 @@ def test_aggressive_gate_takes_only_levered_entries():
             _rec(t0 + 60, hold_h=5.0, sym="AAAUSDT", lev=8.0)]
     rows2, _c2, one2, _l2 = P.build_rows({"optimal": pair, "aggr": pair},
                                     now=t0 + 10 * H, log=lambda *_: None)
-    opt = [r for r in rows2 if r["ruler"] == "optimal" and r["dep"] == 1000]
-    agg = [r for r in rows2 if r["ruler"] == "aggr" and r["dep"] == 1000]
+    # формат размера — сложный процент: у сестры тот же состав, строки свои
+    cz = R.DEFAULT_SIZING
+    opt = [r for r in rows2 if r["ruler"] == "optimal" and r["dep"] == 1000
+           and R.sizing_of(r) == cz]
+    agg = [r for r in rows2 if r["ruler"] == "aggr" and r["dep"] == 1000
+           and R.sizing_of(r) == cz]
     assert len(opt) == 1 and opt[0]["lev"] == 1.0, opt
     assert len(agg) == 1 and agg[0]["lev"] == 8.0, agg
     assert one2["optimal"]["skipped_repeats"] == 1, one2
@@ -2617,7 +2692,9 @@ TESTS = [test_net_rides_the_summary_with_reasons_not_zeros,
     test_take_steps_follow_the_floating_average,
     test_take_frac_comes_from_the_rule_not_from_the_record,
     test_fav_backfill_adds_a_field_and_nothing_else,
-    test_open_position_is_not_a_closed_one, test_journal_appends_only_new,
+    test_open_position_is_not_a_closed_one,
+    test_fixed_ticket_is_a_sister_book_in_its_own_journal,
+    test_journal_appends_only_new,
     test_open_dd_forward_is_the_window_not_the_whole_book,
          test_report_names_what_is_not_modelled,
          test_day_concentration_is_measured_and_not_faked,

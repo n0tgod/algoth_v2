@@ -28,7 +28,11 @@ DCA = {"rulers": [{"key": "optimal_h", "title": "оптимальная (шор�
        "deposits": [100.0, 1000.0, 10000.0],
        "books": {"optimal_h:1000": {"all": {"usd": 123.4, "final": 0.12, "n": 50}},
                  "pair_optimal:1000": {"all": {"usd": -20.0, "final": -0.02, "n": 10}},
-                 "optimal:100": {"all": {"usd": 5.0, "final": 0.05, "n": 3}}},
+                 "optimal:100": {"all": {"usd": 5.0, "final": 0.05, "n": 3}},
+                 # сестра фиксированного билета — свой ключ, свои деньги
+                 "pair_optimal:1000:fixed": {"all": {"usd": 7.5, "final": 0.0075, "n": 9}}},
+       "sizings": ["compound", "fixed"],
+       "sizing_title": {"compound": "сложный процент", "fixed": "фиксированный билет"},
        "window": {"from": "2026-08-08"}, "stale": False}
 
 
@@ -168,22 +172,29 @@ def test_subscriptions_cells_hedge_warning_and_state():
         app, _ = _app(tmp, venue=FakeVenue(equity=1100.0, modes={"BTCUSDT": "hedge", "ETHUSDT": "oneway"}))
         acc = _login(app)
         st, cells = app.strategies()
-        assert st == 200 and len(cells["cells"]) == 9
-        c = next(x for x in cells["cells"] if x["book"] == "optimal_h" and x["deposit"] == 1000.0)
+        assert st == 200 and len(cells["cells"]) == 9 * len(cells["sizings"])
+        assert cells["sizings"][0] == "compound"
+        c = next(x for x in cells["cells"] if x["book"] == "optimal_h" and x["deposit"] == 1000.0
+                 and x["sizing"] == "compound")
         assert c["side"] == "short" and abs(c["paper_cash_usd"] - 1123.4) < 1e-9
-        assert next(x for x in cells["cells"] if x["book"] == "optimal" and x["deposit"] == 10000.0)["paper_cash_usd"] is None
+        assert next(x for x in cells["cells"] if x["book"] == "optimal" and x["deposit"] == 10000.0
+                    and x["sizing"] == "compound")["paper_cash_usd"] is None
         st, k = app.add_key(acc, "bybit", "ABCD1234KEY", SECRET)
         kid = k["key_id"]
         st, r = app.add_subscription(acc, kid, "optimal_h", 7777)
         assert st == 400 and "нет среди книг" in r["error"]
         st, r = app.add_subscription(acc, "key_nope", "optimal_h", 1000)
         assert st == 404
+        st, r = app.add_subscription(acc, kid, "optimal_h", 1000, sizing="martingale")
+        assert st == 400 and "формат размера" in r["error"]
         st, s1 = app.add_subscription(acc, kid, "optimal_h", 1000)
         assert st == 200 and s1["mode"] == "dry" and s1["side"] == "short" and s1["hedge_mode"] == "n/a"
+        assert s1["sizing"] == "compound"             # умолчание — как у бумаги
         st, dup = app.add_subscription(acc, kid, "optimal_h", "1000")
         assert st == 409
-        st, s2 = app.add_subscription(acc, kid, "pair_optimal", 1000)
+        st, s2 = app.add_subscription(acc, kid, "pair_optimal", 1000, sizing="fixed")
         assert st == 200 and s2["side"] == "both" and s2["hedge_mode"] == "off"
+        assert s2["sizing"] == "fixed"
         assert any("хеджирования выключен" in w for w in s2["warnings"])
         st, stt = app.state(acc)
         subs = {x["book"]: x for x in stt["subscriptions"]}
@@ -192,7 +203,9 @@ def test_subscriptions_cells_hedge_warning_and_state():
         assert a["cash_usd"] == 1000.0 and a["paper_cash_usd"] == 1123.4 and a["realized_usd"] == 0.0
         assert a["equity_usd"] == 1100.0 and a["equity_ok"] is True and a["idle_usd"] == 100.0
         b = subs["pair_optimal"]
-        assert b["cash_usd"] == 1000.0 and b["paper_cash_usd"] == 980.0 and b["equity_ok"] is True
+        # касса бумаги — у СЕСТРЫ фиксированного билета, не у сложного процента
+        assert b["sizing"] == "fixed" and b["cash_usd"] == 1000.0 and b["equity_ok"] is True
+        assert b["paper_cash_usd"] == 1000.0 + 7.5, b
         # живой реализованный результат подписки двигает ЕЁ кассу
         app.db.set_sub_state(a["subscription_id"], {"side": "short", "realized_usd": 150.0})
         st, stt = app.state(acc)

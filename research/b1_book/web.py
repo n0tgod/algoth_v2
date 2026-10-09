@@ -6666,6 +6666,7 @@ td.dcol{width:1px;white-space:nowrap}
 <div class="panel filters" id="filters">
   <div class="fl"><div class="tabs" id="rtabs"></div></div>
   <div class="fr"><div class="tabs" id="tabs"></div>
+    <div class="tabs" id="sztabs"></div>
     <div class="tabs" id="gtabs"></div></div>
 </div>
 <div id="box">&hellip;</div>
@@ -6697,6 +6698,13 @@ function tsq(t){ return t == null ? "&mdash;"
 // умножение россыпью по вызовам однажды забылось бы в одном из них.
 function fpct(v){ return v == null ? "\u2014" : pct(Number(v) * 1e4); }
 let DATA = null, DEP = null, RUL = null, GRP = "all";
+// Формат размера (решение владельца 2026-10-09): «сложный процент» —
+// книга как считалась с D6, «фиксированный билет» — сестра в своём
+// журнале. Умолчание — сложный процент: книга по умолчанию не меняется.
+let SZ = "compound";
+function dcaSetSizing(x){ SZ = x; dcaPick(); }
+// ключ книги несёт все оси: линейка, депозит и — у сестры — формат
+function bookKey(){ return RUL + ":" + DEP + (SZ === "compound" ? "" : ":" + SZ); }
 // Цвет величины — одно объявление на страницу: тайл открытого pnl
 // красится и при отрисовке, и при живой переоценке, и две копии
 // правила однажды разошлись бы.
@@ -6726,7 +6734,7 @@ function dcaState(x){ PST = x; PAGE = 0; render(); }
 function dcaSize(n){ SIZE = Number(n); PAGE = 0; render(); }
 function dcaPage(n){ PAGE = Math.max(0, Number(n)); render(); }
 function dcaIntro(on){ INTRO = !!on; render(); }
-function dcaFull(){ FULL = RUL + ":" + DEP; PAGE = 0; load(); }
+function dcaFull(){ FULL = bookKey(); PAGE = 0; load(); }
 function dcaPick(){ PAGE = 0; if (FULL) { FULL = null; load(); } else render(); }
 function dcaSetRuler(x){ RUL = x; dcaPick(); }
 function dcaSetDep(x){ DEP = x; dcaPick(); }
@@ -7739,6 +7747,7 @@ function render(){
     tabs.innerHTML = ""; box.innerHTML = "";
     document.getElementById("rtabs").innerHTML = "";
     document.getElementById("gtabs").innerHTML = "";
+    document.getElementById("sztabs").innerHTML = "";
     if (bar) bar.innerHTML = "";
     return; }
   const deps = d.deposits || [];
@@ -7761,6 +7770,18 @@ function render(){
   }).join("");
   for (const el of tabs.querySelectorAll(".tab"))
     el.onclick = () => dcaSetDep(el.dataset.dep);
+  // Формат размера — вкладкой между депозитом и группой: подписи
+  // приходят с сервера (`rules.SIZING_TITLE`), страница своих не
+  // выдумывает; одна ось в ответе — вкладок нет вовсе.
+  const sztabs = document.getElementById("sztabs");
+  const szs = d.sizings || ["compound"];
+  if (!szs.includes(SZ)) SZ = szs[0];
+  sztabs.innerHTML = szs.length < 2 ? "" : szs.map(z =>
+    "<div class='tab" + (z === SZ ? " on" : "") + "' data-sz='" + esc(z) +
+    "' title='" + esc(((d.sizing_plain || {})[z]) || "") + "'>" +
+    esc(((d.sizing_title || {})[z]) || z) + "</div>").join("");
+  for (const el of sztabs.querySelectorAll(".tab"))
+    el.onclick = () => dcaSetSizing(el.dataset.sz);
   // Умолчание — «с бэктестом»: это общий счёт книги, и он же кривая,
   // которую владелец просил не делить. «Без бэктеста» стоит рядом
   // ровно затем, чтобы вклад пересчёта по прошлому можно было снять
@@ -7774,8 +7795,16 @@ function render(){
     el.onclick = () => { GRP = el.dataset.grp; render(); };
   // ключ книги несёт ОБЕ оси: склеив их по депозиту, страница показала
   // бы одну книгу под именем другой
-  const b = (d.books || {})[RUL + ":" + DEP] || {};
+  const b = (d.books || {})[bookKey()] || {};
   let h = "";
+  if (SZ !== "compound") h += "<div class=panel><p class=dim><b>" +
+    esc(((d.sizing_title || {})[SZ]) || SZ) + "</b>: " +
+    esc(((d.sizing_plain || {})[SZ]) || "") + ". Книга-сестра: решения те же, " +
+    "что у сложного процента, раздача кассы своя; запись ведётся с " +
+    "2026-10-09, старше — пересчёт." +
+    (b.n_journal == null ? " <b>Журнала у этой книги ещё нет</b> &mdash; " +
+     "первый прогон после смены правил его создаёт; прочерк, не ноль." : "") +
+    "</p></div>";
   if (d.stale) h += "<div class='panel alarm'><b>Суточный прогон не " +
     "пришёл</b>, артефакту " + (d.age_h == null ? "&mdash;" : d.age_h) +
     " ч. Числа ниже описывают ТОТ прогон, а не сегодняшний день.</div>";
@@ -7903,7 +7932,8 @@ async function dcaMarks(){
   try {
     const r = await fetch("/dca_marks?k=" + encodeURIComponent(KEY)
       + "&ruler=" + encodeURIComponent(RUL)
-      + "&dep=" + encodeURIComponent(DEP));
+      + "&dep=" + encodeURIComponent(DEP)
+      + "&sizing=" + encodeURIComponent(SZ));
     d = await r.json();
   } catch (e) { return; }
   if (!d || d.known === false || d.error) return;
@@ -12189,7 +12219,8 @@ def serve(collector, port, token, log):
                 return self._ok(json.dumps(
                     collector.dca_paper(q.get("dep", [None])[0],
                                         q.get("ruler", [None])[0],
-                                        q.get("full", [None])[0]),
+                                        q.get("full", [None])[0],
+                                        q.get("sizing", [None])[0]),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/dca_marks":
@@ -12198,7 +12229,8 @@ def serve(collector, port, token, log):
                 # ходит раз в минуту — тот же урок, что у `model_marks`.
                 return self._ok(json.dumps(
                     collector.dca_marks(q.get("dep", [None])[0],
-                                        q.get("ruler", [None])[0]),
+                                        q.get("ruler", [None])[0],
+                                        q.get("sizing", [None])[0]),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/dca_trades":

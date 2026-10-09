@@ -34,6 +34,7 @@ import db as DBM                                              # noqa: E402
 import sealed                                                 # noqa: E402
 import bybit                                                  # noqa: E402
 
+DEFAULT_SIZING = "compound"     # формат размера по умолчанию — как у бумаги
 SCHEMA = 1
 OUT = os.path.join(HERE, "out")
 SERVER_IP = "116.203.146.99"
@@ -216,6 +217,7 @@ class App:
         d = self.dca() or {}
         rulers = d.get("rulers") or []
         deps = d.get("deposits") or []
+        sizings = list(d.get("sizings") or [DEFAULT_SIZING])
         cells = []
         for r in rulers:
             key = r.get("key") if isinstance(r, dict) else r
@@ -223,16 +225,30 @@ class App:
                 continue
             side = (r.get("side") if isinstance(r, dict) else None) or (
                 "both" if str(key).startswith(PAIR_PREFIX) else "short" if str(key).endswith("_h") else "long")
-            for dep in deps:
-                b = (d.get("books") or {}).get(f"{key}:{int(float(dep))}") or {}
+            for dep, sizing in ((dp, z) for dp in deps for z in sizings):
+                b = (d.get("books") or {}).get(self.cell_key(key, dep, sizing)) or {}
                 cells.append({"book": key, "deposit": float(dep), "side": side,
+                              # формат размера — ось ячейки (решение владельца
+                              # 2026-10-09): сложный процент либо фиксированный
+                              # билет; подпись — от правил книг, не своя
+                              "sizing": sizing,
+                              "sizing_title": (d.get("sizing_title") or {}).get(sizing, sizing),
                               "title": (r.get("title") if isinstance(r, dict) else None) or key,
                               # касса БУМАГИ — справка: подписка стартует с депозита (§2)
                               "paper_cash_usd": self.paper_cash(b, float(dep)),
                               "ticket_usd": self.ticket_of(b, float(dep)),
                               "final": ((b.get("all") or {}).get("final")),
                               "n": ((b.get("all") or {}).get("n"))})
-        return 200, {"cells": cells, "stale": d.get("stale"), "window": d.get("window")}
+        return 200, {"cells": cells, "stale": d.get("stale"), "window": d.get("window"),
+                     "sizings": sizings, "sizing_title": d.get("sizing_title") or {},
+                     "sizing_plain": d.get("sizing_plain") or {}}
+
+    @staticmethod
+    def cell_key(book, deposit, sizing=None):
+        """Ключ книги в своде `/dca`: та же схема, что у `rules.cell_key` —
+        `книга:депозит`, у фиксированного билета с хвостом `:fixed`."""
+        k = f"{book}:{int(float(deposit))}"
+        return k if (sizing or DEFAULT_SIZING) == DEFAULT_SIZING else f"{k}:{sizing}"
 
     @staticmethod
     def paper_cash(book, deposit):
@@ -264,7 +280,7 @@ class App:
         return float(s["deposit"]) + float(st.get("realized_usd") or 0.0)
 
     # ------------------------------------------------------------ подписки
-    def add_subscription(self, acc, key_id, book, deposit):
+    def add_subscription(self, acc, key_id, book, deposit, sizing=None):
         k = self.db.key(key_id, acc["id"])
         if k is None or k["status"] != "ok":
             return 404, {"error": "ключа нет или он отозван"}
@@ -273,13 +289,20 @@ class App:
         except (TypeError, ValueError):
             return 400, {"error": "депозит — число из ряда ячеек"}
         st, cells = self.strategies()
-        cell = next((c for c in cells["cells"] if c["book"] == book and abs(c["deposit"] - deposit) < 1e-9), None)
+        sizing = sizing or DEFAULT_SIZING
+        if sizing not in cells["sizings"]:
+            return 400, {"error": f"формат размера {sizing!r} книгам неизвестен: "
+                                  + ", ".join(cells["sizings"])}
+        cell = next((c for c in cells["cells"] if c["book"] == book
+                     and abs(c["deposit"] - deposit) < 1e-9 and c["sizing"] == sizing), None)
         if cell is None:
             return 400, {"error": f"ячейки {book} на {deposit:g} $ нет среди книг сервера"}
         for s in self.db.subs_on_key(key_id):
+            # одна книга на ключ в ЛЮБОМ формате: две подписки одной книги
+            # торговали бы одни имена на одном счёте и ломали сверку
             if s["book"] == book:
                 return 409, {"error": "на этом ключе уже есть подписка на эту книгу"}
-        state = {"side": cell["side"], "warnings": []}
+        state = {"side": cell["side"], "sizing": sizing, "warnings": []}
         if cell["side"] == "both":
             try:
                 modes = self.venue_modes(k)
@@ -293,7 +316,7 @@ class App:
                 state["hedge_mode"] = "n/a"
                 state["warnings"].append(f"режим хеджирования не прочитан: {e}")
         sid = self.db.add_subscription(acc["id"], key_id, book, deposit, state)
-        self.db.event(acc["id"], "subscription", f"подписка {book} на {deposit:g} $ (сухой режим)",
+        self.db.event(acc["id"], "subscription", f"подписка {book} на {deposit:g} $, {sizing} (сухой режим)",
                       {"subscription_id": sid, "warnings": state["warnings"]})
         return 200, self._sub_view(self.db.subscription(sid, acc["id"]))
 
@@ -308,6 +331,7 @@ class App:
         st = json.loads(s["state_json"] or "{}")
         return {"subscription_id": s["id"], "key_id": s["key_id"], "book": s["book"],
                 "deposit": s["deposit"], "mode": s["mode"], "side": st.get("side"),
+                "sizing": st.get("sizing") or DEFAULT_SIZING,
                 "hedge_mode": st.get("hedge_mode", "n/a"), "warnings": st.get("warnings") or [],
                 "created": s["created"]}
 
@@ -331,7 +355,8 @@ class App:
         for s in self.db.subscriptions_of(acc["id"]):
             k = self.db.key(s["key_id"])
             st = json.loads(s["state_json"] or "{}")
-            b = (d.get("books") or {}).get(f"{s['book']}:{int(s['deposit'])}") or {}
+            sizing = st.get("sizing") or DEFAULT_SIZING
+            b = (d.get("books") or {}).get(self.cell_key(s["book"], s["deposit"], sizing)) or {}
             cash = self.sub_cash(s, st)
             paper = self.paper_cash(b, s["deposit"])
             equity = k["equity_usd"] if k else None
@@ -345,7 +370,7 @@ class App:
             else:
                 warnings.append("эквити счёта не прочитано")
             subs.append({"subscription_id": s["id"], "book": s["book"], "deposit": s["deposit"],
-                         "mode": s["mode"], "side": st.get("side"),
+                         "mode": s["mode"], "side": st.get("side"), "sizing": sizing,
                          "cash_usd": cash, "realized_usd": float(st.get("realized_usd") or 0.0),
                          "paper_cash_usd": paper, "ticket_usd": self.ticket_of(b, s["deposit"]),
                          "equity_usd": equity, "equity_age_s": eq_age,
@@ -462,7 +487,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if rest == ["subscriptions"] and method == "GET":
             return self._send(*self.app.list_subscriptions(acc))
         if rest == ["subscriptions"] and method == "POST":
-            return self._send(*self.app.add_subscription(acc, body.get("key_id"), body.get("book"), body.get("deposit")))
+            return self._send(*self.app.add_subscription(acc, body.get("key_id"), body.get("book"),
+                                                         body.get("deposit"), body.get("sizing")))
         if len(rest) == 2 and rest[0] == "subscriptions" and method == "DELETE":
             return self._send(*self.app.delete_subscription(acc, rest[1]))
         if len(rest) == 3 and rest[0] == "subscriptions" and rest[2] in ("arm", "disarm", "cmd"):

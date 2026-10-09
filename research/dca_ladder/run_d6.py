@@ -277,9 +277,20 @@ def queue(recs):
     return sorted(recs, key=lambda r: (int(r["at"]), -r["fwd"]))
 
 
+SIZING_COMPOUND = "compound"      # маржа = доля ТЕКУЩЕГО счёта
+SIZING_FIXED = "fixed"            # маржа = доля СТАРТОВОГО депозита, всегда
+
+
 def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
-           keep_rows=False):
+           keep_rows=False, sizing=SIZING_COMPOUND):
     """Хронологическая раздача кассы. Возвращает сводку и кривую счёта.
+
+    `sizing` — формат размера (решение владельца 2026-10-09): при
+    «сложном проценте» маржа позиции есть доля текущего счёта и плывёт
+    с ним; при «фиксированном билете» — доля стартового депозита, то
+    есть билет в долларах, один на всю запись. Отказ по кассе у обоих
+    один: маржа больше свободных денег. Это ЕДИНСТВЕННОЕ место, где
+    форматы различаются, — вторая копия раздачи разошлась бы с первой.
 
     Порядок объявлен: деньги возвращаются раньше, чем тратятся, а внутри
     секунды достаются лучшим по |прогноз|. Отказы считаются по причинам
@@ -314,8 +325,12 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
             else:
                 still.append(p)
         live = still
-        # 2. размер по доле ТЕКУЩЕГО счёта
-        margin = equity * float(share_of(r))
+        # 2. размер по доле счёта: текущего (сложный процент) либо
+        #    стартового (фиксированный билет)
+        if sizing not in (SIZING_COMPOUND, SIZING_FIXED):
+            raise ValueError(f"неизвестный формат размера: {sizing!r}")
+        base = equity if sizing == SIZING_COMPOUND else float(deposit)
+        margin = base * float(share_of(r))
         notional = margin * r["lev"]
         if notional * RUNG_SHARE < min_notional:
             too_small += 1
@@ -371,6 +386,7 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
     op_dd = min([0.0] + [openP.get(h, 0.0) for h in hrs]) if hrs else 0.0
     total = taken + no_cash + too_small
     return {
+        "sizing": sizing,
         "taken": taken, "no_cash": no_cash, "too_small": too_small,
         "take_share": round(taken / total, 4) if total else None,
         "final": round(equity / deposit - 1.0, 4),

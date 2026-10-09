@@ -3865,7 +3865,7 @@ class Collector:
                 "deposit": int(dep), "rules_version": DR.RULES,
                 "situational": False, "no_timer": False}
 
-    def dca_marks(self, dep=None, ruler=None):
+    def dca_marks(self, dep=None, ruler=None, sizing=None):
         """Живая переоценка открытых позиций DCA-книги — частый опрос.
 
         Прогон книги считает отметку по закрытию последнего бара записи
@@ -3909,7 +3909,10 @@ class Collector:
             self._dca_art = (mt, art)
         rk = ruler or DR.DEFAULT_RULER
         d = int(dep or DR.DEP_PAGE)
-        cell = f"{rk}:{d}"
+        # ключ ячейки несёт формат размера: открытые у сестры свои
+        ck = getattr(DR, "cell_key", None)
+        cell = (ck(rk, d, sizing or DR.DEFAULT_SIZING) if ck
+                else f"{rk}:{d}")
         live = (art.get("live") or {}).get(cell)
         if live is None:
             # `None` — «не считали», пустой словарь — «считали, и
@@ -3945,7 +3948,7 @@ class Collector:
                 # молчаливая сумма по части читалась бы как сумма по всем.
                 "mark_usd": (round(total, 2) if priced else None)}
 
-    def dca_paper(self, dep=None, ruler=None, full=None):
+    def dca_paper(self, dep=None, ruler=None, full=None, sizing=None):
         """Бумажные DCA-книги: свод из артефакта, сделки из журнала.
 
         Разделение источников то же, что у месячной книги, и по той же
@@ -3969,7 +3972,7 @@ class Collector:
         # Ключ кеша несёт и ГЛУБИНУ списка: без неё запрос «показать
         # больше» две минуты отдавался бы прежним хвостом, и кнопка
         # выглядела бы нажатой впустую.
-        key = f"{ruler or ''}:{dep or ''}:{full or ''}"
+        key = f"{ruler or ''}:{dep or ''}:{full or ''}:{sizing or ''}"
         cat, cached = getattr(self, "_dca_cache", (0.0, {}))
         if now - cat < 120 and key in cached:
             return cached[key]
@@ -4002,6 +4005,20 @@ class Collector:
             return out
         acc = {}
         rows, bad = self._dca_rows(DR, DR.JOURNAL, acc)
+        # Формат размера — ВТОРАЯ ось у каждой ячейки (решение владельца
+        # 2026-10-09): книги фиксированного билета живут в своём журнале
+        # (`rules.fixed_twin`), ключ ячейки несёт формат (`rules.cell_key`).
+        # Оси — от правил машины, а подписи — тоже оттуда: страница не
+        # выдумывает своих слов для правила, которого не считает.
+        sizings = list(getattr(DR, "SIZINGS", ("compound",)))
+        twin = getattr(DR, "fixed_twin", None)
+        ckey = getattr(DR, "cell_key", None) or (lambda rk, d, z="compound": f"{rk}:{int(d)}")
+        szof = getattr(DR, "sizing_of", None) or (lambda r: "compound")
+        out["sizings"] = sizings
+        out["sizing_title"] = dict(getattr(DR, "SIZING_TITLE", {}) or {})
+        out["sizing_plain"] = dict(getattr(DR, "SIZING_PLAIN", {}) or {})
+        frows = (self._dca_rows(DR, twin(DR.JOURNAL), acc)[0]
+                 if twin and len(sizings) > 1 else [])
         out["present"] = True
         out["bad_lines"] = bad
         out["rules"] = art.get("rules") or {}
@@ -4045,7 +4062,7 @@ class Collector:
                                        "PAIR_JOURNAL", "pair",
                                        "общего счёта")
         sh, pr = out["short"] or {}, out["pair"] or {}
-        fams = [(list(out["rulers"]), art_books, rows)]
+        fams = [(list(out["rulers"]), art_books, rows, frows)]
         # Порядок вкладок: ОБЩИЙ СЧЁТ первым. Владелец дважды не нашёл
         # общую статистику, стоявшую последней, — место на странице есть
         # часть ответа, а не оформление.
@@ -4055,31 +4072,36 @@ class Collector:
                 (sh, "h24", "H24_JOURNAL", "short_bad_lines")):
             if not blk.get("present"):
                 continue
-            frows, fbad = self._dca_rows(DR, getattr(DR, jattr), acc)
+            jrows, fbad = self._dca_rows(DR, getattr(DR, jattr), acc)
             out[badkey] = fbad
+            jfix = (self._dca_rows(DR, twin(getattr(DR, jattr)), acc)[0]
+                    if twin and len(sizings) > 1 else [])
             fams.append((list(blk.get("rulers") or []),
-                         blk.get("books") or {}, frows))
+                         blk.get("books") or {}, jrows, jfix))
             add = [dict(x, family=fam) for x in (blk.get("rulers") or [])]
             if fam == "pair":
                 head += add
             else:
                 out["rulers"] = out["rulers"] + add
         out["rulers"] = head + out["rulers"]
-        for (fam_rulers, fam_art, fam_rows) in fams:
+        for (fam_rulers, fam_art, fam_rows, fam_fixed) in fams:
           for rk in [x["key"] for x in fam_rulers]:
-            for d in out["deposits"]:
-                k = f"{rk}:{int(d)}"
+            for d, z in ((d_, z_) for d_ in out["deposits"] for z_ in sizings):
+                k = ckey(rk, d, z)
+                src = fam_rows if z == sizings[0] else fam_fixed
                 b = dict(fam_art.get(k) or {})
-                if not b and rk == DR.DEFAULT_RULER:
+                if not b and rk == DR.DEFAULT_RULER and z == sizings[0]:
                     # свод прежнего образца ключевался одним депозитом
                     b = dict(fam_art.get(str(int(d))) or {})
+                b.setdefault("sizing", z)
                 # Версия правил спрашивается ОДНИМ предикатом
                 # (`rules.is_current`): у семейства она СВОЯ, и вторая
                 # копия проверки уже соврала — список сделок короткой
                 # книги показывал позиции прежнего пола (с
                 # ликвидациями), пока деньги считались по нынешнему.
-                mine = [r for r in fam_rows if int(r.get("dep", 0)) == int(d)
-                        and DR.is_current(r) and DR.ruler_of(r) == rk]
+                mine = [r for r in src if int(r.get("dep", 0)) == int(d)
+                        and DR.is_current(r) and DR.ruler_of(r) == rk
+                        and szof(r) == z]
                 fwd, back = DR.split_rows(mine, ahead_h)
                 b["n_journal"] = len(mine)
                 b.setdefault("ruler", rk)
@@ -4176,7 +4198,7 @@ class Collector:
         out["read"] = dict(acc, sec=round(time.time() - now, 3))
         rk0 = ruler if ruler in {x["key"] for x in out["rulers"]} else None
         if dep is not None and rk0:
-            k = f"{rk0}:{int(float(dep))}"
+            k = ckey(rk0, float(dep), sizing if sizing in sizings else sizings[0])
             if k in books:
                 out["selected"] = k
         cached[key] = out
