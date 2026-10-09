@@ -1,0 +1,8 @@
+== задание api-init ==
+строка: run tools/app_api/init.py
+начало: 2026-10-09T17:01:56Z
+запускаю: .venv/bin/python tools/app_api/init.py 
+пара конвертов: создана (/root/algoth_v2/tools/app_api/out/master.key, 600)
+токен оператора: создан, начинается с qgHW…; файл /root/algoth_v2/tools/app_api/out/operator_token.txt
+сертификат: создан на 116.203.146.99; отпечаток SPKI sha256/wKWVCGnK2gM+mwe369X3yH7tRS5KTDlrJXdWGYal7xs=
+конец: 2026-10-09T17:01:56Z, код 0
