@@ -1662,3 +1662,6 @@ Terminated
 
 == сигнал 1791578235 ==
 [2026-10-09T20:37:17Z] задание api-restart-2 запущено: tools/app_api/restart.py
+
+== сигнал 1791578435 ==
+[2026-10-09T20:40:37Z] задание api-aud-1 запущено: tools/app_api/add_audience.py

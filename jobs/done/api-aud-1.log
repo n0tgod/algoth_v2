@@ -1,0 +1,7 @@
+== задание api-aud-1 ==
+строка: run tools/app_api/add_audience.py algoth
+начало: 2026-10-09T20:40:37Z
+запускаю: .venv/bin/python tools/app_api/add_audience.py algoth
+аудитория 'algoth' добавлена
+список: ['algoth']
+конец: 2026-10-09T20:40:37Z, код 0
