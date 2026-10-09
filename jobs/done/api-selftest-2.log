@@ -1,0 +1,11 @@
+== задание api-selftest-2 ==
+строка: run tools/app_api/selftest.py
+начало: 2026-10-09T17:05:46Z
+запускаю: .venv/bin/python tools/app_api/selftest.py 
+health: 200 {'ok': True, 'schema': 1}
+вход оператора: 200, аккаунт acc_05bccaa551a6df40, роль operator
+me: 200 {'account_id': 'acc_05bccaa551a6df40', 'role': 'operator', 'email': None, 'apple_linked': False, 'schema': 1}
+ячеек стратегий: 36, первая pair_safe 100 $ касса 111.55
+state: 200, подписок 0, live_enabled False
+ок
+конец: 2026-10-09T17:05:48Z, код 0

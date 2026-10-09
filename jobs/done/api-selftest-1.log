@@ -5,3 +5,13 @@
 status.json нет — процесс API не стартовал ни разу
 API не отвечает на https://127.0.0.1:443: <urlopen error [Errno 111] Connection refused>
 конец: 2026-10-09T17:03:09Z, код 1
+публикуется в ветку main:
+ jobs/done/api-init.log        | 10 ++++++++++
+ jobs/done/api-selftest-1.done |  1 +
+ jobs/done/api-selftest-1.log  |  7 +++++++
+ jobs/poke.log                 |  3 +++
+ 4 files changed, 21 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   fc31ed85..f32e7ed9  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
