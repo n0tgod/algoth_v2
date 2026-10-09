@@ -8528,15 +8528,17 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 API приложения Algoth (спека 15 §7, §7a): аккаунты, ключи биржи, подписки на ячейки стратегий, состояние и со…
 
 
-## tools/app_api/apple.py · 46 строк
+## tools/app_api/apple.py · 68 строк
 
 Sign in with Apple: проверка identity token (JWT RS256) ключами Apple.
 
-- L14 `KEYS_URL = 'https://appleid.apple.com/auth/keys'`
-- L15 `ISSUER = 'https://appleid.apple.com'`
-- L16 `BUNDLE_ID = 'pl.mdsauto.algoth'`
-- L20 `_keys()`
-- L28 `verify(identity_token, audience=BUNDLE_ID, keys=None)` — → {'sub', 'email'} или ValueError словами.
+- L15 `KEYS_URL = 'https://appleid.apple.com/auth/keys'`
+- L16 `ISSUER = 'https://appleid.apple.com'`
+- L17 `BUNDLE_ID = 'pl.mdsauto.algoth'`
+- L21 `_keys()`
+- L29 `AUDIENCES_FILE = os.path.join(os.path.dirname(os.path.ab…`
+- L32 `audiences(path=AUDIENCES_FILE)` — Допустимые аудитории токена (Bundle ID приложения): умолчание плюс строки файла на сервере — у сборки TestFli…
+- L45 `verify(identity_token, audience=None, keys=None)` — → {'sub', 'email'} или ValueError словами (с аудиторией токена при несовпадении: она не секрет, а ключ к почи…
 
 ## tools/app_api/bybit.py · 104 строк
 

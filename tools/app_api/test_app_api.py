@@ -19,6 +19,7 @@ import sealed                                                 # noqa: E402
 import bybit                                                  # noqa: E402
 import server as SV                                           # noqa: E402
 import init as INIT                                           # noqa: E402
+import apple as APPLE                                         # noqa: E402
 
 SECRET = "s3cr3t-never-shown-xyz"
 DCA = {"rulers": [{"key": "optimal_h", "title": "оптимальная (шорт)", "side": "short"},
@@ -254,6 +255,29 @@ def test_init_is_idempotent_and_prints_pin():
         for name in ("master.key", "operator_token.txt", "tls/key.pem"):
             assert oct(os.stat(os.path.join(tmp, name)).st_mode & 0o777) == "0o600", name
         assert os.path.exists(os.path.join(tmp, "tls", "cert.pem"))
+
+
+def test_apple_verify_names_the_audience_and_accepts_listed_ones():
+    import jwt
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    from jwt.algorithms import RSAAlgorithm
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    jwk = json.loads(RSAAlgorithm.to_jwk(key.public_key()))
+    jwk["kid"] = "k1"
+    now = int(__import__("time").time())
+    tok = jwt.encode({"iss": APPLE.ISSUER, "aud": "pl.other.app", "sub": "u1", "exp": now + 600, "iat": now},
+                     key, algorithm="RS256", headers={"kid": "k1"})
+    try:
+        APPLE.verify(tok, audience=["pl.mdsauto.algoth"], keys=[jwk])
+        raise AssertionError("чужая аудитория принята")
+    except ValueError as e:
+        assert "pl.other.app" in str(e) and "pl.mdsauto.algoth" in str(e), e
+    who = APPLE.verify(tok, audience=["pl.mdsauto.algoth", "pl.other.app"], keys=[jwk])
+    assert who["sub"] == "u1"
+    with tempfile.TemporaryDirectory() as tmp:
+        f = os.path.join(tmp, "a.txt")
+        open(f, "w").write("# комментарий\npl.other.app\n")
+        assert APPLE.audiences(f) == ["pl.mdsauto.algoth", "pl.other.app"]
 
 
 TESTS = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]

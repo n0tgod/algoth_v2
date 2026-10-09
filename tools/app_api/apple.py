@@ -5,6 +5,7 @@
 Результат — стабильный `sub` пользователя и e-mail, если Apple его отдал.
 """
 import json
+import os
 import time
 import urllib.request
 
@@ -25,10 +26,28 @@ def _keys():
     return _cache["keys"]
 
 
-def verify(identity_token, audience=BUNDLE_ID, keys=None):
-    """→ {'sub', 'email'} или ValueError словами."""
+AUDIENCES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "apple_audiences.txt")
+
+
+def audiences(path=AUDIENCES_FILE):
+    """Допустимые аудитории токена (Bundle ID приложения): умолчание плюс
+    строки файла на сервере — у сборки TestFlight Bundle ID задаёт секрет
+    `IOS_BUNDLE_ID`, и он может отличаться от записанного здесь."""
+    out = [BUNDLE_ID]
+    try:
+        with open(path, encoding="utf-8") as f:
+            out += [ln.strip() for ln in f if ln.strip() and not ln.startswith("#")]
+    except OSError:
+        pass
+    return out
+
+
+def verify(identity_token, audience=None, keys=None):
+    """→ {'sub', 'email'} или ValueError словами (с аудиторией токена при
+    несовпадении: она не секрет, а ключ к починке)."""
     try:
         header = jwt.get_unverified_header(identity_token)
+        raw = jwt.decode(identity_token, options={"verify_signature": False})
     except jwt.PyJWTError as e:
         raise ValueError(f"токен Apple не читается: {e}") from e
     kid = header.get("kid")
@@ -36,9 +55,12 @@ def verify(identity_token, audience=BUNDLE_ID, keys=None):
     jwk = next((k for k in jwks if k.get("kid") == kid), None)
     if jwk is None:
         raise ValueError("ключ подписи Apple не найден")
+    auds = audiences() if audience is None else ([audience] if isinstance(audience, str) else list(audience))
     try:
         claims = jwt.decode(identity_token, PyJWK.from_dict(jwk).key, algorithms=["RS256"],
-                            audience=audience, issuer=ISSUER)
+                            audience=auds, issuer=ISSUER)
+    except jwt.InvalidAudienceError as e:
+        raise ValueError(f"токен Apple отвергнут: аудитория {raw.get('aud')!r} не из допустимых {auds}") from e
     except jwt.PyJWTError as e:
         raise ValueError(f"токен Apple отвергнут: {e}") from e
     if not claims.get("sub"):

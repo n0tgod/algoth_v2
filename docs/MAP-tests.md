@@ -4573,29 +4573,30 @@ X1: исполнитель против подставной биржи.
 - L291 `такт_демона_пишет_статус_и_не_молчит_об_ошибке`
 - L375 `which_python`
 
-## tools/app_api/test_app_api.py · 272 строк
+## tools/app_api/test_app_api.py · 296 строк
 
 Проверки API приложения (спека 15 Y0): конверт открывается только приватной половиной и ломается от подмены;…
 
 - L16 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L23 `SECRET = 's3cr3t-never-shown-xyz'`
-- L24 `DCA = {'rulers': [{'key': 'optimal_h', 'title…`
-- L34 `class FakeVenue`
-  - L35 `FakeVenue.__init__(self, perms=None, ips=None, read_only=0, equity=1500.0…`
-  - L44 `FakeVenue.query_api(self, key, secret)`
-  - L50 `FakeVenue.wallet_equity(self, key, secret)`
-  - L55 `FakeVenue.position_mode(self, key, secret, symbols=None)`
-- L59 `_app(tmp, venue=None, **kw)`
-- L66 `test_sealed_box_opens_only_with_private_half_and_detects_tamper…`
-- L89 `test_permission_judgement()`
-- L99 `test_operator_login_account_cap_and_apple_link()`
-- L124 `_login(app)`
-- L129 `test_key_add_rejects_money_moving_and_readonly_warns_on_ip_and_…`
-- L165 `test_subscriptions_cells_hedge_warning_and_state()`
-- L204 `_http(port, method, path, body=None, token=None)`
-- L216 `test_http_routing_auth_and_stage_gates()`
-- L249 `test_init_is_idempotent_and_prints_pin()`
-- L259 `TESTS = [v for k, v in sorted(globals().items()…`
+- L24 `SECRET = 's3cr3t-never-shown-xyz'`
+- L25 `DCA = {'rulers': [{'key': 'optimal_h', 'title…`
+- L35 `class FakeVenue`
+  - L36 `FakeVenue.__init__(self, perms=None, ips=None, read_only=0, equity=1500.0…`
+  - L45 `FakeVenue.query_api(self, key, secret)`
+  - L51 `FakeVenue.wallet_equity(self, key, secret)`
+  - L56 `FakeVenue.position_mode(self, key, secret, symbols=None)`
+- L60 `_app(tmp, venue=None, **kw)`
+- L67 `test_sealed_box_opens_only_with_private_half_and_detects_tamper…`
+- L90 `test_permission_judgement()`
+- L100 `test_operator_login_account_cap_and_apple_link()`
+- L125 `_login(app)`
+- L130 `test_key_add_rejects_money_moving_and_readonly_warns_on_ip_and_…`
+- L166 `test_subscriptions_cells_hedge_warning_and_state()`
+- L205 `_http(port, method, path, body=None, token=None)`
+- L217 `test_http_routing_auth_and_stage_gates()`
+- L250 `test_init_is_idempotent_and_prints_pin()`
+- L260 `test_apple_verify_names_the_audience_and_accepts_listed_ones()`
+- L283 `TESTS = [v for k, v in sorted(globals().items()…`
 
 ## tools/test_disk_alarm.py · 64 строк
 
