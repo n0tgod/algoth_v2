@@ -2231,6 +2231,14 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L57 `candidates(bars, boundary)` — Три цены на границе часа из списка баров [t, o, h, l, c, v].
 - L67 `main(argv=None)`
 
+## research/dca_paper/probe_live_hour.py · 51 строк
+
+Зонд 10.10: что бумажная короткая книга сделала с решениями последних часов, которые живой исполнитель Ladder…
+
+- L16 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L20 `T = lambda t: time.strftime('%m-%d %H:%M', …`
+- L23 `main(argv=None)`
+
 ## research/dca_paper/repeat_entry.py · 449 строк
 
 Пропустить первый вход: насколько «ювелирны» второй, третий, четвёртый выбор имени моделью — и что это даёт к…
