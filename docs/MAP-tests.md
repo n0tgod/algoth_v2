@@ -289,7 +289,7 @@
 - L700 `paperStub()`
 - L835 `bookDaysStub()`
 
-## research/b1_book/test_book.py · 9188 строк
+## research/b1_book/test_book.py · 9257 строк
 
 Тесты стакана. Закрывают место, где ошибка портит все данные молча.
 
@@ -435,7 +435,8 @@
 - L8843 `test_dca_summary_is_rebuilt_by_file_signature_not_by_clock()` — Свод `/dca` пересобирается, когда меняются файлы (куски журналов, артефакты), а не раз в две минуты; свежесть…
 - L8925 `test_pinned_journal_files_survive_the_cache_budget()` — Файлы периодического сторожа закреплены в кеше журналов и в бюджет не входят (починка 10.10: сторож выходов к…
 - L8985 `test_model_signature_sees_only_the_files_the_build_reads()` — Подпись кеша `/model` — по файлам, из которых сборка берёт числа (починка 10.10): файл каталога книги, меняющ…
-- L9035 `main()`
+- L9035 `test_brake_reads_only_the_books_it_counts()` — Тормоз читает и подписывает журналы только ТОРГУЕМЫХ книг без эхо (починка 10.10): эхо-книги в сумму не входя…
+- L9103 `main()`
 
 ## research/b1_book/test_measure_pack.py · 133 строк
 

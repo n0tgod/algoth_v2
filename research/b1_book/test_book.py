@@ -2117,7 +2117,7 @@ def test_brake_recomputes_only_when_journals_or_day_change():
         c = C.Collector(["TEST"], [], root, lambda m: None)
         calls = []
         day0 = 1791244800.0                       # 2026-10-06 00:00 UTC
-        c.closed_rows = lambda: (calls.append(1) or
+        c.closed_rows = lambda *a, **k: (calls.append(1) or
                                  ([{"at": day0 + 100, "pnl": -5.0, "hz": "h4"}], [], [], []))
         class TRf:
             @staticmethod
@@ -2142,9 +2142,9 @@ def test_brake_recomputes_only_when_journals_or_day_change():
         # считает снова (входы меняются дописью, чтобы счёт вообще пошёл)
         with open(os.path.join(mdir, "picks.jsonl"), "a") as f:
             f.write(_json.dumps({"i": 3}) + "\n")
-        c.closed_rows = lambda: (_ for _ in ()).throw(RuntimeError("журнал бит"))
+        c.closed_rows = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("журнал бит"))
         bad = c._brake_step(TRf, path, 10.0, mem, now=day0 + 86400 + 120)
-        c.closed_rows = lambda: (calls.append(1) or ([], [], [], []))
+        c.closed_rows = lambda *a, **k: (calls.append(1) or ([], [], [], []))
         st = c._brake_step(TRf, path, 10.0, mem, now=day0 + 86400 + 180)
         check("ошибка счёта названа и не запоминается: следующий шаг считает заново",
               "журнал бит" in bad.get("error", "") and len(calls) == 4 and "error" not in st,
@@ -9032,6 +9032,74 @@ def test_model_signature_sees_only_the_files_the_build_reads():
         C.Collector.MODEL_SIG_FILES = was
 
 
+def test_brake_reads_only_the_books_it_counts():
+    """Тормоз читает и подписывает журналы только ТОРГУЕМЫХ книг без эхо
+    (починка 10.10): эхо-книги в сумму не входят, а их разбор ради
+    тормоза выбрасывал из кеша чужие файлы. Новый вход (`entries_live`)
+    подпись не двигает — он ничего не реализует. Контроль: пустой
+    список эхо возвращает эхо-книгу в подпись."""
+    import tempfile
+
+    import collect as C
+
+    s8 = tempfile.mkdtemp()
+    for d in ("model_h4", "model_h24b"):
+        os.makedirs(os.path.join(s8, d))
+        for fn in ("picks.jsonl", "review.jsonl", "entries_live.jsonl", "exits_live.jsonl"):
+            with open(os.path.join(s8, d, fn), "w") as f:
+                f.write("{}\n")
+    here_was, books_was, echo_was = C.HERE, C.Collector.BOOKS, C.Collector.ECHO_BOOKS
+    try:
+        C.HERE = os.path.join(s8, "b1_book")                   # s8_loop/out = s8
+        os.makedirs(os.path.join(s8, "s8_loop"), exist_ok=True)
+        os.symlink(s8, os.path.join(s8, "s8_loop", "out"))
+        C.Collector.BOOKS = [("h4", "model_h4"), ("h24b", "model_h24b")]
+        C.Collector.ECHO_BOOKS = {"h24b"}
+
+        class FakeC(C.Collector):
+            def __init__(self):
+                pass
+        c = FakeC()
+        check("тормоз считает торгуемые без эхо", c._brake_books() == [("h4", "model_h4")], str(c._brake_books()))
+        now = 1_791_600_000.0
+        s0 = c._brake_sig(now)
+        check("подпись не несёт файлов эхо-книги и файла входов",
+              all("model_h24b" not in x[0] and "entries_live" not in x[0] for x in s0 if isinstance(x, tuple)), str(s0))
+        p = os.path.join(s8, "model_h24b", "review.jsonl")
+        with open(p, "a") as f:
+            f.write('{"x": 1}\n')
+        os.utime(p, (now + 9, now + 9))
+        check("дописанный журнал эхо-книги подпись не двигает", c._brake_sig(now) == s0, "сдвинулась")
+        p2 = os.path.join(s8, "model_h4", "entries_live.jsonl")
+        with open(p2, "a") as f:
+            f.write('{"x": 1}\n')
+        os.utime(p2, (now + 9, now + 9))
+        check("новый живой вход подпись не двигает", c._brake_sig(now) == s0, "сдвинулась")
+        p3 = os.path.join(s8, "model_h4", "exits_live.jsonl")
+        with open(p3, "a") as f:
+            f.write('{"x": 1}\n')
+        os.utime(p3, (now + 9, now + 9))
+        check("живой выход (реализация) подпись двигает", c._brake_sig(now) != s0, "не сдвинулась")
+        # шаг тормоза читает ровно эти книги
+        got = {}
+        c.closed_rows = lambda books=None: (got.setdefault("books", books) or ([], [], [], []))
+        c.brake_skips = 0
+
+        class TRf:
+            @staticmethod
+            def day_realized(it, now):
+                return 0.0
+        mem = {}
+        c._brake_step(TRf, os.path.join(s8, "brake.json"), 10.0, mem, now=now)
+        check("шаг тормоза читает только считаемые книги", got["books"] == [("h4", "model_h4")], str(got))
+        # Контроль: без списка эхо эхо-книга возвращается в подпись
+        C.Collector.ECHO_BOOKS = set()
+        check("контроль: пустой список эхо — эхо-книга в подписи",
+              any("model_h24b" in x[0] for x in c._brake_sig(now) if isinstance(x, tuple)), "эхо не вернулось")
+    finally:
+        C.HERE, C.Collector.BOOKS, C.Collector.ECHO_BOOKS = here_was, books_was, echo_was
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
@@ -9069,6 +9137,7 @@ def main():
     test_dca_summary_is_rebuilt_by_file_signature_not_by_clock()
     test_pinned_journal_files_survive_the_cache_budget()
     test_model_signature_sees_only_the_files_the_build_reads()
+    test_brake_reads_only_the_books_it_counts()
     test_book_built_twice_gives_same_numbers()
     test_overview_and_trades_page_agree()
     test_model_trades_lite_matches_full()

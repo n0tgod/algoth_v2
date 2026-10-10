@@ -7097,8 +7097,21 @@ class Collector:
 
     BRAKE_TTL = 300           # период пересчёта тормоза, секунд
 
+    # Входы тормоза — файлы, от которых зависит РЕАЛИЗОВАННЫЙ день:
+    # `entries_live.jsonl` (новые входы) из подписи убран 10.10 — вход
+    # ничего не реализует, а живой сканер дописывает его каждые
+    # несколько минут, и тормоз перечитывал все книги на каждый вход.
     BRAKE_FILES = ("manifest.json", "picks.jsonl", "review.jsonl",
-                   "books.jsonl", "exits_live.jsonl", "entries_live.jsonl")
+                   "books.jsonl", "exits_live.jsonl")
+
+    def _brake_books(self):
+        """Книги, которые тормоз СЧИТАЕТ: торгуемые без эхо. Эхо-книги
+        (`ECHO_BOOKS`) в сумму не входят — читать их журналы ради
+        тормоза значило разбирать ~400 МБ объектов, которые затем
+        выбрасывались из кеша (10.10: `h24b`/`h24bf` — по 21 полному
+        разбору за 95 мин)."""
+        return [(hz, name) for hz, name in self.BOOKS
+                if hz not in self.ECHO_BOOKS]
 
     def _brake_sig(self, now):
         """Подпись входов тормоза: журналы торгуемых книг и день UTC.
@@ -7113,7 +7126,7 @@ class Collector:
         """
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
         sig = [time.strftime("%Y-%m-%d", time.gmtime(now))]
-        for _hz, name in self.BOOKS:
+        for _hz, name in self._brake_books():
             for fn in self.BRAKE_FILES:
                 p = os.path.join(s8, name, fn)
                 try:
@@ -7134,7 +7147,7 @@ class Collector:
             st = dict(mem["st"], at=round(now, 1), skips=self.brake_skips)
         else:
             try:
-                rows, _err, _sc, _op = self.closed_rows()
+                rows, _err, _sc, _op = self.closed_rows(self._brake_books())
                 realized = TR.day_realized(
                     ((r["at"], r["pnl"]) for r in rows
                      if r["hz"] not in self.ECHO_BOOKS), now)
