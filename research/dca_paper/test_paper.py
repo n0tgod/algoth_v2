@@ -2039,8 +2039,22 @@ def _run_watchdog_cases(block, art_name="DCA-paper.json"):
     env.update(e0)
     assert got is True, "контроль: порог 0 обязан пропустить прогон при 1900 МБ"
     set_mem(5000)
+    # Гейт по ЦИКЛУ (14:56 10.10): цикл тяжелее порога — учится, книги
+    # ждут при любой свободной памяти; лёгкий цикл — идут; контроль —
+    # порог 9000 снимает защиту. pgrep отдаёт pid, ps — RSS в КБ.
+    stub("pgrep", '#!/bin/sh\ncase "$*" in *train.py*) [ -n "$TRAIN_PID" ] && echo "$TRAIN_PID" && exit 0; exit 1;; esac\nexit ${PGREP_RC:-1}\n')
+    stub("ps", '#!/bin/sh\necho "${TRAIN_RSS_KB:-0}"\n')
+    env.update(TRAIN_PID="4242", TRAIN_RSS_KB=str(3300 * 1024))
+    assert run("12", 7200) is False, "цикл 3300 МБ — обучение, книги ждут при 5000 МБ свободных"
+    env["TRAIN_RSS_KB"] = str(900 * 1024)
+    assert run("12", 7200) is True, "цикл 900 МБ — не учится, книги идут"
+    env["TRAIN_RSS_KB"] = str(3300 * 1024)
+    env["TRAIN_BUSY_MB"] = "9000"
+    assert run("12", 7200) is True, "контроль: порог 9000 обязан пропустить прогон при цикле 3300"
+    env.pop("TRAIN_BUSY_MB"); env.pop("TRAIN_PID"); env.pop("TRAIN_RSS_KB")
+    stub("pgrep", "#!/bin/sh\nexit ${PGREP_RC:-1}\n")
     print("ok  сторож: книга идёт каждый час, вопрос — когда СЧИТАЛИ, "
-          "а не когда трогали файл; гейт памяти откладывает при обучении")
+          "а не когда трогали файл; гейты памяти и обучения откладывают прогон")
     return True
 
 def _run_pair_cases(block):

@@ -65,11 +65,33 @@ BOOK_MEM_MIN_MB=2500
 mem_avail_mb() {
     awk '/^MemAvailable:/ {print int($2/1024)}' "$MEMINFO" 2>/dev/null
 }
+# Второй гейт — ПО ЦИКЛУ, не по свободной памяти (14:56 10.10): RSS
+# обучения плавает между 2.5 и 3.7 ГБ, и в 14:55 гейт по MemAvailable
+# пропустил прогон книг, а минутой позже ядро убило цикл на пике —
+# пятое потерянное обучение за день. Правило то же, что у деплоя
+# (`restart_book.sh`): цикл тяжелее `TRAIN_BUSY_MB` — учится, книги
+# ждут такта. Цикла нет или `ps` молчит — ноль, гейт по памяти остаётся.
+TRAIN_BUSY_MB=${TRAIN_BUSY_MB:-2000}
+train_rss_mb() {
+    local pids kb
+    pids=$(pgrep -d' ' -f "s8_loop/train.py$" 2>/dev/null || true)
+    if [ -z "$pids" ]; then
+        echo 0
+        return
+    fi
+    kb=$(ps -o rss= -p "$(echo "$pids" | tr ' ' ',')" 2>/dev/null | sort -n | tail -1 | tr -d ' ')
+    echo "$(( ${kb:-0} / 1024 ))"
+}
 books_mem_ok() {
-    local a
+    local a t
+    t=$(train_rss_mb)
+    if [ "${t:-0}" -gt "$TRAIN_BUSY_MB" ]; then
+        echo "[$(now)] прогон книг отложен: идёт обучение S8 (цикл ${t} МБ > ${TRAIN_BUSY_MB})"
+        return 1
+    fi
     a=$(mem_avail_mb)
     if [ -z "$a" ]; then
-        echo "[$(now)] память не измерена ($MEMINFO) — прогон книг без гейта"
+        echo "[$(now)] память не измерена ($MEMINFO) — прогон книг без гейта по памяти"
         return 0
     fi
     if [ "$a" -ge "$BOOK_MEM_MIN_MB" ]; then
