@@ -55,3 +55,14 @@
   [2026-10-10T12:50:01Z] DCA-книги: последний счёт 11101 с назад — прогон
   [2026-10-10T14:55:01Z] DCA-книги: последний счёт 7441 с назад — прогон
 конец: 2026-10-10T15:15:03Z, код 0
+публикуется в ветку main:
+ jobs/done/l1-cyclelog3.log | 12 ++++++++++
+ jobs/done/l1-wdlog.log     |  7 ++++++
+ jobs/done/l1-wdlog2.done   |  1 +
+ jobs/done/l1-wdlog2.log    | 57 ++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log              |  3 +++
+ 5 files changed, 80 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   1fa6a873..acb0bd87  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
