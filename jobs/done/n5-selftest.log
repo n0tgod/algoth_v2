@@ -14,3 +14,13 @@ positions: 200, открытых 3, закрытых 0
   open APRUSDT short x8.989576233187108 вход 0.0757 средняя 0.0757 пол 0.09120778365832 цель 0.0675 отметка 0.10484504999999959 (есть) исход None None
 ок
 конец: 2026-10-10T21:04:13Z, код 0
+публикуется в ветку main:
+ jobs/done/n5-selftest.done          |  1 +
+ jobs/done/n5-selftest.log           | 16 ++++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 4 files changed, 21 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   22cfc5e3..22c63f10  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
