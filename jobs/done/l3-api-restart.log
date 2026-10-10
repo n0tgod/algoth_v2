@@ -1,0 +1,6 @@
+== задание l3-api-restart ==
+строка: run tools/app_api/restart.py
+начало: 2026-10-10T17:18:39Z
+запускаю: .venv/bin/python tools/app_api/restart.py 
+порт 443: слушает
+конец: 2026-10-10T17:18:44Z, код 0
