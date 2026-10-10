@@ -39,3 +39,13 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-10-10T20:51:40Z
+публикуется в ветку main:
+ jobs/done/n3-check.log              | 10 +++++++++
+ jobs/done/n4-status.log             | 41 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  2 ++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 4 files changed, 54 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   d058a38e..ee81558e  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
