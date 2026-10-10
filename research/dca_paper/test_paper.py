@@ -648,6 +648,37 @@ def test_fixed_ticket_is_a_sister_book_in_its_own_journal():
           "журнале; сложный процент не сдвинулся")
 
 
+def test_rows_carry_executor_levels_from_the_rules():
+    """Строка журнала и открытая позиция несут уровни исполнителя (спека
+    15 Y1): цель от плавающей средней, ликвидацию, пол капитуляции между
+    ликвидацией и средней, срок — теми же функциями правил, что рисует
+    страница. Без обещания модели цели нет — поле None, не ноль."""
+    t0 = T0
+    rec = dict(_rec(t0, hold_h=5.0, pnl=0.10, sym="AAAUSDT", lev=4.0), fav_bp=500.0,
+               fills=[[float(t0), 100.0, 0.25], [float(t0) + 600, 90.0, 0.25]], avg=94.7368, depth=2)
+    rows, _c, _o, live = P.build_rows({"optimal": [rec]}, now=t0 + 10 * H, log=lambda *_: None)
+    r = next(x for x in rows if x["dep"] == 1000 and R.sizing_of(x) == R.DEFAULT_SIZING)
+    lv = r["levels"]
+    assert lv and lv["depth"] == 2 and lv["term_ts"] == rec["sched_end"], lv
+    assert abs(lv["avg"] - 50 / (25 / 100.0 + 25 / 90.0)) < 1e-6, lv
+    # лонг: цель выше средней на долю правила (обещание × TAKE_MULT)
+    assert abs(lv["take_px"] - lv["avg"] * (1 + 0.05 * R.TAKE_MULT)) < 1e-6, lv
+    assert lv["liq_px"] is not None and lv["liq_px"] < lv["avg"], lv
+    assert lv["liq_px"] < lv["floor_px"] < lv["avg"] and lv["floor_frac"] == R.FLOOR_FRAC, lv
+    # без обещания — цели нет, но пол и ликвидация есть
+    rec2 = dict(rec, fav_bp=None, sym="BBBUSDT")
+    rows2, _c, _o, live2 = P.build_rows({"optimal": [rec2]}, now=t0 + 10 * H, log=lambda *_: None)
+    lv2 = next(x for x in rows2 if x["dep"] == 1000 and R.sizing_of(x) == R.DEFAULT_SIZING)["levels"]
+    assert lv2["take_px"] is None and lv2["floor_px"] is not None, lv2
+    # открытая позиция — те же уровни в артефакте
+    op = _rec(t0 + H, hold_h=1.0, pnl=-0.05, sym="CCCUSDT", state="open", exit_="срок")
+    op["fav_bp"] = 300.0
+    _r, _c, _o, live3 = P.build_rows({"optimal": [op]}, now=t0 + 10 * H, log=lambda *_: None)
+    pos = live3[P._cell("optimal", 1000)]["positions"][0]
+    assert pos["levels"] and pos["levels"]["take_px"] > pos["levels"]["avg"], pos["levels"]
+    print("ok  уровни исполнителя: цель, ликвидация, пол, срок — в строке и у открытой")
+
+
 def test_journal_appends_only_new():
     """Строка write-ahead не переписывается: момент записи подвинуть нельзя."""
     t0 = T0
@@ -2726,6 +2757,7 @@ TESTS = [test_net_rides_the_summary_with_reasons_not_zeros,
     test_fav_backfill_adds_a_field_and_nothing_else,
     test_open_position_is_not_a_closed_one,
     test_fixed_ticket_is_a_sister_book_in_its_own_journal,
+    test_rows_carry_executor_levels_from_the_rules,
     test_journal_appends_only_new,
     test_open_dd_forward_is_the_window_not_the_whole_book,
          test_report_names_what_is_not_modelled,

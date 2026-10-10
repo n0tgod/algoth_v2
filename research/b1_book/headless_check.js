@@ -35,7 +35,7 @@ const isTour = /tournament — all 72 branches/.test(src);
 const isPaper =
   /monthly book — one construction, recorded forward/.test(src);
 const isDca =
-  /DCA paper books — three modes/.test(src);
+  /(DCA|Ladder) paper books — three modes/.test(src);
 const flatBox = () => String(global.__el ? global.__el("box").innerHTML : "")
   .replace(/\s+/g, " ");
 const isAgents =

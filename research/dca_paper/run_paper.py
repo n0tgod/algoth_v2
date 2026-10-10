@@ -337,6 +337,22 @@ def attach_fav(recs, legs, log=print):
     return missing
 
 
+def _levels(rec, rk, looks):
+    """Уровни позиции по записи реплея — `rules.levels_of`; ставка
+    поддержки читается раз на имя за прогон (`looks`)."""
+    sym = rec.get("sym")
+    if sym not in looks:
+        try:
+            looks[sym] = R.mmr_look(sym)
+        except Exception:                                 # noqa: BLE001
+            looks[sym] = None
+    try:
+        row = dict(rec, margin=rec.get("margin"), side=rec.get("side") or R.side_of(rk))
+        return R.levels_of(row, rec.get("book") or rk, look=looks[sym])
+    except Exception:                                     # noqa: BLE001
+        return None
+
+
 def build_rows(by_ruler, now=None, log=print, keys=None):
     """Решения, взятые каждой книгой, с деньгами в долларах.
 
@@ -348,6 +364,7 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
     """
     now = float(now if now is not None else time.time())
     out, cells, one, live = [], {}, {}, {}
+    looks = {}                           # ставка поддержки по имени, раз на прогон
     # Семейство книг передаётся списком: у книг `h24` свой лист и свой
     # прогон, и молчаливый перебор ВСЕХ ключей заставил бы длинный прогон
     # считать чужие книги из своих ног.
@@ -469,6 +486,9 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
                         # и он ступенчатый — якорь у цели плавающая ТВХ
                         "fav_bp": r.get("fav_bp"),
                         "written_at": now, "rules": R.RULES}
+                    # уровни для исполнителя (спека 15 Y1): цель, ликвидация,
+                    # пол, срок — функциями правил, не копией
+                    row["levels"] = _levels(dict(r, margin=margin), rk, looks)
                     # формат размера — ТОЛЬКО у фиксированного билета:
                     # журнал сложного процента формы не меняет, и строка
                     # без поля читается прежним форматом (`sizing_of`)
@@ -511,6 +531,7 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
                         # планового конца.
                         "cut_why": r.get("cut_why"),
                         "book_end": r.get("book_end"),
+                        "levels": _levels(dict(r, margin=margin), rk, looks),
                         "state": st}
                 (op if st == "open" else cut).append(item)
             c["open_n"], c["cut_n"] = len(op), len(cut)

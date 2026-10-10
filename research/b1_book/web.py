@@ -6401,7 +6401,7 @@ setInterval(load, 60000);
 # первой, и экран будет утверждать не то, что опубликовано отчётом.
 DCAPAGE = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DCA paper books — three modes × three deposits</title>
+<title>Ladder paper books — three modes × three deposits</title>
 <style>
 /* ===================================================================
    Палитра и элементы взяты ИЗ САМИХ МАКЕТОВ владельца (их `code.html`,
@@ -6653,7 +6653,7 @@ td.dcol{width:1px;white-space:nowrap}
 </style>
 <div class="wrap">
 <div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
-  <span class="k">DCA paper books &mdash; three modes &times; three deposits</span>
+  <span class="k">Ladder paper books &mdash; three modes &times; three deposits</span>
   <button class="btn" id="whatbtn">что это</button>
   <span style="flex:1"></span>
   <span class="k" id="lead"></span></div>

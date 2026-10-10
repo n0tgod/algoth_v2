@@ -1018,6 +1018,43 @@ def _ladder():
     return L
 
 
+def levels_of(row, key=None, look=None):
+    """Уровни позиции для исполнителя (спека 15 §9, Y1): цель, ликвидация,
+    пол капитуляции, средняя — ТЕМИ ЖЕ функциями, что рисует страница
+    (`avg_walk`, `liq_walk`, `take_rule`), и срок. Исполнителю не считать
+    ничего самому — он читает числа строки.
+
+    Чего нет — того нет (не ноль): без обещания модели цели нет, без
+    маржи и плеча — ликвидации и пола. `look` — ставка поддержки по
+    нотионалу (`mmr_look(sym)`); вызывающий, идущий по многим строкам
+    одного имени, передаёт её сам, чтобы не читать тиры на каждую.
+    """
+    fills = row.get("fills") or []
+    if not fills:
+        return None
+    side = row_side(row, key)
+    tr = take_rule(row.get("fav_bp"), side)
+    tf = abs(float(tr["frac"])) if tr else None
+    notl = notional_of(row)
+    walk = avg_walk(fills, row.get("entry_px"), notl, take_frac=tf, side=side)
+    if not walk:
+        return None
+    margin = row.get("margin")
+    if margin is not None and (look is not None or row.get("sym")):
+        liq_walk(walk, margin, side, look=look if look is not None else mmr_look(row.get("sym")))
+    last = walk[-1]
+    avg = last.get("avg")
+    liq = last.get("liq")
+    out = {"avg": avg, "take_px": last.get("take"), "liq_px": liq, "floor_px": None,
+           "term_ts": row.get("sched_end"), "depth": len(fills), "side": side}
+    if liq is not None and avg is not None:
+        ff = floor_frac_of(key or ruler_of(row), FLOOR_FRAC)
+        # пол — на доле пути от ликвидации к средней, зеркально у шорта
+        out["floor_px"] = liq + ff * (avg - liq)
+        out["floor_frac"] = ff
+    return out
+
+
 def mmr_look(sym, path=None):
     """Функция «нотионал → ставка поддерживающей маржи» для имени.
 

@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 564, строк: 243799, каталогов: 86.
+Модулей кода: 564, строк: 243894, каталогов: 86.
 
 
 ## корень — память проекта, идеи, README
@@ -121,7 +121,7 @@
 
 - `absorb.py` · 365 строк — Поглощение в стакане: крупный стоит, его выедают, он подставляет снова.
 - `book.py` · 216 строк — Стакан: состояние, применение обновлений, снимок.
-- `collect.py` · 8002 строк — Сбор стакана и ленты площадки исполнения живьём.
+- `collect.py` · 8004 строк — Сбор стакана и ленты площадки исполнения живьём.
 - `layout_check.py` · 148 строк — Замер раскладки плиток страницы DCA настоящим браузером.
 - `measure_pack.py` · 405 строк — Замер: сколько весит запись стакана в разных форматах — на ЖИВЫХ часах.
 - `memguard.py` · 104 строк — Самоограничитель памяти сборщика (починка 10.10).
@@ -192,9 +192,9 @@
 - `pick_rule.py` · 340 строк — Правило выбора позиций при полной кассе: кто получает место, когда кандидатов больше, чем денег.
 - `probe_exit.py` · 168 строк — Разбор одного выхода: где стояла цена по записи и что видит график.
 - `repeat_entry.py` · 449 строк — Пропустить первый вход: насколько «ювелирны» второй, третий, четвёртый выбор имени моделью — и что это даёт к…
-- `rules.py` · 1380 строк — Правила бумажных DCA-книг: три депозита, одни правила.
+- `rules.py` · 1417 строк — Правила бумажных DCA-книг: три депозита, одни правила.
 - `run_pair.py` · 563 строк — Общий счёт: длинная книга и короткая на ОДНОМ депозите.
-- `run_paper.py` · 1707 строк — Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
+- `run_paper.py` · 1728 строк — Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
 - `run_short.py` · 457 строк — Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
 - `short_adds.py` · 560 строк — Доливы в прибыльный шорт: заполнить зарезервированные ступени по триггеру.
 - `short_age.py` · 411 строк — Правила общего счёта на ОТДЕЛЬНЫХ коротких книгах: возраст и билет.
@@ -219,7 +219,7 @@
 - `tail_screen.py` · 495 строк — Портрет хвоста коротких книг: что общего у минусовых сделок.
 - `wave.py` · 280 строк — Волна рынка и охрана рынком — ОДНА библиотека для книг и замеров.
 - `wave_guard.py` · 488 строк — Охрана рынком для коротких книг h24: концентрация, состав выходов, депозиты, равенство ядру.
-- тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (152), `test_backfill_exit_px.py` (80), `test_boost.py` (174), `test_cost_gap.py` (141), `test_costs.py` (496), `test_cut.py` (297), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_guard.py` (201), `test_guard_fill.py` (75), `test_guard_forward.py` (67), `test_names.py` (227), `test_pair.py` (571), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (3257), `test_path_screen.py` (247), `test_pick_rule.py` (121), `test_repeat_entry.py` (234), `test_short.py` (491), `test_short_adds.py` (189), `test_short_age.py` (148), `test_short_floor.py` (125), `test_short_levcap.py` (193), `test_short_levers.py` (225), `test_short_rules_1003.py` (62), `test_short_rung.py` (237), `test_short_rung_axes.py` (143), `test_short_rung_time.py` (144), `test_short_select.py` (143), `test_short_size.py` (66), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_weeks.py` (230), `test_short_why.py` (158), `test_slip_x3.py` (76), `test_tail_screen.py` (198), `test_wave_guard.py` (166)
+- тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (152), `test_backfill_exit_px.py` (80), `test_boost.py` (174), `test_cost_gap.py` (141), `test_costs.py` (496), `test_cut.py` (297), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_guard.py` (201), `test_guard_fill.py` (75), `test_guard_forward.py` (67), `test_names.py` (227), `test_pair.py` (571), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (3289), `test_path_screen.py` (247), `test_pick_rule.py` (121), `test_repeat_entry.py` (234), `test_short.py` (491), `test_short_adds.py` (189), `test_short_age.py` (148), `test_short_floor.py` (125), `test_short_levcap.py` (193), `test_short_levers.py` (225), `test_short_rules_1003.py` (62), `test_short_rung.py` (237), `test_short_rung_axes.py` (143), `test_short_rung_time.py` (144), `test_short_select.py` (143), `test_short_size.py` (66), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_weeks.py` (230), `test_short_why.py` (158), `test_slip_x3.py` (76), `test_tail_screen.py` (198), `test_wave_guard.py` (166)
 - отчёты в `out/` (46): DCA-agree-book.md, DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-boost-100.md, DCA-cost-gap.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-entry-gate.md, DCA-fund-check.md, DCA-fund-probe.md, DCA-guard-fill.md, DCA-guard-forward.md, DCA-names.md, DCA-pair-age-why.md, DCA-pair-age.md, DCA-pair-gate.md, DCA-pair.md, DCA-paper.md, DCA-path-screen.md, DCA-pick-rule.md, DCA-repeat-entry.md, DCA-short-adds.md, DCA-short-age.md, DCA-short-floor.md, DCA-short-levcap.md, DCA-short-levers-hold.md, DCA-short-levers.md, DCA-short-rung-axes.md, DCA-short-rung-time.md, DCA-short-rung.md, DCA-short-select.md, DCA-short-size.md, DCA-short-stop.md, DCA-short-supply-1m.md, DCA-short-supply.md, DCA-short-take.md, DCA-short-weeks.md, DCA-short-why.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md, DCA-tail-screen.md, DCA-wave-guard-faith.md, DCA-wave-guard.md
 
 ## research/f1_carry — F1 — carry на funding: разложение брутто (гипотеза 3)
@@ -807,7 +807,7 @@
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
 - документы: `README.md` — Очередь заданий, `queue-state.md` — 
-- заданий `.job`: 668, логов `done/*.log`: 669 (в карту не перечисляются — их читают по имени)
+- заданий `.job`: 669, логов `done/*.log`: 669 (в карту не перечисляются — их читают по имени)
 
 ## tools — команды сервера, защита коммитов, хуки
 
@@ -818,7 +818,7 @@
 - `app_api/bybit.py` · 106 строк — Запросы к Bybit V5 от имени ключа аккаунта — только то, что нужно проверкам спеки 15 §7a: права ключа, эквити…
 - `app_api/db.py` · 246 строк — Хранилище API приложения: SQLite с WAL (спека 15 §7a.1).
 - `app_api/diag.py` · 58 строк — Диагностика API приложения на сервере, только чтение: слушает ли порт, хвост журнала запросов (адрес, метод,…
-- `app_api/follow.py` · 163 строк — Сухой исполнитель-следователь (спека 15, Y2 в сухом режиме).
+- `app_api/follow.py` · 166 строк — Сухой исполнитель-следователь (спека 15, Y2 в сухом режиме).
 - `app_api/init.py` · 88 строк — Разовая подготовка API на сервере: пара конвертов, токен оператора, самоподписанный сертификат. Существующее…
 - `app_api/push.py` · 214 строк — Пуши APNs для событий живого исполнителя (спека 15 §7.5).
 - `app_api/restart.py` · 32 строк — Перезапуск процесса API приложения со свежим кодом (через очередь). Останавливает процесс и сразу поднимает н…

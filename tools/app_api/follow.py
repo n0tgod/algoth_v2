@@ -58,9 +58,12 @@ def events_for(p, seen, since, closed):
     n_seen = int(seen.get("fills") or 0)
     out = []
     depth_n = len(fills)
+    lv = p.get("levels") or {}
     base = {"mode": "dry", "sym": p.get("sym"), "side": p.get("side"),
             "lev": _f(p.get("lev")), "paper_margin_usd": _f(p.get("margin")),
-            "margin_usd": _f(p.get("margin"))}
+            "margin_usd": _f(p.get("margin")),
+            # уровни строки книги (Y1): пол и ликвидация — как записаны
+            "floor_px": _f(lv.get("floor_px")), "liq_px": _f(lv.get("liq_px"))}
     for i in range(n_seen, len(fills)):
         f = fills[i]
         w = walk[i] if i < len(walk) else {}
