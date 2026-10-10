@@ -21,3 +21,14 @@ pair_aggr 100 $: решений к кассе 1661 (длинных 653, коро
 
 сверка повтора с ration: взято 461 / 461, расхождение 0
 конец: 2026-10-10T21:38:03Z, код 0
+публикуется в ветку main:
+ jobs/done/n17-probe.log             | 10 ++++++++++
+ jobs/done/n18-probe.done            |  1 +
+ jobs/done/n18-probe.log             | 23 +++++++++++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 38 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   c37d567b..89cbd437  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
