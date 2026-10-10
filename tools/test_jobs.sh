@@ -86,6 +86,7 @@ has "снятие состояния выполняется" jobs/done/h.log "д
 has "состояние печатает возраст процессов" jobs/done/h.log "процессы (возраст с)"
 has "состояние печатает убийства ядра за сутки" jobs/done/h.log "убийства ядра по памяти за сутки"
 has "состояние спрашивает возраст весов обучения" jobs/done/h.log "train_alarm.py --print"
+has "состояние печатает исполнитель Ladder" jobs/done/h.log "исполнитель Ladder"
 
 # 8. Расхождение с origin не даёт трогать задания.
 echo "run research/probe_x/probe.py" > jobs/i.job

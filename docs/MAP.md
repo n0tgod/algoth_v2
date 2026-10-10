@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 570, строк: 248624, каталогов: 86.
+Модулей кода: 570, строк: 248643, каталогов: 86.
 
 
 ## корень — память проекта, идеи, README
@@ -838,7 +838,7 @@
 - `diag_queue.py` · 78 строк — Состояние канала заданий и идущих прогонов — одним заданием.
 - `diag_spill.py` · 67 строк — Проверка перелива записи: читаются ли перелитые часы ПО ПРЕЖНЕМУ пути.
 - `disk_alarm.py` · 88 строк — Тревога по заполнению дисков — ДО того, как умрёт сборщик.
-- `jobs.sh` · 305 строк — Очередь заданий: сессия кладёт задание в git, сервер его выполняет.
+- `jobs.sh` · 323 строк — Очередь заданий: сессия кладёт задание в git, сервер его выполняет.
 - `loggrep.py` · 98 строк — Строки лога по образцу, счётом по дням — через очередь заданий.
 - `logtail.py` · 88 строк — Выдержка логов сервера за окно времени — через очередь заданий.
 - `memtop.py` · 155 строк — Кто держит память на сервере — через очередь заданий.
@@ -862,4 +862,4 @@
 - `unstick_publish.py` · 77 строк — Разморозить публикацию: вернуть разрезанный журнал к версии git.
 - `venv_add.py` · 75 строк — Установка пакетов в окружение сервера через очередь заданий.
 - `watchdog_book.sh` · 566 строк — Сторож сбора: поднимает умершее и перезапускает зависшее.
-- тесты: `app_api/test_app_api.py` (1169), `test_disk_alarm.py` (64), `test_jobs.sh` (239), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (49), `test_watchdog_ship.sh` (49)
+- тесты: `app_api/test_app_api.py` (1169), `test_disk_alarm.py` (64), `test_jobs.sh` (240), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (49), `test_watchdog_ship.sh` (49)

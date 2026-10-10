@@ -257,10 +257,10 @@ for job in "$JOBS"/*.job; do
                 # 5 минут, и список без возраста показывал живой процесс
                 # — отказ, неотличимый от исправности. Процесс моложе
                 # тика сторожа и убийства ядра ниже — это и есть петля.
-                for p in $(pgrep -f "b1_book/collect.py|s8_loop/train.py|bot live" 2>/dev/null); do
+                for p in $(pgrep -f "b1_book/collect.py|s8_loop/train.py|bot live|bot ladder" 2>/dev/null); do
                     ps -o pid=,etimes=,args= -p "$p" 2>/dev/null | cut -c1-160
                 done
-                pgrep -f "b1_book/collect.py|s8_loop/train.py|bot live" >/dev/null 2>&1 || echo "нет"
+                pgrep -f "b1_book/collect.py|s8_loop/train.py|bot live|bot ladder" >/dev/null 2>&1 || echo "нет"
                 echo "--- убийства ядра по памяти за сутки ---"
                 n_oom=$(journalctl -k --since "24 hours ago" --no-pager 2>/dev/null \
                     | grep -c "Out of memory: Killed" || true)
@@ -284,7 +284,25 @@ for job in "$JOBS"/*.job; do
                 head -c 700 research/b1_book/out/status.json 2>/dev/null
                 echo; echo "--- живой исполнитель ---"
                 head -c 700 bot/out/live/live_status.json 2>/dev/null
-                echo; echo "конец: $(now)"
+                # Исполнитель Ladder (спека 15 §10a): возраст файла
+                # статуса — это и есть такт; живой процесс без свежего
+                # статуса — отказ, неотличимый от исправности.
+                echo; echo "--- исполнитель Ladder ---"
+                .venv/bin/python - <<'PY' 2>&1 || true
+import glob, json, os, time
+fs = sorted(glob.glob("bot/out/dca/*/ladder_status.json"))
+print("статусов нет" if not fs else "")
+for f in fs:
+    try:
+        d = json.load(open(f))
+    except Exception as e:
+        print(f"{f}: не читается — {e}"); continue
+    ps = d.get("positions") or []
+    print(f"{os.path.basename(os.path.dirname(f))}: статусу {time.time() - os.path.getmtime(f):.0f} с, "
+          f"режим {d.get('mode')}, позиций {len(ps)} (отметка у {sum(1 for p in ps if p.get('mark_px') is not None)}), "
+          f"пауза {d.get('paused')}, без входов {d.get('no_entries')}, ошибка {d.get('last_error')}")
+PY
+                echo "конец: $(now)"
             } >> "$log" 2>&1
             tools/publish.sh "job: $name" >> "$log" 2>&1
             echo "[$(now)] задание $name: состояние снято"
