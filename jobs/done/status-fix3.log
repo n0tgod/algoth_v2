@@ -1,0 +1,41 @@
+== задание status-fix3 ==
+строка: status
+начало: 2026-10-10T04:32:58Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   74G   71G  52% /
+/dev/sdb        147G   78G   62G  56% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 439849    1985 .venv/bin/python research/b1_book/collect.py --http 8765
+ 441032    1677 .venv/bin/python research/s8_loop/train.py
+ 669148 3999913 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.
+--- убийства ядра по памяти за сутки ---
+12 (подробно: run tools/memtop.py)
+--- обучение S8 ---
+ТРЕВОГА обучение S8: веса от 2026-10-07 11:47 UTC, 64.8 ч назад (каденция 24, тревога с 36 ч) — обучение стоит; последний цикл 03:10 UTC: память: доступно 2236 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час — просьба уже стоит
+--- идущие прогоны ---
+нет
+--- статус сбора ---
+{"t": 1791606773.3, "uptime_sec": 1978.1, "rss_mb": 1424, "mem_guard": {"drops": 0, "dies": 0, "max_rss_mb": 1475}, "messages": 5931347, "trades": 561372, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 1098783, "snapshot_errors": 0, "last_snap_age_sec": 18.0, "snap_pass_sec": 0.365, "writes": {"book": 1098783, "raw": 26078, "trades": 561357, "liq": 81, "metrics": 4746}, "write_age_sec": {"book": 18.0, "raw": 2.9, "trades": 15.2, "liq": 28.2, "metrics": 88.5}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.2588, "ask": 0.259, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0003861, "ask": 0.0003862, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1108, "ask": 0.1109
+--- живой исполнитель ---
+{
+  "at_ms": 1791606777996,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 284.21345292,
+    "equity": 284.21345292
+  }
+}
+конец: 2026-10-10T04:32:59Z
