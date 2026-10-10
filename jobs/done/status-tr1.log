@@ -39,3 +39,12 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-10-10T12:46:40Z
+публикуется в ветку main:
+ jobs/done/api-restart-12.log | 11 +++++++++++
+ jobs/done/status-tr1.log     | 41 +++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                |  2 ++
+ 3 files changed, 54 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   40ad2199..d036ef70  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
