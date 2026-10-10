@@ -415,6 +415,16 @@ def decide(sub, st, legs_by_family, book_cell, env, log=print):
             k = leg_key(sk, g)
             if k in seen:
                 continue
+            # Решение, впервые увиденное позже `PENDING_MAX_S` после себя,
+            # исполнять нельзя: вход был бы на другой цене, чем у бумаги
+            # (подъём API после решения, источник отстал). Это отказ с
+            # причиной и возрастом, а не намерение задним числом.
+            if float(g["at"]) + PENDING_MAX_S <= now:
+                seen[k] = float(g["at"])
+                skips.append(skip_row(sub, rk, sk, g,
+                                      f"решение пришло поздно: возраст {int((now - float(g['at'])) // 60)} мин "
+                                      f"(подъём после решения или источник отстал)", now))
+                continue
             todo.append((sk, g, now))
     # фильтры стороны — ОДНОЙ функцией с бумагой: возраст имени у
     # коротких, гейт по ставке где объявлен

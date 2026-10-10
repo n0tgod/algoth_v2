@@ -678,6 +678,9 @@ def test_intents_plan_entry_like_paper_and_size_from_subscription_cash():
                                      for i in range(4)}}}
         _i6, sk6, _ = I.decide(sub, dict(st, **full), {"sit": [g_long]}, None, env, log=lambda *a: None)
         assert len(sk6) == 1 and sk6[0]["why"].startswith("нет кассы"), sk6
+        # решение, увиденное впервые через 20+ мин после себя, — отказ «поздно», не вход задним числом
+        _il, skl, _ = I.decide(sub, st, {"sit": [g_long]}, None, dict(env, now=at + I.PENDING_MAX_S + 60), log=lambda *a: None)
+        assert not _il and len(skl) == 1 and skl[0]["why"].startswith("решение пришло поздно: возраст 21 мин"), skl
         # решение до подписки не ведётся; повтор того же решения не дублируется
         _i7, sk7, it7 = I.decide(dict(sub, created=at + 1), {}, {"sit": [g_long]}, None, env, log=lambda *a: None)
         assert not _i7 and not sk7

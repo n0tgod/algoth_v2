@@ -8684,7 +8684,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L64 `operator_token(out)`
 - L76 `main(out=OUT, ip=SERVER_IP)`
 
-## tools/app_api/intents.py · 748 строк
+## tools/app_api/intents.py · 758 строк
 
 Намерения живого исполнителя Ladder (спека 15 §10a, этап L1).
 
@@ -8721,15 +8721,15 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L353 `read_rows(path, limit=None)`
 - L367 `busy_names(st, book_cell, rk, sk, now)` — Имена, занятые у источника: живые намерения подписки по той же книге-источнику и открытые позиции той же книг…
 - L383 `decide(sub, st, legs_by_family, book_cell, env, log=print)` — Решения одной подписки по новым ногам. Возвращает (намерения, отказы, новое состояние `intents`).
-- L516 `_bp(a, b)`
-- L524 `paper_rows(book_cell, rk)` — Позиции бумажной ячейки — открытые и хвост закрытых — с книгой-источником.
-- L534 `match_paper(intent, rows)` — Строка бумаги того же решения: имя, источник, секунда решения.
-- L547 `parity_one(intent, q)` — Расхождение намерения с бумажной строкой — числом по полю.
-- L564 `parity(root, sub, st, book_cell, since=None, tail=PARITY_TAIL)` — Сверка намерений подписки с бумажной ячейкой: совпавшие — с расхождениями по полю (медиана и максимум |Δ|), н…
-- L609 `summary(st)` — Что отдаёт состояние подписки приложению (§10a L1: «намерения за час»).
-- L620 `cell_key(book, deposit, sizing)`
-- L625 `tick(db, dca, root, log=print, env=None)` — Один такт по всем активным подпискам. Возвращает число намерений.
-- L695 `main(argv=None)`
+- L526 `_bp(a, b)`
+- L534 `paper_rows(book_cell, rk)` — Позиции бумажной ячейки — открытые и хвост закрытых — с книгой-источником.
+- L544 `match_paper(intent, rows)` — Строка бумаги того же решения: имя, источник, секунда решения.
+- L557 `parity_one(intent, q)` — Расхождение намерения с бумажной строкой — числом по полю.
+- L574 `parity(root, sub, st, book_cell, since=None, tail=PARITY_TAIL)` — Сверка намерений подписки с бумажной ячейкой: совпавшие — с расхождениями по полю (медиана и максимум |Δ|), н…
+- L619 `summary(st)` — Что отдаёт состояние подписки приложению (§10a L1: «намерения за час»).
+- L630 `cell_key(book, deposit, sizing)`
+- L635 `tick(db, dca, root, log=print, env=None)` — Один такт по всем активным подпискам. Возвращает число намерений.
+- L705 `main(argv=None)`
 
 ## tools/app_api/push.py · 214 строк
 
