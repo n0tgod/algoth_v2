@@ -10,3 +10,13 @@ state: 200, подписок 1, live_enabled False
   pair_aggr 100 $ режим dry: касса 100.0, позиций 1, намерений 0, отказов 6, возраст источников {'h24': 6533.0, 'sit': 6279.3}
 ок
 конец: 2026-10-10T17:20:01Z, код 0
+публикуется в ветку main:
+ jobs/done/l3-selftest.log   | 10 ++++++++++
+ jobs/done/l3-selftest2.done |  1 +
+ jobs/done/l3-selftest2.log  | 12 ++++++++++++
+ jobs/poke.log               |  3 +++
+ 4 files changed, 26 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   7303413a..039516dd  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
