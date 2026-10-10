@@ -1742,3 +1742,7 @@ Terminated
 
 == сигнал 1791628154 ==
 [2026-10-10T10:29:16Z] задание restart-book-fix6: перезапуск сборщика
+
+== сигнал 1791633185 ==
+[2026-10-10T11:53:06Z] задание api-restart-7 запущено: tools/app_api/restart.py
+[2026-10-10T11:53:07Z] задание set-topic-1 запущено: tools/app_api/set_topic.py
