@@ -793,9 +793,18 @@ class App:
             q = next((x for x in cands if x.get("sym") == p["sym"]
                       and abs(float(x.get("at") or 0) - float(p["pos_at"])) < 1.0), None)
             if q is None:
-                last = max([float(x.get("at") or 0) for x in cands] or [0.0])
-                p["paper_why"] = ("бумага ещё не считала этот час" if float(p["pos_at"]) > last else
-                                  "бумага это решение не брала (касса или одна позиция на имя)")
+                # «Считала ли бумага этот час» — по МОМЕНТУ ЕЁ ПРОГОНА
+                # (`open.at`), а не по последнему взятому решению: 10.10
+                # бумага посчитала 20:00 в 20:59, ничего не взяла (касса),
+                # а подпись по последнему входу (15:00) говорила «ещё не
+                # считала» — отказ, выданный за ожидание.
+                ran = (book.get("open") or {}).get("at")
+                if ran is None:
+                    p["paper_why"] = "время прогона бумаги неизвестно — сравнить не с чем"
+                elif float(p["pos_at"]) > float(ran):
+                    p["paper_why"] = "бумага ещё не считала этот час"
+                else:
+                    p["paper_why"] = "бумага это решение не взяла (касса или одна позиция на имя)"
                 continue
             closed = q.get("exit_ts") is not None and q.get("exit") is not None
             pm = float(q.get("margin") or 0) or None

@@ -1078,10 +1078,20 @@ def test_live_positions_are_built_from_executor_journal_in_paper_row_shape():
         assert "mark_usd" not in a and a["mark_why"] == "исполнитель не прислал статус"
         # бумага не считала час — причина словами
         dca["books"]["optimal_h:1000"]["trades"] = []
-        dca["books"]["optimal_h:1000"]["open"] = {"positions": [{"sym": "ZUSDT", "at": T - 3600}]}
+        dca["books"]["optimal_h:1000"]["open"] = {"positions": [{"sym": "ZUSDT", "at": T - 3600}], "at": T - 60}
         app._dca = {"at": 0.0, "data": None}
         a = app.live_positions(acc)[1]["positions"][0]
         assert a["paper_why"] == "бумага ещё не считала этот час" and "vs_paper" not in a, a.get("paper_why")
+        # бумага ПОСЧИТАЛА час (прогон позже решения) и не взяла — это отказ,
+        # а не ожидание, хотя её последний вход старше решения (10.10, 20:00)
+        dca["books"]["optimal_h:1000"]["open"]["at"] = T + 3540
+        app._dca = {"at": 0.0, "data": None}
+        a = app.live_positions(acc)[1]["positions"][0]
+        assert a["paper_why"].startswith("бумага это решение не взяла"), a.get("paper_why")
+        dca["books"]["optimal_h:1000"]["open"].pop("at")
+        app._dca = {"at": 0.0, "data": None}
+        a = app.live_positions(acc)[1]["positions"][0]
+        assert a["paper_why"].startswith("время прогона бумаги неизвестно"), a.get("paper_why")
         pn = app.live_positions(acc)[1]["pnl"]
         assert pn["open_unmarked"] == 1 and pn["open_usd"] == 0.0 and pn["total_usd"] == 0.59, "без отметки — названо числом"
     print("ok  живые позиции: форма строки книги, доливы с целью, исход словом бумаги, отметка исполнителя нетто")
