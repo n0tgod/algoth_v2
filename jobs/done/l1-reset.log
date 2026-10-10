@@ -10,3 +10,15 @@
 == pair_aggr 100 $ compound (sub_3f11698eb30279fa), касса 100.00 $
 такт 1970-01-01 00:00:00 UTC; намерений 0, отказов 0, живых 0, ждут бар 0
 конец: 2026-10-10T13:33:59Z, код 0
+публикуется в ветку main:
+ jobs/done/l1-check.log              |  4 ++++
+ jobs/done/l1-reset.done             |  1 +
+ jobs/done/l1-reset.log              | 12 ++++++++++++
+ jobs/done/l1b-api-restart.log       |  8 ++++++++
+ jobs/poke.log                       |  5 +++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 31 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   9caf6e2f..73e1c6ae  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
