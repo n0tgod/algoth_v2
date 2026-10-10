@@ -1,0 +1,34 @@
+== задание n1-selftest ==
+строка: run tools/app_api/selftest.py
+начало: 2026-10-10T20:24:44Z
+запускаю: .venv/bin/python tools/app_api/selftest.py 
+health: 200 {'ok': True, 'schema': 1}
+вход оператора: 200, аккаунт acc_05bccaa551a6df40, роль operator
+me: 200, роль operator, Apple ID привязан
+ячеек стратегий: 72, первая pair_safe 100 $, касса бумаги 108.91
+state: 200, подписок 1, live_enabled True
+  pair_aggr 100 $ режим live: касса 100.0, позиций 0, намерений 0, отказов 6, возраст источников {'h24': 17583.1, 'sit': 17329.4}; исполнитель: есть
+ок
+конец: 2026-10-10T20:24:44Z, код 0
+публикуется в ветку main:
+ jobs/done/n1-check.done                |     1 +
+ jobs/done/n1-check.log                 |     4 +
+ jobs/done/n1-cycle.done                |     1 +
+ jobs/done/n1-cycle.log                 |    39 +
+ jobs/done/n1-selftest.done             |     1 +
+ jobs/done/n1-selftest.log              |    12 +
+ jobs/done/n1-status.log                |    12 +
+ jobs/poke.log                          |     5 +
+ research/mech_2859b3d4/out/run.log     |   360 +
+ research/mech_59653014/out/run.log     |    90 +
+ research/paper_monthly/out/daily.log   |  4249 +++++++++
+ research/s10_policy/out/tournament.log | 15315 +++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json    |     2 +-
+ 13 files changed, 20090 insertions(+), 1 deletion(-)
+fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.

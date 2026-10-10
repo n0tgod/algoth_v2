@@ -1,0 +1,74 @@
+== задание n1-cycle ==
+строка: run tools/loggrep.py --file train --preset cycle --last 8
+начало: 2026-10-10T20:24:44Z
+запускаю: .venv/bin/python tools/loggrep.py --file train --preset cycle --last 8
+== research/s8_loop/out/train.log по образцу /матрица:|обучение пропущено по каденции|обучение отложено по памяти|переобучаю:|цикл закончен/ за 10 сут ==
+  совпадений 455
+  2026-10-01: 48
+  2026-10-02: 50
+  2026-10-03: 50
+  2026-10-04: 44
+  2026-10-05: 48
+  2026-10-06: 47
+  2026-10-07: 43
+  2026-10-08: 50
+  2026-10-09: 50
+  2026-10-10: 25
+  [10-10 08:52:11] переобучаю: весам 69.1 ч при каденции 24
+  [10-10 09:52:30] матрица: 799 символов × 1721 часов, сечений с ≥30 именами: 1532, признаков 50
+  [10-10 09:57:00] переобучаю: весам 70.2 ч при каденции 24
+  [10-10 10:35:58] матрица: 799 символов × 1722 часов, сечений с ≥30 именами: 1533, признаков 50
+  [10-10 10:39:31] переобучаю: весам 70.9 ч при каденции 24
+  [10-10 15:28:53] матрица: 799 символов × 1727 часов, сечений с ≥30 именами: 1538, признаков 50
+  [10-10 15:35:22] переобучаю: весам 75.8 ч при каденции 24
+  [10-10 19:48:09] цикл закончен за 17288 с, веса v2 до часа 2026-10-10-14
+конец: 2026-10-10T20:24:44Z, код 0
+git add отказал: fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+git add сказал: fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+нечего публиковать: в индекс не попало ни одного файла.
+что git видит в артефактах (?? не отслеживается, !! погашен
+.gitignore, пусто — файла нет вовсе):
+A  research/mech_2859b3d4/out/run.log
+A  research/mech_59653014/out/run.log
+M  research/paper_monthly/out/daily.log
+M  research/s10_policy/out/tournament.log
+M  research/s8_loop/out/day_brake.json
+!! research/a1_universe/out/cache_api/
+!! research/a1_universe/out/funding/
+!! research/a1_universe/out/funding_binance/
+!! research/a1_universe/out/instruments.log
+!! research/a1_universe/out/klines/
+!! research/a1_universe/out/klines_1m.log
+!! research/a1_universe/out/refresh.log
+!! research/a2_storage/out/build_1m.log
+!! research/a2_storage/out/hygiene_1m.log
+!! research/a2_storage/out/parquet/
+!! research/a2_storage/out/restat_1m.log
+!! research/a4_cointegration/out/sweep_run.log
+!! research/a4_cointegration/out/walkforward_null1_run.log
+!! research/a4_cointegration/out/walkforward_run.log
+!! research/a4_cointegration/out/windows/
+!! research/a4_cointegration/out/windows_null1/
+!! research/asset_groups/out/daily_liquidity_1m.csv.gz
+!! research/b1_book/out/book/
+!! research/b1_book/out/cache/
+!! research/b1_book/out/collect.log
+!! research/b1_book/out/liq/
+!! research/b1_book/out/market_vol.json
+!! research/b1_book/out/measure-pack.json.state
+!! research/b1_book/out/metrics/
+!! research/b1_book/out/raw/
+нет строк выше — прогон писал не в этот каталог;
+строки с !! — правило .gitignore этапа гасит отчёт.

@@ -1,0 +1,77 @@
+== задание n1-status ==
+строка: status
+начало: 2026-10-10T20:24:44Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   74G   71G  52% /
+/dev/sdb        147G   77G   63G  56% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 553659   27297 .venv/bin/python research/b1_book/collect.py --http 8765
+ 582416   19483 .venv/bin/python research/s8_loop/train.py
+ 669148 4057019 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.
+--- убийства ядра по памяти за сутки ---
+5 (подробно: run tools/memtop.py)
+--- обучение S8 ---
+обучение S8: веса от 2026-10-10 19:48 UTC, 0.6 ч назад (каденция 24, тревога с 36 ч); последний цикл 19:48 UTC: обучилась
+--- идущие прогоны ---
+нет
+--- статус сбора ---
+{"t": 1791663883.5, "uptime_sec": 27294.8, "rss_mb": 1547, "mem_guard": {"drops": 0, "dies": 0, "max_rss_mb": 1558}, "messages": 95413165, "trades": 9555156, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 20964252, "snapshot_errors": 0, "last_snap_age_sec": 0.7, "snap_pass_sec": 0.405, "writes": {"book": 20964252, "trades": 9555147, "raw": 521679, "liq": 2865, "metrics": 71100}, "write_age_sec": {"book": 0.7, "trades": 0.4, "raw": 0.4, "liq": 24.3, "metrics": 122.5}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.2638, "ask": 0.2639, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.00039, "ask": 0.0003903, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1108, "ask":
+--- живой исполнитель ---
+{
+  "at_ms": 1791663881070,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 284.21345292,
+    "equity": 284.21345292
+  }
+}
+конец: 2026-10-10T20:24:44Z
+git add отказал: fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+git add сказал: fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+публикуется в ветку main:
+ jobs/done/n1-check.done                |     1 +
+ jobs/done/n1-check.log                 |     4 +
+ jobs/done/n1-cycle.done                |     1 +
+ jobs/done/n1-cycle.log                 |    39 +
+ jobs/done/n1-selftest.done             |     1 +
+ jobs/done/n1-selftest.log              |    12 +
+ jobs/done/n1-status.log                |    12 +
+ jobs/poke.log                          |     5 +
+ research/mech_2859b3d4/out/run.log     |   360 +
+ research/mech_59653014/out/run.log     |    90 +
+ research/paper_monthly/out/daily.log   |  4249 +++++++++
+ research/s10_policy/out/tournament.log | 15315 +++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json    |     2 +-
+ 13 files changed, 20090 insertions(+), 1 deletion(-)
+fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.

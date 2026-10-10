@@ -1,0 +1,62 @@
+== задание n1-check ==
+строка: run tools/app_api/intents.py --check --tail 30
+начало: 2026-10-10T20:24:44Z
+запускаю: .venv/bin/python tools/app_api/intents.py --check --tail 30
+подписок активных 1; корень /root/algoth_v2/bot/out/dca
+источник research/s8_loop/out/model_h24/picks.jsonl: смещение 17107521 из 17107521, прочитано строк 1084, последнее чтение 2026-10-10 20:23 UTC
+источник research/s8_loop/out/model_sit/sheets.jsonl: смещение 492815656 из 492815656, прочитано строк 22, последнее чтение 2026-10-10 20:23 UTC
+
+== pair_aggr 100 $ compound (sub_3f11698eb30279fa), касса 100.00 $
+такт 2026-10-10 20:23:52 UTC; возраст источников: h24 293 мин, sit 288 мин; намерений 0, отказов 6, живых 0, ждут бар 0
+  отказ 10-10 15:00 CAPUSDT — решение пришло поздно: возраст 30 мин (подъём после решения или источник отстал)
+  отказ 10-10 15:00 JCTUSDT — решение пришло поздно: возраст 30 мин (подъём после решения или источник отстал)
+  отказ 10-10 15:00 APRUSDT — решение пришло поздно: возраст 30 мин (подъём после решения или источник отстал)
+  отказ 10-10 15:00 VKTXUSDT — решение пришло поздно: возраст 31 мин (подъём после решения или источник отстал)
+  отказ 10-10 15:00 ACNUSDT — решение пришло поздно: возраст 31 мин (подъём после решения или источник отстал)
+  отказ 10-10 15:00 USUSDT — решение пришло поздно: возраст 31 мин (подъём после решения или источник отстал)
+  сверка с бумагой: намерений 0, совпало 0, без бумаги 0, бумага без намерения 3 (строк бумаги с подписки 3)
+    entry_bp: —
+    lev_d: —
+    margin_d: —
+    take_bp: —
+    floor_bp: —
+    бумага без намерения: USUSDT 10-10 03:00 — намерения не было (решение до подъёма или источник не прочитан)
+    бумага без намерения: JCTUSDT 10-10 15:00 — решение пришло поздно: возраст 30 мин (подъём после решения или источник отстал)
+    бумага без намерения: BATUSDT 10-10 03:00 — намерения не было (решение до подъёма или источник не прочитан)
+конец: 2026-10-10T20:24:45Z, код 0
+git add отказал: fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+git add сказал: fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+публикуется в ветку main:
+ jobs/done/n1-check.done                |     1 +
+ jobs/done/n1-check.log                 |     4 +
+ jobs/done/n1-cycle.done                |     1 +
+ jobs/done/n1-cycle.log                 |    39 +
+ jobs/done/n1-selftest.done             |     1 +
+ jobs/done/n1-selftest.log              |    12 +
+ jobs/done/n1-status.log                |    12 +
+ jobs/poke.log                          |     5 +
+ research/mech_2859b3d4/out/run.log     |   360 +
+ research/mech_59653014/out/run.log     |    90 +
+ research/paper_monthly/out/daily.log   |  4249 +++++++++
+ research/s10_policy/out/tournament.log | 15315 +++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json    |     2 +-
+ 13 files changed, 20090 insertions(+), 1 deletion(-)
+fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.

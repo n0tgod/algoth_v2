@@ -1844,3 +1844,16 @@ Terminated
 
 == сигнал 1791653218 ==
 [2026-10-10T17:27:00Z] задание l3-api-restart2 запущено: tools/app_api/restart.py
+
+== сигнал 1791663882 ==
+[2026-10-10T20:24:44Z] задание n1-check запущено: tools/app_api/intents.py
+[2026-10-10T20:24:44Z] задание n1-cycle запущено: tools/loggrep.py
+[2026-10-10T20:24:44Z] задание n1-selftest запущено: tools/app_api/selftest.py
+[2026-10-10T20:24:44Z] задание n1-status: состояние снято
+
+== сигнал 1791664213 ==
+
+== сигнал 1791664853 ==
+
+== сигнал 1791665326 ==
+[2026-10-10T20:48:48Z] задание n2-api-restart запущено: tools/app_api/restart.py
