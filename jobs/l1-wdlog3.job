@@ -1,0 +1,1 @@
+run tools/loggrep.py --file watchdog --pattern S8 --last 12
