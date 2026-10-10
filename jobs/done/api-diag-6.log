@@ -1,0 +1,65 @@
+== задание api-diag-6 ==
+строка: run tools/app_api/diag.py
+начало: 2026-10-10T12:05:33Z
+запускаю: .venv/bin/python tools/app_api/diag.py 
+порт 443: слушает
+status.json: {"started": 1791633900.49951, "port": 443, "pid": 539148, "host": "ubuntu-8gb-nbg1-2", "exec_root": "/root/algoth_v2/bot/out/dca", "push": {"configured": true, "key_id": "TD766D55Y7", "team_id": "VKK\u2026", "topic": "algoth", "saved": 1791633054.8924236}}
+журнал запросов: строк 340, последние 40:
+      return self._sslobj.read(len, buffer)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ssl.SSLError: [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:2570)
+  ----------------------------------------
+  2026-10-10T10:42:32Z 130.131.160.46 GET /developmentserver/metadatauploader "GET /developmentserver/metadatauploader HTTP/1.1" 404 -
+  2026-10-10T11:22:33Z 78.153.140.43 GET /.env "GET /.env HTTP/1.1" 404 -
+  2026-10-10T11:22:33Z 78.153.140.43 POST / "POST / HTTP/1.1" 404 -
+  2026-10-10T11:48:02Z 46.125.141.3 GET /api/v1/me "GET /api/v1/me HTTP/1.1" 200 -
+  2026-10-10T11:48:02Z 46.125.141.3 GET /api/v1/keys "GET /api/v1/keys HTTP/1.1" 200 -
+  2026-10-10T11:48:03Z 46.125.141.3 GET /api/v1/strategies "GET /api/v1/strategies HTTP/1.1" 200 -
+  2026-10-10T11:48:03Z 46.125.141.3 GET /api/v1/subscriptions "GET /api/v1/subscriptions HTTP/1.1" 200 -
+  2026-10-10T11:48:04Z 46.125.141.3 GET /api/v1/state "GET /api/v1/state HTTP/1.1" 200 -
+  2026-10-10T11:48:04Z 46.125.141.3 GET /api/v1/devices "GET /api/v1/devices HTTP/1.1" 200 -
+  2026-10-10T11:48:09Z 46.125.141.3 POST /api/v1/devices "POST /api/v1/devices HTTP/1.1" 200 -
+  2026-10-10T11:48:09Z 46.125.141.3 GET /api/v1/devices "GET /api/v1/devices HTTP/1.1" 200 -
+  2026-10-10T11:50:54Z 46.125.141.3 POST /api/v1/push/config "POST /api/v1/push/config HTTP/1.1" 200 -
+  2026-10-10T11:50:55Z 46.125.141.3 GET /api/v1/devices "GET /api/v1/devices HTTP/1.1" 200 -
+  2026-10-10T11:51:01Z 46.125.141.3 POST /api/v1/push/test "POST /api/v1/push/test HTTP/1.1" 200 -
+  2026-10-10T11:51:09Z пуш test None → c1832af2…: 400 TopicDisallowed
+  2026-10-10T11:51:09Z 46.125.141.3 POST /api/v1/trades/test "POST /api/v1/trades/test HTTP/1.1" 200 -
+  2026-10-10T11:51:09Z 46.125.141.3 GET /api/v1/trades "GET /api/v1/trades?limit=300 HTTP/1.1" 200 -
+  2026-10-10T11:53:09Z API на 443 с TLS
+  2026-10-10T11:53:09Z приём журнала исполнителя: /root/algoth_v2/bot/out/dca, пуши настроены
+  2026-10-10T11:55:40Z 46.125.141.3 GET /api/v1/me "GET /api/v1/me HTTP/1.1" 200 -
+  2026-10-10T11:55:40Z 46.125.141.3 POST /api/v1/devices "POST /api/v1/devices HTTP/1.1" 200 -
+  2026-10-10T11:55:40Z 46.125.141.3 GET /api/v1/keys "GET /api/v1/keys HTTP/1.1" 200 -
+  2026-10-10T11:55:40Z 46.125.141.3 GET /api/v1/devices "GET /api/v1/devices HTTP/1.1" 200 -
+  2026-10-10T11:55:40Z 46.125.141.3 GET /api/v1/strategies "GET /api/v1/strategies HTTP/1.1" 200 -
+  2026-10-10T11:55:41Z 46.125.141.3 GET /api/v1/subscriptions "GET /api/v1/subscriptions HTTP/1.1" 200 -
+  2026-10-10T11:55:41Z 46.125.141.3 GET /api/v1/state "GET /api/v1/state HTTP/1.1" 200 -
+  2026-10-10T11:55:41Z 46.125.141.3 GET /api/v1/devices "GET /api/v1/devices HTTP/1.1" 200 -
+  2026-10-10T11:55:42Z 46.125.141.3 POST /api/v1/push/test "POST /api/v1/push/test HTTP/1.1" 200 -
+  2026-10-10T11:55:47Z 46.125.141.3 POST /api/v1/trades/test "POST /api/v1/trades/test HTTP/1.1" 200 -
+  2026-10-10T11:55:47Z 46.125.141.3 GET /api/v1/trades "GET /api/v1/trades?limit=300 HTTP/1.1" 200 -
+  2026-10-10T11:56:15Z 46.125.141.3 GET /api/v1/trades "GET /api/v1/trades?limit=300 HTTP/1.1" 200 -
+  2026-10-10T11:56:58Z API на 443 с TLS
+  2026-10-10T11:56:58Z приём журнала исполнителя: /root/algoth_v2/bot/out/dca, пуши настроены
+  2026-10-10T12:05:00Z API на 443 с TLS
+  2026-10-10T12:05:00Z приём журнала исполнителя: /root/algoth_v2/bot/out/dca, пуши настроены
+  2026-10-10T12:05:01Z следователь pair_aggr 100 $: событий 2
+accounts: 1
+sessions: 2
+exchange_keys: 1
+subscriptions: 1
+events: 8
+аккаунты (без секретов):
+   ('acc_05bccaa551a6df40', 'operator', 1, 'active', '2026-10-09 17:05:46')
+последние события:
+   ('2026-10-10 11:50:54', 'acc_05bccaa551a6df40', 'push', 'ключ APNs задан: TD766D55Y7, тема pl.mdsauto.algoth')
+   ('2026-10-09 21:55:14', 'acc_05bccaa551a6df40', 'subscription', 'подписка pair_aggr на 100 $ (сухой режим)')
+   ('2026-10-09 21:11:04', 'acc_05bccaa551a6df40', 'key', 'ключ AgSF… добавлен')
+   ('2026-10-09 20:45:49', 'acc_05bccaa551a6df40', 'auth', 'вход через Apple')
+   ('2026-10-09 20:45:49', 'acc_05bccaa551a6df40', 'account', 'Apple ID привязан к аккаунту')
+   ('2026-10-09 20:44:57', 'acc_05bccaa551a6df40', 'auth', 'вход оператора')
+   ('2026-10-09 17:05:46', 'acc_05bccaa551a6df40', 'auth', 'вход оператора')
+   ('2026-10-09 17:05:46', 'acc_05bccaa551a6df40', 'account', 'аккаунт оператора создан')
+LIVE_ENABLED: False
+конец: 2026-10-10T12:05:33Z, код 0
