@@ -50,12 +50,21 @@ def main():
     print(f"вход оператора: {st}, аккаунт {a.get('account_id')}, роль {a.get('role')}")
     sess = a.get("session")
     st, me = call(base, "/api/v1/me", token=sess, ctx=ctx)
-    print(f"me: {st} {me}")
+    # адрес почты в лог не идёт: лог задания уезжает в git
+    print(f"me: {st}, роль {me.get('role')}, Apple ID {'привязан' if me.get('apple_linked') else 'не привязан'}")
     st, s = call(base, "/api/v1/strategies", token=sess, ctx=ctx)
     cells = s.get("cells") or []
-    print(f"ячеек стратегий: {len(cells)}" + (f", первая {cells[0]['book']} {cells[0]['deposit']:g} $ касса {cells[0]['cash_usd']}" if cells else " — книги не прочитаны"))
+    print(f"ячеек стратегий: {len(cells)}" + (f", первая {cells[0].get('book')} {cells[0].get('deposit'):g} $, "
+                                              f"касса бумаги {cells[0].get('paper_cash_usd')}" if cells else " — книги не прочитаны"))
     st, stt = call(base, "/api/v1/state", token=sess, ctx=ctx)
     print(f"state: {st}, подписок {len(stt.get('subscriptions') or [])}, live_enabled {stt.get('live_enabled')}")
+    for x in stt.get("subscriptions") or []:
+        it = x.get("intents") or {}
+        ex = x.get("executor")
+        print(f"  {x.get('book')} {x.get('deposit'):g} $ режим {x.get('mode')}: касса {x.get('cash_usd')}, "
+              f"позиций {len(x.get('positions') or [])}, намерений {it.get('n')}, отказов {it.get('n_skips')}, "
+              f"возраст источников {it.get('source_age_s')}"
+              + (f"; исполнитель: {('нет — ' + str(ex.get('why_none'))) if not ex.get('status') else 'есть'}" if ex else ""))
     call(base, "/api/v1/auth/logout", {}, token=sess, ctx=ctx)
     print("ок")
 

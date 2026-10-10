@@ -8900,7 +8900,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L65 `write_keypair(dirpath)` — Пара на диск: приватная — 600, публичная — рядом. Существующую не трогает: перезапись приватного ключа сделал…
 - L82 `read_pub(dirpath)`
 
-## tools/app_api/selftest.py · 64 строк
+## tools/app_api/selftest.py · 73 строк
 
 Самопроверка API на сервере: процесс жив, TLS отвечает, вход оператора работает, книги читаются. Печатает сло…
 
