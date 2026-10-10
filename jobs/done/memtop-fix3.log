@@ -167,3 +167,13 @@
    1496656        1      4  311:19  /usr/lib/polkit-1/polkitd --no-debug
    2329847        1      4  214:58  /usr/lib/systemd/systemd-timesyncd
 конец: 2026-10-10T05:22:10Z, код 0
+публикуется в ветку main:
+ jobs/done/memtop-fix3.done          |   1 +
+ jobs/done/memtop-fix3.log           | 169 ++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |   3 +
+ research/s8_loop/out/day_brake.json |   2 +-
+ 4 files changed, 174 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   3a0717d2..9e2cf9fb  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
