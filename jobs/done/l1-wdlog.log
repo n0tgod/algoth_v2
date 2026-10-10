@@ -13,3 +13,10 @@
  jobs/done/l1-wdlog.log      |  7 +++++++
  jobs/poke.log               |  4 ++++
  6 files changed, 28 insertions(+)
+fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.

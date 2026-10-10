@@ -55,3 +55,15 @@
   [10-10 10:35:58] матрица: 799 символов × 1722 часов, сечений с ≥30 именами: 1533, признаков 50
   [10-10 10:39:31] переобучаю: весам 70.9 ч при каденции 24
 конец: 2026-10-10T15:14:26Z, код 0
+публикуется в ветку main:
+ jobs/done/l1-cyclelog2.log  | 11 +++++++++
+ jobs/done/l1-cyclelog3.done |  1 +
+ jobs/done/l1-cyclelog3.log  | 57 +++++++++++++++++++++++++++++++++++++++++++++
+ jobs/done/l1-wdlog.done     |  1 +
+ jobs/done/l1-wdlog.log      | 15 ++++++++++++
+ jobs/poke.log               |  4 ++++
+ 6 files changed, 89 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   53d0fac6..897f5ef3  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
