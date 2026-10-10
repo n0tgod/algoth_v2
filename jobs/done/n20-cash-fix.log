@@ -120,3 +120,17 @@ pair_aggr: охрана рынком ≥ 2 % закрыла 1279 из 4365 по�
 | общая (агрессивная) | 100000 | фикс. | +34.8 % → +34.8 % | -4.5 % → -4.5 % | 1645 → 1645 | 2026-10-05 | -1.4 % → -1.4 % | -1.4 % | 0 → 0 |
 
 
+публикуется в ветку main:
+ jobs/done/n19-api-restart.log            |   10 +
+ jobs/done/n20-cash-fix.done              |    1 +
+ jobs/done/n20-cash-fix.log               |  122 ++
+ jobs/poke.log                            |    3 +
+ research/dca_paper/out/DCA-cash-fix.json | 2669 ++++++++++++++++++++++++++++++
+ research/dca_paper/out/DCA-cash-fix.md   |   91 +
+ research/s8_loop/out/day_brake.json      |    2 +-
+ 7 files changed, 2897 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   383391e2..3bd2fed1  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-10T21:47:46Z, код 0
