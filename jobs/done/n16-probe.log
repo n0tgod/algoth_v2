@@ -27,3 +27,15 @@ h24/nn: часов 1045, коротких выборов 3135, ног под к�
   10-10 21:00 RLCUSDT nn fwd -834.9509718586661 | реплей optimal_s: нет записи | возраст 1298.6 сут
   10-10 21:00 STRKUSDT nn fwd -550.3350489936673 | реплей optimal_s: нет записи | возраст 963.3 сут
 конец: 2026-10-10T21:34:45Z, код 0
+публикуется в ветку main:
+ jobs/done/n15-status.done           |  1 +
+ jobs/done/n15-status.log            | 11 +++++++++++
+ jobs/done/n16-probe.done            |  1 +
+ jobs/done/n16-probe.log             | 29 +++++++++++++++++++++++++++++
+ jobs/poke.log                       |  4 ++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 47 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   8cc7b800..7eaced9a  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
