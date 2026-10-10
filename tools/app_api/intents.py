@@ -702,6 +702,30 @@ def tick(db, dca, root, log=print, env=None):
     return n
 
 
+def reset_sub(db, root, sub_id, now=None):
+    """Сброс намерений подписки: файлы НЕ удаляются — переименовываются в
+    `*-stale-<момент>.jsonl` (запись остаётся), состояние `intents`
+    очищается, смещения источников не трогаются. Нужен, когда состояние
+    набрано не теми правилами (первый подъём 10.10 записал намерения по
+    решениям задним числом). Возвращает, что сделано, словами."""
+    now = float(now or time.time())
+    tag = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(now))
+    moved = []
+    for path in (intents_path(root, sub_id), skips_path(root, sub_id)):
+        if os.path.exists(path):
+            dst = path[:-len(".jsonl")] + f"-stale-{tag}.jsonl"
+            os.replace(path, dst)
+            moved.append(os.path.basename(dst))
+    row = db.c.execute("SELECT * FROM subscriptions WHERE id=?", (sub_id,)).fetchone()
+    if row is None:
+        return {"error": f"подписки {sub_id} нет", "moved": moved}
+    st = json.loads(row["state_json"] or "{}")
+    had = st.pop("intents", None)
+    db.set_sub_state(sub_id, st)
+    return {"sub": sub_id, "moved": moved, "had_intents": (had or {}).get("n"),
+            "had_live": len((had or {}).get("live") or {})}
+
+
 def main(argv=None):
     import argparse
     ap = argparse.ArgumentParser(description="сверка намерений исполнителя с бумажными книгами")
@@ -709,12 +733,15 @@ def main(argv=None):
     ap.add_argument("--root", default=None, help="корень журналов исполнителя (умолчание — сервера)")
     ap.add_argument("--check", action="store_true", help="напечатать сверку по подпискам")
     ap.add_argument("--tail", type=int, default=20, help="сколько последних намерений и отказов показать")
+    ap.add_argument("--reset-sub", default=None, help="сбросить намерения подписки (файлы переименовываются, не удаляются)")
     a = ap.parse_args(argv)
     sys.path.insert(0, HERE)
     import server as SV                                      # noqa: E402
     import db as DBM                                         # noqa: E402
     root = a.root or SV.EXEC_ROOT
     db = DBM.DB(a.db)
+    if a.reset_sub:
+        print("сброс:", json.dumps(reset_sub(db, root, a.reset_sub), ensure_ascii=False))
     dca = None
     try:
         dca = SV.fetch_dca()

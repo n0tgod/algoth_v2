@@ -807,9 +807,17 @@ def test_intents_sources_are_read_as_tail_once_and_tick_feeds_state_and_parity()
             sk2 = I.read_rows(I.skips_path(root, sub["subscription_id"]))
             assert sk2[-1]["sym"] == "BBBUSDT" and "намерение держит" in sk2[-1]["why"], sk2[-1]
             assert SECRET not in json.dumps(li)
+            # сброс подписки: файлы переименованы (не удалены), состояние чисто, смещения источников целы
+            r = I.reset_sub(app.db, root, sub["subscription_id"], now=at)
+            assert r["had_intents"] == 1 and r["had_live"] == 1 and len(r["moved"]) == 2, r
+            d = os.path.join(root, sub["subscription_id"])
+            assert not os.path.exists(I.intents_path(root, sub["subscription_id"])) and any("intents-stale-" in x for x in os.listdir(d))
+            assert "intents" not in json.loads(app.db.subscription(sub["subscription_id"], acc["id"])["state_json"])
+            assert I.load_sources_state(root)[picks]["offset"] == os.path.getsize(picks)
+            assert I.reset_sub(app.db, root, "sub_nope")["error"].startswith("подписки")
     finally:
         D2.build_levels = orig
-    print("ok  такт намерений: хвост источников, файлы с seq, сводка в состоянии, сверка с бумагой")
+    print("ok  такт намерений: хвост источников, файлы с seq, сводка в состоянии, сверка с бумагой, сброс")
 
 
 TESTS = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]

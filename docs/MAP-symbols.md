@@ -8684,7 +8684,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L64 `operator_token(out)`
 - L76 `main(out=OUT, ip=SERVER_IP)`
 
-## tools/app_api/intents.py · 758 строк
+## tools/app_api/intents.py · 785 строк
 
 Намерения живого исполнителя Ladder (спека 15 §10a, этап L1).
 
@@ -8729,7 +8729,8 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L619 `summary(st)` — Что отдаёт состояние подписки приложению (§10a L1: «намерения за час»).
 - L630 `cell_key(book, deposit, sizing)`
 - L635 `tick(db, dca, root, log=print, env=None)` — Один такт по всем активным подпискам. Возвращает число намерений.
-- L705 `main(argv=None)`
+- L705 `reset_sub(db, root, sub_id, now=None)` — Сброс намерений подписки: файлы НЕ удаляются — переименовываются в `*-stale-<момент>.jsonl` (запись остаётся)…
+- L729 `main(argv=None)`
 
 ## tools/app_api/push.py · 214 строк
 
