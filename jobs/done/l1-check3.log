@@ -17,3 +17,13 @@
     бумага без намерения: USUSDT 10-10 03:00 — намерения не было (решение до подъёма или источник не прочитан)
     бумага без намерения: BATUSDT 10-10 03:00 — намерения не было (решение до подъёма или источник не прочитан)
 конец: 2026-10-10T15:07:24Z, код 0
+публикуется в ветку main:
+ jobs/done/l1-check3.done            |  1 +
+ jobs/done/l1-check3.log             | 19 +++++++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 4 files changed, 24 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   b3cf98dc..7fb56c31  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
