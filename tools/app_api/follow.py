@@ -60,6 +60,8 @@ def events_for(p, seen, since, closed):
     depth_n = len(fills)
     lv = p.get("levels") or {}
     base = {"mode": "dry", "sym": p.get("sym"), "side": p.get("side"),
+            # секунда входа позиции — ключ позиции для графика и сверки
+            "pos_at": at, "exit_ts_pos": _f(p.get("exit_ts")) if closed else None,
             "lev": _f(p.get("lev")), "paper_margin_usd": _f(p.get("margin")),
             "margin_usd": _f(p.get("margin")),
             # уровни строки книги (Y1): пол и ликвидация — как записаны

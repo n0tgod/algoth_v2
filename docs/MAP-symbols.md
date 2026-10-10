@@ -8656,7 +8656,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L17 `OUT = os.path.join(HERE, 'out')`
 - L20 `main()`
 
-## tools/app_api/follow.py · 166 строк
+## tools/app_api/follow.py · 168 строк
 
 Сухой исполнитель-следователь (спека 15, Y2 в сухом режиме).
 
@@ -8665,9 +8665,9 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L39 `pos_key(p)`
 - L43 `_f(v)`
 - L50 `events_for(p, seen, since, closed)` — События одной позиции сверх уже отданных. `seen` — {"fills": n, "closed": bool}; возвращает (события, новое s…
-- L97 `plan(book, state, since)` — Все новые события ячейки по своду книги. Возвращает (события по времени, новое состояние слежения).
-- L124 `append_events(root, sub_id, events)` — Дописать события с растущим seq; вернуть сколько записано.
-- L148 `tick(db, dca, root, log=print)` — Один такт по всем активным подпискам. Возвращает число событий.
+- L99 `plan(book, state, since)` — Все новые события ячейки по своду книги. Возвращает (события по времени, новое состояние слежения).
+- L126 `append_events(root, sub_id, events)` — Дописать события с растущим seq; вернуть сколько записано.
+- L150 `tick(db, dca, root, log=print)` — Один такт по всем активным подпискам. Возвращает число событий.
 
 ## tools/app_api/init.py · 88 строк
 

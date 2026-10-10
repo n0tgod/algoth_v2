@@ -497,6 +497,7 @@ def test_follower_turns_cell_positions_into_executor_events_once():
     e0 = evs[0]
     assert e0["depth"] == "1/2" and e0["qty"] == 0.25 * 25 * 4 / 2.0 and e0["term_ts"] == since + 60 + 72 * 3600
     assert e0["paper_margin_usd"] == 25.0 and e0["mode"] == "dry" and e0["take_px"] == 2.0 * 1.1
+    assert e0["pos_at"] == since + 60 and evs[4]["pos_at"] == since + 120 and evs[4]["exit_ts_pos"] == done["exit_ts"]
     rung = evs[2]
     assert rung["depth"] == "2/2" and abs(rung["avg"] - (50 / (25 / 2.0 + 25 / 1.8))) < 1e-9 and rung["px"] == 1.8
     mk = evs[4]
