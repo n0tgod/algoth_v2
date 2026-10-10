@@ -4,3 +4,16 @@
 запускаю: .venv/bin/python tools/app_api/set_topic.py algoth
 тема пушей: 'pl.mdsauto.algoth' → 'algoth'; ключ TD766D55Y7 на месте
 конец: 2026-10-10T11:53:07Z, код 0
+публикуется в ветку main:
+ jobs/done/api-restart-7.done        |  1 +
+ jobs/done/api-restart-7.log         |  4 ++++
+ jobs/done/restart-book-fix6.log     | 10 ++++++++++
+ jobs/done/set-topic-1.done          |  1 +
+ jobs/done/set-topic-1.log           |  6 ++++++
+ jobs/poke.log                       |  4 ++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 7 files changed, 27 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   84bfcc1d..835530a9  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
