@@ -224,7 +224,12 @@ class DB:
     def trade(self, tid):
         return self.c.execute("SELECT * FROM trades WHERE id=?", (tid,)).fetchone()
 
-    def trades_of(self, acc_id, since=0, limit=200):
+    def trades_of(self, acc_id, since=0, limit=200, modes=None):
+        if modes:
+            q = ",".join("?" * len(modes))
+            return self.c.execute(f"SELECT * FROM trades WHERE account_id=? AND id>? AND mode IN ({q}) "
+                                  "ORDER BY id DESC LIMIT ?",
+                                  (acc_id, int(since), *modes, int(limit))).fetchall()
         return self.c.execute("SELECT * FROM trades WHERE account_id=? AND id>? ORDER BY id DESC LIMIT ?",
                               (acc_id, int(since), int(limit))).fetchall()
 

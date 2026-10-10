@@ -8678,7 +8678,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L72 `wallet_equity(key, secret, base=BASE)` — Эквити единого счёта в долларах. Нет поля — None, не ноль.
 - L83 `position_mode(key, secret, symbols=None, base=BASE)` — Режим позиций по именам: positionIdx 0 — односторонний, 1/2 — хедж. Возвращает {имя: 'hedge' | 'oneway'} по п…
 
-## tools/app_api/db.py · 246 строк
+## tools/app_api/db.py · 251 строк
 
 Хранилище API приложения: SQLite с WAL (спека 15 §7a.1).
 
@@ -8717,10 +8717,10 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
   - L203 `DB.drop_device(self, token, acc_id)`
   - L207 `DB.add_trade(self, acc_id, sub_id, ev)` — Строка журнала исполнителя → запись; повтор (та же подписка и `seq`) молча не дублируется — журнал write-ahea…
   - L224 `DB.trade(self, tid)`
-  - L227 `DB.trades_of(self, acc_id, since=0, limit=200)`
-  - L231 `DB.trade_pushed(self, tid, result)`
-  - L234 `DB.last_seq(self, sub_id)`
-  - L239 `DB.nonce_once(self, nonce, window=120)` — ------------------------------------------------------------ nonce
+  - L227 `DB.trades_of(self, acc_id, since=0, limit=200, modes=None)`
+  - L236 `DB.trade_pushed(self, tid, result)`
+  - L239 `DB.last_seq(self, sub_id)`
+  - L244 `DB.nonce_once(self, nonce, window=120)` — ------------------------------------------------------------ nonce
 
 ## tools/app_api/diag.py · 58 строк
 
@@ -8909,7 +8909,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L17 `call(base, path, body=None, token=None, ctx=None)`
 - L26 `main()`
 
-## tools/app_api/server.py · 927 строк
+## tools/app_api/server.py · 941 строк
 
 HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 
@@ -8964,32 +8964,32 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
   - L473 `App.kill(self, acc, sid, on)` — KILL подписки: исполнитель не делает НИЧЕГО (ни заявок, ни отмен).
   - L491 `App.check_account(self, acc, sid, runner=None)` — Предполётная проверка счёта по кнопке владельца: ключ открывает отдельный процесс (`preflight.py`), сюда прих…
   - L509 `App.state(self, acc)` — ------------------------------------------------------------ состояние
-  - L589 `App.events(self, acc, since)`
-  - L592 `App.books(self, full=None)`
-  - L600 `App.add_device(self, acc, token, env='prod', build=None)` — ------------------------------------------------------------ устройства и пуши (§7.5)
-  - L608 `App.list_devices(self, acc)`
-  - L614 `App.delete_device(self, acc, token)`
-  - L618 `App.push_config(self, acc, team_id, key_id, p8, topic=None)`
-  - L629 `App.push_test(self, acc)` — Пробный пуш на устройства аккаунта — без записи сделки.
-  - L647 `App.list_trades(self, acc, since=0, limit=200)` — ------------------------------------------------------------ сделки исполнителя (§7.6)
-  - L661 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
-  - L671 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
-  - L685 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
-  - L702 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
-- L720 `fetch_dca(full=None)`
-- L733 `class Handler`
-  - L737 `Handler.log_message(self, fmt, *a)`
-  - L741 `Handler._send(self, code, obj)`
-  - L750 `Handler._body(self)`
-  - L760 `Handler._acc(self)`
-  - L768 `Handler._route(self, method)`
-  - L857 `Handler.do_GET(self)`
-  - L860 `Handler.do_POST(self)`
-  - L863 `Handler.do_DELETE(self)`
-- L867 `class Server`
-- L872 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
-- L883 `read_operator_token(path)`
-- L891 `main(argv=None)`
+  - L591 `App.events(self, acc, since)`
+  - L594 `App.books(self, full=None)`
+  - L602 `App.add_device(self, acc, token, env='prod', build=None)` — ------------------------------------------------------------ устройства и пуши (§7.5)
+  - L610 `App.list_devices(self, acc)`
+  - L616 `App.delete_device(self, acc, token)`
+  - L620 `App.push_config(self, acc, team_id, key_id, p8, topic=None)`
+  - L631 `App.push_test(self, acc)` — Пробный пуш на устройства аккаунта — без записи сделки.
+  - L649 `App.list_trades(self, acc, since=0, limit=200, mode='live')` — Записи журнала исполнителя. По умолчанию — только ЖИВЫЕ (решение владельца 10.10: «на вкладке Trades — реальн…
+  - L674 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
+  - L684 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
+  - L698 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
+  - L715 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
+- L733 `fetch_dca(full=None)`
+- L746 `class Handler`
+  - L750 `Handler.log_message(self, fmt, *a)`
+  - L754 `Handler._send(self, code, obj)`
+  - L763 `Handler._body(self)`
+  - L773 `Handler._acc(self)`
+  - L781 `Handler._route(self, method)`
+  - L871 `Handler.do_GET(self)`
+  - L874 `Handler.do_POST(self)`
+  - L877 `Handler.do_DELETE(self)`
+- L881 `class Server`
+- L886 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
+- L897 `read_operator_token(path)`
+- L905 `main(argv=None)`
 
 ## tools/app_api/set_topic.py · 44 строк
 

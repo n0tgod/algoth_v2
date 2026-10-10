@@ -429,13 +429,16 @@ def test_devices_trades_ingest_and_push_chain():
         assert app.push_tick() == 3
         assert len(calls) - n0 == 3                                   # пуш на КАЖДОЕ действие
         assert app.push_tick() == 0 and len(calls) - n0 == 3          # повтор чтения — ничего
-        st, tr = app.list_trades(acc)
+        # по умолчанию — только живые: сухие скрыты и сосчитаны
+        st, tr0 = app.list_trades(acc)
+        assert st == 200 and tr0["trades"] == [] and tr0["hidden"] == 3 and "скрыто 3" in tr0["note"], tr0
+        st, tr = app.list_trades(acc, mode="all")
         assert st == 200 and [t["seq"] for t in tr["trades"]] == [3, 2, 1] and tr["by_mode"] == {"dry": 3}
         t3 = tr["trades"][0]
         assert t3["kind"] == "take" and t3["words"] == "Closed at target" and t3["pnl_usd"] == 3.9
         assert t3["pushed"]["sent"] == 1 and t3["pushed"]["results"][0]["env"] == "prod"
         # лента по since — только новое
-        st, tr2 = app.list_trades(acc, since=tr["trades"][-1]["id"])
+        st, tr2 = app.list_trades(acc, since=tr["trades"][-1]["id"], mode="all")
         assert [t["seq"] for t in tr2["trades"]] == [3, 2]
         # дописанная строка — новая запись; битые строки не роняют приём
         with open(os.path.join(root, sid, "events-2026-10-10.jsonl"), "a", encoding="utf-8") as f:
@@ -460,8 +463,9 @@ def test_devices_trades_ingest_and_push_chain():
         assert st == 200 and r["ingested"] == 1 and r["trade"]["mode"] == "test" and r["trade"]["kind"] == "test"
         assert r["trade"]["reason"] == "hello" and r["trade"]["pushed"]["sent"] == 1
         assert calls[-1][0].startswith(PUSH.HOSTS["sandbox"])
-        st, tr = app.list_trades(acc)
+        st, tr = app.list_trades(acc, mode="all")
         assert tr["by_mode"] == {"dry": 4, "test": 1} and tr["executor_running"] == "dry"
+        assert [t["mode"] for t in app.list_trades(acc, mode="test")[1]["trades"]] == ["test"]
         assert SECRET not in json.dumps(tr)
 
 
@@ -553,7 +557,7 @@ def test_follower_tick_feeds_trades_and_pushes_for_the_subscribed_cell():
         # подписка создана «сейчас», позиция — в будущем относительно неё
         app.db.c.execute("UPDATE subscriptions SET created=? WHERE id=?", (since, sub["subscription_id"]))
         assert app.push_tick() == 1
-        st, tr = app.list_trades(acc)
+        st, tr = app.list_trades(acc, mode="all")
         t = tr["trades"][0]
         assert t["kind"] == "entry" and t["mode"] == "dry" and t["sym"] == "KAITOUSDT" and t["side"] == "short"
         assert t["subscription_id"] == sub["subscription_id"] and t["pushed"]["sent"] == 1
@@ -956,6 +960,16 @@ def test_arm_needs_word_switch_fresh_equity_and_one_live_per_key():
         # состояние: исполнитель ещё не поднят — сказано словами
         stt = app.state(acc)[1]["subscriptions"][0]
         assert stt["mode"] == "live" and stt["executor"]["why_none"].startswith("исполнитель ещё не поднят"), stt["executor"]
+        assert stt["positions"] == [], "у живой подписки без исполнителя позиций бумаги нет"
+        # живая запись исполнителя — на вкладке по умолчанию, пробная — нет
+        os.makedirs(os.path.join(root, sid), exist_ok=True)
+        with open(os.path.join(root, sid, "events.jsonl"), "w") as f:
+            f.write(json.dumps({"seq": 1, "ts": time.time(), "ev": "entry", "mode": "live", "sym": "XUSDT",
+                                "side": "short", "qty": 5.0, "px": 2.0}) + "\n")
+        import tradelog as TL
+        TL.ingest(app.db, root, log=lambda *a: None)
+        tr = app.list_trades(acc)[1]
+        assert [t["mode"] for t in tr["trades"]] == ["live"] and tr["executor_running"] == "live", tr
         # исполнитель поднят: позиции и касса — его
         with open(os.path.join(root, sid, "ladder_status.json"), "w") as f:
             json.dump({"at_ms": time.time() * 1000, "mode": "live", "realized_usd": -3.5, "positions": [

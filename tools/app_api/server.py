@@ -533,7 +533,9 @@ class App:
             ex = self.exec_status(s["id"]) if s["mode"] == "live" else None
             if ex is not None:
                 cash = float(s["deposit"]) + float(ex.get("realized_usd") or 0.0)
-            for q in ([] if ex is not None else ((b.get("open") or {}).get("positions") or [])):
+            # У живой подписки позиции — только исполнителя: бумажные под её
+            # строкой читались бы позициями на счёте, которых нет.
+            for q in ([] if s["mode"] == "live" else ((b.get("open") or {}).get("positions") or [])):
                 lv = q.get("levels") or {}
                 w = (q.get("walk") or [{}])[-1]
                 positions.append({"sym": q.get("sym"), "side": q.get("side"), "at": q.get("at"),
@@ -644,19 +646,30 @@ class App:
         return 200, {"devices": len(devs), "sent": sum(1 for r in res if r["status"] == 200), "results": res}
 
     # ------------------------------------------------------------ сделки исполнителя (§7.6)
-    def list_trades(self, acc, since=0, limit=200):
+    def list_trades(self, acc, since=0, limit=200, mode="live"):
+        """Записи журнала исполнителя. По умолчанию — только ЖИВЫЕ (решение
+        владельца 10.10: «на вкладке Trades — реальные сделки»); сухие и
+        пробные остаются в базе и отдаются по `mode=all` (или `dry`,
+        `test`), а их число называется — скрытое не выдаётся за пустое."""
         try:
             since, limit = int(since or 0), max(1, min(int(limit or 200), 500))
         except (TypeError, ValueError):
             return 400, {"error": "since и limit — числа"}
-        rows = [TRADES.view(r) for r in self.db.trades_of(acc["id"], since=since, limit=limit)]
+        mode = (mode or "live").strip()
+        modes = None if mode == "all" else [m for m in mode.split(",") if m]
+        rows = [TRADES.view(r) for r in self.db.trades_of(acc["id"], since=since, limit=limit, modes=modes)]
         by_mode = {}
         for r in self.db.c.execute("SELECT mode, COUNT(*) AS n FROM trades WHERE account_id=? GROUP BY mode",
                                    (acc["id"],)).fetchall():
             by_mode[r["mode"]] = r["n"]
-        return 200, {"trades": rows, "by_mode": by_mode, "executor_running": "dry",
-                     "note": ("сухой исполнитель: записи dry — действия книги подписки как их исполнил бы "
-                              "исполнитель, на биржу ничего не отправлено; test — проверка канала")}
+        live = any(s["mode"] == "live" for s in self.db.subscriptions_of(acc["id"]))
+        hidden = sum(n for m, n in by_mode.items() if modes is not None and m not in modes)
+        note = ("живые сделки исполнителя на бирже" if live else
+                "живого исполнителя нет: подписка в сухом режиме")
+        if hidden:
+            note += f"; сухих и пробных записей скрыто {hidden}"
+        return 200, {"trades": rows, "by_mode": by_mode, "mode": mode, "hidden": hidden,
+                     "executor_running": "live" if live else "dry", "note": note}
 
     def trade_test(self, acc, text=None):
         """Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой."""
@@ -847,7 +860,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if rest == ["push", "test"] and method == "POST":
             return self._send(*self.app.push_test(acc))
         if rest == ["trades"] and method == "GET":
-            return self._send(*self.app.list_trades(acc, (q.get("since") or ["0"])[0], (q.get("limit") or ["200"])[0]))
+            return self._send(*self.app.list_trades(acc, (q.get("since") or ["0"])[0], (q.get("limit") or ["200"])[0],
+                                                    (q.get("mode") or ["live"])[0]))
         if rest == ["intents"] and method == "GET":
             return self._send(*self.app.list_intents(acc, (q.get("sub") or [None])[0], (q.get("limit") or ["50"])[0]))
         if rest == ["trades", "test"] and method == "POST":
