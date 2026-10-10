@@ -272,6 +272,8 @@ pub struct Ladder<E: Exchange> {
     ev_seq: i64,
     ins: BTreeMap<String, Instrument>,
     lev_set: BTreeMap<String, String>,
+    /// Середина цены имени на последнем такте — отметка позиции в статусе.
+    marks: BTreeMap<String, (f64, i64)>,
     pub last_error: Option<String>,
 }
 
@@ -313,6 +315,7 @@ impl<E: Exchange> Ladder<E> {
             ev_seq,
             ins: BTreeMap::new(),
             lev_set: BTreeMap::new(),
+            marks: BTreeMap::new(),
             last_error: None,
         })
     }
@@ -375,6 +378,17 @@ impl<E: Exchange> Ladder<E> {
                     o.insert("rungs_resting".into(), json!(p.rung_orders.len()));
                     o.insert("closing".into(), json!(p.closing));
                     o.insert("opened_ms".into(), json!(p.opened_ms));
+                    // Отметка: середина последнего такта и нереализованное
+                    // брутто `±(середина − средняя) × количество`; комиссии и
+                    // реализованное частичными выходами — отдельными полями.
+                    if let Some(&(mid, at)) = self.marks.get(&p.sym) {
+                        let sgn = if p.long() { 1.0 } else { -1.0 };
+                        o.insert("mark_px".into(), json!(mid));
+                        o.insert("mark_at_ms".into(), json!(at));
+                        o.insert("upnl_usd".into(), json!(sgn * (mid - p.avg()) * p.qty));
+                    }
+                    o.insert("fee_usd".into(), json!(p.fees));
+                    o.insert("realized_part_usd".into(), json!(p.realized));
                 }
                 v
             })
@@ -1120,6 +1134,9 @@ impl<E: Exchange> Ladder<E> {
                 continue;
             }
             let Some(&(bid, ask)) = quotes.get(&sym) else { continue };
+            if bid > 0.0 && ask > 0.0 {
+                self.marks.insert(sym.clone(), ((bid + ask) / 2.0, now_ms));
+            }
             if let Some(fl) = p.floor_px() {
                 let hit = if p.long() { bid > 0.0 && bid <= fl } else { ask > 0.0 && ask >= fl };
                 if hit {

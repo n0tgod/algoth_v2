@@ -671,6 +671,103 @@ class App:
         return 200, {"trades": rows, "by_mode": by_mode, "mode": mode, "hidden": hidden,
                      "executor_running": "live" if live else "dry", "note": note}
 
+    # Слова исхода — те же, что у строк бумажной книги: карточка позиции
+    # одна на бумагу и живое, и два словаря однажды разошлись бы.
+    EXIT_WORDS = {"take": "тейк", "floor": "пол", "term": "срок", "market": "рынок",
+                  "cmd_close": "команда", "liq": "ликвидация", "mismatch": "вне исполнителя"}
+
+    def live_positions(self, acc):
+        """Живые позиции — в ФОРМЕ строки бумажной книги (`sym, side, at, lev,
+        margin, entry_px, avg, fills, walk, exit, exit_ts, exit_px, usd,
+        pnl_frac, mark_usd, mark_frac, levels`), чтобы приложение рисовало
+        их той же карточкой и тем же экраном позиции. Источник — журнал
+        исполнителя (§7.6, записи `live`): входы и доливы с ценами, уровни
+        глубины и исход записаны им; здесь только сборка по позиции. Отметка
+        открытой — из статуса исполнителя (середина последнего такта и
+        нереализованное), её комиссии вычитаются: отметка — нетто на сейчас."""
+        rows = sorted(self.db.trades_of(acc["id"], since=0, limit=100000, modes=["live"]),
+                      key=lambda r: (r["subscription_id"], r["seq"]))
+        subs = {s["id"]: s for s in self.db.subscriptions_of(acc["id"])}
+        out, by = [], {}
+        for r in rows:
+            try:
+                d = json.loads(r["data_json"] or "{}")
+            except ValueError:
+                d = {}
+            sym, kind = r["sym"], r["kind"]
+            at = d.get("pos_at")
+            if not sym or at is None:
+                continue
+            key = (r["subscription_id"], sym, int(float(at)))
+            p = by.get(key)
+            if kind == "entry":
+                s = subs.get(r["subscription_id"])
+                margin, lev = r["margin_usd"], r["lev"]
+                p = {"sym": sym, "side": r["side"], "book": d.get("book"), "subscription_id": r["subscription_id"],
+                     "cell": (f"{s['book']}:{int(float(s['deposit']))}" if s else None),
+                     "pos_at": float(at), "at": r["ts"], "lev": lev, "margin": margin,
+                     "entry_px": r["px"], "avg": r["avg"] or r["px"], "px_ref": d.get("px_ref"),
+                     "slip_bp": d.get("slip_bp"), "fills": [], "walk": [], "depth": 1, "state": "open",
+                     "fees": float(d.get("fee_usd") or 0.0), "live_exec": True,
+                     "sched_end": d.get("term_ts"),
+                     "levels": {"take_px": d.get("take_px"), "floor_px": d.get("floor_px"),
+                                "liq_px": d.get("liq_px"), "term_ts": d.get("term_ts")}}
+                by[key] = p
+                out.append(p)
+            if p is None:
+                continue
+            if kind in ("entry", "rung") and r["qty"] and r["px"]:
+                qty = float(r["qty"])
+                cum = (p["walk"][-1]["qty"] if p["walk"] else 0.0) + qty
+                notl = (float(p["margin"] or 0) * float(p["lev"] or 0)) or None
+                w = (qty * float(r["px"]) / notl) if notl else None
+                p["fills"].append([r["ts"], r["px"], w])
+                p["walk"].append({"at": r["ts"], "px": r["px"], "w": w, "dq": qty, "qty": cum,
+                                  "avg": r["avg"], "take": d.get("take_px"), "liq": d.get("liq_px"),
+                                  "floor": d.get("floor_px")})
+                p["avg"] = r["avg"] or p["avg"]
+                p["depth"] = len(p["walk"])
+                if kind == "rung":
+                    p["fees"] += float(d.get("fee_usd") or 0.0)
+                    p["levels"].update({k: d.get(k) for k in ("take_px", "floor_px", "liq_px") if d.get(k) is not None})
+            elif kind == "take_set" and r["px"]:
+                p["levels"]["take_px"] = r["px"]
+                if p["walk"]:
+                    p["walk"][-1]["take"] = r["px"]
+            elif kind in self.EXIT_WORDS:
+                p.update({"state": "closed", "exit": self.EXIT_WORDS[kind], "exit_ts": r["ts"],
+                          "exit_px": r["px"], "usd": r["pnl_usd"], "pnl_bp": r["pnl_bp"],
+                          "pnl_frac": ((r["pnl_usd"] / p["margin"]) if (r["pnl_usd"] is not None and p["margin"]) else None),
+                          "reason": r["reason"]})
+        # открытые — отметка исполнителя
+        st_cache = {}
+        for p in out:
+            if p["state"] != "open":
+                continue
+            sid = p["subscription_id"]
+            if sid not in st_cache:
+                st_cache[sid] = self.exec_status(sid) or {}
+            ex = st_cache[sid]
+            q = next((x for x in ex.get("positions") or []
+                      if x.get("sym") == p["sym"] and abs(float(x.get("pos_at") or 0) - p["pos_at"]) < 1.0), None)
+            if q is None:
+                p["mark_why"] = ("исполнитель не прислал статус" if not ex else
+                                 "исполнитель этой позиции не держит — исход ждёт записи журнала")
+                continue
+            if q.get("upnl_usd") is not None:
+                net = float(q["upnl_usd"]) + float(q.get("realized_part_usd") or 0.0) - float(q.get("fee_usd") or 0.0)
+                p["mark_usd"] = net
+                p["mark_frac"] = (net / p["margin"]) if p["margin"] else None
+                p["mark_px"] = q.get("mark_px")
+                p["last_ts"] = (q.get("mark_at_ms") or 0) / 1000.0
+            p["qty"] = q.get("qty")
+            p["closing"] = q.get("closing")
+            p["levels"].update({"take_px": q.get("take_px") or p["levels"].get("take_px"),
+                                "floor_px": q.get("floor_px"), "liq_px": q.get("liq_px")})
+        out.sort(key=lambda p: (p["state"] != "open", -float(p.get("exit_ts") or p["at"] or 0)))
+        return 200, {"positions": out, "open": sum(1 for p in out if p["state"] == "open"),
+                     "closed": sum(1 for p in out if p["state"] == "closed"), "at": time.time()}
+
     def trade_test(self, acc, text=None):
         """Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой."""
         if acc["role"] != "operator":
@@ -864,6 +961,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                                                     (q.get("mode") or ["live"])[0]))
         if rest == ["intents"] and method == "GET":
             return self._send(*self.app.list_intents(acc, (q.get("sub") or [None])[0], (q.get("limit") or ["50"])[0]))
+        if rest == ["positions"] and method == "GET":
+            return self._send(*self.app.live_positions(acc))
         if rest == ["trades", "test"] and method == "POST":
             return self._send(*self.app.trade_test(acc, body.get("text")))
         return self._send(404, {"error": "нет такого адреса"})

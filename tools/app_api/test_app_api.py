@@ -995,6 +995,63 @@ def test_arm_needs_word_switch_fresh_equity_and_one_live_per_key():
     print("ok  живой режим: слово, рубильник, эквити, один на ключ, файлы входов и KILL, позиции исполнителя")
 
 
+def test_live_positions_are_built_from_executor_journal_in_paper_row_shape():
+    """Живые позиции — строками той же формы, что бумажные: вход и доливы
+    из журнала исполнителя (`fills`, `walk` с контрактами, средней и целью
+    после каждого), исход закрытой словом бумаги, отметка открытой из
+    статуса исполнителя за вычетом комиссий; сухие и пробные записи в
+    позиции не попадают."""
+    with tempfile.TemporaryDirectory() as tmp:
+        root = os.path.join(tmp, "exec")
+        app, _ = _app(tmp, out=tmp, exec_root=root)
+        acc = _login(app)
+        st, k = app.add_key(acc, "bybit", "ABCD1234KEY", SECRET)
+        st, sub = app.add_subscription(acc, k["key_id"], "optimal_h", 1000)
+        sid = sub["subscription_id"]
+        app.db.c.execute("UPDATE subscriptions SET mode='live' WHERE id=?", (sid,))
+        d = os.path.join(root, sid)
+        os.makedirs(d)
+        T = 1_791_000_000.0
+        evs = [
+            {"ev": "entry", "sym": "AUSDT", "side": "long", "book": "optimal", "pos_at": T, "qty": 0.5, "px": 100.0,
+             "avg": 100.0, "margin_usd": 25.0, "lev": 8.0, "take_px": 104.0, "floor_px": 80.0, "liq_px": 78.0,
+             "term_ts": T + 72 * 3600, "fee_usd": 0.03, "slip_bp": 1.2, "px_ref": 99.99},
+            {"ev": "take_set", "sym": "AUSDT", "side": "long", "pos_at": T, "px": 104.0, "qty": 0.5},
+            {"ev": "rung", "sym": "AUSDT", "side": "long", "pos_at": T, "qty": 0.51, "px": 97.0,
+             "avg": 98.49, "margin_usd": 25.0, "lev": 8.0, "take_px": 102.43, "floor_px": 85.0, "liq_px": 83.0, "fee_usd": 0.03},
+            {"ev": "take_set", "sym": "AUSDT", "side": "long", "pos_at": T, "px": 102.43, "qty": 1.01},
+            {"ev": "entry", "sym": "SUSDT", "side": "short", "book": "optimal_h", "pos_at": T + 60, "qty": 3.0, "px": 2.0,
+             "avg": 2.0, "margin_usd": 6.25, "lev": 4.0, "take_px": 1.8, "floor_px": 2.2, "liq_px": 2.5, "fee_usd": 0.003},
+            {"ev": "take", "sym": "SUSDT", "side": "short", "pos_at": T + 60, "px": 1.8, "pnl_usd": 0.59, "pnl_bp": 98.0},
+            {"ev": "entry", "sym": "DRYUSDT", "side": "long", "pos_at": T, "qty": 1.0, "px": 1.0, "mode": "dry"},
+        ]
+        with open(os.path.join(d, "events.jsonl"), "w") as f:
+            for i, e in enumerate(evs, 1):
+                f.write(json.dumps(dict({"mode": "live"}, **e, seq=i, ts=T + 100 + i)) + "\n")
+        import tradelog as TL
+        TL.ingest(app.db, root, log=lambda *a: None)
+        with open(os.path.join(d, "ladder_status.json"), "w") as f:
+            json.dump({"at_ms": time.time() * 1000, "positions": [
+                {"sym": "AUSDT", "pos_at": T, "qty": 1.01, "upnl_usd": 1.5, "fee_usd": 0.06, "realized_part_usd": 0.0,
+                 "mark_px": 99.97, "mark_at_ms": T * 1000, "take_px": 102.43, "floor_px": 85.0, "liq_px": 83.0}]}, f)
+        code, r = app.live_positions(acc)
+        assert code == 200 and r["open"] == 1 and r["closed"] == 1, r
+        a, s_ = r["positions"]
+        assert a["sym"] == "AUSDT" and a["state"] == "open" and a["depth"] == 2 and a["cell"] == "optimal_h:1000"
+        assert [w["qty"] for w in a["walk"]] == [0.5, 1.01] and a["walk"][1]["avg"] == 98.49
+        assert a["walk"][0]["take"] == 104.0 and a["walk"][1]["take"] == 102.43, "цель после каждого рунга"
+        assert abs(a["fills"][0][2] - 0.5 * 100.0 / 200.0) < 1e-12, "доля рунга — от нотионала маржа × плечо"
+        assert abs(a["mark_usd"] - (1.5 - 0.06)) < 1e-12 and abs(a["mark_frac"] - 1.44 / 25.0) < 1e-12
+        assert a["levels"]["floor_px"] == 85.0 and a["at"] == T + 101 and a["pos_at"] == T
+        assert s_["state"] == "closed" and s_["exit"] == "тейк" and s_["usd"] == 0.59 and abs(s_["pnl_frac"] - 0.59 / 6.25) < 1e-12
+        assert all(p["sym"] != "DRYUSDT" for p in r["positions"]), "сухая запись — не позиция"
+        # нет статуса исполнителя — отметки нет, причина словами
+        os.remove(os.path.join(d, "ladder_status.json"))
+        a = app.live_positions(acc)[1]["positions"][0]
+        assert "mark_usd" not in a and a["mark_why"] == "исполнитель не прислал статус"
+    print("ok  живые позиции: форма строки книги, доливы с целью, исход словом бумаги, отметка исполнителя нетто")
+
+
 def test_supervisor_starts_armed_subs_with_key_on_stdin_and_stops_unarmed():
     """Супервизор: подписке в live — ровно один процесс, ключ ТОЛЬКО трубой;
     первый подъём не читает сухие намерения; подписка вышла из live —

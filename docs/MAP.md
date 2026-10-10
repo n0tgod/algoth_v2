@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 570, строк: 248263, каталогов: 86.
+Модулей кода: 570, строк: 248441, каталогов: 86.
 
 
 ## корень — память проекта, идеи, README
@@ -792,7 +792,7 @@
 - `engine.rs` · 640 строк — Движок тени: те же сделки, что у Python-счёта, своим счётом.
 - `events.rs` · 140 строк — События журнала — единственное, что ядро запоминает.
 - `journal.rs` · 310 строк — Журнал: append-only файл событий, суточная ротация, честное чтение.
-- `ladder.rs` · 1263 строк — Исполнитель книг Ladder (спека 15 §10a, этапы L2–L3).
+- `ladder.rs` · 1280 строк — Исполнитель книг Ladder (спека 15 §10a, этапы L2–L3).
 - `lib.rs` · 12 строк — Исполнительное ядро (спека 09). Этап E1: журнал и состояние.
 - `live.rs` · 1894 строк — Живой исполнитель — этапы X1–X3 спеки 12.
 - `main.rs` · 552 строк — `bot state <каталог> [капитал]` — вывести состояние из журнала.
@@ -803,7 +803,7 @@
 
 ## bot/tests — интеграционные тесты ядра
 
-- тесты: `e1.rs` (333), `e2.rs` (357), `gen_parity.py` (256), `ladder.rs` (566), `live_x1.rs` (1429), `watchdog.rs` (382)
+- тесты: `e1.rs` (333), `e2.rs` (357), `gen_parity.py` (256), `ladder.rs` (571), `live_x1.rs` (1429), `watchdog.rs` (382)
 
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
@@ -829,7 +829,7 @@
 - `app_api/restart.py` · 32 строк — Перезапуск процесса API приложения со свежим кодом (через очередь). Останавливает процесс и сразу поднимает н…
 - `app_api/sealed.py` · 87 строк — Запечатанный конверт для секретов ключей биржи (спека 15 §7a.2).
 - `app_api/selftest.py` · 73 строк — Самопроверка API на сервере: процесс жив, TLS отвечает, вход оператора работает, книги читаются. Печатает сло…
-- `app_api/server.py` · 941 строк — HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
+- `app_api/server.py` · 1040 строк — HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - `app_api/set_topic.py` · 44 строк — Сменить тему пушей APNs (Bundle ID приложения) в `out/apns.json`.
 - `app_api/tradelog.py` · 172 строк — Журнал событий живого исполнителя → записи `trades` → пуши (спека 15 §7.6).
 - `diag_cycle.py` · 302 строк — Почему молчит цикл обучения: хвост журнала и состояние манифеста.
@@ -862,4 +862,4 @@
 - `unstick_publish.py` · 77 строк — Разморозить публикацию: вернуть разрезанный журнал к версии git.
 - `venv_add.py` · 75 строк — Установка пакетов в окружение сервера через очередь заданий.
 - `watchdog_book.sh` · 566 строк — Сторож сбора: поднимает умершее и перезапускает зависшее.
-- тесты: `app_api/test_app_api.py` (1076), `test_disk_alarm.py` (64), `test_jobs.sh` (239), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (49), `test_watchdog_ship.sh` (49)
+- тесты: `app_api/test_app_api.py` (1133), `test_disk_alarm.py` (64), `test_jobs.sh` (239), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (49), `test_watchdog_ship.sh` (49)

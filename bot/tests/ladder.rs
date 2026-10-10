@@ -297,9 +297,14 @@ fn шорт_с_одним_рунгом_входит_ставит_цель_и_в�
     assert_eq!(e0["mode"], "live");
     assert_eq!(e0["depth"], "1/1");
     assert!((e0["slip_bp"].as_f64().unwrap() - (-(99.99_f64 / 100.0 - 1.0) * 1e4)).abs() < 1e-6);
-    // повтор такта — ничего нового
+    // повтор такта — ничего нового; статус несёт отметку позиции
     let rep = lx.tick(T0 + 125_000);
     assert_eq!(rep.opened + rep.closed, 0);
+    let st = lx.status_json(T0 + 125_000, None);
+    let p0 = &st["positions"][0];
+    assert_eq!(p0["mark_px"], 100.0);
+    assert!((p0["upnl_usd"].as_f64().unwrap() - (-(100.0 - 99.99) * 0.39)).abs() < 1e-9, "{p0}");
+    assert!(p0["fee_usd"].as_f64().unwrap() > 0.0);
     // цена прошла цель — цель исполнена, позиция закрыта с прибылью
     m.set_px("SSSUSDT", 94.0, 94.02);
     let rep = lx.tick(T0 + 130_000);

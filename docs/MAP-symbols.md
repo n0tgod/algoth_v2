@@ -8382,7 +8382,7 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L298 `mod tests`
   - L302 `calendar_matches_known_dates`
 
-## bot/src/ladder.rs · 1263 строк
+## bot/src/ladder.rs · 1280 строк
 
 Исполнитель книг Ladder (спека 15 §10a, этапы L2–L3).
 
@@ -8412,37 +8412,37 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L243 `claim_pid` — Второй исполнитель на ту же подписку делил бы одни позиции и удваивал заявки: живой pid в файле с процессом `…
 - L260 `struct LTick`
 - L268 `struct Ladder`
-- L278 `mode`
-- L286 `read_jsonl`
-- L295 `impl Ladder`
-  - L296 `Ladder::open`
-  - L322 `Ladder::event`
-  - L343 `Ladder::pos_fields`
-  - L354 `Ladder::save`
-  - L363 `Ladder::status_json`
-  - L402 `Ladder::write_status`
-  - L414 `Ladder::instrument`
-  - L426 `Ladder::place`
-  - L466 `Ladder::tick`
-  - L507 `Ladder::new_intents`
-  - L519 `Ladder::reject`
-  - L530 `Ladder::enter`
-  - L731 `Ladder::place_rungs`
-  - L778 `Ladder::place_take` — Цель reduceOnly на всё открытое количество от текущей средней.
-  - L816 `Ladder::ensure_takes`
-  - L833 `Ladder::delta` — Учитывает приращение исполнения лежащей заявки по её статусу. Возвращает (приращение кол-ва, цена приращения,…
-  - L848 `Ladder::apply_rung_fill`
-  - L873 `Ladder::apply_exit_fill` — Частичный или полный выход: деньги и количество.
-  - L889 `Ladder::finish` — Позиция закрыта: событие исхода, реализованное, снятие рунгов.
-  - L924 `Ladder::discover_fills` — Исполнения лежащих заявок, ушедших из списка открытых.
-  - L944 `Ladder::poll_sym` — Опрос заявок одного имени: `open` — список открытых (опрашиваются только ушедшие из него); None — опрашиваютс…
-  - L1005 `Ladder::replace_take` — После рунга цель переезжает: старая снимается (с учётом того, что успела исполниться), новая ставится от ново…
-  - L1024 `Ladder::reconcile`
-  - L1100 `Ladder::check_exits`
-  - L1132 `Ladder::exit_intent`
-  - L1154 `Ladder::close` — Закрытие: снять рунги и цель (учтя успевшее исполниться), затем reduceOnly-IOC с потолком 100 б.п. Недоисполн…
-- L1229 `wall_ms`
-- L1237 `run_loop` — Цикл демона: такт раз в `interval_sec`.
+- L280 `mode`
+- L288 `read_jsonl`
+- L297 `impl Ladder`
+  - L298 `Ladder::open`
+  - L325 `Ladder::event`
+  - L346 `Ladder::pos_fields`
+  - L357 `Ladder::save`
+  - L366 `Ladder::status_json`
+  - L416 `Ladder::write_status`
+  - L428 `Ladder::instrument`
+  - L440 `Ladder::place`
+  - L480 `Ladder::tick`
+  - L521 `Ladder::new_intents`
+  - L533 `Ladder::reject`
+  - L544 `Ladder::enter`
+  - L745 `Ladder::place_rungs`
+  - L792 `Ladder::place_take` — Цель reduceOnly на всё открытое количество от текущей средней.
+  - L830 `Ladder::ensure_takes`
+  - L847 `Ladder::delta` — Учитывает приращение исполнения лежащей заявки по её статусу. Возвращает (приращение кол-ва, цена приращения,…
+  - L862 `Ladder::apply_rung_fill`
+  - L887 `Ladder::apply_exit_fill` — Частичный или полный выход: деньги и количество.
+  - L903 `Ladder::finish` — Позиция закрыта: событие исхода, реализованное, снятие рунгов.
+  - L938 `Ladder::discover_fills` — Исполнения лежащих заявок, ушедших из списка открытых.
+  - L958 `Ladder::poll_sym` — Опрос заявок одного имени: `open` — список открытых (опрашиваются только ушедшие из него); None — опрашиваютс…
+  - L1019 `Ladder::replace_take` — После рунга цель переезжает: старая снимается (с учётом того, что успела исполниться), новая ставится от ново…
+  - L1038 `Ladder::reconcile`
+  - L1114 `Ladder::check_exits`
+  - L1149 `Ladder::exit_intent`
+  - L1171 `Ladder::close` — Закрытие: снять рунги и цель (учтя успевшее исполниться), затем reduceOnly-IOC с потолком 100 б.п. Недоисполн…
+- L1246 `wall_ms`
+- L1254 `run_loop` — Цикл демона: такт раз в `interval_sec`.
 
 ## bot/src/lib.rs · 12 строк
 
@@ -8909,7 +8909,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L17 `call(base, path, body=None, token=None, ctx=None)`
 - L26 `main()`
 
-## tools/app_api/server.py · 941 строк
+## tools/app_api/server.py · 1040 строк
 
 HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 
@@ -8972,24 +8972,25 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
   - L620 `App.push_config(self, acc, team_id, key_id, p8, topic=None)`
   - L631 `App.push_test(self, acc)` — Пробный пуш на устройства аккаунта — без записи сделки.
   - L649 `App.list_trades(self, acc, since=0, limit=200, mode='live')` — Записи журнала исполнителя. По умолчанию — только ЖИВЫЕ (решение владельца 10.10: «на вкладке Trades — реальн…
-  - L674 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
-  - L684 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
-  - L698 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
-  - L715 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
-- L733 `fetch_dca(full=None)`
-- L746 `class Handler`
-  - L750 `Handler.log_message(self, fmt, *a)`
-  - L754 `Handler._send(self, code, obj)`
-  - L763 `Handler._body(self)`
-  - L773 `Handler._acc(self)`
-  - L781 `Handler._route(self, method)`
-  - L871 `Handler.do_GET(self)`
-  - L874 `Handler.do_POST(self)`
-  - L877 `Handler.do_DELETE(self)`
-- L881 `class Server`
-- L886 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
-- L897 `read_operator_token(path)`
-- L905 `main(argv=None)`
+  - L679 `App.live_positions(self, acc)` — Живые позиции — в ФОРМЕ строки бумажной книги (`sym, side, at, lev, margin, entry_px, avg, fills, walk, exit,…
+  - L771 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
+  - L781 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
+  - L795 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
+  - L812 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
+- L830 `fetch_dca(full=None)`
+- L843 `class Handler`
+  - L847 `Handler.log_message(self, fmt, *a)`
+  - L851 `Handler._send(self, code, obj)`
+  - L860 `Handler._body(self)`
+  - L870 `Handler._acc(self)`
+  - L878 `Handler._route(self, method)`
+  - L970 `Handler.do_GET(self)`
+  - L973 `Handler.do_POST(self)`
+  - L976 `Handler.do_DELETE(self)`
+- L980 `class Server`
+- L985 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
+- L996 `read_operator_token(path)`
+- L1004 `main(argv=None)`
 
 ## tools/app_api/set_topic.py · 44 строк
 
