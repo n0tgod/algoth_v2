@@ -4,3 +4,14 @@
 запускаю: .venv/bin/python tools/app_api/restart.py 
 порт 443: слушает
 конец: 2026-10-10T20:55:50Z, код 0
+публикуется в ветку main:
+ jobs/done/n4-status.done      |  1 +
+ jobs/done/n4-status.log       | 10 ++++++++++
+ jobs/done/n6-api-restart.done |  1 +
+ jobs/done/n6-api-restart.log  |  6 ++++++
+ jobs/poke.log                 |  6 ++++++
+ 5 files changed, 24 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   b67fc22c..f85c6a78  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
