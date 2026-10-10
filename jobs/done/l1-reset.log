@@ -1,0 +1,12 @@
+== задание l1-reset ==
+строка: run tools/app_api/intents.py --reset-sub sub_3f11698eb30279fa
+начало: 2026-10-10T13:33:59Z
+запускаю: .venv/bin/python tools/app_api/intents.py --reset-sub sub_3f11698eb30279fa
+сброс: {"sub": "sub_3f11698eb30279fa", "moved": ["intents-stale-20261010T133359Z.jsonl", "skips-stale-20261010T133359Z.jsonl"], "had_intents": 10, "had_live": 10}
+подписок активных 1; корень /root/algoth_v2/bot/out/dca
+источник research/s8_loop/out/model_h24/picks.jsonl: смещение 17092776 из 17092776, прочитано строк 1082, последнее чтение 2026-10-10 13:33 UTC
+источник research/s8_loop/out/model_sit/sheets.jsonl: смещение 492409775 из 492409775, прочитано строк 21, последнее чтение 2026-10-10 13:33 UTC
+
+== pair_aggr 100 $ compound (sub_3f11698eb30279fa), касса 100.00 $
+такт 1970-01-01 00:00:00 UTC; намерений 0, отказов 0, живых 0, ждут бар 0
+конец: 2026-10-10T13:33:59Z, код 0
