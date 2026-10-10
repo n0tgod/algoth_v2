@@ -8922,6 +8922,66 @@ def test_dca_summary_is_rebuilt_by_file_signature_not_by_clock():
             setattr(DR, k, v)
 
 
+def test_pinned_journal_files_survive_the_cache_budget():
+    """Файлы периодического сторожа закреплены в кеше журналов и в бюджет
+    не входят (починка 10.10: сторож выходов каждую минуту перечитывал
+    четыре книги, которые часовая сборка страницы выбрасывала — 103
+    полных разбора за 25 мин). Закрепление липкое; бюджет считается по
+    незакреплённым. Контроль: подделка, читающая без закрепления,
+    теряет файл сторожа."""
+    import json as _json
+    import tempfile
+
+    import collect as C
+    import memsize as MS
+
+    d = tempfile.mkdtemp()
+    paths = []
+    for k in range(4):
+        p = os.path.join(d, f"book{k}", "picks.jsonl")
+        os.makedirs(os.path.dirname(p))
+        with open(p, "w", encoding="utf-8") as f:
+            for i in range(120):
+                f.write(_json.dumps({"i": i, "ladder": [[1, 2]] * 24}) + "\n")
+        paths.append(p)
+    cache, budget_was = C.Collector._JSONL_CACHE, C.Collector._JSONL_BUDGET
+    cache.clear(); C.Collector._JSONL_FILES.clear()
+    try:
+        C.Collector._jsonl(paths[0], pin=True)
+        est = cache[paths[0]]["est"]
+        C.Collector._JSONL_BUDGET = int(est * 1.5)              # бюджет — на один незакреплённый
+        for p in paths[1:]:
+            C.Collector._jsonl(p)
+        check("закреплённый файл пережил три чужих разбора при бюджете на один",
+              paths[0] in cache and cache[paths[0]]["pin"] is True
+              and set(cache) == {paths[0], paths[3]}, str([x.rsplit("/", 2)[-2] for x in cache]))
+        # липкость: чтение без pin не снимает закрепления
+        C.Collector._jsonl(paths[0])
+        C.Collector._jsonl(paths[1])
+        check("закрепление липкое: обычное чтение флаг не снимает, выбрасывается незакреплённый",
+              cache[paths[0]]["pin"] is True and paths[3] not in cache and paths[1] in cache,
+              str([x.rsplit("/", 2)[-2] for x in cache]))
+
+        class FakeC(C.Collector):
+            def __init__(self):
+                pass
+        fc = FakeC()
+        fc.guard = C.MG.MemGuard(drop=lambda: {}, rss=lambda: 1, log=lambda m: None)
+        jc = MS.census(fc)["parts"]["_JSONL_CACHE (разобранные журналы книг, класс)"]
+        check("перепись называет закреплённые отдельно: один файл, его вес",
+              jc["pinned_n"] == 1 and abs(jc["pinned_mb"] - est / 2 ** 20) < 0.2, str(jc))
+        # Контроль: без закрепления файл сторожа выбрасывается, как все
+        cache.clear()
+        C.Collector._jsonl(paths[0])
+        for p in paths[1:]:
+            C.Collector._jsonl(p)
+        check("контроль: без закрепления файл сторожа выброшен (подделка кусается)",
+              paths[0] not in cache, str([x.rsplit("/", 2)[-2] for x in cache]))
+    finally:
+        cache.clear(); C.Collector._JSONL_FILES.clear()
+        C.Collector._JSONL_BUDGET = budget_was
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
@@ -8957,6 +9017,7 @@ def main():
     test_collector_drop_caches_empties_every_page_cache_and_counts_churn()
     test_dca_parts_cache_has_a_budget_and_evicts_the_least_used()
     test_dca_summary_is_rebuilt_by_file_signature_not_by_clock()
+    test_pinned_journal_files_survive_the_cache_budget()
     test_book_built_twice_gives_same_numbers()
     test_overview_and_trades_page_agree()
     test_model_trades_lite_matches_full()

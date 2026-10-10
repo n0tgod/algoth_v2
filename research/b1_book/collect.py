@@ -6180,7 +6180,14 @@ class Collector:
     # 640 МБ объектов: при 384 рабочий набор страниц и сторожей не
     # помещался (06.10: 56 полных разборов за 8 минут), при прежних
     # ~1.3 ГБ не оставалось места обучению. Оборот виден в `/mem`.
-    _JSONL_BUDGET = 640 * 1024 * 1024
+    # 10.10: при 640 работа всё равно тасовалась (103 полных разбора за
+    # 25 мин, 4 ГБ выброшено): сторож выходов каждые 60 с перечитывает
+    # 12 файлов четырёх ситуационных книг (~330 МБ объектов), а часовая
+    # сборка `/model` и переоценка смотримой книги их выбрасывали.
+    # Файлы сторожа теперь ЗАКРЕПЛЕНЫ (`pin`) и в бюджет не входят;
+    # бюджет — на остальное, и 384 МБ ему хватает: сборка `/model`
+    # читает книги по одной и к выброшенным не возвращается.
+    _JSONL_BUDGET = 384 * 1024 * 1024
 
     # Счётчики кеша — для переписи памяти (`/mem`): по ним подбирается
     # бюджет. Выброс, за которым через минуту следует полный разбор того
@@ -6204,7 +6211,11 @@ class Collector:
         return entry.get("est") or 0
 
     @staticmethod
-    def _jsonl(path):
+    def _jsonl(path, pin=False):
+        """Строки файла из кеша. `pin` — файл читается периодическим
+        сторожем: закрепляется и из кеша не выбрасывается (закрепление
+        липкое: однажды закреплённый остаётся таким и для прочих
+        читателей — иначе их чтение сняло бы флаг)."""
         cache = Collector._JSONL_CACHE
         try:
             st = os.stat(path)
@@ -6220,6 +6231,8 @@ class Collector:
         stats = Collector._JSONL_STATS
         if hit is not None and hit["sig"] == sig:
             hit["used"] = time.time()
+            if pin:
+                hit["pin"] = True
             stats["hit"] += 1
             return hit["rows"]
         rows, offset, head = [], 0, b""
@@ -6259,6 +6272,7 @@ class Collector:
                 continue
         cache[path] = {"sig": sig, "head": head, "offset": offset + cut,
                        "rows": rows, "used": time.time(),
+                       "pin": bool(pin or (hit or {}).get("pin")),
                        "est": MS.deep_size(rows)}
         stats["tail" if offset else "full"] += 1
         Collector._jsonl_file_stat(path, "tail" if offset else "full")
@@ -6270,11 +6284,13 @@ class Collector:
     def _jsonl_trim():
         cache = Collector._JSONL_CACHE
         cost = Collector._jsonl_cost
-        total = sum(cost(v) for v in cache.values())
+        # закреплённые — вне бюджета и вне выброса; их вес виден в `/mem`
+        total = sum(cost(v) for v in cache.values() if not v.get("pin"))
         if total <= Collector._JSONL_BUDGET:
             return
         stats = Collector._JSONL_STATS
-        for path, _ in sorted(cache.items(), key=lambda kv: kv[1]["used"]):
+        for path, _ in sorted(((p, e) for p, e in cache.items() if not e.get("pin")),
+                              key=lambda kv: kv[1]["used"]):
             gone = cost(cache.pop(path))
             total -= gone
             stats["evict"] += 1
@@ -6455,10 +6471,11 @@ class Collector:
         записано ЗДЕСЬ: гасится проверка уровней, а не позиции.
         """
         for d, stt in books.items():
+            # сторож читает раз в минуту: файлы закрепляются в кеше
             stt["pos"] = sit_open_levels(
-                self._jsonl(os.path.join(d, "picks.jsonl")),
-                self._jsonl(os.path.join(d, "review.jsonl")),
-                self._jsonl(os.path.join(d, "entries_live.jsonl")))
+                self._jsonl(os.path.join(d, "picks.jsonl"), pin=True),
+                self._jsonl(os.path.join(d, "review.jsonl"), pin=True),
+                self._jsonl(os.path.join(d, "entries_live.jsonl"), pin=True))
         return books
 
     def sit_watch(self):
@@ -6490,10 +6507,10 @@ class Collector:
                 "signalled": {(e.get("arm"), e.get("hour"),
                                e.get("sym"), e.get("side"))
                               for e in self._jsonl(os.path.join(
-                                  mdir, "exits_live.jsonl"))},
+                                  mdir, "exits_live.jsonl"), pin=True)},
                 "entered": {(e.get("arm"), e.get("hour"), e.get("sym"))
                             for e in self._jsonl(os.path.join(
-                                mdir, "entries_live.jsonl"))},
+                                mdir, "entries_live.jsonl"), pin=True)},
                 "pos": [],
             }
 

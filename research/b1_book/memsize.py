@@ -185,8 +185,12 @@ def census(c, deep=False):
             ents.append((est, path, e))
         tot = sum(x[0] for x in ents)
         total += tot
+        pinned = [x for x in ents if x[2].get("pin")]
         parts["_JSONL_CACHE (разобранные журналы книг, класс)"] = {
             "n": len(ents), "mb": round(tot / 2 ** 20, 1),
+            # закреплённые файлы сторожа — вне бюджета, их вес отдельно
+            "pinned_n": len(pinned),
+            "pinned_mb": round(sum(x[0] for x in pinned) / 2 ** 20, 1),
             "budget_mb": round(getattr(type(c), "_JSONL_BUDGET", 0) / 2 ** 20),
             "stats": dict(getattr(type(c), "_JSONL_STATS", {}) or {}),
             # кто тасуется: восьмёрка файлов по числу ПОЛНЫХ разборов
