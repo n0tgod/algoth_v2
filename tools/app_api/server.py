@@ -381,8 +381,25 @@ class App:
                     warnings.append(f"на счёте {equity:,.0f} $, подписка требует {cash:,.0f} $ — входов не будет")
             else:
                 warnings.append("эквити счёта не прочитано")
+            # открытые позиции ячейки — из свода книг, с уровнями строки (Y1);
+            # `followed` — открыта после подписки, то есть её ведёт исполнитель
+            since = float((st.get("follow") or {}).get("since") or s["created"])
+            positions = []
+            for q in ((b.get("open") or {}).get("positions") or []):
+                lv = q.get("levels") or {}
+                w = (q.get("walk") or [{}])[-1]
+                positions.append({"sym": q.get("sym"), "side": q.get("side"), "at": q.get("at"),
+                                  "avg": q.get("avg"), "qty": w.get("qty"), "lev": q.get("lev"),
+                                  "paper_margin_usd": q.get("margin"), "depth": q.get("depth"),
+                                  "mark_frac": q.get("mark_frac"), "mark_usd": q.get("mark_usd"),
+                                  "take_px": lv.get("take_px") if lv else w.get("take"),
+                                  "floor_px": lv.get("floor_px"), "liq_px": lv.get("liq_px"),
+                                  "term_ts": q.get("sched_end"),
+                                  "followed": bool(q.get("at") is not None and float(q["at"]) >= since)})
             subs.append({"subscription_id": s["id"], "book": s["book"], "deposit": s["deposit"],
                          "mode": s["mode"], "side": st.get("side"), "sizing": sizing,
+                         "positions": positions, "follow": {k: v for k, v in (st.get("follow") or {}).items()
+                                                            if k in ("since", "at", "gaps")},
                          "cash_usd": cash, "realized_usd": float(st.get("realized_usd") or 0.0),
                          "paper_cash_usd": paper, "ticket_usd": self.ticket_of(b, s["deposit"]),
                          "equity_usd": equity, "equity_age_s": eq_age,
@@ -390,8 +407,8 @@ class App:
                          "idle_usd": (None if equity is None or cash is None else max(0.0, equity - cash)),
                          "shortfall_usd": (None if equity is None or cash is None else max(0.0, cash - equity)),
                          "hedge_mode": st.get("hedge_mode", "n/a"),
-                         "min_order_share": None,                 # Y1: не измерено
-                         "positions": [], "orders": [], "reconcile": None,
+                         "min_order_share": None,                 # не измерено
+                         "orders": [], "reconcile": None,
                          "halt": None, "warnings": warnings})
         ev = [dict(e) for e in self.db.events_of(acc["id"], since=0, limit=10**9)][-20:]
         return 200, {"schema": SCHEMA, "at": time.time(), "live_enabled": os.path.exists(os.path.join(OUT, "LIVE_ENABLED")),

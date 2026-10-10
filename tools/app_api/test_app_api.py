@@ -554,6 +554,12 @@ def test_follower_tick_feeds_trades_and_pushes_for_the_subscribed_cell():
         assert t["subscription_id"] == sub["subscription_id"] and t["pushed"]["sent"] == 1
         assert calls[-1]["aps"]["alert"]["title"] == "Entry [dry] · KAITO short", calls[-1]
         assert tr["executor_running"] == "dry" and tr["by_mode"] == {"dry": 1}
+        # состояние подписки несёт открытые позиции ячейки с уровнями и флагом слежения
+        st, stt = app.state(acc)
+        ps = stt["subscriptions"][0]["positions"]
+        assert len(ps) == 1 and ps[0]["sym"] == "KAITOUSDT" and ps[0]["followed"] is True
+        assert ps[0]["qty"] == pos["walk"][-1]["qty"] and ps[0]["take_px"] == pos["walk"][-1]["take"]
+        assert ps[0]["term_ts"] == pos["sched_end"] and stt["subscriptions"][0]["follow"]["since"] == since
         assert app.push_tick() == 0                     # повтор такта — ничего
         stt = json.loads(app.db.subscription(sub["subscription_id"], acc["id"])["state_json"])
         assert stt["follow"]["seen"]["KAITOUSDT:%d" % (since + 3600)] == {"fills": 1, "closed": False}
