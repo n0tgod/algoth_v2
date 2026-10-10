@@ -679,6 +679,45 @@ def test_rows_carry_executor_levels_from_the_rules():
     print("ok  уровни исполнителя: цель, ликвидация, пол, срок — в строке и у открытой")
 
 
+def test_deploy_does_not_kill_a_running_training():
+    """Деплой (`restart_book.sh`) не трогает цикл, пока тот обучается
+    (10.10: три деплоя подряд убили почти законченные обучения). Признак —
+    память процесса цикла выше порога; FORCE_CYCLE=1 — сознательно."""
+    wd = os.path.abspath(os.path.join(HERE, os.pardir, os.pardir, "tools", "restart_book.sh"))
+    src = open(wd, encoding="utf-8").read()
+    a = src.index("# --- идущее обучение не убивается деплоем")
+    b = src.index("# --- конец защиты обучения")
+    block = src[a:b] + 'echo "ДАЛЬШЕ: перезапускаю циклы"\n'
+    d = tempfile.mkdtemp()
+    os.makedirs(os.path.join(d, "stubs"))
+
+    def stub(name, body):
+        p = os.path.join(d, "stubs", name)
+        with open(p, "w") as f:
+            f.write(body)
+        os.chmod(p, 0o755)
+
+    def run(rss_mb, pids="4242", env_extra=None):
+        stub("pgrep", f'#!/bin/sh\n[ -n "{pids}" ] && echo "{pids}" && exit 0; exit 1\n')
+        stub("ps", f"#!/bin/sh\necho {rss_mb * 1024}\n")
+        env = dict(os.environ, PATH=os.path.join(d, "stubs") + os.pathsep + os.environ["PATH"])
+        env.update(env_extra or {})
+        r = subprocess.run(["bash", "-c", block], cwd=d, env=env, capture_output=True, text=True)
+        return r.returncode, r.stdout
+    rc, out = run(3300)
+    assert rc == 0 and "НЕ трогаю" in out and "3300 МБ" in out and "ДАЛЬШЕ" not in out, out
+    rc, out = run(900)
+    assert "ДАЛЬШЕ" in out and "НЕ трогаю" not in out, out
+    rc, out = run(3300, env_extra={"FORCE_CYCLE": "1"})
+    assert "ДАЛЬШЕ" in out, out
+    rc, out = run(3300, pids="")
+    assert "ДАЛЬШЕ" in out, out                        # цикла нет — защищать нечего
+    # контроль: порог, задранный выше любого обучения, защиту снимает
+    rc, out = run(3300, env_extra={"TRAIN_BUSY_MB": "9000"})
+    assert "ДАЛЬШЕ" in out, out
+    print("ok  деплой не убивает идущее обучение: порог памяти, FORCE_CYCLE — сознательно")
+
+
 def test_journal_appends_only_new():
     """Строка write-ahead не переписывается: момент записи подвинуть нельзя."""
     t0 = T0
@@ -2758,6 +2797,7 @@ TESTS = [test_net_rides_the_summary_with_reasons_not_zeros,
     test_open_position_is_not_a_closed_one,
     test_fixed_ticket_is_a_sister_book_in_its_own_journal,
     test_rows_carry_executor_levels_from_the_rules,
+    test_deploy_does_not_kill_a_running_training,
     test_journal_appends_only_new,
     test_open_dd_forward_is_the_window_not_the_whole_book,
          test_report_names_what_is_not_modelled,
