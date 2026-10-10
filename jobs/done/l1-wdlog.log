@@ -1,0 +1,15 @@
+== задание l1-wdlog ==
+строка: run tools/loggrep.py --file watchdog --pattern books --last 30
+начало: 2026-10-10T15:14:26Z
+запускаю: .venv/bin/python tools/loggrep.py --file watchdog --pattern books --last 30
+== research/b1_book/out/watchdog.log по образцу /books/ за 10 сут ==
+  совпадений 0
+конец: 2026-10-10T15:14:26Z, код 0
+публикуется в ветку main:
+ jobs/done/l1-cyclelog2.log  | 11 +++++++++++
+ jobs/done/l1-cyclelog3.done |  1 +
+ jobs/done/l1-cyclelog3.log  |  4 ++++
+ jobs/done/l1-wdlog.done     |  1 +
+ jobs/done/l1-wdlog.log      |  7 +++++++
+ jobs/poke.log               |  4 ++++
+ 6 files changed, 28 insertions(+)
