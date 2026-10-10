@@ -1831,3 +1831,6 @@ Terminated
 
 == сигнал 1791652717 ==
 [2026-10-10T17:18:39Z] задание l3-api-restart запущено: tools/app_api/restart.py
+
+== сигнал 1791652757 ==
+[2026-10-10T17:19:19Z] задание l3-selftest запущено: tools/app_api/selftest.py

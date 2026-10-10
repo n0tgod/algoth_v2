@@ -1,0 +1,15 @@
+== задание l3-selftest ==
+строка: run tools/app_api/selftest.py
+начало: 2026-10-10T17:19:19Z
+запускаю: .venv/bin/python tools/app_api/selftest.py 
+health: 200 {'ok': True, 'schema': 1}
+вход оператора: 200, аккаунт acc_05bccaa551a6df40, роль operator
+me: 200 {'account_id': 'acc_05bccaa551a6df40', 'role': 'operator', 'email': 'kasatkin.w9925@gmail.com', 'apple_linked': True, 'schema': 1}
+Traceback (most recent call last):
+  File "/root/algoth_v2/tools/app_api/selftest.py", line 64, in <module>
+    main()
+  File "/root/algoth_v2/tools/app_api/selftest.py", line 56, in main
+    print(f"ячеек стратегий: {len(cells)}" + (f", первая {cells[0]['book']} {cells[0]['deposit']:g} $ касса {cells[0]['cash_usd']}" if cells else " — книги не прочитаны"))
+                                                                                                             ~~~~~~~~^^^^^^^^^^^^
+KeyError: 'cash_usd'
+конец: 2026-10-10T17:19:20Z, код 1
