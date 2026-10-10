@@ -8982,6 +8982,56 @@ def test_pinned_journal_files_survive_the_cache_budget():
         C.Collector._JSONL_BUDGET = budget_was
 
 
+def test_model_signature_sees_only_the_files_the_build_reads():
+    """Подпись кеша `/model` — по файлам, из которых сборка берёт числа
+    (починка 10.10): файл каталога книги, меняющийся каждую минуту, не
+    пересобирает все книги и не выбрасывает кеш журналов. Журнал
+    изменился — подпись изменилась. Контроль: подпись по всем файлам
+    (как было) меняется от постороннего файла."""
+    import tempfile
+
+    import collect as C
+
+    s8 = tempfile.mkdtemp()
+    for d in ("model", "model_h24"):
+        os.makedirs(os.path.join(s8, d))
+        for fn in ("picks.jsonl", "review.jsonl", "manifest.json", "scan_sheet.json"):
+            with open(os.path.join(s8, d, fn), "w") as f:
+                f.write("{}\n")
+
+    class FakeC(C.Collector):
+        BOOK_DIRS = {"h4": "model", "h24": "model_h24"}
+
+        def __init__(self):
+            pass
+    c = FakeC()
+    s0 = c._model_sig(s8)
+    check("подпись несёт только читаемые файлы (без scan_sheet.json)",
+          all(x[1] in C.Collector.MODEL_SIG_FILES for x in s0 if len(x) > 2) and len(s0) == 6, str(s0))
+    p = os.path.join(s8, "model", "scan_sheet.json")
+    with open(p, "a") as f:
+        f.write('{"minute": 1}\n')
+    os.utime(p, (time.time() + 5, time.time() + 5))
+    check("посторонний файл каталога изменился — подпись та же",
+          c._model_sig(s8) == s0, "подпись сдвинулась")
+    with open(os.path.join(s8, "model_h24", "picks.jsonl"), "a") as f:
+        f.write('{"i": 1}\n')
+    check("журнал книги дописан — подпись другая", c._model_sig(s8) != s0, "подпись не сдвинулась")
+    check("потолок возраста кеша — час, не десять минут",
+          C.Collector.MODEL_CACHE_MAX_SEC == 3600, str(C.Collector.MODEL_CACHE_MAX_SEC))
+    # Контроль: подпись по всем файлам (как было) чувствует посторонний файл
+    was = C.Collector.MODEL_SIG_FILES
+    C.Collector.MODEL_SIG_FILES = None
+    try:
+        s1 = c._model_sig(s8)
+        with open(p, "a") as f:
+            f.write('{"minute": 2}\n')
+        check("контроль: без списка читаемых файлов посторонний файл двигает подпись",
+              c._model_sig(s8) != s1, "подпись не сдвинулась")
+    finally:
+        C.Collector.MODEL_SIG_FILES = was
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
@@ -9018,6 +9068,7 @@ def main():
     test_dca_parts_cache_has_a_budget_and_evicts_the_least_used()
     test_dca_summary_is_rebuilt_by_file_signature_not_by_clock()
     test_pinned_journal_files_survive_the_cache_budget()
+    test_model_signature_sees_only_the_files_the_build_reads()
     test_book_built_twice_gives_same_numbers()
     test_overview_and_trades_page_agree()
     test_model_trades_lite_matches_full()

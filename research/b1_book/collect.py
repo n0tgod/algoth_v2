@@ -2042,11 +2042,25 @@ class Collector:
             return "traded"
         return "observation" if rr_min < float(traded_gate) else "traded"
 
-    MODEL_CACHE_MAX_SEC = 600
+    # Потолок возраста кеша — на то, чего подпись не видит. 10.10: при
+    # 600 с и подписи по ВСЕМ файлам каталога сборка шла каждые ~3.5 мин
+    # (в каталогах книг есть файлы, меняющиеся чаще журналов), читала
+    # все книги и выбрасывала из кеша журналов всё остальное — 150
+    # полных разборов за 33 мин. Подпись теперь — по файлам, которые
+    # сборка ЧИТАЕТ (`MODEL_SIG_FILES`), потолок — час: журналы книг
+    # дописывает часовой цикл, живое (тормоз дня, отметки открытых)
+    # страница берёт отдельными маршрутами.
+    MODEL_CACHE_MAX_SEC = 3600
+    MODEL_SIG_FILES = ("picks.jsonl", "review.jsonl", "books.jsonl",
+                       "entries_live.jsonl", "exits_live.jsonl",
+                       "manifest.json", "train_log.jsonl", "ic_history.jsonl",
+                       "readiness.json", "last_run.json")
 
     def _model_sig(self, s8):
-        """Подпись файлов всех книг: (имя, mtime, размер) по каталогам."""
+        """Подпись файлов всех книг: (имя, mtime, размер) по каталогам —
+        только тех файлов, из которых сборка берёт числа."""
         sig = []
+        want = self.MODEL_SIG_FILES
         for key in sorted(self.BOOK_DIRS):
             d = os.path.join(s8, self.BOOK_DIRS[key])
             try:
@@ -2055,6 +2069,8 @@ class Collector:
                 sig.append((key, None))
                 continue
             for fn in names:
+                if want is not None and fn not in want:
+                    continue
                 try:
                     st = os.stat(os.path.join(d, fn))
                 except OSError:
