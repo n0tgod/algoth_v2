@@ -156,14 +156,30 @@ impl LPos {
     pub fn n(&self) -> usize {
         self.rungs.len().max(1)
     }
-    /// Пол на текущей глубине — уровень намерения для этой глубины.
+    /// Пол на текущей глубине — на той же ДОЛЕ от средней, что у бумаги.
+    ///
+    /// Намерение несёт пол абсолютной ценой от цены решения (`px_ref`), а
+    /// живой вход случается позже и по другой цене: 10.10 STRK вошёл на
+    /// 2.2 % выше, и абсолютный пол стоял в 4.9 % от входа вместо 7.1 %
+    /// правила. В книге пол привязан к позиции (`liq + доля × (средняя −
+    /// liq)`, ликвидация — от средней и плеча), поэтому переносится
+    /// пропорцией: `средняя_живая × пол_бумаги / средняя_бумаги` на той
+    /// же глубине. Нет средней бумаги в намерении — уровень как есть.
     pub fn floor_px(&self) -> Option<f64> {
         let k = self.depth.max(1).min(self.rungs.len().max(1)) - 1;
-        self.rungs.get(k).and_then(|r| r.floor_px)
+        let r = self.rungs.get(k)?;
+        Self::rebase(r.floor_px?, r.avg, self.avg())
     }
     pub fn liq_px(&self) -> Option<f64> {
         let k = self.depth.max(1).min(self.rungs.len().max(1)) - 1;
-        self.rungs.get(k).and_then(|r| r.liq_px)
+        let r = self.rungs.get(k)?;
+        Self::rebase(r.liq_px?, r.avg, self.avg())
+    }
+    fn rebase(level: f64, paper_avg: Option<f64>, live_avg: f64) -> Option<f64> {
+        match paper_avg {
+            Some(pa) if pa > 0.0 && live_avg > 0.0 => Some(live_avg * level / pa),
+            _ => Some(level),
+        }
     }
     /// Цель от ТЕКУЩЕЙ средней: `avg × (1 ± доля)`, округление внутрь.
     pub fn take_px(&self) -> Option<f64> {

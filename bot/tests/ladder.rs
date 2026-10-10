@@ -324,6 +324,39 @@ fn шорт_с_одним_рунгом_входит_ставит_цель_и_в�
 }
 
 #[test]
+fn пол_держится_на_доле_от_живой_средней_а_не_на_цене_решения() {
+    // Намерение посчитано от цены решения 100: пол 107 (+7 %). Живой вход
+    // случился по 102 — пол обязан стоять на +7 % от 102, а не на 107.
+    let d = dir("floor-rebase");
+    let m = Mock::new();
+    m.set_px("SSSUSDT", 102.0, 102.02);
+    let mut it = short_intent(1);
+    it["rungs"] = json!([{"px": 100.0, "share": 0.25, "avg": 100.0, "floor_px": 107.0, "liq_px": 115.0}]);
+    write_intents(&d, &[it]);
+    let mut lx = ladder(&d, &m, false);
+    lx.tick(T0 + 120_000);
+    let p = lx.st.positions.get("SSSUSDT").cloned().unwrap();
+    assert!((p.avg() - 102.0).abs() < 1e-9);
+    assert!((p.floor_px().unwrap() - 102.0 * 1.07).abs() < 1e-9, "{:?}", p.floor_px());
+    assert!((p.liq_px().unwrap() - 102.0 * 1.15).abs() < 1e-9);
+    assert!((events(&d)[0]["floor_px"].as_f64().unwrap() - 109.14).abs() < 1e-9, "событие несёт живой пол");
+    // цена между абсолютным полом намерения (107) и живым (109.14) — не выход
+    m.set_px("SSSUSDT", 107.9, 108.0);
+    assert_eq!(lx.tick(T0 + 130_000).closed, 0, "старый абсолютный пол закрыл бы позицию здесь");
+    m.set_px("SSSUSDT", 109.2, 109.25);
+    assert_eq!(lx.tick(T0 + 140_000).closed, 1);
+    assert_eq!(kinds(&d).last().unwrap(), "floor");
+    // без средней бумаги в намерении — уровень как есть (прежние намерения)
+    let d2 = dir("floor-plain");
+    let m2 = Mock::new();
+    m2.set_px("SSSUSDT", 102.0, 102.02);
+    write_intents(&d2, &[short_intent(1)]);
+    let mut lx2 = ladder(&d2, &m2, false);
+    lx2.tick(T0 + 120_000);
+    assert_eq!(lx2.st.positions["SSSUSDT"].floor_px(), Some(107.0));
+}
+
+#[test]
 fn лонг_лестница_доливает_переставляет_цель_и_выходит_по_полу() {
     let d = dir("long");
     let m = Mock::new();
