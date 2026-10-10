@@ -47,3 +47,11 @@
     бумага без намерения: USUSDT 10-10 03:00 — одна позиция на имя: бумага держит
     бумага без намерения: BATUSDT 10-10 03:00 — намерения не было (решение до подъёма или источник не прочитан)
 конец: 2026-10-10T13:30:11Z, код 0
+публикуется в ветку main:
+ jobs/done/l1-api-restart.log   | 10 +++++++++
+ jobs/done/l1-check.done        |  1 +
+ jobs/done/l1-check.log         | 49 ++++++++++++++++++++++++++++++++++++++++++
+ jobs/done/l1b-api-restart.done |  1 +
+ jobs/done/l1b-api-restart.log  |  4 ++++
+ jobs/poke.log                  |  6 ++++++
+ 6 files changed, 71 insertions(+)
