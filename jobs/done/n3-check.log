@@ -30,3 +30,13 @@
     бумага без намерения: JCTUSDT 10-10 15:00 — решение пришло поздно: возраст 30 мин (подъём после решения или источник отстал)
     бумага без намерения: BATUSDT 10-10 03:00 — намерения не было (решение до подъёма или источник не прочитан)
 конец: 2026-10-10T20:49:33Z, код 0
+публикуется в ветку main:
+ jobs/done/n2-api-restart.log | 18 ++++++++++++++++++
+ jobs/done/n3-check.done      |  1 +
+ jobs/done/n3-check.log       | 32 ++++++++++++++++++++++++++++++++
+ jobs/poke.log                |  3 +++
+ 4 files changed, 54 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   ebce444d..a40052fc  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

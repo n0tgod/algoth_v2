@@ -1,0 +1,41 @@
+== задание n4-status ==
+строка: status
+начало: 2026-10-10T20:51:40Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   74G   71G  52% /
+/dev/sdb        147G   79G   61G  57% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 553659   28912 .venv/bin/python research/b1_book/collect.py --http 8765
+ 582416   21099 .venv/bin/python research/s8_loop/train.py
+ 669148 4058635 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.
+--- убийства ядра по памяти за сутки ---
+5 (подробно: run tools/memtop.py)
+--- обучение S8 ---
+обучение S8: веса от 2026-10-10 19:48 UTC, 1.1 ч назад (каденция 24, тревога с 36 ч); последний цикл 20:41 UTC: весам 0.9 ч при каденции 24
+--- идущие прогоны ---
+нет
+--- статус сбора ---
+{"t": 1791665497.0, "uptime_sec": 28908.3, "rss_mb": 1559, "mem_guard": {"drops": 0, "dies": 0, "max_rss_mb": 1559}, "messages": 100326984, "trades": 9947372, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 22182102, "snapshot_errors": 0, "last_snap_age_sec": 0.7, "snap_pass_sec": 0.355, "writes": {"book": 22182102, "trades": 9947366, "raw": 558394, "liq": 3037, "metrics": 75050}, "write_age_sec": {"book": 0.7, "trades": 0.2, "raw": 0.1, "liq": 211.0, "metrics": 230.3}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.2659, "ask": 0.2661, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0003897, "ask": 0.0003899, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1111, "a
+--- живой исполнитель ---
+{
+  "at_ms": 1791665500400,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 284.17116407,
+    "equity": 283.62874907
+  }
+}
+конец: 2026-10-10T20:51:40Z
