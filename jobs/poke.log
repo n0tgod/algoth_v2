@@ -1825,3 +1825,6 @@ Terminated
 [2026-10-10T16:09:23Z] задание l1-check4 запущено: tools/app_api/intents.py
 [2026-10-10T16:09:23Z] задание l1-cyclelog4 запущено: tools/loggrep.py
 [2026-10-10T16:09:23Z] задание l1-wdlog3 запущено: tools/loggrep.py
+
+== сигнал 1791648713 ==
+[2026-10-10T16:11:54Z] задание l1d-api-restart запущено: tools/app_api/restart.py

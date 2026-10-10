@@ -23,3 +23,15 @@
     бумага без намерения: USUSDT 10-10 03:00 — намерения не было (решение до подъёма или источник не прочитан)
     бумага без намерения: BATUSDT 10-10 03:00 — намерения не было (решение до подъёма или источник не прочитан)
 конец: 2026-10-10T16:09:24Z, код 0
+публикуется в ветку main:
+ jobs/done/l1-check4.done            |  1 +
+ jobs/done/l1-check4.log             | 25 ++++++++++++++++++++++++
+ jobs/done/l1-cyclelog4.done         |  1 +
+ jobs/done/l1-cyclelog4.log          | 34 +++++++++++++++++++++++++++++++++
+ jobs/done/l1-wdlog2.log             | 11 +++++++++++
+ jobs/done/l1-wdlog3.done            |  1 +
+ jobs/done/l1-wdlog3.log             | 38 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  7 +++++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 9 files changed, 119 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at db0f222db7ec0d4930d7a77246f2fb2908f9eb2c but expected c18c711f67fc72938c5807ad1418ba1d0971e5ac
