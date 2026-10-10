@@ -46,6 +46,44 @@ PICKS = os.path.join(RESEARCH, "s8_loop", "out", "model_h24", "picks.jsonl")
 REF_GATE = "any"                     # отсчёт — все решения с краем ≥ 33
 
 
+def h24_leg(p, row, arm=None, at=None):
+    """Короткая нога из ОДНОЙ строки выбора книги h24. None — не нога.
+
+    Вынесено из `h24_legs` ради живого исполнителя (спека 15 §10a, L1):
+    намерения читают выборы по мере появления, строку за строкой, и
+    собирать ногу обязаны тем же правилом, что реплей, — иначе
+    исполнитель входил бы по ноге, которой книга не знает. Правило:
+    обещание `fav` = `mfe`, риск `adv_q` = `mae` (оба уже в терминах
+    позиции), RR = |fav| / риск, сторона — знак `fwd` (< 0), момент —
+    закрытие часа выбора. Гейт края (`run_d10.gate_of`) здесь НЕ
+    применяется: он — правило отбора, и его применяет вызывающий.
+    """
+    arm = arm or p.get("arm") or "gbm"
+    if at is None:
+        at = TR.hour_end(p.get("hour")) if p.get("hour") else None
+    if not at:
+        return None
+    try:
+        fwd = float(row["fwd"])
+        fav = float(row["mfe"])
+        adv = float(row["mae"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not (fwd < 0 and fav < 0 < adv):
+        return None
+    g = {"arm": arm, "sym": row.get("sym"), "hour": p.get("hour"),
+         "at": float(at), "side": "short", "fwd": fwd,
+         "fz": None, "adv_q": adv, "fav": fav, "rr": abs(fav) / adv}
+    # Поля модели, которые выбор УЖЕ несёт, а нога прежде теряла:
+    # новизна вектора признаков (`odd`), бета к волне, прогноз в σ.
+    # Реплею они не нужны, скрину хвоста (`dca_paper/tail_screen`) —
+    # нужны; считать их второй раз неоткуда, лист их не хранит.
+    for k in ("odd", "beta", "fwd_z", "mae_q", "mfe_q", "px"):
+        if row.get(k) is not None:
+            g[k] = row[k]
+    return g
+
+
 def h24_legs(arm="nn", path=None, limit=None, log=print):
     """Короткие ноги из выборов книги h24 (рука `arm`).
 
@@ -79,27 +117,10 @@ def h24_legs(arm="nn", path=None, limit=None, log=print):
             n_hours += 1
             for row in p.get("short") or []:
                 n_rows += 1
-                try:
-                    fwd = float(row["fwd"])
-                    fav = float(row["mfe"])
-                    adv = float(row["mae"])
-                except (KeyError, TypeError, ValueError):
+                g = h24_leg(p, row, arm, at=at)
+                if g is None:
                     bad += 1
                     continue
-                if not (fwd < 0 and fav < 0 < adv):
-                    bad += 1
-                    continue
-                g = {"arm": arm, "sym": row.get("sym"), "hour": p["hour"],
-                     "at": float(at), "side": "short", "fwd": fwd,
-                     "fz": None, "adv_q": adv, "fav": fav, "rr": abs(fav) / adv}
-                # Поля модели, которые выбор УЖЕ несёт, а нога прежде
-                # теряла: новизна вектора признаков (`odd`), бета к
-                # волне, прогноз в σ. Реплею они не нужны, скрину хвоста
-                # (`dca_paper/tail_screen`) — нужны; считать их второй раз
-                # неоткуда, лист их не хранит.
-                for k in ("odd", "beta", "fwd_z", "mae_q", "mfe_q", "px"):
-                    if row.get(k) is not None:
-                        g[k] = row[k]
                 if D10.gate_of(g):
                     out.append(g)
     out.sort(key=lambda g: (g["at"], g["arm"], g["fwd"], g["sym"]))

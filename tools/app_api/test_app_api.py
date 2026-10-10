@@ -12,6 +12,7 @@ import os
 import sys
 import tempfile
 import threading
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -565,6 +566,247 @@ def test_follower_tick_feeds_trades_and_pushes_for_the_subscribed_cell():
         stt = json.loads(app.db.subscription(sub["subscription_id"], acc["id"])["state_json"])
         assert stt["follow"]["seen"]["KAITOUSDT:%d" % (since + 3600)] == {"fills": 1, "closed": False}
         assert SECRET not in json.dumps(tr)
+
+
+
+# ------------------------------------------------------------ намерения (L1)
+
+def _flat_bars(t0, n=1440, px=100.0, jitter=0.0):
+    out = []
+    for i in range(n):
+        d = jitter * ((i % 7) - 3) / 3.0
+        out.append((t0 + i * 60, px + d, px + d + 0.2, px + d - 0.2, px + d, 1000.0))
+    return out
+
+
+def _bars_fn(bars):
+    def bars_of(sym, t0, t1):
+        return [b for b in bars if t0 <= b[0] <= t1]
+    return bars_of
+
+
+def _sheet_line(hour, written_at, rows, arm="nn"):
+    return json.dumps({"hour": hour, "written_at": written_at, "arms": {arm: rows}})
+
+
+def _pick_line(hour, shorts, arm="nn"):
+    return json.dumps({"arm": arm, "hour": hour, "long": [], "short": shorts})
+
+
+def test_intents_plan_entry_like_paper_and_size_from_subscription_cash():
+    """Намерение входа считается теми же функциями, что бумага: вход, плечо,
+    рунги, цель, пол и ликвидация совпадают с записью `run_d6.one_position`
+    того же решения на тех же барах; размер — доля кассы подписки (сложный
+    процент: депозит + реализованное; фиксированный билет: депозит);
+    короткая книга h24 — один рунг и плечо забора; отказы — одна на имя
+    (бумага держит), гейт плеча агрессивной, нет кассы, возраст имени;
+    незакрытый бар входа — ожидание, не отказ."""
+    import intents as I
+    c = I.core()
+    R, D2, D6, L = c["R"], c["D2"], c["D6"], c["L"]
+    t0 = 1_791_000_000 - 1_791_000_000 % 3600
+    at = t0 + 1440 * 60                      # решение — конец 24-го часа
+    bars = _flat_bars(t0, n=1440 + 5)        # пять баров после входа
+    now = at + 4 * 60 + 5                    # xx:04:05 — бар входа закрыт
+    LEVELS = [97.0, 94.0, 91.0, 88.0, 103.0, 106.0, 109.0]
+    orig = D2.build_levels
+    D2.build_levels = lambda w, i: LEVELS
+    try:
+        g_long = {"arm": "nn", "sym": "AAAUSDT", "hour": "x", "at": float(at), "side": "long",
+                  "fwd": 120.0, "fz": 2.0, "adv_q": -300.0, "fav": 250.0, "rr": 250 / 300}
+        g_short = {"arm": "nn", "sym": "BBBUSDT", "hour": "x", "at": float(at), "side": "short",
+                   "fwd": -120.0, "fz": None, "adv_q": 300.0, "fav": -250.0, "rr": 250 / 300}
+        ts = [b[0] for b in bars]
+        look = lambda notl: L.mmr_for_notional([], notl, flat=D2.FLAT_MMR)      # noqa: E731
+        sub = {"id": "sub_t", "book": "optimal", "deposit": 1000.0, "created": at - 10}
+        st = {"sizing": "compound", "realized_usd": 200.0}
+        env = {"now": now, "bars": _bars_fn(bars), "launch": {}, "tiers": {}}
+        ints, skips, it = I.decide(sub, st, {"sit": [g_long]}, None, env, log=lambda *a: None)
+        assert len(ints) == 1 and not skips, (ints, skips)
+        r = ints[0]
+        # то же, что посчитает бумага на тех же барах
+        rec = D6.one_position(g_long, bars, ts, look, "depth", R.SURVIVE_MULT, hold_h=72)
+        assert r["px_ref"] == rec["entry_px"] == 100.0 and r["lev"] == rec["lev"] and r["lev"] > 1.0, (r["lev"], rec["lev"])
+        assert [x["px"] for x in r["rungs"]] == [100.0, 97.0, 94.0, 91.0] and [x["share"] for x in r["rungs"]] == [0.25] * 4
+        share = R.share(1000.0, "optimal")
+        assert abs(r["margin_usd"] - 1200.0 * share) < 1e-6 and r["cash_usd"] == 1200.0, r
+        paper_lv = R.levels_of(dict(rec, margin=r["margin_usd"]), "optimal", look=look)
+        assert abs(r["take_px"] - paper_lv["take_px"]) < 1e-9 and abs(r["floor_px"] - paper_lv["floor_px"]) < 1e-9
+        assert abs(r["liq_px"] - paper_lv["liq_px"]) < 1e-9 and r["term_ts"] == at + 72 * 3600 and r["side"] == "long"
+        assert r["take_px"] == 100.0 * (1 + 2 * 250 / 1e4) and r["floor_px"] < 100.0 and r["liq_px"] < r["floor_px"]
+        assert it["live"][I.leg_key("optimal", g_long)]["margin_usd"] == r["margin_usd"] and r["mode"] == "dry"
+        # фиксированный билет — от депозита, не от кассы
+        ints_f, _s, _i = I.decide(sub, dict(st, sizing="fixed"), {"sit": [g_long]}, None, env, log=lambda *a: None)
+        assert abs(ints_f[0]["margin_usd"] - 1000.0 * share) < 1e-6 and ints_f[0]["cash_usd"] == 1000.0
+        # короткая книга h24: один рунг, плечо забора на структурной лестнице, цель ниже, пол выше
+        sub_h = {"id": "sub_h", "book": "optimal_h", "deposit": 1000.0, "created": at - 10}
+        env_h = dict(env, launch={"BBBUSDT": at - 30 * 86400})
+        ints_h, skips_h, it_h = I.decide(sub_h, {"sizing": "compound"}, {"h24": [g_short]}, None, env_h, log=lambda *a: None)
+        assert len(ints_h) == 1 and not skips_h, (ints_h, skips_h)
+        h = ints_h[0]
+        assert h["side"] == "short" and [x["px"] for x in h["rungs"]] == [100.0] and h["rungs"][0]["share"] == 0.25
+        assert h["rungs_full"] == [100.0, 103.0, 106.0, 109.0] and h["lev"] > 1.0 and h["hold_h"] == 24
+        assert h["take_px"] == 100.0 * (1 - 2 * 250 / 1e4) and h["floor_px"] > 100.0 and h["liq_px"] > h["floor_px"]
+        assert abs(h["margin_usd"] - 1000.0 * R.share_in("optimal_h", "optimal_h", 1000.0)) < 1e-9
+        # общий счёт: короткая сторона своим билетом × доля, длинная своим
+        sub_p = {"id": "sub_p", "book": "pair_optimal", "deposit": 10000.0, "created": at - 10}
+        ints_p, skips_p, _ = I.decide(sub_p, {"sizing": "compound"}, {"sit": [g_long], "h24": [g_short]}, None,
+                                      env_h, log=lambda *a: None)
+        assert sorted((x["book"], x["sym"]) for x in ints_p) == [("optimal", "AAAUSDT"), ("optimal_h", "BBBUSDT")], ints_p
+        by = {x["book"]: x for x in ints_p}
+        assert abs(by["optimal_h"]["margin_usd"] - 10000.0 * R.share_in("pair_optimal", "optimal_h", 10000.0)) < 1e-9
+        assert abs(by["optimal"]["margin_usd"] - 10000.0 * R.share_in("pair_optimal", "optimal", 10000.0)) < 1e-9
+        # отказы: возраст имени (молодое / неизвестное), одна на имя, гейт плеча, нет кассы
+        _i1, sk1, _ = I.decide(sub_h, {}, {"h24": [g_short]}, None, dict(env, launch={"BBBUSDT": at - 86400}), log=lambda *a: None)
+        assert len(sk1) == 1 and "возраст" in sk1[0]["why"], sk1
+        _i2, sk2, _ = I.decide(sub_h, {}, {"h24": [g_short]}, None, dict(env, launch={"OTHER": at - 86400}), log=lambda *a: None)
+        assert len(sk2) == 1 and "возраст" in sk2[0]["why"], sk2
+        book_cell = {"open": {"positions": [{"sym": "AAAUSDT", "at": at - 7200, "book": None}]}}
+        _i3, sk3, _ = I.decide(sub, st, {"sit": [g_long]}, book_cell, env, log=lambda *a: None)
+        assert len(sk3) == 1 and sk3[0]["why"].startswith("одна позиция на имя: бумага"), sk3
+        sub_a = {"id": "sub_a", "book": "aggr", "deposit": 1000.0, "created": at - 10}
+        # глубокая лестница → забор даёт плечо 1.9 (ниже гейта 4); лестница
+        # LEVELS → 6.3 (проходит): числа — от `fence_leverage`, не назначены
+        D2.build_levels = lambda w, i: [90.0, 80.0, 70.0]
+        _i4, sk4, _ = I.decide(sub_a, {}, {"sit": [g_long]}, None, env, log=lambda *a: None)
+        assert len(sk4) == 1 and sk4[0]["why"].startswith("гейт плеча: 1.8"), sk4
+        D2.build_levels = lambda w, i: LEVELS
+        i5, sk5, _ = I.decide(sub_a, {}, {"sit": [g_long]}, None, env, log=lambda *a: None)
+        assert len(i5) == 1 and i5[0]["lev"] >= R.AGGR_MIN_LEV, (i5, sk5)
+        full = {"intents": {"live": {f"optimal:X{i}USDT:{at}": {"sym": f"X{i}USDT", "book": "optimal",
+                                                                "margin_usd": 300.0, "term_ts": at + 3600}
+                                     for i in range(4)}}}
+        _i6, sk6, _ = I.decide(sub, dict(st, **full), {"sit": [g_long]}, None, env, log=lambda *a: None)
+        assert len(sk6) == 1 and sk6[0]["why"].startswith("нет кассы"), sk6
+        # решение до подписки не ведётся; повтор того же решения не дублируется
+        _i7, sk7, it7 = I.decide(dict(sub, created=at + 1), {}, {"sit": [g_long]}, None, env, log=lambda *a: None)
+        assert not _i7 and not sk7
+        _i8, sk8, _ = I.decide(sub, dict(st, intents=it), {"sit": [g_long]}, None, env, log=lambda *a: None)
+        assert not _i8 and not sk8, (_i8, sk8)
+        # бар входа не закрыт — ждём; пришёл — намерение, тем же решением
+        early = dict(env, now=at + 30, bars=_bars_fn([b for b in bars if b[0] <= at]))
+        i9, sk9, it9 = I.decide(sub, st, {"sit": [g_long]}, None, early, log=lambda *a: None)
+        assert not i9 and not sk9 and len(it9["pending"]) == 1 and "бар" in it9["pending"][0]["why"], it9
+        i10, sk10, it10 = I.decide(sub, dict(st, intents=it9), {}, None, env, log=lambda *a: None)
+        assert len(i10) == 1 and i10[0]["px_ref"] == 100.0 and not it10["pending"], (i10, it10)
+        # контроль: бар так и не пришёл — отказ с причиной, не вечное ожидание
+        late = dict(early, now=at + I.PENDING_MAX_S + 1)
+        i11, sk11, it11 = I.decide(sub, dict(st, intents=it9), {}, None, late, log=lambda *a: None)
+        assert not i11 and len(sk11) == 1 and "не пришёл" in sk11[0]["why"] and not it11["pending"], sk11
+    finally:
+        D2.build_levels = orig
+    print("ok  намерения: геометрия как у бумаги, размер от кассы подписки, отказы с причиной")
+
+
+def test_intents_sources_are_read_as_tail_once_and_tick_feeds_state_and_parity():
+    """Такт сервера: источники читаются хвостом от смещения (первое чтение —
+    хвост, неполная строка остаётся), ноги собираются тем же правилом, что
+    реплей; намерение пишется в intents.jsonl с seq, отказ — в skips.jsonl;
+    состояние несёт сводку, /intents отдаёт хвост; сверка с бумагой находит
+    строку того же решения и печатает Δ = 0, а строку бумаги без намерения
+    называет причиной отказа."""
+    import intents as I
+    c = I.core()
+    D2, R = c["D2"], c["R"]
+    t0 = 1_791_000_000 - 1_791_000_000 % 3600
+    at = t0 + 1440 * 60
+    hour = time.strftime("%Y-%m-%d-%H", time.gmtime(at - 3600))
+    bars = _flat_bars(t0, n=1440 + 6)
+    now = at + 5 * 60
+    orig = D2.build_levels
+    D2.build_levels = lambda w, i: [97.0, 94.0, 91.0, 103.0, 106.0]
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            picks = os.path.join(tmp, "picks.jsonl")
+            sheets = os.path.join(tmp, "sheets.jsonl")
+            # хвост источника: старая строка (до подписки) и новая; последняя — без перевода строки
+            with open(picks, "w", encoding="utf-8") as f:
+                f.write(_pick_line("2026-01-01-00", [{"sym": "OLDUSDT", "fwd": -400.0, "mae": 120.0, "mfe": -600.0, "px": 1.0}]) + "\n")
+                f.write(_pick_line(hour, [{"sym": "BBBUSDT", "fwd": -400.0, "mae": 120.0, "mfe": -600.0, "px": 100.0},
+                                          {"sym": "YNGUSDT", "fwd": -400.0, "mae": 120.0, "mfe": -600.0, "px": 100.0},
+                                          {"sym": "LOWUSDT", "fwd": -20.0, "mae": 120.0, "mfe": -600.0, "px": 100.0}]) + "\n")
+                f.write('{"arm": "nn", "hour": "2026-')                   # незаконченная запись
+            lines, sst, why = I.read_tail(picks, {}, first_tail=10 ** 9)
+            assert len(lines) == 2 and why is None and sst["offset"] == os.path.getsize(picks) - len('{"arm": "nn", "hour": "2026-'), sst
+            lines2, sst2, _ = I.read_tail(picks, sst)
+            assert lines2 == [] and sst2["offset"] == sst["offset"]
+            with open(picks, "a", encoding="utf-8") as f:
+                f.write('01-01"}\n')
+            lines3, sst3, _ = I.read_tail(picks, sst2)
+            assert len(lines3) == 1 and sst3["offset"] == os.path.getsize(picks)
+            # первое чтение с хвоста режет неполную первую строку
+            lines4, _s4, _ = I.read_tail(picks, {}, first_tail=40)
+            assert lines4 == [] or all(json.loads(x) for x in lines4)
+            legs = I.legs_from_lines("h24", lines, log=lambda *a: None)
+            assert sorted(g["sym"] for g in legs) == ["BBBUSDT", "OLDUSDT", "YNGUSDT"], legs   # LOW — край < 33
+            assert all(g["side"] == "short" and g["fav"] == -600.0 and g["adv_q"] == 120.0 for g in legs)
+            with open(sheets, "w", encoding="utf-8") as f:
+                f.write(_sheet_line(hour, at + 1.5, [{"sym": "AAAUSDT", "fwd": 120.0, "px": 100.0, "mae": -100.0, "mfe": 250.0},
+                                                      {"sym": "RRRUSDT", "fwd": 120.0, "px": 100.0, "mae": -300.0, "mfe": 250.0}]) + "\n")
+            sl = I.legs_from_lines("sit", [open(sheets).read().strip()], log=lambda *a: None)
+            assert [g["sym"] for g in sl] == ["AAAUSDT"] and sl[0]["at"] == at + 1.5, sl   # RRR — RR < 2
+            # такт сервера с подменёнными источниками и барами
+            root = os.path.join(tmp, "exec")
+            dca = dict(DCA)
+            dca["books"] = dict(DCA["books"])
+            paper_row = {"sym": "BBBUSDT", "at": float(at), "side": "short", "entry_px": 100.0, "lev": None, "margin": None,
+                         "fills": [[at, 100.0, 0.25]], "levels": None, "exit": "срок", "exit_ts": at + 86400}
+            dca["books"]["optimal_h:1000"] = {"all": {"usd": 1.0}, "open": {"positions": []},
+                                              "trades": [paper_row], "trades_total": 1}
+            app, _ = _app(tmp, out=tmp, exec_root=root, dca_fetch=lambda full=None: dca)
+            acc = _login(app)
+            st, k = app.add_key(acc, "bybit", "ABCD1234KEY", SECRET)
+            st, sub = app.add_subscription(acc, k["key_id"], "optimal_h", 1000)
+            app.db.c.execute("UPDATE subscriptions SET created=? WHERE id=?", (at - 10, sub["subscription_id"]))
+            app.intents_env = {"now": now, "bars": _bars_fn(bars), "tiers": {},
+                               "launch": {"BBBUSDT": at - 30 * 86400, "YNGUSDT": at - 2 * 86400, "OLDUSDT": at - 90 * 86400},
+                               "files": {"h24": picks, "sit": sheets}}
+            n = app.intents_tick(force=True)
+            assert n == 1, n
+            rows = I.read_rows(I.intents_path(root, sub["subscription_id"]))
+            assert len(rows) == 1 and rows[0]["seq"] == 1 and rows[0]["sym"] == "BBBUSDT" and rows[0]["cell"] == "optimal_h"
+            assert rows[0]["decided_at"] == at and rows[0]["px_ref"] == 100.0 and rows[0]["lev"] > 1
+            sk = I.read_rows(I.skips_path(root, sub["subscription_id"]))
+            assert [x["sym"] for x in sk] == ["YNGUSDT"] and "возраст" in sk[0]["why"], sk
+            # бумажная строка дополнена плечом и маржой намерения — сверка даёт нули
+            paper_row["lev"], paper_row["margin"] = rows[0]["lev"], rows[0]["margin_usd"]
+            paper_row["levels"] = {"take_px": rows[0]["take_px"], "floor_px": rows[0]["floor_px"]}
+            dca["books"]["optimal_h:1000"]["trades"].append(
+                {"sym": "YNGUSDT", "at": float(at), "side": "short", "entry_px": 100.0, "lev": 3.0, "margin": 25.0})
+            app._dca["at"] = 0.0
+            n2 = app.intents_tick(force=True)
+            assert n2 == 0
+            st_, stt = app.state(acc)
+            summ = stt["subscriptions"][0]["intents"]
+            assert summ["n"] == 1 and summ["n_skips"] == 1 and summ["live"] == 1 and summ["error"] is None, summ
+            p = summ["parity"]
+            assert p["intents"] == 1 and p["matched"] == 1 and p["paper_only"] == 1 and p["intent_only"] == 0, p
+            assert p["fields"]["entry_bp"] == {"n": 1, "median": 0.0, "max": 0.0} and p["fields"]["lev_d"]["max"] == 0.0
+            assert p["fields"]["take_bp"]["max"] == 0.0 and p["fields"]["floor_bp"]["max"] == 0.0 and p["fields"]["margin_d"]["max"] == 0.0
+            assert p["paper_only_tail"][0]["sym"] == "YNGUSDT" and "возраст" in p["paper_only_tail"][0]["why"], p
+            # смещение источника запомнено: повторный такт ничего не перечитывает
+            sst_saved = I.load_sources_state(root)
+            assert sst_saved[picks]["offset"] == os.path.getsize(picks) and sst_saved[picks]["read"] >= 3
+            st_, li = app.list_intents(acc)
+            assert li["subscriptions"][0]["intents"][0]["sym"] == "BBBUSDT" and li["subscriptions"][0]["skips"][0]["sym"] == "YNGUSDT"
+            assert li["subscriptions"][0]["summary"]["parity"]["matched"] == 1
+            # контроль: без состояния источников хвост читается заново — и дедуп держит состояние подписки
+            os.remove(I.sources_state_path(root))
+            assert app.intents_tick(force=True) == 0
+            assert len(I.read_rows(I.intents_path(root, sub["subscription_id"]))) == 1
+            # следующий час: новое решение по тому же имени — одна на имя (намерение держит)
+            hour2 = time.strftime("%Y-%m-%d-%H", time.gmtime(at))
+            with open(picks, "a", encoding="utf-8") as f:
+                f.write(_pick_line(hour2, [{"sym": "BBBUSDT", "fwd": -400.0, "mae": 120.0, "mfe": -600.0, "px": 100.0}]) + "\n")
+            bars2 = bars + _flat_bars(at + 6 * 60, n=3600, px=100.0)
+            app.intents_env.update({"now": at + 3600 + 5 * 60, "bars": _bars_fn(bars2)})
+            assert app.intents_tick(force=True) == 0
+            sk2 = I.read_rows(I.skips_path(root, sub["subscription_id"]))
+            assert sk2[-1]["sym"] == "BBBUSDT" and "намерение держит" in sk2[-1]["why"], sk2[-1]
+            assert SECRET not in json.dumps(li)
+    finally:
+        D2.build_levels = orig
+    print("ok  такт намерений: хвост источников, файлы с seq, сводка в состоянии, сверка с бумагой")
 
 
 TESTS = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]

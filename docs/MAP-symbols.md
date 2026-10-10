@@ -1335,7 +1335,7 @@ D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: пл�
 - L982 `publish(name)`
 - L988 `main(argv=None)`
 
-## research/dca_ladder/run_d11.py · 195 строк
+## research/dca_ladder/run_d11.py · 216 строк
 
 D11 — DCA-лестница на сигнале книги `h24` (24 ч, рука по выбору), шорт.
 
@@ -1345,13 +1345,14 @@ D11 — DCA-лестница на сигнале книги `h24` (24 ч, рук
 - L44 `OUT = os.path.join(HERE, 'out')`
 - L45 `PICKS = os.path.join(RESEARCH, 's8_loop', 'out'…`
 - L46 `REF_GATE = 'any'`
-- L49 `h24_legs(arm='nn', path=None, limit=None, log=print)` — Короткие ноги из выборов книги h24 (рука `arm`).
-- L111 `configure(hold_h=None)` — Отсчёт по гейту «любой»; срок — по аргументу. Возвращает, что было.
-- L126 `restore(was)`
-- L132 `run(arm='nn', hold_h=None, limit=None, src=None, log=print, leg…`
-- L145 `report(s)`
-- L162 `publish(name)`
-- L167 `main(argv=None)`
+- L49 `h24_leg(p, row, arm=None, at=None)` — Короткая нога из ОДНОЙ строки выбора книги h24. None — не нога.
+- L87 `h24_legs(arm='nn', path=None, limit=None, log=print)` — Короткие ноги из выборов книги h24 (рука `arm`).
+- L132 `configure(hold_h=None)` — Отсчёт по гейту «любой»; срок — по аргументу. Возвращает, что было.
+- L147 `restore(was)`
+- L153 `run(arm='nn', hold_h=None, limit=None, src=None, log=print, leg…`
+- L166 `report(s)`
+- L183 `publish(name)`
+- L188 `main(argv=None)`
 
 ## research/dca_ladder/run_d12.py · 264 строк
 
@@ -1529,7 +1530,7 @@ D5 (спека 14) — ЛИНЕЙКА забора: глубины лестни�
 - L663 `publish(name)`
 - L670 `main()`
 
-## research/dca_ladder/run_d6.py · 1155 строк
+## research/dca_ladder/run_d6.py · 1222 строк
 
 D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных мест или много мелких.
 
@@ -1545,33 +1546,35 @@ D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных 
 - L109 `GRID_RULER = [('depth', 2.0), ('sigma', 6.0)]`
 - L117 `GRID_TICKET = [7.0, 5.0]` — Ось билета добавлена ПОСЛЕ первого прогона, под вопрос владельца о другом депозите, и потому диагностика, а н…
 - L120 `shares_for(deposit)` — Доли сетки плюс доли, задающие объявленные билеты при этом депозите.
-- L130 `one_position(g, bars, ts, look, rule, param, hold_h=None, ckpt_…` — Исход одной позиции при заданной линейке забора. Гейты — D2.
-- L233 `SCHED_TOL = 120.0` — Допуски классификации. `SCHED_TOL` — тот же, что у D7: бар не встаёт ровно на границу срока, и больше двух ми…
-- L234 `FRESH_TOL = 2 * HOUR`
-- L237 `record_end_of(src)` — Конец записи по источнику баров; 0.0, если источник его не знает.
-- L249 `position_state(r, data_end)` — Закрыта / открыта / оборвана записью. Правило одно на всех.
-- L269 `queue(recs)` — Очередь за деньгами: по секунде решения, внутри секунды — лучшие.
-- L280 `SIZING_COMPOUND = 'compound'`
-- L281 `SIZING_FIXED = 'fixed'`
-- L284 `ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,…` — Хронологическая раздача кассы. Возвращает сводку и кривую счёта.
-- L431 `window(longs)` — Окно замера ПО РЕШЕНИЯМ, а не по календарю запуска.
-- L452 `peak_open(recs)` — Пик одновременности — В ЛОТАХ и В ИМЕНАХ, и это РАЗНЫЕ числа.
-- L491 `one_per_name(recs)` — Строгое биржевое правило: второй выбор по открытому имени пропущен.
-- L511 `full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE, lo…` — Депозит, при котором НИ ОДИН сигнал не отвергнут.
-- L585 `coverage_curve(recs, peak, deps, ticket=None, min_notional=MIN_…` — Сколько сигналов берётся при депозите меньше полного охвата.
-- L605 `gated_legs(limit=None, log=print, side='long')` — Гейтованные ноги журнала листов — БЕЗ реплея по барам.
-- L624 `collect_recs(limit=None, src=None, log=print, rulers=None, hold…` — Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
-- L730 `run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_de…`
-- L783 `anchor_deposit(s)` — Опора по депозиту — встроенная проверка меры, считается В ОДНОМ прогоне на ОДНИХ исходах.
-- L823 `_anchor_block(a)`
-- L862 `_full_block(s)` — Депозит, при котором берётся каждый сигнал, и что тогда выходит.
-- L957 `_shares_of(s)` — Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать тот прогон, который породил файл (урок R1…
-- L964 `_pct(x, d=2)`
-- L968 `report(s)`
-- L1068 `_restat_window(s, log=print)` — Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
-- L1088 `_window_line(w)`
-- L1103 `publish(name)`
-- L1110 `main()`
+- L130 `plan_position(g, bars, ts, look, rule, param, hold_h=None, lev_…` — ГЕОМЕТРИЯ позиции на момент решения — без исхода. None — нечем.
+- L206 `one_position(g, bars, ts, look, rule, param, hold_h=None, ckpt_…` — Исход одной позиции при заданной линейке забора. Гейты — D2.
+- L289 `SCHED_TOL = 120.0` — Допуски классификации. `SCHED_TOL` — тот же, что у D7: бар не встаёт ровно на границу срока, и больше двух ми…
+- L290 `FRESH_TOL = 2 * HOUR`
+- L293 `record_end_of(src)` — Конец записи по источнику баров; 0.0, если источник его не знает.
+- L305 `position_state(r, data_end)` — Закрыта / открыта / оборвана записью. Правило одно на всех.
+- L325 `queue(recs)` — Очередь за деньгами: по секунде решения, внутри секунды — лучшие.
+- L336 `SIZING_COMPOUND = 'compound'`
+- L337 `SIZING_FIXED = 'fixed'`
+- L340 `ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,…` — Хронологическая раздача кассы. Возвращает сводку и кривую счёта.
+- L487 `window(longs)` — Окно замера ПО РЕШЕНИЯМ, а не по календарю запуска.
+- L508 `peak_open(recs)` — Пик одновременности — В ЛОТАХ и В ИМЕНАХ, и это РАЗНЫЕ числа.
+- L547 `one_per_name(recs)` — Строгое биржевое правило: второй выбор по открытому имени пропущен.
+- L567 `full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE, lo…` — Депозит, при котором НИ ОДИН сигнал не отвергнут.
+- L641 `coverage_curve(recs, peak, deps, ticket=None, min_notional=MIN_…` — Сколько сигналов берётся при депозите меньше полного охвата.
+- L661 `gated_legs(limit=None, log=print, side='long')` — Гейтованные ноги журнала листов — БЕЗ реплея по барам.
+- L678 `leg_gated(g, side='long')` — Проходит ли нога листа гейты книги: сторона, край, отношение.
+- L691 `collect_recs(limit=None, src=None, log=print, rulers=None, hold…` — Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
+- L797 `run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_de…`
+- L850 `anchor_deposit(s)` — Опора по депозиту — встроенная проверка меры, считается В ОДНОМ прогоне на ОДНИХ исходах.
+- L890 `_anchor_block(a)`
+- L929 `_full_block(s)` — Депозит, при котором берётся каждый сигнал, и что тогда выходит.
+- L1024 `_shares_of(s)` — Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать тот прогон, который породил файл (урок R1…
+- L1031 `_pct(x, d=2)`
+- L1035 `report(s)`
+- L1135 `_restat_window(s, log=print)` — Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
+- L1155 `_window_line(w)`
+- L1170 `publish(name)`
+- L1177 `main()`
 
 ## research/dca_ladder/run_d7.py · 387 строк
 
@@ -8681,6 +8684,53 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L64 `operator_token(out)`
 - L76 `main(out=OUT, ip=SERVER_IP)`
 
+## tools/app_api/intents.py · 748 строк
+
+Намерения живого исполнителя Ladder (спека 15 §10a, этап L1).
+
+- L49 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L50 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L51 `RESEARCH = os.path.join(ROOT, 'research')`
+- L53 `HOUR = 3600.0`
+- L54 `MINUTE = 60.0`
+- L55 `FIRST_TAIL = 8 * 1024 * 1024`
+- L56 `SEEN_KEEP_S = 7 * 86400`
+- L57 `PENDING_MAX_S = 20 * MINUTE`
+- L58 `PARITY_TAIL = 300`
+- L60 `_CORE = None`
+- L61 `_TIERS = {'mtime': None, 'data': {}}`
+- L64 `core()` — Модули правил и ядра — лениво: API без подписок их не грузит.
+- L91 `bars_source(log=None)` — Бары записи сборщика с хвостом книги (`tail.TailBars`) — только диск: окно намерения не старше суток, хранили…
+- L103 `tiers()` — Тиры площадки — один разбор на изменение файла.
+- L122 `source_files(files=None)` — Файл источника по семейству книги: `sit` — листы ситуационной, `h24` — выборы книги со сроком. Подмена — для…
+- L131 `read_tail(path, st, first_tail=FIRST_TAIL)` — Новые ПОЛНЫЕ строки файла от сохранённого смещения.
+- L173 `legs_from_lines(family, lines, log=print)` — Строки источника → ноги ТЕМ ЖЕ правилом, что реплей: лист — через `tournament._leg`, выборы h24 — через `run_…
+- L212 `sources_state_path(root)`
+- L216 `load_sources_state(root)`
+- L224 `save_sources_state(root, st)`
+- L234 `leg_key(book, g)`
+- L238 `cell_sources(rk)` — Книги-источники ячейки: у общего счёта две, у обычной — она сама.
+- L244 `sub_cash(sub, st)` — Касса подписки — депозит плюс своё реализованное (§2). Одно правило с `server.App.sub_cash`; здесь — чтобы мо…
+- L250 `size_for(rk, sk, deposit, sizing, cash)` — Маржа позиции источника `sk` в ячейке `rk`: доля счёта по правилу книги (`rules.share_in`) от кассы подписки…
+- L260 `plan_entry(g, sk, bars, src_tiers, now, why)` — Геометрия входа ТЕМИ ЖЕ функциями, что бумага. None — причина в `why`.
+- L286 `intent_row(sub, st, rk, sk, g, pl, margin, share, base, now)` — Строка намерения входа — числа ядра, не копия.
+- L317 `skip_row(sub, rk, sk, g, why, now)`
+- L323 `_append(path, rows)` — Дозапись с растущим `seq`; возвращает число строк.
+- L345 `intents_path(root, sub_id)`
+- L349 `skips_path(root, sub_id)`
+- L353 `read_rows(path, limit=None)`
+- L367 `busy_names(st, book_cell, rk, sk, now)` — Имена, занятые у источника: живые намерения подписки по той же книге-источнику и открытые позиции той же книг…
+- L383 `decide(sub, st, legs_by_family, book_cell, env, log=print)` — Решения одной подписки по новым ногам. Возвращает (намерения, отказы, новое состояние `intents`).
+- L516 `_bp(a, b)`
+- L524 `paper_rows(book_cell, rk)` — Позиции бумажной ячейки — открытые и хвост закрытых — с книгой-источником.
+- L534 `match_paper(intent, rows)` — Строка бумаги того же решения: имя, источник, секунда решения.
+- L547 `parity_one(intent, q)` — Расхождение намерения с бумажной строкой — числом по полю.
+- L564 `parity(root, sub, st, book_cell, since=None, tail=PARITY_TAIL)` — Сверка намерений подписки с бумажной ячейкой: совпавшие — с расхождениями по полю (медиана и максимум |Δ|), н…
+- L609 `summary(st)` — Что отдаёт состояние подписки приложению (§10a L1: «намерения за час»).
+- L620 `cell_key(book, deposit, sizing)`
+- L625 `tick(db, dca, root, log=print, env=None)` — Один такт по всем активным подпискам. Возвращает число намерений.
+- L695 `main(argv=None)`
+
 ## tools/app_api/push.py · 214 строк
 
 Пуши APNs для событий живого исполнителя (спека 15 §7.5).
@@ -8736,75 +8786,78 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L17 `call(base, path, body=None, token=None, ctx=None)`
 - L26 `main()`
 
-## tools/app_api/server.py · 707 строк
+## tools/app_api/server.py · 752 строк
 
 HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 
 - L30 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L31 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L40 `DEFAULT_SIZING = 'compound'`
-- L41 `SCHEMA = 1`
-- L42 `OUT = os.path.join(HERE, 'out')`
-- L45 `EXEC_ROOT = os.environ.get('ALGOTH_EXEC_ROOT') or o…` — Журналы живого исполнителя по подпискам (спека 15 §7.6, §9): пишет `bot dca` (Y2), читает приём `trades.inges…
-- L47 `PUSH_TICK_S = 5`
-- L48 `SERVER_IP = '116.203.146.99'`
-- L49 `COLLECTOR = 'http://127.0.0.1:8765'`
-- L50 `PAGE_TOKEN = os.path.join(ROOT, 'research', 'b1_book…`
-- L51 `MAX_ACCOUNTS = 1`
-- L52 `EQUITY_TTL = 60.0`
-- L53 `RATE = {'read': (60, 60.0), 'write': (10, 60.0…`
-- L54 `STAGE_NOT_BUILT = 'этап не построен: команды и перевод в …`
-- L55 `PAIR_PREFIX = 'pair_'`
-- L58 `log(*a)`
-- L62 `class RateLimiter`
-  - L63 `RateLimiter.__init__(self)`
-  - L67 `RateLimiter.allow(self, who, kind)`
-- L80 `class App` — Логика API без HTTP: её гоняют проверки напрямую.
-  - L83 `App.__init__(self, dbpath, pub, operator_token=None, venue=bybit, d…`
-  - L101 `App.auth_operator(self, token, device=None)` — ------------------------------------------------------------ вход
-  - L114 `App.auth_apple(self, identity_token, device=None, current=None)`
-  - L147 `App.logout(self, token)`
-  - L151 `App.me(self, acc)`
-  - L156 `App.add_key(self, acc, venue, key, secret)` — ------------------------------------------------------------ ключи
-  - L199 `App._key_view(self, r)`
-  - L206 `App.list_keys(self, acc)`
-  - L209 `App.delete_key(self, acc, kid)`
-  - L222 `App.dca(self)` — ------------------------------------------------------------ книги и ячейки
-  - L228 `App.strategies(self)`
-  - L259 `App.cell_key(book, deposit, sizing=None)` — Ключ книги в своде `/dca`: та же схема, что у `rules.cell_key` — `книга:депозит`, у фиксированного билета с х…
-  - L266 `App.paper_cash(book, deposit)` — Касса БУМАЖНОЙ книги сейчас: депозит плюс её накопленный нетто.
-  - L276 `App.ticket_of(book, deposit)` — Билет ячейки (маржа одной позиции на стартовом депозите), $.
-  - L287 `App.sub_cash(s, st)` — Касса ПОДПИСКИ: стартовый депозит плюс реализованный нетто её собственных живых позиций (`realized_usd` в сос…
-  - L295 `App.add_subscription(self, acc, key_id, book, deposit, sizing=None)` — ------------------------------------------------------------ подписки
-  - L335 `App.venue_modes(self, k)` — Режим позиций по ключу. Секрет открыть этот процесс НЕ может: режим читается ключом только при добавлении (см…
-  - L342 `App._sub_view(self, s)`
-  - L350 `App.list_subscriptions(self, acc)`
-  - L353 `App.delete_subscription(self, acc, sid)`
-  - L364 `App.state(self, acc)` — ------------------------------------------------------------ состояние
-  - L418 `App.events(self, acc, since)`
-  - L421 `App.books(self, full=None)`
-  - L429 `App.add_device(self, acc, token, env='prod', build=None)` — ------------------------------------------------------------ устройства и пуши (§7.5)
-  - L437 `App.list_devices(self, acc)`
-  - L443 `App.delete_device(self, acc, token)`
-  - L447 `App.push_config(self, acc, team_id, key_id, p8, topic=None)`
-  - L458 `App.push_test(self, acc)` — Пробный пуш на устройства аккаунта — без записи сделки.
-  - L476 `App.list_trades(self, acc, since=0, limit=200)` — ------------------------------------------------------------ сделки исполнителя (§7.6)
-  - L490 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
-  - L500 `App.push_tick(self)` — Такт фонового потока: следователь пишет события ячеек подписок (сухой исполнитель), затем новые строки журнал…
-- L516 `fetch_dca(full=None)`
-- L529 `class Handler`
-  - L533 `Handler.log_message(self, fmt, *a)`
-  - L537 `Handler._send(self, code, obj)`
-  - L546 `Handler._body(self)`
-  - L556 `Handler._acc(self)`
-  - L564 `Handler._route(self, method)`
-  - L637 `Handler.do_GET(self)`
-  - L640 `Handler.do_POST(self)`
-  - L643 `Handler.do_DELETE(self)`
-- L647 `class Server`
-- L652 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
-- L663 `read_operator_token(path)`
-- L671 `main(argv=None)`
+- L41 `DEFAULT_SIZING = 'compound'`
+- L42 `SCHEMA = 1`
+- L43 `OUT = os.path.join(HERE, 'out')`
+- L46 `EXEC_ROOT = os.environ.get('ALGOTH_EXEC_ROOT') or o…` — Журналы живого исполнителя по подпискам (спека 15 §7.6, §9): пишет `bot dca` (Y2), читает приём `trades.inges…
+- L48 `PUSH_TICK_S = 5`
+- L51 `INTENTS_TICK_S = 60` — намерения исполнителя (спека 15 §10a, L1): источники читаются раз в минуту — выборы приходят часовым циклом,…
+- L52 `SERVER_IP = '116.203.146.99'`
+- L53 `COLLECTOR = 'http://127.0.0.1:8765'`
+- L54 `PAGE_TOKEN = os.path.join(ROOT, 'research', 'b1_book…`
+- L55 `MAX_ACCOUNTS = 1`
+- L56 `EQUITY_TTL = 60.0`
+- L57 `RATE = {'read': (60, 60.0), 'write': (10, 60.0…`
+- L58 `STAGE_NOT_BUILT = 'этап не построен: команды и перевод в …`
+- L59 `PAIR_PREFIX = 'pair_'`
+- L62 `log(*a)`
+- L66 `class RateLimiter`
+  - L67 `RateLimiter.__init__(self)`
+  - L71 `RateLimiter.allow(self, who, kind)`
+- L84 `class App` — Логика API без HTTP: её гоняют проверки напрямую.
+  - L87 `App.__init__(self, dbpath, pub, operator_token=None, venue=bybit, d…`
+  - L108 `App.auth_operator(self, token, device=None)` — ------------------------------------------------------------ вход
+  - L121 `App.auth_apple(self, identity_token, device=None, current=None)`
+  - L154 `App.logout(self, token)`
+  - L158 `App.me(self, acc)`
+  - L163 `App.add_key(self, acc, venue, key, secret)` — ------------------------------------------------------------ ключи
+  - L206 `App._key_view(self, r)`
+  - L213 `App.list_keys(self, acc)`
+  - L216 `App.delete_key(self, acc, kid)`
+  - L229 `App.dca(self)` — ------------------------------------------------------------ книги и ячейки
+  - L235 `App.strategies(self)`
+  - L266 `App.cell_key(book, deposit, sizing=None)` — Ключ книги в своде `/dca`: та же схема, что у `rules.cell_key` — `книга:депозит`, у фиксированного билета с х…
+  - L273 `App.paper_cash(book, deposit)` — Касса БУМАЖНОЙ книги сейчас: депозит плюс её накопленный нетто.
+  - L283 `App.ticket_of(book, deposit)` — Билет ячейки (маржа одной позиции на стартовом депозите), $.
+  - L294 `App.sub_cash(s, st)` — Касса ПОДПИСКИ: стартовый депозит плюс реализованный нетто её собственных живых позиций (`realized_usd` в сос…
+  - L302 `App.add_subscription(self, acc, key_id, book, deposit, sizing=None)` — ------------------------------------------------------------ подписки
+  - L342 `App.venue_modes(self, k)` — Режим позиций по ключу. Секрет открыть этот процесс НЕ может: режим читается ключом только при добавлении (см…
+  - L349 `App._sub_view(self, s)`
+  - L357 `App.list_subscriptions(self, acc)`
+  - L360 `App.delete_subscription(self, acc, sid)`
+  - L371 `App.state(self, acc)` — ------------------------------------------------------------ состояние
+  - L428 `App.events(self, acc, since)`
+  - L431 `App.books(self, full=None)`
+  - L439 `App.add_device(self, acc, token, env='prod', build=None)` — ------------------------------------------------------------ устройства и пуши (§7.5)
+  - L447 `App.list_devices(self, acc)`
+  - L453 `App.delete_device(self, acc, token)`
+  - L457 `App.push_config(self, acc, team_id, key_id, p8, topic=None)`
+  - L468 `App.push_test(self, acc)` — Пробный пуш на устройства аккаунта — без записи сделки.
+  - L486 `App.list_trades(self, acc, since=0, limit=200)` — ------------------------------------------------------------ сделки исполнителя (§7.6)
+  - L500 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
+  - L510 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
+  - L524 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
+  - L541 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
+- L559 `fetch_dca(full=None)`
+- L572 `class Handler`
+  - L576 `Handler.log_message(self, fmt, *a)`
+  - L580 `Handler._send(self, code, obj)`
+  - L589 `Handler._body(self)`
+  - L599 `Handler._acc(self)`
+  - L607 `Handler._route(self, method)`
+  - L682 `Handler.do_GET(self)`
+  - L685 `Handler.do_POST(self)`
+  - L688 `Handler.do_DELETE(self)`
+- L692 `class Server`
+- L697 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
+- L708 `read_operator_token(path)`
+- L716 `main(argv=None)`
 
 ## tools/app_api/set_topic.py · 44 строк
 
@@ -8815,7 +8868,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L19 `OK = re.compile('^[A-Za-z0-9._-]{1,120}$')`
 - L22 `main(argv)`
 
-## tools/app_api/trades.py · 172 строк
+## tools/app_api/tradelog.py · 172 строк
 
 Журнал событий живого исполнителя → записи `trades` → пуши (спека 15 §7.6).
 

@@ -4583,36 +4583,42 @@ X1: исполнитель против подставной биржи.
 - L291 `такт_демона_пишет_статус_и_не_молчит_об_ошибке`
 - L375 `which_python`
 
-## tools/app_api/test_app_api.py · 583 строк
+## tools/app_api/test_app_api.py · 825 строк
 
 Проверки API приложения (спека 15 Y0): конверт открывается только приватной половиной и ломается от подмены;…
 
-- L16 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L24 `SECRET = 's3cr3t-never-shown-xyz'`
-- L25 `DCA = {'rulers': [{'key': 'optimal_h', 'title…`
-- L39 `class FakeVenue`
-  - L40 `FakeVenue.__init__(self, perms=None, ips=None, read_only=0, equity=1500.0…`
-  - L49 `FakeVenue.query_api(self, key, secret)`
-  - L55 `FakeVenue.wallet_equity(self, key, secret)`
-  - L60 `FakeVenue.position_mode(self, key, secret, symbols=None)`
-- L64 `_app(tmp, venue=None, **kw)`
-- L72 `test_sealed_box_opens_only_with_private_half_and_detects_tamper…`
-- L95 `test_permission_judgement()`
-- L105 `test_operator_login_account_cap_and_apple_link()`
-- L130 `_login(app)`
-- L135 `test_key_add_rejects_money_moving_and_readonly_warns_on_ip_and_…`
-- L171 `test_subscriptions_cells_hedge_warning_and_state()`
-- L226 `_http(port, method, path, body=None, token=None)`
-- L238 `test_http_routing_auth_and_stage_gates()`
-- L271 `test_init_is_idempotent_and_prints_pin()`
-- L281 `test_apple_verify_names_the_audience_and_accepts_listed_ones()`
-- L304 `_ec_pem()`
-- L315 `test_push_key_is_checked_by_signing_and_words_come_from_the_rec…` — Ключ APNs принимается только если им можно подписать; слова пуша — из записи сделки, деньги печатаются, а не…
-- L365 `test_devices_trades_ingest_and_push_chain()` — Журнал исполнителя → запись → пуш на устройства; повтор чтения не дублирует; мёртвый токен выключается; пробн…
-- L464 `_pos(sym, at, fills, side='long', closed=None, lev=4.0, margin=…`
-- L481 `test_follower_turns_cell_positions_into_executor_events_once()` — Сухой исполнитель: позиции ячейки подписки → события §7.6 — первый рунг вход, следующие доливы с переездом це…
-- L525 `test_follower_tick_feeds_trades_and_pushes_for_the_subscribed_c…` — Такт сервера: следователь → журнал подписки → записи `trades` с mode dry → пуш на устройство; чужие ячейки не…
-- L570 `TESTS = [v for k, v in sorted(globals().items()…`
+- L17 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L25 `SECRET = 's3cr3t-never-shown-xyz'`
+- L26 `DCA = {'rulers': [{'key': 'optimal_h', 'title…`
+- L40 `class FakeVenue`
+  - L41 `FakeVenue.__init__(self, perms=None, ips=None, read_only=0, equity=1500.0…`
+  - L50 `FakeVenue.query_api(self, key, secret)`
+  - L56 `FakeVenue.wallet_equity(self, key, secret)`
+  - L61 `FakeVenue.position_mode(self, key, secret, symbols=None)`
+- L65 `_app(tmp, venue=None, **kw)`
+- L73 `test_sealed_box_opens_only_with_private_half_and_detects_tamper…`
+- L96 `test_permission_judgement()`
+- L106 `test_operator_login_account_cap_and_apple_link()`
+- L131 `_login(app)`
+- L136 `test_key_add_rejects_money_moving_and_readonly_warns_on_ip_and_…`
+- L172 `test_subscriptions_cells_hedge_warning_and_state()`
+- L227 `_http(port, method, path, body=None, token=None)`
+- L239 `test_http_routing_auth_and_stage_gates()`
+- L272 `test_init_is_idempotent_and_prints_pin()`
+- L282 `test_apple_verify_names_the_audience_and_accepts_listed_ones()`
+- L305 `_ec_pem()`
+- L316 `test_push_key_is_checked_by_signing_and_words_come_from_the_rec…` — Ключ APNs принимается только если им можно подписать; слова пуша — из записи сделки, деньги печатаются, а не…
+- L366 `test_devices_trades_ingest_and_push_chain()` — Журнал исполнителя → запись → пуш на устройства; повтор чтения не дублирует; мёртвый токен выключается; пробн…
+- L465 `_pos(sym, at, fills, side='long', closed=None, lev=4.0, margin=…`
+- L482 `test_follower_turns_cell_positions_into_executor_events_once()` — Сухой исполнитель: позиции ячейки подписки → события §7.6 — первый рунг вход, следующие доливы с переездом це…
+- L526 `test_follower_tick_feeds_trades_and_pushes_for_the_subscribed_c…` — Такт сервера: следователь → журнал подписки → записи `trades` с mode dry → пуш на устройство; чужие ячейки не…
+- L574 `_flat_bars(t0, n=1440, px=100.0, jitter=0.0)`
+- L582 `_bars_fn(bars)`
+- L588 `_sheet_line(hour, written_at, rows, arm='nn')`
+- L592 `_pick_line(hour, shorts, arm='nn')`
+- L596 `test_intents_plan_entry_like_paper_and_size_from_subscription_c…` — Намерение входа считается теми же функциями, что бумага: вход, плечо, рунги, цель, пол и ликвидация совпадают…
+- L701 `test_intents_sources_are_read_as_tail_once_and_tick_feeds_state…` — Такт сервера: источники читаются хвостом от смещения (первое чтение — хвост, неполная строка остаётся), ноги…
+- L812 `TESTS = [v for k, v in sorted(globals().items()…`
 
 ## tools/test_disk_alarm.py · 64 строк
 

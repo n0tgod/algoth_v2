@@ -127,6 +127,82 @@ def shares_for(deposit):
     return keep
 
 
+def plan_position(g, bars, ts, look, rule, param, hold_h=None,
+                  lev_look=None, adds=None, why=None):
+    """ГЕОМЕТРИЯ позиции на момент решения — без исхода. None — нечем.
+
+    Это пролог `one_position`, вынесенный ради живого исполнителя
+    (спека 15 §10a, L1): намерение входа обязано считаться ТЕМИ ЖЕ
+    функциями, что бумага, — окно по записи (`D2.split_window`), вход
+    открытием первого бара от решения, цель правилом книги
+    (`rules.take_rule`), стоп против позиции, структурные уровни и рунги
+    (`D2.build_levels`, `D2.structural_rungs`), σ окна, плечо забора с
+    пределом тира (`D5.fence_leverage`). Вторая копия этого пролога в
+    модуле намерений однажды разошлась бы с симуляцией, и исполнитель
+    входил бы не там, где его судит книга; поэтому `one_position` зовёт
+    ровно эту функцию и дальше только симулирует.
+
+    `why` — список: причина отказа дописывается в него словами
+    (намерениям исполнителя нужна причина, реплею — нет).
+
+    `adds="none"` — книга без доливов (семейство `h24`, `rules.RULERS
+    [...]["adds"]`): плечо остаётся плечом забора на СТРУКТУРНОЙ
+    лестнице (так считает `run_d10.one_position` для ячейки
+    `fence:none`), а рунг один — вход. Умолчание — лестница как есть.
+
+    Возвращает словарь: side, entry (цена входа), entry_ts (метка бара
+    входа), take (правило цели), stop_px, rungs (цены по порядку
+    заполнения, `rungs[0]` — вход), rungs_full (структурная лестница до
+    забора), lev, binder (кто связал плечо), sigma_bp, hold (бары от
+    входа), win, now_i, hold_h.
+    """
+    side = g.get("side") or "long"
+    hold_h = D2.HOLD_H if hold_h is None else float(hold_h)
+    rs = D2.split_window(bars, ts, g["at"], D2.BACK_H, hold_h)
+    if rs is None:
+        if why is not None:
+            why.append("нет бара входа или бара после него")
+        return None
+    win, now_i = rs
+    hold = win[now_i:]
+    entry = float(hold[0][1])
+    if entry <= 0:
+        if why is not None:
+            why.append("цена входа не положительна")
+        return None
+    # Тейк — правило КНИГИ (`rules.take_rule`): якорь по плавающей ТВХ и
+    # расстояние в долях обещания. Гейт остался прежним по существу:
+    # `take_px > вход` означало ровно `fav > 0`, и `take_rule` возвращает
+    # None на том же условии — состав позиций правкой не тронут.
+    take = R_BOOK.take_rule(g["fav"], side)
+    stop_px = entry * (1 + g["adv_q"] / 1e4)
+    # Стоп обязан стоять ПРОТИВ позиции: у лонга ниже входа, у шорта
+    # выше. Проверка зеркальна, а не снята: обещание не той стороны —
+    # это отсутствие меры, и такую ногу книга не берёт вовсе.
+    ok_stop = (0 < stop_px < entry) if side == "long" else (stop_px > entry)
+    if not (take and ok_stop):
+        if why is not None:
+            why.append("обещание не в сторону позиции" if not take
+                       else "стоп не против позиции")
+        return None
+    lv = D2.build_levels(win, now_i)
+    rungs_full = D2.structural_rungs(entry, list(lv), D2.MIN_ADD_GAP,
+                                     D2.N_RUNGS, side=side)
+    sigma_bp, _r, _t = D3.window_stats(win, now_i)
+    lev, rungs, binder = D5.fence_leverage(rule, param, entry, rungs_full,
+                                           look, sigma_bp, side=side,
+                                           lev_look=lev_look)
+    if adds == "none":
+        rungs = [entry]
+    return {"side": side, "entry": entry, "entry_ts": float(hold[0][0]),
+            "take": take, "stop_px": float(stop_px),
+            "rungs": [float(x) for x in rungs],
+            "rungs_full": [float(x) for x in rungs_full],
+            "lev": float(lev), "binder": binder,
+            "sigma_bp": (None if sigma_bp != sigma_bp else float(sigma_bp)),
+            "hold": hold, "win": win, "now_i": now_i, "hold_h": hold_h}
+
+
 def one_position(g, bars, ts, look, rule, param, hold_h=None,
                  ckpt_h=None, lev_look=None):
     """Исход одной позиции при заданной линейке забора. Гейты — D2.
@@ -147,40 +223,20 @@ def one_position(g, bars, ts, look, rule, param, hold_h=None,
     из 1021 (14.5 %) и 262 длинных из 55 958 (0.5 %), а из 80 коротких
     ликвидаций 62 были ровно эти. Такая позиция не «рискованная», она
     неисполнимая, и её исход описывает сделку, которой не было.
+
+    Геометрия — `plan_position` (одно ядро с намерениями исполнителя);
+    здесь только симуляция по барам от входа.
     """
     # Сторону несёт САМА нога (`legs_from_sheets` размечает её знаком
     # прогноза, как живой сканер). Отдельным параметром её брать нельзя:
     # тогда вызывающий мог бы посчитать длинную ногу по короткому
     # правилу, и запись не выдала бы этого ничем.
-    side = g.get("side") or "long"
-    hold_h = D2.HOLD_H if hold_h is None else float(hold_h)
-    rs = D2.split_window(bars, ts, g["at"], D2.BACK_H, hold_h)
-    if rs is None:
+    pl = plan_position(g, bars, ts, look, rule, param, hold_h=hold_h,
+                       lev_look=lev_look)
+    if pl is None:
         return None
-    win, now_i = rs
-    hold = win[now_i:]
-    entry = float(hold[0][1])
-    if entry <= 0:
-        return None
-    # Тейк — правило КНИГИ (`rules.take_rule`): якорь по плавающей ТВХ и
-    # расстояние в долях обещания. Гейт остался прежним по существу:
-    # `take_px > вход` означало ровно `fav > 0`, и `take_rule` возвращает
-    # None на том же условии — состав позиций правкой не тронут.
-    take = R_BOOK.take_rule(g["fav"], side)
-    stop_px = entry * (1 + g["adv_q"] / 1e4)
-    # Стоп обязан стоять ПРОТИВ позиции: у лонга ниже входа, у шорта
-    # выше. Проверка зеркальна, а не снята: обещание не той стороны —
-    # это отсутствие меры, и такую ногу книга не берёт вовсе.
-    ok_stop = (0 < stop_px < entry) if side == "long" else (stop_px > entry)
-    if not (take and ok_stop):
-        return None
-    lv = D2.build_levels(win, now_i)
-    rungs_full = D2.structural_rungs(entry, list(lv), D2.MIN_ADD_GAP,
-                                     D2.N_RUNGS, side=side)
-    sigma_bp, _r, _t = D3.window_stats(win, now_i)
-    lev, rungs, _binder = D5.fence_leverage(rule, param, entry, rungs_full,
-                                            look, sigma_bp, side=side,
-                                            lev_look=lev_look)
+    side, hold, hold_h = pl["side"], pl["hold"], pl["hold_h"]
+    entry, take, rungs, lev = pl["entry"], pl["take"], pl["rungs"], pl["lev"]
     cps = ([float(g["at"]) + float(h) * HOUR for h in ckpt_h]
            if ckpt_h else None)
     r = L.simulate_dca(hold, rungs, D2.WEIGHTS[:len(rungs)], 1.0, lev,
@@ -615,10 +671,21 @@ def gated_legs(limit=None, log=print, side="long"):
     считать заново. Чтение журнала листов дёшево, чтение баров — нет.
     """
     legs = TNT.legs_from_sheets([D2.SHEETS], log=log)
-    longs = [g for g in legs if (side is None or g["side"] == side)
-             and abs(g["fwd"]) >= D2.MIN_EDGE_BP
-             and (g["rr"] or 0) >= D2.MIN_RR]
+    longs = [g for g in legs if leg_gated(g, side)]
     return longs[:limit] if limit else longs
+
+
+def leg_gated(g, side="long"):
+    """Проходит ли нога листа гейты книги: сторона, край, отношение.
+
+    Одно правило на реплей (`gated_legs`) и на намерения живого
+    исполнителя (спека 15 §10a): вторая копия двух неравенств однажды
+    разошлась бы, и исполнитель брал бы ноги, которых книга не берёт.
+    `side=None` — сторона не проверяется.
+    """
+    return bool((side is None or g.get("side") == side)
+                and abs(float(g["fwd"])) >= D2.MIN_EDGE_BP
+                and (g.get("rr") or 0) >= D2.MIN_RR)
 
 
 def collect_recs(limit=None, src=None, log=print, rulers=None,

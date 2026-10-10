@@ -33,8 +33,9 @@ sys.path.insert(0, HERE)
 import db as DBM                                              # noqa: E402
 import sealed
 import push as PUSH
-import trades as TRADES
+import tradelog as TRADES                                             # noqa: E402  (имя не `trades`: так зовётся модуль кассы S8)
 import follow as FOLLOW                                                 # noqa: E402
+import intents as INTENTS                                               # noqa: E402
 import bybit                                                  # noqa: E402
 
 DEFAULT_SIZING = "compound"     # формат размера по умолчанию — как у бумаги
@@ -45,6 +46,9 @@ OUT = os.path.join(HERE, "out")
 EXEC_ROOT = os.environ.get("ALGOTH_EXEC_ROOT") or os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "bot", "out", "dca")
 PUSH_TICK_S = 5
+# намерения исполнителя (спека 15 §10a, L1): источники читаются раз в
+# минуту — выборы приходят часовым циклом, чаще читать нечего
+INTENTS_TICK_S = 60
 SERVER_IP = "116.203.146.99"
 COLLECTOR = "http://127.0.0.1:8765"
 PAGE_TOKEN = os.path.join(ROOT, "research", "b1_book", "out", "token.txt")
@@ -96,6 +100,9 @@ class App:
         self.out = out or os.path.dirname(dbpath) or "."
         self.exec_root = exec_root or EXEC_ROOT
         self.sender = sender or PUSH.Sender(self.out)
+        # подмены источников и баров для проверок; None — настоящие
+        self.intents_env = None
+        self._intents_at = 0.0
 
     # ------------------------------------------------------------ вход
     def auth_operator(self, token, device=None):
@@ -400,6 +407,9 @@ class App:
                          "mode": s["mode"], "side": st.get("side"), "sizing": sizing,
                          "positions": positions, "follow": {k: v for k, v in (st.get("follow") or {}).items()
                                                             if k in ("since", "at", "gaps")},
+                         # намерения исполнителя за подписку (L1): счёт, живые,
+                         # ждущие бар, сверка с бумагой, ошибка такта
+                         "intents": INTENTS.summary(st),
                          "cash_usd": cash, "realized_usd": float(st.get("realized_usd") or 0.0),
                          "paper_cash_usd": paper, "ticket_usd": self.ticket_of(b, s["deposit"]),
                          "equity_usd": equity, "equity_age_s": eq_age,
@@ -497,10 +507,43 @@ class App:
                                 (sid, ev["seq"])).fetchone()
         return 200, {"ingested": n, "trade": (TRADES.view(row) if row else None)}
 
-    def push_tick(self):
-        """Такт фонового потока: следователь пишет события ячеек подписок
-        (сухой исполнитель), затем новые строки журналов → записи → пуши."""
+    def intents_tick(self, force=False):
+        """Намерения исполнителя по новым выборам источников (L1) — раз в
+        `INTENTS_TICK_S`; падение пишется в состояние подписки самим
+        модулем и в лог, такт пушей не роняет."""
+        now = time.time()
+        if not force and now - self._intents_at < INTENTS_TICK_S:
+            return 0
+        self._intents_at = now
         try:
+            return INTENTS.tick(self.db, self.dca(), self.exec_root, log=log, env=self.intents_env)
+        except Exception as e:                                  # noqa: BLE001
+            log(f"намерения: {e}")
+            return 0
+
+    def list_intents(self, acc, sub_id=None, limit=50):
+        """Намерения и отказы по подпискам аккаунта — хвост файлов."""
+        try:
+            limit = max(1, min(int(limit), 500))
+        except (TypeError, ValueError):
+            limit = 50
+        out = []
+        for s in self.db.subscriptions_of(acc["id"]):
+            if sub_id and s["id"] != sub_id:
+                continue
+            st = json.loads(s["state_json"] or "{}")
+            out.append({"subscription_id": s["id"], "book": s["book"], "deposit": s["deposit"],
+                        "summary": INTENTS.summary(st),
+                        "intents": INTENTS.read_rows(INTENTS.intents_path(self.exec_root, s["id"]), limit),
+                        "skips": INTENTS.read_rows(INTENTS.skips_path(self.exec_root, s["id"]), limit)})
+        return 200, {"subscriptions": out, "at": time.time()}
+
+    def push_tick(self):
+        """Такт фонового потока: намерения по новым выборам (раз в минуту),
+        следователь пишет события ячеек подписок (сухой исполнитель),
+        затем новые строки журналов → записи → пуши."""
+        try:
+            self.intents_tick()
             try:
                 FOLLOW.tick(self.db, self.dca(), self.exec_root, log=log)
             except Exception as e:                              # noqa: BLE001
@@ -630,6 +673,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self._send(*self.app.push_test(acc))
         if rest == ["trades"] and method == "GET":
             return self._send(*self.app.list_trades(acc, (q.get("since") or ["0"])[0], (q.get("limit") or ["200"])[0]))
+        if rest == ["intents"] and method == "GET":
+            return self._send(*self.app.list_intents(acc, (q.get("sub") or [None])[0], (q.get("limit") or ["50"])[0]))
         if rest == ["trades", "test"] and method == "POST":
             return self._send(*self.app.trade_test(acc, body.get("text")))
         return self._send(404, {"error": "нет такого адреса"})
