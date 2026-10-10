@@ -1,0 +1,2669 @@
+{
+ "computed_at": "2026-10-10 21:47",
+ "rows": [
+  {
+   "family": "Длинные книги",
+   "book": "safe",
+   "title": "безопасная",
+   "dep": 100.0,
+   "sizing": "compound",
+   "since": 1790820781.1,
+   "page_forward_final": -0.0138,
+   "old_all": {
+    "n": 75,
+    "usd": 17.41,
+    "final": 0.1741,
+    "max_dd": -0.0443
+   },
+   "new_all": {
+    "n": 91,
+    "usd": 34.75,
+    "final": 0.3475,
+    "max_dd": -0.0379
+   },
+   "old_win": {
+    "n": 7,
+    "usd": -1.38,
+    "final": -0.0138,
+    "max_dd": -0.0376
+   },
+   "new_win": {
+    "n": 6,
+    "usd": -1.46,
+    "final": -0.0146,
+    "max_dd": -0.0423
+   },
+   "old_no_cash": 1807,
+   "new_no_cash": 1792,
+   "old_open": 3,
+   "new_open": 3
+  },
+  {
+   "family": "Длинные книги",
+   "book": "safe",
+   "title": "безопасная",
+   "dep": 100.0,
+   "sizing": "fixed",
+   "since": 1791234749.9,
+   "page_forward_final": -0.013,
+   "old_all": {
+    "n": 94,
+    "usd": 24.49,
+    "final": 0.2449,
+    "max_dd": -0.0335
+   },
+   "new_all": {
+    "n": 91,
+    "usd": 24.74,
+    "final": 0.2474,
+    "max_dd": -0.0464
+   },
+   "old_win": {
+    "n": 6,
+    "usd": -1.3,
+    "final": -0.013,
+    "max_dd": -0.0318
+   },
+   "new_win": {
+    "n": 6,
+    "usd": -1.3,
+    "final": -0.013,
+    "max_dd": -0.0318
+   },
+   "old_no_cash": 1787,
+   "new_no_cash": 1790,
+   "old_open": 4,
+   "new_open": 4
+  },
+  {
+   "family": "Длинные книги",
+   "book": "safe",
+   "title": "безопасная",
+   "dep": 1000.0,
+   "sizing": "compound",
+   "since": 1788703700.5,
+   "page_forward_final": 0.0436,
+   "old_all": {
+    "n": 541,
+    "usd": 132.82,
+    "final": 0.1328,
+    "max_dd": -0.0269
+   },
+   "new_all": {
+    "n": 552,
+    "usd": 132.01,
+    "final": 0.132,
+    "max_dd": -0.0289
+   },
+   "old_win": {
+    "n": 121,
+    "usd": 47.13,
+    "final": 0.0471,
+    "max_dd": -0.0039
+   },
+   "new_win": {
+    "n": 121,
+    "usd": 47.12,
+    "final": 0.0471,
+    "max_dd": -0.0039
+   },
+   "old_no_cash": 1340,
+   "new_no_cash": 1329,
+   "old_open": 4,
+   "new_open": 4
+  },
+  {
+   "family": "Длинные книги",
+   "book": "safe",
+   "title": "безопасная",
+   "dep": 1000.0,
+   "sizing": "fixed",
+   "since": 1791234749.9,
+   "page_forward_final": -0.0016,
+   "old_all": {
+    "n": 554,
+    "usd": 125.09,
+    "final": 0.1251,
+    "max_dd": -0.0283
+   },
+   "new_all": {
+    "n": 562,
+    "usd": 136.67,
+    "final": 0.1367,
+    "max_dd": -0.0287
+   },
+   "old_win": {
+    "n": 8,
+    "usd": -1.6,
+    "final": -0.0016,
+    "max_dd": -0.0032
+   },
+   "new_win": {
+    "n": 8,
+    "usd": -1.6,
+    "final": -0.0016,
+    "max_dd": -0.0032
+   },
+   "old_no_cash": 1327,
+   "new_no_cash": 1319,
+   "old_open": 4,
+   "new_open": 4
+  },
+  {
+   "family": "Длинные книги",
+   "book": "safe",
+   "title": "безопасная",
+   "dep": 10000.0,
+   "sizing": "compound",
+   "since": 1788703700.5,
+   "page_forward_final": 0.0043,
+   "old_all": {
+    "n": 1814,
+    "usd": 859.4,
+    "final": 0.0859,
+    "max_dd": -0.0026
+   },
+   "new_all": {
+    "n": 1816,
+    "usd": 860.4,
+    "final": 0.086,
+    "max_dd": -0.0026
+   },
+   "old_win": {
+    "n": 121,
+    "usd": 46.46,
+    "final": 0.0046,
+    "max_dd": -0.0004
+   },
+   "new_win": {
+    "n": 121,
+    "usd": 46.46,
+    "final": 0.0046,
+    "max_dd": -0.0004
+   },
+   "old_no_cash": 67,
+   "new_no_cash": 65,
+   "old_open": 4,
+   "new_open": 4
+  },
+  {
+   "family": "Длинные книги",
+   "book": "safe",
+   "title": "безопасная",
+   "dep": 10000.0,
+   "sizing": "fixed",
+   "since": 1791234749.9,
+   "page_forward_final": -0.0002,
+   "old_all": {
+    "n": 1815,
+    "usd": 837.14,
+    "final": 0.0837,
+    "max_dd": -0.0026
+   },
+   "new_all": {
+    "n": 1816,
+    "usd": 837.9,
+    "final": 0.0838,
+    "max_dd": -0.0026
+   },
+   "old_win": {
+    "n": 8,
+    "usd": -1.6,
+    "final": -0.0002,
+    "max_dd": -0.0003
+   },
+   "new_win": {
+    "n": 8,
+    "usd": -1.6,
+    "final": -0.0002,
+    "max_dd": -0.0003
+   },
+   "old_no_cash": 66,
+   "new_no_cash": 65,
+   "old_open": 4,
+   "new_open": 4
+  },
+  {
+   "family": "Длинные книги",
+   "book": "safe",
+   "title": "безопасная",
+   "dep": 100000.0,
+   "sizing": "compound",
+   "since": 1788703700.5,
+   "page_forward_final": 0.0024,
+   "old_all": {
+    "n": 1881,
+    "usd": 5234.43,
+    "final": 0.0523,
+    "max_dd": -0.0015
+   },
+   "new_all": {
+    "n": 1881,
+    "usd": 5234.43,
+    "final": 0.0523,
+    "max_dd": -0.0015
+   },
+   "old_win": {
+    "n": 121,
+    "usd": 261.02,
+    "final": 0.0026,
+    "max_dd": -0.0002
+   },
+   "new_win": {
+    "n": 121,
+    "usd": 261.02,
+    "final": 0.0026,
+    "max_dd": -0.0002
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 4,
+   "new_open": 4
+  },
+  {
+   "family": "Длинные книги",
+   "book": "safe",
+   "title": "безопасная",
+   "dep": 100000.0,
+   "sizing": "fixed",
+   "since": 1791234749.9,
+   "page_forward_final": -0.0001,
+   "old_all": {
+    "n": 1881,
+    "usd": 5150.72,
+    "final": 0.0515,
+    "max_dd": -0.0015
+   },
+   "new_all": {
+    "n": 1881,
+    "usd": 5150.72,
+    "final": 0.0515,
+    "max_dd": -0.0015
+   },
+   "old_win": {
+    "n": 8,
+    "usd": -9.3,
+    "final": -0.0001,
+    "max_dd": -0.0002
+   },
+   "new_win": {
+    "n": 8,
+    "usd": -9.3,
+    "final": -0.0001,
+    "max_dd": -0.0002
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 4,
+   "new_open": 4
+  },
+  {
+   "family": "Длинные книги",
+   "book": "optimal",
+   "title": "оптимальная",
+   "dep": 100.0,
+   "sizing": "compound",
+   "since": 1790820781.1,
+   "page_forward_final": 0.0081,
+   "old_all": {
+    "n": 60,
+    "usd": 161.86,
+    "final": 1.6186,
+    "max_dd": -0.0608
+   },
+   "new_all": {
+    "n": 91,
+    "usd": 391.22,
+    "final": 3.9122,
+    "max_dd": -0.1111
+   },
+   "old_win": {
+    "n": 3,
+    "usd": 0.81,
+    "final": 0.0081,
+    "max_dd": 0.0
+   },
+   "new_win": {
+    "n": 7,
+    "usd": 144.23,
+    "final": 1.4423,
+    "max_dd": -0.1981
+   },
+   "old_no_cash": 1837,
+   "new_no_cash": 1803,
+   "old_open": 1,
+   "new_open": 4
+  },
+  {
+   "family": "Длинные книги",
+   "book": "optimal",
+   "title": "оптимальная",
+   "dep": 100.0,
+   "sizing": "fixed",
+   "since": 1791234749.9,
+   "page_forward_final": 0.41,
+   "old_all": {
+    "n": 97,
+    "usd": 202.05,
+    "final": 2.0205,
+    "max_dd": -0.0789
+   },
+   "new_all": {
+    "n": 117,
+    "usd": 199.57,
+    "final": 1.9957,
+    "max_dd": -0.1658
+   },
+   "old_win": {
+    "n": 7,
+    "usd": 41.0,
+    "final": 0.41,
+    "max_dd": -0.0647
+   },
+   "new_win": {
+    "n": 9,
+    "usd": 40.69,
+    "final": 0.4069,
+    "max_dd": -0.0647
+   },
+   "old_no_cash": 1797,
+   "new_no_cash": 1777,
+   "old_open": 4,
+   "new_open": 4
+  },
+  {
+   "family": "Длинные книги",
+   "book": "optimal",
+   "title": "оптимальная",
+   "dep": 1000.0,
+   "sizing": "compound",
+   "since": 1788703700.5,
+   "page_forward_final": 0.1658,
+   "old_all": {
+    "n": 559,
+    "usd": 292.56,
+    "final": 0.2926,
+    "max_dd": -0.0498
+   },
+   "new_all": {
+    "n": 560,
+    "usd": 273.54,
+    "final": 0.2735,
+    "max_dd": -0.0665
+   },
+   "old_win": {
+    "n": 124,
+    "usd": 204.13,
+    "final": 0.2041,
+    "max_dd": -0.0247
+   },
+   "new_win": {
+    "n": 124,
+    "usd": 201.44,
+    "final": 0.2014,
+    "max_dd": -0.0244
+   },
+   "old_no_cash": 1334,
+   "new_no_cash": 1333,
+   "old_open": 4,
+   "new_open": 4
+  },
+  {
+   "family": "Длинные книги",
+   "book": "optimal",
+   "title": "оптимальная",
+   "dep": 1000.0,
+   "sizing": "fixed",
+   "since": 1791234749.9,
+   "page_forward_final": 0.0407,
+   "old_all": {
+    "n": 565,
+    "usd": 239.2,
+    "final": 0.2392,
+    "max_dd": -0.0624
+   },
+   "new_all": {
+    "n": 574,
+    "usd": 284.69,
+    "final": 0.2847,
+    "max_dd": -0.0493
+   },
+   "old_win": {
+    "n": 9,
+    "usd": 40.69,
+    "final": 0.0407,
+    "max_dd": -0.0065
+   },
+   "new_win": {
+    "n": 9,
+    "usd": 40.69,
+    "final": 0.0407,
+    "max_dd": -0.0065
+   },
+   "old_no_cash": 1328,
+   "new_no_cash": 1319,
+   "old_open": 4,
+   "new_open": 4
+  },
+  {
+   "family": "Длинные книги",
+   "book": "optimal",
+   "title": "оптимальная",
+   "dep": 10000.0,
+   "sizing": "compound",
+   "since": 1788703700.5,
+   "page_forward_final": 0.0179,
+   "old_all": {
+    "n": 1826,
+    "usd": 1906.65,
+    "final": 0.1907,
+    "max_dd": -0.0059
+   },
+   "new_all": {
+    "n": 1829,
+    "usd": 1909.45,
+    "final": 0.1909,
+    "max_dd": -0.0059
+   },
+   "old_win": {
+    "n": 124,
+    "usd": 215.47,
+    "final": 0.0215,
+    "max_dd": -0.0026
+   },
+   "new_win": {
+    "n": 124,
+    "usd": 215.53,
+    "final": 0.0216,
+    "max_dd": -0.0026
+   },
+   "old_no_cash": 67,
+   "new_no_cash": 64,
+   "old_open": 4,
+   "new_open": 4
+  },
+  {
+   "family": "Длинные книги",
+   "book": "optimal",
+   "title": "оптимальная",
+   "dep": 10000.0,
+   "sizing": "fixed",
+   "since": 1791234749.9,
+   "page_forward_final": 0.0041,
+   "old_all": {
+    "n": 1827,
+    "usd": 1796.39,
+    "final": 0.1796,
+    "max_dd": -0.0059
+   },
+   "new_all": {
+    "n": 1828,
+    "usd": 1796.73,
+    "final": 0.1797,
+    "max_dd": -0.0059
+   },
+   "old_win": {
+    "n": 9,
+    "usd": 40.69,
+    "final": 0.0041,
+    "max_dd": -0.0006
+   },
+   "new_win": {
+    "n": 9,
+    "usd": 40.69,
+    "final": 0.0041,
+    "max_dd": -0.0006
+   },
+   "old_no_cash": 66,
+   "new_no_cash": 65,
+   "old_open": 4,
+   "new_open": 4
+  },
+  {
+   "family": "Длинные книги",
+   "book": "optimal",
+   "title": "оптимальная",
+   "dep": 100000.0,
+   "sizing": "compound",
+   "since": 1788703700.5,
+   "page_forward_final": 0.0097,
+   "old_all": {
+    "n": 1893,
+    "usd": 11419.97,
+    "final": 0.1142,
+    "max_dd": -0.0034
+   },
+   "new_all": {
+    "n": 1893,
+    "usd": 11419.97,
+    "final": 0.1142,
+    "max_dd": -0.0034
+   },
+   "old_win": {
+    "n": 124,
+    "usd": 1173.74,
+    "final": 0.0117,
+    "max_dd": -0.0014
+   },
+   "new_win": {
+    "n": 124,
+    "usd": 1173.74,
+    "final": 0.0117,
+    "max_dd": -0.0014
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 4,
+   "new_open": 4
+  },
+  {
+   "family": "Длинные книги",
+   "book": "optimal",
+   "title": "оптимальная",
+   "dep": 100000.0,
+   "sizing": "fixed",
+   "since": 1791234749.9,
+   "page_forward_final": 0.0024,
+   "old_all": {
+    "n": 1893,
+    "usd": 11019.93,
+    "final": 0.1102,
+    "max_dd": -0.0034
+   },
+   "new_all": {
+    "n": 1893,
+    "usd": 11019.93,
+    "final": 0.1102,
+    "max_dd": -0.0034
+   },
+   "old_win": {
+    "n": 9,
+    "usd": 236.01,
+    "final": 0.0024,
+    "max_dd": -0.0004
+   },
+   "new_win": {
+    "n": 9,
+    "usd": 236.01,
+    "final": 0.0024,
+    "max_dd": -0.0004
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 4,
+   "new_open": 4
+  },
+  {
+   "family": "Длинные книги",
+   "book": "aggr",
+   "title": "агрессивная",
+   "dep": 100.0,
+   "sizing": "compound",
+   "since": 1791443356.1,
+   "page_forward_final": 0.0685,
+   "old_all": {
+    "n": 118,
+    "usd": 31.06,
+    "final": 0.3106,
+    "max_dd": -0.2088
+   },
+   "new_all": {
+    "n": 123,
+    "usd": 15.89,
+    "final": 0.1589,
+    "max_dd": -0.2196
+   },
+   "old_win": {
+    "n": 2,
+    "usd": 6.85,
+    "final": 0.0685,
+    "max_dd": -0.0288
+   },
+   "new_win": {
+    "n": 2,
+    "usd": 6.11,
+    "final": 0.0611,
+    "max_dd": -0.0259
+   },
+   "old_no_cash": 533,
+   "new_no_cash": 528,
+   "old_open": 2,
+   "new_open": 2
+  },
+  {
+   "family": "Длинные книги",
+   "book": "aggr",
+   "title": "агрессивная",
+   "dep": 100.0,
+   "sizing": "fixed",
+   "since": 1791443356.1,
+   "page_forward_final": 0.0542,
+   "old_all": {
+    "n": 123,
+    "usd": 23.66,
+    "final": 0.2366,
+    "max_dd": -0.1751
+   },
+   "new_all": {
+    "n": 124,
+    "usd": 13.27,
+    "final": 0.1327,
+    "max_dd": -0.2502
+   },
+   "old_win": {
+    "n": 2,
+    "usd": 5.42,
+    "final": 0.0542,
+    "max_dd": -0.0232
+   },
+   "new_win": {
+    "n": 2,
+    "usd": 5.42,
+    "final": 0.0542,
+    "max_dd": -0.0232
+   },
+   "old_no_cash": 528,
+   "new_no_cash": 527,
+   "old_open": 2,
+   "new_open": 2
+  },
+  {
+   "family": "Длинные книги",
+   "book": "aggr",
+   "title": "агрессивная",
+   "dep": 1000.0,
+   "sizing": "compound",
+   "since": 1789371206.9,
+   "page_forward_final": -0.0099,
+   "old_all": {
+    "n": 487,
+    "usd": 298.56,
+    "final": 0.2986,
+    "max_dd": -0.0219
+   },
+   "new_all": {
+    "n": 512,
+    "usd": 303.89,
+    "final": 0.3039,
+    "max_dd": -0.0219
+   },
+   "old_win": {
+    "n": 16,
+    "usd": -4.96,
+    "final": -0.005,
+    "max_dd": -0.0148
+   },
+   "new_win": {
+    "n": 16,
+    "usd": -4.98,
+    "final": -0.005,
+    "max_dd": -0.0148
+   },
+   "old_no_cash": 164,
+   "new_no_cash": 139,
+   "old_open": 2,
+   "new_open": 2
+  },
+  {
+   "family": "Длинные книги",
+   "book": "aggr",
+   "title": "агрессивная",
+   "dep": 1000.0,
+   "sizing": "fixed",
+   "since": 1791443356.1,
+   "page_forward_final": 0.0054,
+   "old_all": {
+    "n": 507,
+    "usd": 281.52,
+    "final": 0.2815,
+    "max_dd": -0.0173
+   },
+   "new_all": {
+    "n": 534,
+    "usd": 304.88,
+    "final": 0.3049,
+    "max_dd": -0.0173
+   },
+   "old_win": {
+    "n": 2,
+    "usd": 5.42,
+    "final": 0.0054,
+    "max_dd": -0.0025
+   },
+   "new_win": {
+    "n": 2,
+    "usd": 5.42,
+    "final": 0.0054,
+    "max_dd": -0.0025
+   },
+   "old_no_cash": 144,
+   "new_no_cash": 117,
+   "old_open": 2,
+   "new_open": 2
+  },
+  {
+   "family": "Длинные книги",
+   "book": "aggr",
+   "title": "агрессивная",
+   "dep": 10000.0,
+   "sizing": "compound",
+   "since": 1789371206.9,
+   "page_forward_final": -0.004,
+   "old_all": {
+    "n": 651,
+    "usd": 2002.95,
+    "final": 0.2003,
+    "max_dd": -0.0098
+   },
+   "new_all": {
+    "n": 651,
+    "usd": 2002.95,
+    "final": 0.2003,
+    "max_dd": -0.0098
+   },
+   "old_win": {
+    "n": 16,
+    "usd": -19.75,
+    "final": -0.002,
+    "max_dd": -0.006
+   },
+   "new_win": {
+    "n": 16,
+    "usd": -19.75,
+    "final": -0.002,
+    "max_dd": -0.006
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 2,
+   "new_open": 2
+  },
+  {
+   "family": "Длинные книги",
+   "book": "aggr",
+   "title": "агрессивная",
+   "dep": 10000.0,
+   "sizing": "fixed",
+   "since": 1791443356.1,
+   "page_forward_final": 0.0024,
+   "old_all": {
+    "n": 651,
+    "usd": 1914.92,
+    "final": 0.1915,
+    "max_dd": -0.0081
+   },
+   "new_all": {
+    "n": 651,
+    "usd": 1914.92,
+    "final": 0.1915,
+    "max_dd": -0.0081
+   },
+   "old_win": {
+    "n": 2,
+    "usd": 24.27,
+    "final": 0.0024,
+    "max_dd": -0.0011
+   },
+   "new_win": {
+    "n": 2,
+    "usd": 24.27,
+    "final": 0.0024,
+    "max_dd": -0.0011
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 2,
+   "new_open": 2
+  },
+  {
+   "family": "Длинные книги",
+   "book": "aggr",
+   "title": "агрессивная",
+   "dep": 100000.0,
+   "sizing": "compound",
+   "since": 1789371206.9,
+   "page_forward_final": -0.0041,
+   "old_all": {
+    "n": 651,
+    "usd": 20104.13,
+    "final": 0.201,
+    "max_dd": -0.0098
+   },
+   "new_all": {
+    "n": 651,
+    "usd": 20104.13,
+    "final": 0.201,
+    "max_dd": -0.0098
+   },
+   "old_win": {
+    "n": 16,
+    "usd": -198.4,
+    "final": -0.002,
+    "max_dd": -0.0061
+   },
+   "new_win": {
+    "n": 16,
+    "usd": -198.4,
+    "final": -0.002,
+    "max_dd": -0.0061
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 2,
+   "new_open": 2
+  },
+  {
+   "family": "Длинные книги",
+   "book": "aggr",
+   "title": "агрессивная",
+   "dep": 100000.0,
+   "sizing": "fixed",
+   "since": 1791443356.1,
+   "page_forward_final": 0.0024,
+   "old_all": {
+    "n": 651,
+    "usd": 19217.58,
+    "final": 0.1922,
+    "max_dd": -0.0082
+   },
+   "new_all": {
+    "n": 651,
+    "usd": 19217.58,
+    "final": 0.1922,
+    "max_dd": -0.0082
+   },
+   "old_win": {
+    "n": 2,
+    "usd": 243.53,
+    "final": 0.0024,
+    "max_dd": -0.0011
+   },
+   "new_win": {
+    "n": 2,
+    "usd": 243.53,
+    "final": 0.0024,
+    "max_dd": -0.0011
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 2,
+   "new_open": 2
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "safe_h",
+   "title": "безопасная (шорт h24)",
+   "dep": 100.0,
+   "sizing": "compound",
+   "since": 1790758800.0,
+   "page_forward_final": 0.5749,
+   "old_all": {
+    "n": 236,
+    "usd": -19.58,
+    "final": -0.1958,
+    "max_dd": -0.8489
+   },
+   "new_all": {
+    "n": 301,
+    "usd": -7.31,
+    "final": -0.0731,
+    "max_dd": -0.8392
+   },
+   "old_win": {
+    "n": 31,
+    "usd": 58.73,
+    "final": 0.5873,
+    "max_dd": -0.0171
+   },
+   "new_win": {
+    "n": 43,
+    "usd": 52.52,
+    "final": 0.5252,
+    "max_dd": -0.14
+   },
+   "old_no_cash": 895,
+   "new_no_cash": 842,
+   "old_open": 2,
+   "new_open": 3
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "safe_h",
+   "title": "безопасная (шорт h24)",
+   "dep": 100.0,
+   "sizing": "fixed",
+   "since": 1791162000.0,
+   "page_forward_final": 0.2326,
+   "old_all": {
+    "n": 321,
+    "usd": 89.12,
+    "final": 0.8912,
+    "max_dd": -0.4429
+   },
+   "new_all": {
+    "n": 551,
+    "usd": 34.47,
+    "final": 0.3447,
+    "max_dd": -0.5309
+   },
+   "old_win": {
+    "n": 23,
+    "usd": 23.75,
+    "final": 0.2375,
+    "max_dd": -0.0328
+   },
+   "new_win": {
+    "n": 52,
+    "usd": -0.5,
+    "final": -0.005,
+    "max_dd": -0.2844
+   },
+   "old_no_cash": 875,
+   "new_no_cash": 637,
+   "old_open": 3,
+   "new_open": 8
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "safe_h",
+   "title": "безопасная (шорт h24)",
+   "dep": 1000.0,
+   "sizing": "compound",
+   "since": 1790593200.0,
+   "page_forward_final": 0.0561,
+   "old_all": {
+    "n": 1164,
+    "usd": 398.87,
+    "final": 0.3989,
+    "max_dd": -0.1287
+   },
+   "new_all": {
+    "n": 1179,
+    "usd": 455.55,
+    "final": 0.4555,
+    "max_dd": -0.1285
+   },
+   "old_win": {
+    "n": 224,
+    "usd": 51.91,
+    "final": 0.0519,
+    "max_dd": -0.0698
+   },
+   "new_win": {
+    "n": 226,
+    "usd": 70.16,
+    "final": 0.0702,
+    "max_dd": -0.0712
+   },
+   "old_no_cash": 15,
+   "new_no_cash": 0,
+   "old_open": 14,
+   "new_open": 14
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "safe_h",
+   "title": "безопасная (шорт h24)",
+   "dep": 1000.0,
+   "sizing": "fixed",
+   "since": 1791154800.0,
+   "page_forward_final": 0.0186,
+   "old_all": {
+    "n": 1179,
+    "usd": 384.11,
+    "final": 0.3841,
+    "max_dd": -0.0822
+   },
+   "new_all": {
+    "n": 1179,
+    "usd": 384.11,
+    "final": 0.3841,
+    "max_dd": -0.0822
+   },
+   "old_win": {
+    "n": 94,
+    "usd": 19.74,
+    "final": 0.0197,
+    "max_dd": -0.0422
+   },
+   "new_win": {
+    "n": 94,
+    "usd": 19.74,
+    "final": 0.0197,
+    "max_dd": -0.0422
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 14,
+   "new_open": 14
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "safe_h",
+   "title": "безопасная (шорт h24)",
+   "dep": 10000.0,
+   "sizing": "compound",
+   "since": 1790593200.0,
+   "page_forward_final": 0.0258,
+   "old_all": {
+    "n": 1179,
+    "usd": 1843.65,
+    "final": 0.1844,
+    "max_dd": -0.0544
+   },
+   "new_all": {
+    "n": 1179,
+    "usd": 1843.65,
+    "final": 0.1844,
+    "max_dd": -0.0544
+   },
+   "old_win": {
+    "n": 226,
+    "usd": 242.88,
+    "final": 0.0243,
+    "max_dd": -0.0249
+   },
+   "new_win": {
+    "n": 226,
+    "usd": 242.88,
+    "final": 0.0243,
+    "max_dd": -0.0249
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 14,
+   "new_open": 14
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "safe_h",
+   "title": "безопасная (шорт h24)",
+   "dep": 10000.0,
+   "sizing": "fixed",
+   "since": 1791154800.0,
+   "page_forward_final": 0.0082,
+   "old_all": {
+    "n": 1179,
+    "usd": 1705.45,
+    "final": 0.1705,
+    "max_dd": -0.0436
+   },
+   "new_all": {
+    "n": 1179,
+    "usd": 1705.45,
+    "final": 0.1705,
+    "max_dd": -0.0436
+   },
+   "old_win": {
+    "n": 94,
+    "usd": 87.62,
+    "final": 0.0088,
+    "max_dd": -0.0193
+   },
+   "new_win": {
+    "n": 94,
+    "usd": 87.62,
+    "final": 0.0088,
+    "max_dd": -0.0193
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 14,
+   "new_open": 14
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "safe_h",
+   "title": "безопасная (шорт h24)",
+   "dep": 100000.0,
+   "sizing": "compound",
+   "since": 1790593200.0,
+   "page_forward_final": 0.0258,
+   "old_all": {
+    "n": 1179,
+    "usd": 18454.42,
+    "final": 0.1845,
+    "max_dd": -0.0544
+   },
+   "new_all": {
+    "n": 1179,
+    "usd": 18454.42,
+    "final": 0.1845,
+    "max_dd": -0.0544
+   },
+   "old_win": {
+    "n": 226,
+    "usd": 2431.43,
+    "final": 0.0243,
+    "max_dd": -0.025
+   },
+   "new_win": {
+    "n": 226,
+    "usd": 2431.43,
+    "final": 0.0243,
+    "max_dd": -0.025
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 14,
+   "new_open": 14
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "safe_h",
+   "title": "безопасная (шорт h24)",
+   "dep": 100000.0,
+   "sizing": "fixed",
+   "since": 1791154800.0,
+   "page_forward_final": 0.0082,
+   "old_all": {
+    "n": 1179,
+    "usd": 17069.88,
+    "final": 0.1707,
+    "max_dd": -0.0437
+   },
+   "new_all": {
+    "n": 1179,
+    "usd": 17069.88,
+    "final": 0.1707,
+    "max_dd": -0.0437
+   },
+   "old_win": {
+    "n": 94,
+    "usd": 877.02,
+    "final": 0.0088,
+    "max_dd": -0.0193
+   },
+   "new_win": {
+    "n": 94,
+    "usd": 877.02,
+    "final": 0.0088,
+    "max_dd": -0.0193
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 14,
+   "new_open": 14
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "optimal_h",
+   "title": "оптимальная (шорт h24)",
+   "dep": 100.0,
+   "sizing": "compound",
+   "since": null,
+   "page_forward_final": null,
+   "old_all": {
+    "n": 105,
+    "usd": 291.21,
+    "final": 2.9121,
+    "max_dd": -0.4935
+   },
+   "new_all": {
+    "n": 320,
+    "usd": 486.57,
+    "final": 4.8657,
+    "max_dd": -0.6471
+   },
+   "old_win": {
+    "n": null,
+    "usd": null,
+    "final": null,
+    "max_dd": null
+   },
+   "new_win": {
+    "n": null,
+    "usd": null,
+    "final": null,
+    "max_dd": null
+   },
+   "old_no_cash": 1194,
+   "new_no_cash": 979,
+   "old_open": 0,
+   "new_open": 3
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "optimal_h",
+   "title": "оптимальная (шорт h24)",
+   "dep": 100.0,
+   "sizing": "fixed",
+   "since": 1791187200.0,
+   "page_forward_final": -0.0112,
+   "old_all": {
+    "n": 361,
+    "usd": 122.01,
+    "final": 1.2201,
+    "max_dd": -0.3641
+   },
+   "new_all": {
+    "n": 726,
+    "usd": 62.52,
+    "final": 0.6252,
+    "max_dd": -0.7567
+   },
+   "old_win": {
+    "n": 27,
+    "usd": -0.63,
+    "final": -0.0063,
+    "max_dd": -0.1718
+   },
+   "new_win": {
+    "n": 88,
+    "usd": 0.85,
+    "final": 0.0085,
+    "max_dd": -0.2377
+   },
+   "old_no_cash": 940,
+   "new_no_cash": 561,
+   "old_open": 3,
+   "new_open": 13
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "optimal_h",
+   "title": "оптимальная (шорт h24)",
+   "dep": 1000.0,
+   "sizing": "compound",
+   "since": 1790593200.0,
+   "page_forward_final": -0.0103,
+   "old_all": {
+    "n": 1233,
+    "usd": 518.99,
+    "final": 0.519,
+    "max_dd": -0.2033
+   },
+   "new_all": {
+    "n": 1285,
+    "usd": 572.31,
+    "final": 0.5723,
+    "max_dd": -0.2187
+   },
+   "old_win": {
+    "n": 239,
+    "usd": -18.95,
+    "final": -0.019,
+    "max_dd": -0.1699
+   },
+   "new_win": {
+    "n": 256,
+    "usd": 10.0,
+    "final": 0.01,
+    "max_dd": -0.1772
+   },
+   "old_no_cash": 52,
+   "new_no_cash": 0,
+   "old_open": 13,
+   "new_open": 13
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "optimal_h",
+   "title": "оптимальная (шорт h24)",
+   "dep": 1000.0,
+   "sizing": "fixed",
+   "since": 1791154800.0,
+   "page_forward_final": 0.0307,
+   "old_all": {
+    "n": 1285,
+    "usd": 491.24,
+    "final": 0.4912,
+    "max_dd": -0.1123
+   },
+   "new_all": {
+    "n": 1285,
+    "usd": 491.24,
+    "final": 0.4912,
+    "max_dd": -0.1123
+   },
+   "old_win": {
+    "n": 105,
+    "usd": 31.83,
+    "final": 0.0318,
+    "max_dd": -0.0296
+   },
+   "new_win": {
+    "n": 105,
+    "usd": 31.83,
+    "final": 0.0318,
+    "max_dd": -0.0296
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 13,
+   "new_open": 13
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "optimal_h",
+   "title": "оптимальная (шорт h24)",
+   "dep": 10000.0,
+   "sizing": "compound",
+   "since": 1790593200.0,
+   "page_forward_final": 0.0039,
+   "old_all": {
+    "n": 1285,
+    "usd": 1135.81,
+    "final": 0.1136,
+    "max_dd": -0.0416
+   },
+   "new_all": {
+    "n": 1285,
+    "usd": 1135.81,
+    "final": 0.1136,
+    "max_dd": -0.0416
+   },
+   "old_win": {
+    "n": 256,
+    "usd": 27.21,
+    "final": 0.0027,
+    "max_dd": -0.0222
+   },
+   "new_win": {
+    "n": 256,
+    "usd": 27.21,
+    "final": 0.0027,
+    "max_dd": -0.0222
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 13,
+   "new_open": 13
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "optimal_h",
+   "title": "оптимальная (шорт h24)",
+   "dep": 10000.0,
+   "sizing": "fixed",
+   "since": 1791154800.0,
+   "page_forward_final": 0.0068,
+   "old_all": {
+    "n": 1285,
+    "usd": 1090.54,
+    "final": 0.1091,
+    "max_dd": -0.0348
+   },
+   "new_all": {
+    "n": 1285,
+    "usd": 1090.54,
+    "final": 0.1091,
+    "max_dd": -0.0348
+   },
+   "old_win": {
+    "n": 105,
+    "usd": 70.67,
+    "final": 0.0071,
+    "max_dd": -0.0069
+   },
+   "new_win": {
+    "n": 105,
+    "usd": 70.67,
+    "final": 0.0071,
+    "max_dd": -0.0069
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 13,
+   "new_open": 13
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "optimal_h",
+   "title": "оптимальная (шорт h24)",
+   "dep": 100000.0,
+   "sizing": "compound",
+   "since": 1790593200.0,
+   "page_forward_final": 0.0039,
+   "old_all": {
+    "n": 1285,
+    "usd": 11368.73,
+    "final": 0.1137,
+    "max_dd": -0.0417
+   },
+   "new_all": {
+    "n": 1285,
+    "usd": 11368.73,
+    "final": 0.1137,
+    "max_dd": -0.0417
+   },
+   "old_win": {
+    "n": 256,
+    "usd": 272.38,
+    "final": 0.0027,
+    "max_dd": -0.0222
+   },
+   "new_win": {
+    "n": 256,
+    "usd": 272.38,
+    "final": 0.0027,
+    "max_dd": -0.0222
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 13,
+   "new_open": 13
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "optimal_h",
+   "title": "оптимальная (шорт h24)",
+   "dep": 100000.0,
+   "sizing": "fixed",
+   "since": 1791154800.0,
+   "page_forward_final": 0.0068,
+   "old_all": {
+    "n": 1285,
+    "usd": 10915.23,
+    "final": 0.1092,
+    "max_dd": -0.0348
+   },
+   "new_all": {
+    "n": 1285,
+    "usd": 10915.23,
+    "final": 0.1092,
+    "max_dd": -0.0348
+   },
+   "old_win": {
+    "n": 105,
+    "usd": 707.31,
+    "final": 0.0071,
+    "max_dd": -0.0069
+   },
+   "new_win": {
+    "n": 105,
+    "usd": 707.31,
+    "final": 0.0071,
+    "max_dd": -0.0069
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 13,
+   "new_open": 13
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "aggr_h",
+   "title": "агрессивная (шорт h24)",
+   "dep": 100.0,
+   "sizing": "compound",
+   "since": 1790758800.0,
+   "page_forward_final": 1.0369,
+   "old_all": {
+    "n": 478,
+    "usd": 362.65,
+    "final": 3.6265,
+    "max_dd": -0.334
+   },
+   "new_all": {
+    "n": 965,
+    "usd": 134.33,
+    "final": 1.3433,
+    "max_dd": -0.734
+   },
+   "old_win": {
+    "n": 44,
+    "usd": 104.26,
+    "final": 1.0426,
+    "max_dd": -0.6136
+   },
+   "new_win": {
+    "n": 194,
+    "usd": -55.69,
+    "final": -0.5569,
+    "max_dd": -1.1367
+   },
+   "old_no_cash": 528,
+   "new_no_cash": 29,
+   "old_open": 1,
+   "new_open": 9
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "aggr_h",
+   "title": "агрессивная (шорт h24)",
+   "dep": 100.0,
+   "sizing": "fixed",
+   "since": 1791165600.0,
+   "page_forward_final": -0.1218,
+   "old_all": {
+    "n": 973,
+    "usd": 142.67,
+    "final": 1.4267,
+    "max_dd": -0.2549
+   },
+   "new_all": {
+    "n": 981,
+    "usd": 137.94,
+    "final": 1.3794,
+    "max_dd": -0.2612
+   },
+   "old_win": {
+    "n": 100,
+    "usd": -15.18,
+    "final": -0.1518,
+    "max_dd": -0.1323
+   },
+   "new_win": {
+    "n": 100,
+    "usd": -15.18,
+    "final": -0.1518,
+    "max_dd": -0.1323
+   },
+   "old_no_cash": 21,
+   "new_no_cash": 13,
+   "old_open": 9,
+   "new_open": 9
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "aggr_h",
+   "title": "агрессивная (шорт h24)",
+   "dep": 1000.0,
+   "sizing": "compound",
+   "since": 1790632800.0,
+   "page_forward_final": 0.0136,
+   "old_all": {
+    "n": 994,
+    "usd": 160.32,
+    "final": 0.1603,
+    "max_dd": -0.0634
+   },
+   "new_all": {
+    "n": 994,
+    "usd": 160.32,
+    "final": 0.1603,
+    "max_dd": -0.0634
+   },
+   "old_win": {
+    "n": 225,
+    "usd": 8.37,
+    "final": 0.0084,
+    "max_dd": -0.0202
+   },
+   "new_win": {
+    "n": 225,
+    "usd": 8.37,
+    "final": 0.0084,
+    "max_dd": -0.0202
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 9,
+   "new_open": 9
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "aggr_h",
+   "title": "агрессивная (шорт h24)",
+   "dep": 1000.0,
+   "sizing": "fixed",
+   "since": 1791165600.0,
+   "page_forward_final": -0.0127,
+   "old_all": {
+    "n": 994,
+    "usd": 151.74,
+    "final": 0.1517,
+    "max_dd": -0.0538
+   },
+   "new_all": {
+    "n": 994,
+    "usd": 151.74,
+    "final": 0.1517,
+    "max_dd": -0.0538
+   },
+   "old_win": {
+    "n": 100,
+    "usd": -15.79,
+    "final": -0.0158,
+    "max_dd": -0.0135
+   },
+   "new_win": {
+    "n": 100,
+    "usd": -15.79,
+    "final": -0.0158,
+    "max_dd": -0.0135
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 9,
+   "new_open": 9
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "aggr_h",
+   "title": "агрессивная (шорт h24)",
+   "dep": 10000.0,
+   "sizing": "compound",
+   "since": 1790632800.0,
+   "page_forward_final": 0.014,
+   "old_all": {
+    "n": 994,
+    "usd": 1642.15,
+    "final": 0.1642,
+    "max_dd": -0.0649
+   },
+   "new_all": {
+    "n": 994,
+    "usd": 1642.15,
+    "final": 0.1642,
+    "max_dd": -0.0649
+   },
+   "old_win": {
+    "n": 225,
+    "usd": 85.74,
+    "final": 0.0086,
+    "max_dd": -0.0207
+   },
+   "new_win": {
+    "n": 225,
+    "usd": 85.74,
+    "final": 0.0086,
+    "max_dd": -0.0207
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 9,
+   "new_open": 9
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "aggr_h",
+   "title": "агрессивная (шорт h24)",
+   "dep": 10000.0,
+   "sizing": "fixed",
+   "since": 1791165600.0,
+   "page_forward_final": -0.013,
+   "old_all": {
+    "n": 994,
+    "usd": 1552.47,
+    "final": 0.1552,
+    "max_dd": -0.0548
+   },
+   "new_all": {
+    "n": 994,
+    "usd": 1552.47,
+    "final": 0.1552,
+    "max_dd": -0.0548
+   },
+   "old_win": {
+    "n": 100,
+    "usd": -161.54,
+    "final": -0.0162,
+    "max_dd": -0.0138
+   },
+   "new_win": {
+    "n": 100,
+    "usd": -161.54,
+    "final": -0.0162,
+    "max_dd": -0.0138
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 9,
+   "new_open": 9
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "aggr_h",
+   "title": "агрессивная (шорт h24)",
+   "dep": 100000.0,
+   "sizing": "compound",
+   "since": 1790632800.0,
+   "page_forward_final": 0.014,
+   "old_all": {
+    "n": 994,
+    "usd": 16460.45,
+    "final": 0.1646,
+    "max_dd": -0.0651
+   },
+   "new_all": {
+    "n": 994,
+    "usd": 16460.45,
+    "final": 0.1646,
+    "max_dd": -0.0651
+   },
+   "old_win": {
+    "n": 225,
+    "usd": 859.5,
+    "final": 0.0086,
+    "max_dd": -0.0208
+   },
+   "new_win": {
+    "n": 225,
+    "usd": 859.5,
+    "final": 0.0086,
+    "max_dd": -0.0208
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 9,
+   "new_open": 9
+  },
+  {
+   "family": "Короткие книги h24",
+   "book": "aggr_h",
+   "title": "агрессивная (шорт h24)",
+   "dep": 100000.0,
+   "sizing": "fixed",
+   "since": 1791165600.0,
+   "page_forward_final": -0.013,
+   "old_all": {
+    "n": 994,
+    "usd": 15559.7,
+    "final": 0.1556,
+    "max_dd": -0.0549
+   },
+   "new_all": {
+    "n": 994,
+    "usd": 15559.7,
+    "final": 0.1556,
+    "max_dd": -0.0549
+   },
+   "old_win": {
+    "n": 100,
+    "usd": -1619.08,
+    "final": -0.0162,
+    "max_dd": -0.0138
+   },
+   "new_win": {
+    "n": 100,
+    "usd": -1619.08,
+    "final": -0.0162,
+    "max_dd": -0.0138
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 9,
+   "new_open": 9
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_safe",
+   "title": "общая (безопасная)",
+   "dep": 100.0,
+   "sizing": "compound",
+   "since": 1790766000.0,
+   "page_forward_final": 0.0926,
+   "old_all": {
+    "n": 160,
+    "usd": 10.37,
+    "final": 0.1037,
+    "max_dd": -0.4989
+   },
+   "new_all": {
+    "n": 220,
+    "usd": -59.85,
+    "final": -0.5985,
+    "max_dd": -0.9155
+   },
+   "old_win": {
+    "n": 21,
+    "usd": 10.71,
+    "final": 0.1071,
+    "max_dd": -0.0815
+   },
+   "new_win": {
+    "n": 30,
+    "usd": 26.39,
+    "final": 0.2639,
+    "max_dd": -0.0668
+   },
+   "old_no_cash": 2847,
+   "new_no_cash": 2085,
+   "old_open": 2,
+   "new_open": 3
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_safe",
+   "title": "общая (безопасная)",
+   "dep": 100.0,
+   "sizing": "fixed",
+   "since": 1791162000.0,
+   "page_forward_final": 0.1502,
+   "old_all": {
+    "n": 280,
+    "usd": 61.39,
+    "final": 0.6139,
+    "max_dd": -0.4472
+   },
+   "new_all": {
+    "n": 173,
+    "usd": -54.6,
+    "final": -0.546,
+    "max_dd": -0.5903
+   },
+   "old_win": {
+    "n": 23,
+    "usd": 15.51,
+    "final": 0.1551,
+    "max_dd": -0.088
+   },
+   "new_win": {
+    "n": 10,
+    "usd": 1.77,
+    "final": 0.0177,
+    "max_dd": -0.0544
+   },
+   "old_no_cash": 2803,
+   "new_no_cash": 2911,
+   "old_open": 3,
+   "new_open": 2
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_safe",
+   "title": "общая (безопасная)",
+   "dep": 1000.0,
+   "sizing": "compound",
+   "since": 1790593200.0,
+   "page_forward_final": 0.0715,
+   "old_all": {
+    "n": 1284,
+    "usd": 407.23,
+    "final": 0.4072,
+    "max_dd": -0.1187
+   },
+   "new_all": {
+    "n": 1495,
+    "usd": 477.78,
+    "final": 0.4778,
+    "max_dd": -0.1209
+   },
+   "old_win": {
+    "n": 232,
+    "usd": 66.86,
+    "final": 0.0669,
+    "max_dd": -0.0696
+   },
+   "new_win": {
+    "n": 262,
+    "usd": 72.35,
+    "final": 0.0724,
+    "max_dd": -0.0737
+   },
+   "old_no_cash": 1780,
+   "new_no_cash": 1568,
+   "old_open": 18,
+   "new_open": 18
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_safe",
+   "title": "общая (безопасная)",
+   "dep": 1000.0,
+   "sizing": "fixed",
+   "since": 1791154800.0,
+   "page_forward_final": 0.018,
+   "old_all": {
+    "n": 1492,
+    "usd": 373.18,
+    "final": 0.3732,
+    "max_dd": -0.0797
+   },
+   "new_all": {
+    "n": 1626,
+    "usd": 459.07,
+    "final": 0.4591,
+    "max_dd": -0.0754
+   },
+   "old_win": {
+    "n": 102,
+    "usd": 18.13,
+    "final": 0.0181,
+    "max_dd": -0.0437
+   },
+   "new_win": {
+    "n": 102,
+    "usd": 18.13,
+    "final": 0.0181,
+    "max_dd": -0.0437
+   },
+   "old_no_cash": 1571,
+   "new_no_cash": 1437,
+   "old_open": 18,
+   "new_open": 18
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_safe",
+   "title": "общая (безопасная)",
+   "dep": 10000.0,
+   "sizing": "compound",
+   "since": 1790593200.0,
+   "page_forward_final": 0.0279,
+   "old_all": {
+    "n": 2674,
+    "usd": 2462.16,
+    "final": 0.2462,
+    "max_dd": -0.0537
+   },
+   "new_all": {
+    "n": 2870,
+    "usd": 2785.21,
+    "final": 0.2785,
+    "max_dd": -0.0537
+   },
+   "old_win": {
+    "n": 262,
+    "usd": 257.28,
+    "final": 0.0257,
+    "max_dd": -0.0264
+   },
+   "new_win": {
+    "n": 262,
+    "usd": 264.17,
+    "final": 0.0264,
+    "max_dd": -0.0271
+   },
+   "old_no_cash": 389,
+   "new_no_cash": 193,
+   "old_open": 18,
+   "new_open": 18
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_safe",
+   "title": "общая (безопасная)",
+   "dep": 10000.0,
+   "sizing": "fixed",
+   "since": 1791154800.0,
+   "page_forward_final": 0.0086,
+   "old_all": {
+    "n": 2864,
+    "usd": 2454.23,
+    "final": 0.2454,
+    "max_dd": -0.0406
+   },
+   "new_all": {
+    "n": 2985,
+    "usd": 2534.62,
+    "final": 0.2535,
+    "max_dd": -0.0403
+   },
+   "old_win": {
+    "n": 102,
+    "usd": 86.02,
+    "final": 0.0086,
+    "max_dd": -0.0195
+   },
+   "new_win": {
+    "n": 102,
+    "usd": 86.02,
+    "final": 0.0086,
+    "max_dd": -0.0195
+   },
+   "old_no_cash": 199,
+   "new_no_cash": 75,
+   "old_open": 18,
+   "new_open": 18
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_safe",
+   "title": "общая (безопасная)",
+   "dep": 100000.0,
+   "sizing": "compound",
+   "since": 1790593200.0,
+   "page_forward_final": 0.0278,
+   "old_all": {
+    "n": 3027,
+    "usd": 24638.56,
+    "final": 0.2464,
+    "max_dd": -0.0541
+   },
+   "new_all": {
+    "n": 3060,
+    "usd": 24866.66,
+    "final": 0.2487,
+    "max_dd": -0.0541
+   },
+   "old_win": {
+    "n": 262,
+    "usd": 2569.94,
+    "final": 0.0257,
+    "max_dd": -0.0263
+   },
+   "new_win": {
+    "n": 262,
+    "usd": 2574.59,
+    "final": 0.0257,
+    "max_dd": -0.0264
+   },
+   "old_no_cash": 33,
+   "new_no_cash": 0,
+   "old_open": 18,
+   "new_open": 18
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_safe",
+   "title": "общая (безопасная)",
+   "dep": 100000.0,
+   "sizing": "fixed",
+   "since": 1791154800.0,
+   "page_forward_final": 0.0086,
+   "old_all": {
+    "n": 3060,
+    "usd": 22220.6,
+    "final": 0.2222,
+    "max_dd": -0.0416
+   },
+   "new_all": {
+    "n": 3060,
+    "usd": 22220.6,
+    "final": 0.2222,
+    "max_dd": -0.0416
+   },
+   "old_win": {
+    "n": 102,
+    "usd": 867.73,
+    "final": 0.0087,
+    "max_dd": -0.0194
+   },
+   "new_win": {
+    "n": 102,
+    "usd": 867.73,
+    "final": 0.0087,
+    "max_dd": -0.0194
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 18,
+   "new_open": 18
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_optimal",
+   "title": "общая (оптимальная)",
+   "dep": 100.0,
+   "sizing": "compound",
+   "since": null,
+   "page_forward_final": null,
+   "old_all": {
+    "n": 96,
+    "usd": 285.18,
+    "final": 2.8518,
+    "max_dd": -0.542
+   },
+   "new_all": {
+    "n": 262,
+    "usd": 503.18,
+    "final": 5.0318,
+    "max_dd": -0.5638
+   },
+   "old_win": {
+    "n": null,
+    "usd": null,
+    "final": null,
+    "max_dd": null
+   },
+   "new_win": {
+    "n": null,
+    "usd": null,
+    "final": null,
+    "max_dd": null
+   },
+   "old_no_cash": 3078,
+   "new_no_cash": 2937,
+   "old_open": 0,
+   "new_open": 3
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_optimal",
+   "title": "общая (оптимальная)",
+   "dep": 100.0,
+   "sizing": "fixed",
+   "since": 1791187200.0,
+   "page_forward_final": -0.0112,
+   "old_all": {
+    "n": 300,
+    "usd": 72.54,
+    "final": 0.7254,
+    "max_dd": -0.3367
+   },
+   "new_all": {
+    "n": 541,
+    "usd": 242.1,
+    "final": 2.421,
+    "max_dd": -0.676
+   },
+   "old_win": {
+    "n": 27,
+    "usd": -0.63,
+    "final": -0.0063,
+    "max_dd": -0.1718
+   },
+   "new_win": {
+    "n": 92,
+    "usd": 49.96,
+    "final": 0.4996,
+    "max_dd": -0.1255
+   },
+   "old_no_cash": 2900,
+   "new_no_cash": 2643,
+   "old_open": 3,
+   "new_open": 16
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_optimal",
+   "title": "общая (оптимальная)",
+   "dep": 1000.0,
+   "sizing": "compound",
+   "since": 1790593200.0,
+   "page_forward_final": 0.176,
+   "old_all": {
+    "n": 1268,
+    "usd": 763.57,
+    "final": 0.7636,
+    "max_dd": -0.2036
+   },
+   "new_all": {
+    "n": 1602,
+    "usd": 806.43,
+    "final": 0.8064,
+    "max_dd": -0.2193
+   },
+   "old_win": {
+    "n": 221,
+    "usd": 173.44,
+    "final": 0.1734,
+    "max_dd": -0.0445
+   },
+   "new_win": {
+    "n": 293,
+    "usd": 110.9,
+    "final": 0.1109,
+    "max_dd": -0.1719
+   },
+   "old_no_cash": 1915,
+   "new_no_cash": 1579,
+   "old_open": 16,
+   "new_open": 17
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_optimal",
+   "title": "общая (оптимальная)",
+   "dep": 1000.0,
+   "sizing": "fixed",
+   "since": 1791154800.0,
+   "page_forward_final": 0.0724,
+   "old_all": {
+    "n": 1605,
+    "usd": 626.8,
+    "final": 0.6268,
+    "max_dd": -0.1398
+   },
+   "new_all": {
+    "n": 1800,
+    "usd": 835.6,
+    "final": 0.8356,
+    "max_dd": -0.1017
+   },
+   "old_win": {
+    "n": 114,
+    "usd": 72.52,
+    "final": 0.0725,
+    "max_dd": -0.0198
+   },
+   "new_win": {
+    "n": 114,
+    "usd": 72.52,
+    "final": 0.0725,
+    "max_dd": -0.0198
+   },
+   "old_no_cash": 1576,
+   "new_no_cash": 1381,
+   "old_open": 17,
+   "new_open": 17
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_optimal",
+   "title": "общая (оптимальная)",
+   "dep": 10000.0,
+   "sizing": "compound",
+   "since": 1790593200.0,
+   "page_forward_final": 0.0114,
+   "old_all": {
+    "n": 2924,
+    "usd": 3116.99,
+    "final": 0.3117,
+    "max_dd": -0.0375
+   },
+   "new_all": {
+    "n": 3081,
+    "usd": 3243.56,
+    "final": 0.3244,
+    "max_dd": -0.0377
+   },
+   "old_win": {
+    "n": 293,
+    "usd": 96.96,
+    "final": 0.0097,
+    "max_dd": -0.0255
+   },
+   "new_win": {
+    "n": 293,
+    "usd": 98.39,
+    "final": 0.0098,
+    "max_dd": -0.0258
+   },
+   "old_no_cash": 255,
+   "new_no_cash": 97,
+   "old_open": 17,
+   "new_open": 17
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_optimal",
+   "title": "общая (оптимальная)",
+   "dep": 10000.0,
+   "sizing": "fixed",
+   "since": 1791154800.0,
+   "page_forward_final": 0.0111,
+   "old_all": {
+    "n": 3077,
+    "usd": 2821.54,
+    "final": 0.2822,
+    "max_dd": -0.0278
+   },
+   "new_all": {
+    "n": 3125,
+    "usd": 2910.57,
+    "final": 0.2911,
+    "max_dd": -0.0276
+   },
+   "old_win": {
+    "n": 114,
+    "usd": 111.36,
+    "final": 0.0111,
+    "max_dd": -0.0047
+   },
+   "new_win": {
+    "n": 114,
+    "usd": 111.36,
+    "final": 0.0111,
+    "max_dd": -0.0047
+   },
+   "old_no_cash": 101,
+   "new_no_cash": 53,
+   "old_open": 17,
+   "new_open": 17
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_optimal",
+   "title": "общая (оптимальная)",
+   "dep": 100000.0,
+   "sizing": "compound",
+   "since": 1790593200.0,
+   "page_forward_final": 0.0083,
+   "old_all": {
+    "n": 3178,
+    "usd": 24477.26,
+    "final": 0.2448,
+    "max_dd": -0.0367
+   },
+   "new_all": {
+    "n": 3178,
+    "usd": 24477.26,
+    "final": 0.2448,
+    "max_dd": -0.0367
+   },
+   "old_win": {
+    "n": 293,
+    "usd": 664.88,
+    "final": 0.0066,
+    "max_dd": -0.0245
+   },
+   "new_win": {
+    "n": 293,
+    "usd": 664.88,
+    "final": 0.0066,
+    "max_dd": -0.0245
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 17,
+   "new_open": 17
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_optimal",
+   "title": "общая (оптимальная)",
+   "dep": 100000.0,
+   "sizing": "fixed",
+   "since": 1791154800.0,
+   "page_forward_final": 0.0094,
+   "old_all": {
+    "n": 3178,
+    "usd": 21935.16,
+    "final": 0.2194,
+    "max_dd": -0.0283
+   },
+   "new_all": {
+    "n": 3178,
+    "usd": 21935.16,
+    "final": 0.2194,
+    "max_dd": -0.0283
+   },
+   "old_win": {
+    "n": 114,
+    "usd": 943.31,
+    "final": 0.0094,
+    "max_dd": -0.0047
+   },
+   "new_win": {
+    "n": 114,
+    "usd": 943.31,
+    "final": 0.0094,
+    "max_dd": -0.0047
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 17,
+   "new_open": 17
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_aggr",
+   "title": "общая (агрессивная)",
+   "dep": 100.0,
+   "sizing": "compound",
+   "since": 1790758800.0,
+   "page_forward_final": 1.3726,
+   "old_all": {
+    "n": 460,
+    "usd": 386.01,
+    "final": 3.8601,
+    "max_dd": -0.3528
+   },
+   "new_all": {
+    "n": 985,
+    "usd": 194.5,
+    "final": 1.945,
+    "max_dd": -0.7853
+   },
+   "old_win": {
+    "n": 46,
+    "usd": 137.81,
+    "final": 1.3781,
+    "max_dd": -0.4572
+   },
+   "new_win": {
+    "n": 195,
+    "usd": -3.02,
+    "final": -0.0302,
+    "max_dd": -1.1266
+   },
+   "old_no_cash": 1200,
+   "new_no_cash": 662,
+   "old_open": 1,
+   "new_open": 11
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_aggr",
+   "title": "общая (агрессивная)",
+   "dep": 100.0,
+   "sizing": "fixed",
+   "since": 1791165600.0,
+   "page_forward_final": -0.0977,
+   "old_all": {
+    "n": 998,
+    "usd": 177.85,
+    "final": 1.7785,
+    "max_dd": -0.2048
+   },
+   "new_all": {
+    "n": 1199,
+    "usd": 289.99,
+    "final": 2.8999,
+    "max_dd": -0.1467
+   },
+   "old_win": {
+    "n": 102,
+    "usd": -9.77,
+    "final": -0.0977,
+    "max_dd": -0.1253
+   },
+   "new_win": {
+    "n": 102,
+    "usd": -9.77,
+    "final": -0.0977,
+    "max_dd": -0.1253
+   },
+   "old_no_cash": 649,
+   "new_no_cash": 448,
+   "old_open": 11,
+   "new_open": 11
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_aggr",
+   "title": "общая (агрессивная)",
+   "dep": 1000.0,
+   "sizing": "compound",
+   "since": 1790632800.0,
+   "page_forward_final": 0.0211,
+   "old_all": {
+    "n": 1417,
+    "usd": 475.97,
+    "final": 0.476,
+    "max_dd": -0.0662
+   },
+   "new_all": {
+    "n": 1489,
+    "usd": 522.15,
+    "final": 0.5222,
+    "max_dd": -0.0662
+   },
+   "old_win": {
+    "n": 227,
+    "usd": 19.66,
+    "final": 0.0197,
+    "max_dd": -0.0256
+   },
+   "new_win": {
+    "n": 227,
+    "usd": 20.29,
+    "final": 0.0203,
+    "max_dd": -0.0264
+   },
+   "old_no_cash": 228,
+   "new_no_cash": 156,
+   "old_open": 11,
+   "new_open": 11
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_aggr",
+   "title": "общая (агрессивная)",
+   "dep": 1000.0,
+   "sizing": "fixed",
+   "since": 1791165600.0,
+   "page_forward_final": -0.0104,
+   "old_all": {
+    "n": 1482,
+    "usd": 432.5,
+    "final": 0.4325,
+    "max_dd": -0.0419
+   },
+   "new_all": {
+    "n": 1569,
+    "usd": 506.93,
+    "final": 0.5069,
+    "max_dd": -0.0399
+   },
+   "old_win": {
+    "n": 102,
+    "usd": -10.37,
+    "final": -0.0104,
+    "max_dd": -0.0134
+   },
+   "new_win": {
+    "n": 102,
+    "usd": -10.37,
+    "final": -0.0104,
+    "max_dd": -0.0134
+   },
+   "old_no_cash": 163,
+   "new_no_cash": 76,
+   "old_open": 11,
+   "new_open": 11
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_aggr",
+   "title": "общая (агрессивная)",
+   "dep": 10000.0,
+   "sizing": "compound",
+   "since": 1790632800.0,
+   "page_forward_final": 0.0156,
+   "old_all": {
+    "n": 1645,
+    "usd": 4067.83,
+    "final": 0.4068,
+    "max_dd": -0.062
+   },
+   "new_all": {
+    "n": 1645,
+    "usd": 4067.83,
+    "final": 0.4068,
+    "max_dd": -0.062
+   },
+   "old_win": {
+    "n": 227,
+    "usd": 142.28,
+    "final": 0.0142,
+    "max_dd": -0.025
+   },
+   "new_win": {
+    "n": 227,
+    "usd": 142.28,
+    "final": 0.0142,
+    "max_dd": -0.025
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 11,
+   "new_open": 11
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_aggr",
+   "title": "общая (агрессивная)",
+   "dep": 10000.0,
+   "sizing": "fixed",
+   "since": 1791165600.0,
+   "page_forward_final": -0.0137,
+   "old_all": {
+    "n": 1645,
+    "usd": 3467.39,
+    "final": 0.3467,
+    "max_dd": -0.0451
+   },
+   "new_all": {
+    "n": 1645,
+    "usd": 3467.39,
+    "final": 0.3467,
+    "max_dd": -0.0451
+   },
+   "old_win": {
+    "n": 102,
+    "usd": -137.28,
+    "final": -0.0137,
+    "max_dd": -0.0138
+   },
+   "new_win": {
+    "n": 102,
+    "usd": -137.28,
+    "final": -0.0137,
+    "max_dd": -0.0138
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 11,
+   "new_open": 11
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_aggr",
+   "title": "общая (агрессивная)",
+   "dep": 100000.0,
+   "sizing": "compound",
+   "since": 1790632800.0,
+   "page_forward_final": 0.0156,
+   "old_all": {
+    "n": 1645,
+    "usd": 40817.82,
+    "final": 0.4082,
+    "max_dd": -0.0622
+   },
+   "new_all": {
+    "n": 1645,
+    "usd": 40817.82,
+    "final": 0.4082,
+    "max_dd": -0.0622
+   },
+   "old_win": {
+    "n": 227,
+    "usd": 1427.83,
+    "final": 0.0143,
+    "max_dd": -0.0251
+   },
+   "new_win": {
+    "n": 227,
+    "usd": 1427.83,
+    "final": 0.0143,
+    "max_dd": -0.0251
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 11,
+   "new_open": 11
+  },
+  {
+   "family": "Общий счёт",
+   "book": "pair_aggr",
+   "title": "общая (агрессивная)",
+   "dep": 100000.0,
+   "sizing": "fixed",
+   "since": 1791165600.0,
+   "page_forward_final": -0.0138,
+   "old_all": {
+    "n": 1645,
+    "usd": 34777.28,
+    "final": 0.3478,
+    "max_dd": -0.0452
+   },
+   "new_all": {
+    "n": 1645,
+    "usd": 34777.28,
+    "final": 0.3478,
+    "max_dd": -0.0452
+   },
+   "old_win": {
+    "n": 102,
+    "usd": -1375.55,
+    "final": -0.0138,
+    "max_dd": -0.0138
+   },
+   "new_win": {
+    "n": 102,
+    "usd": -1375.55,
+    "final": -0.0138,
+    "max_dd": -0.0138
+   },
+   "old_no_cash": 0,
+   "new_no_cash": 0,
+   "old_open": 11,
+   "new_open": 11
+  }
+ ]
+}
