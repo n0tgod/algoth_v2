@@ -1530,7 +1530,7 @@ D5 (спека 14) — ЛИНЕЙКА забора: глубины лестни�
 - L663 `publish(name)`
 - L670 `main()`
 
-## research/dca_ladder/run_d6.py · 1222 строк
+## research/dca_ladder/run_d6.py · 1237 строк
 
 D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных мест или много мелких.
 
@@ -1556,25 +1556,25 @@ D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных 
 - L336 `SIZING_COMPOUND = 'compound'`
 - L337 `SIZING_FIXED = 'fixed'`
 - L340 `ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,…` — Хронологическая раздача кассы. Возвращает сводку и кривую счёта.
-- L487 `window(longs)` — Окно замера ПО РЕШЕНИЯМ, а не по календарю запуска.
-- L508 `peak_open(recs)` — Пик одновременности — В ЛОТАХ и В ИМЕНАХ, и это РАЗНЫЕ числа.
-- L547 `one_per_name(recs)` — Строгое биржевое правило: второй выбор по открытому имени пропущен.
-- L567 `full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE, lo…` — Депозит, при котором НИ ОДИН сигнал не отвергнут.
-- L641 `coverage_curve(recs, peak, deps, ticket=None, min_notional=MIN_…` — Сколько сигналов берётся при депозите меньше полного охвата.
-- L661 `gated_legs(limit=None, log=print, side='long')` — Гейтованные ноги журнала листов — БЕЗ реплея по барам.
-- L678 `leg_gated(g, side='long')` — Проходит ли нога листа гейты книги: сторона, край, отношение.
-- L691 `collect_recs(limit=None, src=None, log=print, rulers=None, hold…` — Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
-- L797 `run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_de…`
-- L850 `anchor_deposit(s)` — Опора по депозиту — встроенная проверка меры, считается В ОДНОМ прогоне на ОДНИХ исходах.
-- L890 `_anchor_block(a)`
-- L929 `_full_block(s)` — Депозит, при котором берётся каждый сигнал, и что тогда выходит.
-- L1024 `_shares_of(s)` — Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать тот прогон, который породил файл (урок R1…
-- L1031 `_pct(x, d=2)`
-- L1035 `report(s)`
-- L1135 `_restat_window(s, log=print)` — Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
-- L1155 `_window_line(w)`
-- L1170 `publish(name)`
-- L1177 `main()`
+- L502 `window(longs)` — Окно замера ПО РЕШЕНИЯМ, а не по календарю запуска.
+- L523 `peak_open(recs)` — Пик одновременности — В ЛОТАХ и В ИМЕНАХ, и это РАЗНЫЕ числа.
+- L562 `one_per_name(recs)` — Строгое биржевое правило: второй выбор по открытому имени пропущен.
+- L582 `full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE, lo…` — Депозит, при котором НИ ОДИН сигнал не отвергнут.
+- L656 `coverage_curve(recs, peak, deps, ticket=None, min_notional=MIN_…` — Сколько сигналов берётся при депозите меньше полного охвата.
+- L676 `gated_legs(limit=None, log=print, side='long')` — Гейтованные ноги журнала листов — БЕЗ реплея по барам.
+- L693 `leg_gated(g, side='long')` — Проходит ли нога листа гейты книги: сторона, край, отношение.
+- L706 `collect_recs(limit=None, src=None, log=print, rulers=None, hold…` — Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
+- L812 `run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_de…`
+- L865 `anchor_deposit(s)` — Опора по депозиту — встроенная проверка меры, считается В ОДНОМ прогоне на ОДНИХ исходах.
+- L905 `_anchor_block(a)`
+- L944 `_full_block(s)` — Депозит, при котором берётся каждый сигнал, и что тогда выходит.
+- L1039 `_shares_of(s)` — Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать тот прогон, который породил файл (урок R1…
+- L1046 `_pct(x, d=2)`
+- L1050 `report(s)`
+- L1150 `_restat_window(s, log=print)` — Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
+- L1170 `_window_line(w)`
+- L1185 `publish(name)`
+- L1192 `main()`
 
 ## research/dca_ladder/run_d7.py · 387 строк
 
@@ -1870,6 +1870,28 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L263 `report(s)`
 - L315 `publish(name)`
 - L321 `main(argv=None)`
+
+## research/dca_paper/cash_fix.py · 214 строк
+
+Отчёт о правке кассы бумаги (2026-10-10): насколько меняются книги.
+
+- L26 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L27 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L36 `OUT_MD = os.path.join(R.OUT, 'DCA-cash-fix.md')`
+- L37 `OUT_JSON = os.path.join(R.OUT, 'DCA-cash-fix.json')`
+- L38 `MEM_LIMIT_MB = 2200`
+- L39 `REAL_RATION = D6.ration`
+- L41 `T = lambda t: time.strftime('%Y-%m-%d', tim…`
+- L44 `packed_long(log)`
+- L55 `packed_short(log, now, launch)`
+- L69 `packed_pair(log, now, launch, ctx)`
+- L86 `both(packed, keys, now, ctx, log)` — Строки книг прежним и новым правилом кассы, с издержками.
+- L102 `cell_stats(rows, rk, dep, sizing, since)`
+- L109 `g(st, k)`
+- L113 `pct(v)`
+- L117 `num(v)`
+- L121 `main(argv=None)`
+- L187 `report(res, now)`
 
 ## research/dca_paper/cost_gap.py · 309 строк
 

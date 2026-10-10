@@ -75,6 +75,39 @@ def test_money_returns_before_it_is_spent():
           "минутой раньше — нет")
 
 
+def test_profit_returns_to_free_cash():
+    """Результат закрытой позиции возвращается в СВОБОДНЫЕ деньги (10.10).
+
+    Два места (доля 1/2), первая позиция закрылась с +100 % маржи: счёт
+    1.5 депозита, маржа следующих — 0.75 депозита. Свободно 1.5 — входят
+    две. По прежнему правилу свободно было 1.0 (вернулась только маржа),
+    и вторая получала отказ кассы при счёте, на котором она помещается.
+    Убыток симметрично уменьшает свободное.
+    """
+    a = _rec(1_700_000_000, hold_h=1.0, pnl=1.0, sym="A")
+    t = int(a["exit_ts"]) + 60
+    b = _rec(t, hold_h=10.0, pnl=0.0, sym="B")
+    c = _rec(t + 1, hold_h=10.0, pnl=0.0, sym="C")
+    new = D6.ration([a, b, c], 0.5, deposit=1000.0, min_notional=0.0,
+                    profit_to_cash=True)
+    old = D6.ration([a, b, c], 0.5, deposit=1000.0, min_notional=0.0,
+                    profit_to_cash=False)
+    assert new["taken"] == 3 and new["no_cash"] == 0, new
+    assert old["taken"] == 2 and old["no_cash"] == 1, old
+    # убыток −80 % маржи: счёт 0.6, маржа 0.3, свободно 0.6 — две входят;
+    # третья (0.3 > 0) — нет. По прежнему правилу свободно было 1.0 — три.
+    a2 = _rec(1_700_000_000, hold_h=1.0, pnl=-0.8, sym="A")
+    d = _rec(t + 2, hold_h=10.0, pnl=0.0, sym="D")
+    new = D6.ration([a2, b, c, d], 0.5, deposit=1000.0, min_notional=0.0,
+                    profit_to_cash=True)
+    old = D6.ration([a2, b, c, d], 0.5, deposit=1000.0, min_notional=0.0,
+                    profit_to_cash=False)
+    assert new["taken"] == 3 and new["no_cash"] == 1, new
+    assert old["taken"] == 4 and old["no_cash"] == 0, old
+    print("ok  касса: прибыль закрытой позиции свободна для следующих, "
+          "убыток уменьшает свободное (прежнее правило — нет)")
+
+
 def test_min_notional_rejects_not_rounds():
     """Мелкий ордер отвергается, и причина считается отдельной колонкой."""
     # доля 1/600 при депозите 3000 → маржа $5, плечо 4 → нотионал $20,
@@ -626,6 +659,7 @@ def _poison_d6(lit, sub, fn):
 
 
 TESTS = [test_budget_is_respected, test_money_returns_before_it_is_spent,
+         test_profit_returns_to_free_cash,
          test_min_notional_rejects_not_rounds, test_leverage_sets_the_ticket,
          test_best_first_within_a_second, test_deposit_units_and_curve,
          test_report_names_both_refusals, test_concentration_names_one_coin,

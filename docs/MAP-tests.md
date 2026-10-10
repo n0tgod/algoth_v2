@@ -839,7 +839,7 @@
 - L467 `CONTROLS = [('нулевая σ пропускается', _control_si…`
 - L476 `main()`
 
-## research/dca_ladder/test_run_d6.py · 667 строк
+## research/dca_ladder/test_run_d6.py · 701 строк
 
 Тесты D6 — нормировка кассы.
 
@@ -848,37 +848,38 @@
 - L37 `_rec(at, hold_h=1.0, pnl=0.1, lev=4.0, fwd=100.0, sym='AAAUSDT')` — Позиция с готовым исходом: раздаче больше ничего не нужно.
 - L45 `test_budget_is_respected()` — Шесть мест — не больше шести позиций разом, сколько ни предлагай.
 - L59 `test_money_returns_before_it_is_spent()` — Закрытие в ту же секунду освобождает кассу до нового входа.
-- L78 `test_min_notional_rejects_not_rounds()` — Мелкий ордер отвергается, и причина считается отдельной колонкой.
-- L92 `test_leverage_sets_the_ticket()` — Меньше плечо — крупнее минимальный кусок депозита, у́же книга.
-- L109 `test_best_first_within_a_second()` — Внутри секунды деньги достаются лучшим по |прогноз|, не первым.
-- L121 `test_deposit_units_and_curve()` — Доход и просадка считаются в долях ДЕПОЗИТА, а не позиции.
-- L134 `test_report_names_both_refusals()`
-- L148 `test_concentration_names_one_coin()` — Итог, принадлежащий одному имени, обязан быть виден числом.
-- L172 `_pc(x)`
-- L176 `test_report_carries_concentration()` — Число, не доехавшее до отчёта, владельцу не существует.
-- L197 `_control_no_concentration()` — Итог без лучшего имени, равный итогу, — колонка ничего не считает.
-- L216 `test_window_is_measured_and_reported()` — Доход в процентах без окна не читается — окно обязано быть в отчёте.
-- L238 `test_restat_says_the_journal_grew()` — Окно, дописанное позже прогона, обязано назвать хвост числом.
-- L255 `test_percent_of_deposit_is_invariant_to_deposit()` — Пока пол биржи не связывает, процент к депозиту от депозита не зависит.
-- L282 `test_scale_invariance_holds_on_the_cash_boundary()` — Тот же набор сделок — тот же процент, на любом депозите.
-- L305 `test_deposit_anchor_catches_a_broken_measure()` — Расхождение при СОВПАВШЕМ наборе — сломанная мера, не находка.
-- L340 `test_peak_open_separates_lots_from_names()` — Пик в ЛОТАХ и пик в ИМЕНАХ — разные числа, и оба обязаны быть.
-- L363 `test_one_per_name_skips_repeats()` — Строгое правило биржи: повтор по открытому имени не берётся.
-- L379 `test_full_cover_takes_every_signal()` — Депозит полного охвата берёт ВСЕ и выводится из слабейшего плеча.
-- L412 `test_report_carries_full_cover()` — Число, не доехавшее до отчёта, владельцу не существует.
-- L432 `_control_lots_as_names()` — Пик лотов, выданный за пик имён, — ровно то, что нашёл владелец.
-- L452 `_control_no_full_cover()` — Билет от МЕДИАННОГО плеча вместо слабейшего — охват неполон.
-- L474 `_control_no_window()` — Отчёт без окна — доход в процентах непонятно за что.
-- L488 `_control_blind_anchor()` — Опора, объявляющая совпадением всё подряд, не проверяет ничего.
-- L508 `_control_no_budget()` — Без вычета маржи любая доля берёт всё — ширина побеждает даром.
-- L528 `_control_no_min_notional()` — Без минимума биржи мелкий ордер проходит, и книга шире, чем можно.
-- L544 `_control_arrival_order()` — Раздача по порядку прихода: узкая книга берёт случайные сигналы.
-- L559 `test_open_drawdown_is_not_the_equity_drawdown()` — Просадка ОДНОВРЕМЕННО ОТКРЫТЫХ — своя величина (вопрос владельца).
-- L593 `_control_open_dd_counts_the_closing_hour()` — Час закрытия попал в открытые — реализованное выдано за отметку.
-- L600 `_poison_d6(lit, sub, fn)` — Подделка строки `run_d6` и прогон проверки.
-- L628 `TESTS = [test_budget_is_respected, test_money_r…`
-- L644 `CONTROLS = [('бюджет не вычитается', _control_no_b…`
-- L657 `main()`
+- L78 `test_profit_returns_to_free_cash()` — Результат закрытой позиции возвращается в СВОБОДНЫЕ деньги (10.10).
+- L111 `test_min_notional_rejects_not_rounds()` — Мелкий ордер отвергается, и причина считается отдельной колонкой.
+- L125 `test_leverage_sets_the_ticket()` — Меньше плечо — крупнее минимальный кусок депозита, у́же книга.
+- L142 `test_best_first_within_a_second()` — Внутри секунды деньги достаются лучшим по |прогноз|, не первым.
+- L154 `test_deposit_units_and_curve()` — Доход и просадка считаются в долях ДЕПОЗИТА, а не позиции.
+- L167 `test_report_names_both_refusals()`
+- L181 `test_concentration_names_one_coin()` — Итог, принадлежащий одному имени, обязан быть виден числом.
+- L205 `_pc(x)`
+- L209 `test_report_carries_concentration()` — Число, не доехавшее до отчёта, владельцу не существует.
+- L230 `_control_no_concentration()` — Итог без лучшего имени, равный итогу, — колонка ничего не считает.
+- L249 `test_window_is_measured_and_reported()` — Доход в процентах без окна не читается — окно обязано быть в отчёте.
+- L271 `test_restat_says_the_journal_grew()` — Окно, дописанное позже прогона, обязано назвать хвост числом.
+- L288 `test_percent_of_deposit_is_invariant_to_deposit()` — Пока пол биржи не связывает, процент к депозиту от депозита не зависит.
+- L315 `test_scale_invariance_holds_on_the_cash_boundary()` — Тот же набор сделок — тот же процент, на любом депозите.
+- L338 `test_deposit_anchor_catches_a_broken_measure()` — Расхождение при СОВПАВШЕМ наборе — сломанная мера, не находка.
+- L373 `test_peak_open_separates_lots_from_names()` — Пик в ЛОТАХ и пик в ИМЕНАХ — разные числа, и оба обязаны быть.
+- L396 `test_one_per_name_skips_repeats()` — Строгое правило биржи: повтор по открытому имени не берётся.
+- L412 `test_full_cover_takes_every_signal()` — Депозит полного охвата берёт ВСЕ и выводится из слабейшего плеча.
+- L445 `test_report_carries_full_cover()` — Число, не доехавшее до отчёта, владельцу не существует.
+- L465 `_control_lots_as_names()` — Пик лотов, выданный за пик имён, — ровно то, что нашёл владелец.
+- L485 `_control_no_full_cover()` — Билет от МЕДИАННОГО плеча вместо слабейшего — охват неполон.
+- L507 `_control_no_window()` — Отчёт без окна — доход в процентах непонятно за что.
+- L521 `_control_blind_anchor()` — Опора, объявляющая совпадением всё подряд, не проверяет ничего.
+- L541 `_control_no_budget()` — Без вычета маржи любая доля берёт всё — ширина побеждает даром.
+- L561 `_control_no_min_notional()` — Без минимума биржи мелкий ордер проходит, и книга шире, чем можно.
+- L577 `_control_arrival_order()` — Раздача по порядку прихода: узкая книга берёт случайные сигналы.
+- L592 `test_open_drawdown_is_not_the_equity_drawdown()` — Просадка ОДНОВРЕМЕННО ОТКРЫТЫХ — своя величина (вопрос владельца).
+- L626 `_control_open_dd_counts_the_closing_hour()` — Час закрытия попал в открытые — реализованное выдано за отметку.
+- L633 `_poison_d6(lit, sub, fn)` — Подделка строки `run_d6` и прогон проверки.
+- L661 `TESTS = [test_budget_is_respected, test_money_r…`
+- L678 `CONTROLS = [('бюджет не вычитается', _control_no_b…`
+- L691 `main()`
 
 ## research/dca_ladder/test_run_d7.py · 283 строк
 

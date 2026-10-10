@@ -338,7 +338,7 @@ SIZING_FIXED = "fixed"            # маржа = доля СТАРТОВОГО �
 
 
 def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
-           keep_rows=False, sizing=SIZING_COMPOUND):
+           keep_rows=False, sizing=SIZING_COMPOUND, profit_to_cash=False):
     """Хронологическая раздача кассы. Возвращает сводку и кривую счёта.
 
     `sizing` — формат размера (решение владельца 2026-10-09): при
@@ -357,6 +357,16 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
     решение владельца 2026-09-07): билет у сторон свой, а касса одна, и
     считать их двумя вызовами значило бы снова развести деньги по двум
     счетам — ровно то, чего просили не делать.
+
+    Закрытая позиция возвращает в СВОБОДНЫЕ деньги маржу ВМЕСТЕ с
+    результатом (`profit_to_cash`, правило с 2026-10-10). До того
+    возвращалась только маржа, а результат шёл лишь в счёт: сложный
+    процент брал маржу долей выросшего счёта, свободные деньги оставались
+    в масштабе стартового депозита, и книга теряла места по мере роста
+    (`pair_aggr` 100 $: счёт 665 $, маржа 41.59 $, свободно 15.96 $ — две
+    позиции вместо шестнадцати); убыток симметрично не уменьшал свободное.
+    Живой счёт так не считает. `profit_to_cash=False` — прежнее правило,
+    только для сравнения в отчёте о правке.
     """
     share_of = share if callable(share) else (lambda _r: share)
     order = queue(recs)
@@ -376,7 +386,7 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
         still = []
         for p in live:
             if int(p[0]) <= now:
-                free += p[1]
+                free += p[1] * (1.0 + p[2]) if profit_to_cash else p[1]
                 equity += p[1] * p[2]
             else:
                 still.append(p)
@@ -388,6 +398,11 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
         base = equity if sizing == SIZING_COMPOUND else float(deposit)
         margin = base * float(share_of(r))
         notional = margin * r["lev"]
+        if margin <= 0.0:
+            # счёт съеден целиком — денег нет, и это отказ кассы, а не
+            # «мельче минимума»
+            no_cash += 1
+            continue
         if notional * RUNG_SHARE < min_notional:
             too_small += 1
             continue
