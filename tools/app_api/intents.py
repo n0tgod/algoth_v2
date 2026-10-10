@@ -299,6 +299,18 @@ def intent_row(sub, st, rk, sk, g, pl, margin, share, base, now):
            "lev": pl["lev"], "fav_bp": g.get("fav"), "sched_end": term_ts,
            "fills": [[pl["entry_ts"], pl["entry"], weights[0]]]}
     lv = R.levels_of(row, sk, look=pl["look"]) or {}
+    # Уровни на КАЖДОЙ глубине — тем же `levels_of`, по плановым ценам
+    # рунгов: исполнитель берёт пол глубины k отсюда и не считает
+    # ликвидацию сам (второй копии формулы в Rust нет). Цель он
+    # переставляет от фактической средней — `avg × (1 ± take_frac)`.
+    by_depth = []
+    for k in range(1, len(rungs) + 1):
+        rk_row = dict(row, fills=[[pl["entry_ts"], float(px), float(w)]
+                                  for px, w in zip(rungs[:k], weights[:k])])
+        lk = R.levels_of(rk_row, sk, look=pl["look"]) or {}
+        by_depth.append({"px": float(rungs[k - 1]), "share": float(weights[k - 1]),
+                         "avg": lk.get("avg"), "take_px": lk.get("take_px"),
+                         "floor_px": lk.get("floor_px"), "liq_px": lk.get("liq_px")})
     return {"kind": "entry", "mode": "dry", "sub": sub["id"], "cell": rk, "book": sk,
             "sizing": (st.get("sizing") or R.DEFAULT_SIZING),
             "sym": g["sym"], "side": side, "arm": g.get("arm"), "hour": g.get("hour"),
@@ -306,9 +318,11 @@ def intent_row(sub, st, rk, sk, g, pl, margin, share, base, now):
             "computed_at": float(now), "lag_s": round(float(now) - float(g["at"]), 1),
             "px_ref": pl["entry"],
             "lev": pl["lev"], "binder": pl.get("binder"),
-            "margin_usd": round(float(margin), 4), "notional_usd": round(float(margin) * pl["lev"], 4),
+            "margin_usd": round(float(margin), 4),
             "share": share, "cash_usd": round(float(base), 4),
-            "rungs": [{"px": float(px), "share": float(w)} for px, w in zip(rungs, weights)],
+            "rungs": by_depth,
+            # нотионал позиции при ПОЛНОЙ лестнице — Σ доли × маржа × плечо
+            "notional_full_usd": round(float(margin) * pl["lev"] * sum(weights), 4),
             "rungs_full": pl["rungs_full"],
             "take_frac": abs(float(pl["take"]["frac"])) if pl.get("take") else None,
             "take_px": lv.get("take_px"), "floor_px": lv.get("floor_px"),
@@ -324,10 +338,10 @@ def skip_row(sub, rk, sk, g, why, now):
             "arm": g.get("arm"), "fwd_bp": g.get("fwd"), "why": why}
 
 
-def _append(path, rows):
-    """Дозапись с растущим `seq`; возвращает число строк."""
+def _append(path, rows, seqs=False):
+    """Дозапись с растущим `seq`; возвращает число строк (или список seq)."""
     if not rows:
-        return 0
+        return [] if seqs else 0
     os.makedirs(os.path.dirname(path), exist_ok=True)
     seq = 0
     try:
@@ -339,11 +353,13 @@ def _append(path, rows):
                     pass
     except OSError:
         pass
+    out = []
     with open(path, "a", encoding="utf-8") as f:
         for r in rows:
             seq += 1
+            out.append(seq)
             f.write(json.dumps(dict(r, seq=seq, written_at=time.time()), ensure_ascii=False) + "\n")
-    return len(rows)
+    return out if seqs else len(rows)
 
 
 def intents_path(root, sub_id):
@@ -368,12 +384,27 @@ def read_rows(path, limit=None):
     return out[-limit:] if limit else out
 
 
-def busy_names(st, book_cell, rk, sk, now):
+def exec_status(root, sub_id):
+    """Состояние живого исполнителя подписки (`ladder_status.json`); нет — None."""
+    try:
+        with open(os.path.join(root, sub_id, "ladder_status.json"), encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+def busy_names(st, book_cell, rk, sk, now, ex=None):
     """Имена, занятые у источника: живые намерения подписки по той же
     книге-источнику и открытые позиции той же книги в бумажной ячейке
     (правило одной на имя — свойство ИСТОЧНИКА, `run_paper.build_rows`).
+    У живой подписки (`ex` — состояние исполнителя) добавляются ВСЕ
+    имена, которые держит исполнитель: счёт односторонний, второе
+    направление по тому же имени площадка свела бы в одну позицию.
     Возвращает {имя: кто держит}."""
     out = {}
+    for q in ((ex or {}).get("positions") or []):
+        if q.get("sym"):
+            out[q["sym"]] = "исполнитель держит (односторонний счёт)"
     for q in ((book_cell or {}).get("open") or {}).get("positions") or []:
         if (q.get("book") or rk) == sk and q.get("sym"):
             out[q["sym"]] = "бумага держит"
@@ -393,6 +424,10 @@ def decide(sub, st, legs_by_family, book_cell, env, log=print):
     rk = sub["book"]
     dep = float(sub["deposit"])
     sizing = st.get("sizing") or R.DEFAULT_SIZING
+    ex = env.get("exec")
+    if ex is not None:
+        # касса живой подписки — депозит плюс реализованное ИСПОЛНИТЕЛЕМ
+        st = dict(st, realized_usd=float(ex.get("realized_usd") or 0.0))
     cash = sub_cash(sub, st)
     since = float((st.get("follow") or {}).get("since") or sub["created"])
     it = dict(st.get("intents") or {})
@@ -401,6 +436,17 @@ def decide(sub, st, legs_by_family, book_cell, env, log=print):
     pending = list(it.get("pending") or [])
     # живые намерения: срок вышел — деньги и имя свободны
     live = {k: v for k, v in live.items() if float(v.get("term_ts") or 0) > now}
+    if ex is not None:
+        # У живой подписки деньги и имена держит ИСПОЛНИТЕЛЬ: его открытые
+        # позиции плюс намерения, которых он ещё не прочёл (seq больше
+        # прочитанного). Намерение, которое он отверг или уже закрыл, денег
+        # не держит — иначе касса подписки стояла бы занятой до срока.
+        done = int(ex.get("seq_done") or 0)
+        live = {k: v for k, v in live.items() if int(v.get("seq") or 0) > done or not v.get("seq")}
+        for q in ex.get("positions") or []:
+            live[f"exec:{q.get('sym')}:{int(float(q.get('pos_at') or 0))}"] = {
+                "sym": q.get("sym"), "book": q.get("book"), "margin_usd": float(q.get("margin_usd") or 0.0),
+                "term_ts": float(q.get("term_ts") or 0.0) or now + 1, "side": q.get("side"), "exec": True}
     seen = {k: v for k, v in seen.items() if float(v) > now - SEEN_KEEP_S}
     out, skips = [], []
     launch = env.get("launch")
@@ -463,7 +509,7 @@ def decide(sub, st, legs_by_family, book_cell, env, log=print):
                 items = [(g, t0) for g, t0 in items if leg_key(sk, g) in kept_keys]
         # внутри секунды — лучшие по |прогноз| первыми (правило кассы D6)
         items.sort(key=lambda x: (int(float(x[0]["at"])), -abs(float(x[0].get("fwd") or 0))))
-        busy = busy_names(st, book_cell, rk, sk, now)
+        busy = busy_names(dict(st, intents=dict(it, live=live)), book_cell, rk, sk, now, ex=ex)
         for g, t0 in items:
             k = leg_key(sk, g)
             why = []
@@ -532,6 +578,44 @@ def decide(sub, st, legs_by_family, book_cell, env, log=print):
                "last_decided_at": (max([r["decided_at"] for r in out]) if out else it.get("last_decided_at")),
                "cash_usd": cash, "sizing": sizing})
     return out, skips, it
+
+
+def guard_exits(sub, ex, it, env, log=print):
+    """Выходы книги по охране рынком (спека 14 §13) для позиций живого
+    исполнителя — ТОЙ ЖЕ функцией, что бумага (`wave.Market.k_star`):
+    позиция закрывается по закрытию часа, к концу которого средний ход
+    прокси-имён с входа достиг порога книги. Сводка часа есть только
+    после его закрытия, поэтому будущий час триггером не бывает. Выход
+    по позиции пишется один раз (`it["exits"]`)."""
+    c = core()
+    R = c["R"]
+    sent = dict(it.get("exits") or {})
+    todo = []
+    for q in ex.get("positions") or []:
+        book = q.get("book")
+        pct = R.wave_guard_of(book) if book else None
+        if not pct or (q.get("side") or "") != "short":
+            continue
+        key = f"{q.get('sym')}:{int(float(q.get('pos_at') or 0))}"
+        if key in sent:
+            continue
+        todo.append((key, q, float(pct)))
+    out = []
+    if todo:
+        mkt = env.get("market")
+        if mkt is None:
+            import wave as WV                                # noqa: E402
+            mkt = WV.Market(WV.Hours())
+        for key, q, pct in todo:
+            k, _miss = mkt.k_star(float(q["pos_at"]), pct, R.H24_HOLD_H - 1)
+            if k is None:
+                continue
+            sent[key] = float(env.get("now") or time.time())
+            out.append({"kind": "exit", "sub": sub["id"], "sym": q.get("sym"), "book": q.get("book"),
+                        "side": q.get("side"), "decided_at": float(q["pos_at"]), "reason": "market",
+                        "wave_k": int(k), "wave_pct": pct, "computed_at": float(env.get("now") or time.time())})
+    it["exits"] = {k: v for k, v in sent.items() if v > float(env.get("now") or time.time()) - SEEN_KEEP_S}
+    return out
 
 
 # ------------------------------------------------------------ сверка с бумагой
@@ -707,12 +791,25 @@ def tick(db, dca, root, log=print, env=None):
     for s in subs:
         st = json.loads(s["state_json"] or "{}")
         book_cell = books.get(cell_key(s["book"], s["deposit"], st.get("sizing")))
+        ex = exec_status(root, s["id"]) if s["mode"] == "live" else None
+        if ex is not None:
+            st["realized_usd"] = float(ex.get("realized_usd") or 0.0)
         try:
-            ints, skips, it = decide(s, st, legs_by_family, book_cell, env, log=log)
+            ints, skips, it = decide(s, st, legs_by_family, book_cell, dict(env, exec=ex), log=log)
             if ints:
-                n += _append(intents_path(root, s["id"]), ints)
+                seqs = _append(intents_path(root, s["id"]), ints, seqs=True)
+                n += len(seqs)
+                for r, q in zip(ints, seqs):
+                    k = leg_key(r["book"], {"sym": r["sym"], "at": r["decided_at"]})
+                    if k in (it.get("live") or {}):
+                        it["live"][k]["seq"] = q
                 log(f"намерения {s['book']} {float(s['deposit']):g} $: входов {len(ints)}"
                     + (f", отказов {len(skips)}" if skips else ""))
+            if ex is not None:
+                exits = guard_exits(s, ex, it, env, log=log)
+                if exits:
+                    _append(intents_path(root, s["id"]), exits)
+                    log(f"намерения {s['book']}: выходов по охране рынком {len(exits)}")
             if skips:
                 _append(skips_path(root, s["id"]), skips)
             it.pop("error", None)

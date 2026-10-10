@@ -374,6 +374,97 @@ fn main() {
                 bot::live::run_loop(ex, interval);
             }
         }
+        Some("ladder") => {
+            // bot ladder --dir bot/out/dca/<подписка> --base URL --keys-stdin
+            //            [--interval-sec 5] [--dry] [--once]
+            //
+            // Исполнитель книг Ladder (спека 15 §10a). Ключ подписки
+            // приходит ТОЛЬКО стандартным вводом от запускающего
+            // процесса (`tools/app_api/ladder_run.py`): на диске и в
+            // аргументах его нет. Вся логика — в bot::ladder.
+            let mut dir = None;
+            let mut base: Option<String> = None;
+            let mut keys_stdin = false;
+            let mut interval = 5u64;
+            let mut dry = false;
+            let mut once = false;
+            let mut it = args[2..].iter();
+            while let Some(a) = it.next() {
+                let mut val = || it.next().cloned().unwrap_or_default();
+                match a.as_str() {
+                    "--dir" => dir = Some(val()),
+                    "--base" => base = Some(val()),
+                    "--keys-stdin" => keys_stdin = true,
+                    "--interval-sec" => interval = val().parse().unwrap_or(5),
+                    "--dry" => dry = true,
+                    "--once" => once = true,
+                    other => {
+                        eprintln!("неизвестный ключ {other}");
+                        exit(2);
+                    }
+                }
+            }
+            let (Some(dir), Some(base)) = (dir, base) else {
+                eprintln!("нужны --dir и --base");
+                exit(2);
+            };
+            if !keys_stdin {
+                eprintln!("ключ подписки — только --keys-stdin");
+                exit(2);
+            }
+            let keys = match bot::venue::Keys::from_stdin() {
+                Ok(k) => k,
+                Err(e) => {
+                    eprintln!("ключ не читается: {e}");
+                    exit(2);
+                }
+            };
+            let mut v = bot::venue::Venue::new(&base, keys);
+            match v.sync_clock() {
+                Ok(skew) => eprintln!("часы: сдвиг {skew} мс"),
+                Err(e) => {
+                    eprintln!("часы не синхронизируются: {e}");
+                    exit(1);
+                }
+            }
+            let cfg = bot::ladder::LadderCfg { dir: dir.clone().into(), dry };
+            if let Err(e) = std::fs::create_dir_all(&cfg.dir) {
+                eprintln!("каталог подписки не создаётся: {e}");
+                exit(2);
+            }
+            if let Err(e) = bot::ladder::claim_pid(&cfg) {
+                eprintln!("{e}");
+                exit(3);
+            }
+            eprintln!(
+                "исполнитель Ladder: {dir}, {} — {base}",
+                if dry { "СУХОЙ (заявки не отправляются)" } else { "ЖИВЫЕ заявки" }
+            );
+            let lx = match bot::ladder::Ladder::open(cfg, v) {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("исполнитель не поднялся: {e}");
+                    exit(2);
+                }
+            };
+            if once {
+                let mut lx = lx;
+                let now = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_millis() as i64)
+                    .unwrap_or(0);
+                let rep = lx.tick(now);
+                eprintln!(
+                    "такт: входов {}, закрытий {}, отказов {}, ошибка: {}",
+                    rep.opened,
+                    rep.closed,
+                    rep.rejected,
+                    lx.last_error.as_deref().unwrap_or("нет")
+                );
+            } else {
+                bot::ladder::run_loop(lx, interval);
+            }
+        }
         Some("shadow") => {
             // bot shadow --s8 DIR --journal DIR [--arm gbm]
             //            [--capital 1000] [--fees PATH] [--now-ms N]

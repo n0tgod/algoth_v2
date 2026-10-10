@@ -152,7 +152,9 @@ def tick(db, dca, root, log=print):
     if not dca or not dca.get("books"):
         return 0
     n = 0
-    for s in db.c.execute("SELECT * FROM subscriptions WHERE status='active'").fetchall():
+    # Подписку в живом режиме ведёт исполнитель: две записи одной книги
+    # в одном журнале читались бы двумя сделками (спека 15 §10a).
+    for s in db.c.execute("SELECT * FROM subscriptions WHERE status='active' AND mode!='live'").fetchall():
         st = json.loads(s["state_json"] or "{}")
         book = (dca.get("books") or {}).get(cell_key(s["book"], s["deposit"], st.get("sizing")))
         if not book:

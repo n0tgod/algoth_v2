@@ -255,7 +255,10 @@ def test_http_routing_auth_and_stage_gates():
             assert st == 200 and SECRET not in json.dumps(k)
             st, s = _http(port, "POST", "/api/v1/subscriptions", {"key_id": k["key_id"], "book": "optimal_h", "deposit": 1000}, token=tok)
             assert st == 200
-            assert _http(port, "POST", f"/api/v1/subscriptions/{s['subscription_id']}/arm", {}, token=tok)[0] == 501
+            # перевод в live без подтверждения словом — отказ, не 501
+            code, body = _http(port, "POST", f"/api/v1/subscriptions/{s['subscription_id']}/arm", {}, token=tok)
+            assert code == 400 and "подтверждение" in body["error"], (code, body)
+            assert _http(port, "POST", f"/api/v1/subscriptions/{s['subscription_id']}/cmd", {}, token=tok)[0] == 501
             assert _http(port, "POST", "/api/v1/cmd", {"cmd": "kill"}, token=tok)[0] == 501
             assert _http(port, "GET", "/api/v1/books", token=tok)[1]["deposits"] == [100.0, 1000.0, 10000.0]
             st, stt = _http(port, "GET", "/api/v1/state", token=tok)
@@ -827,6 +830,220 @@ def test_intents_sources_are_read_as_tail_once_and_tick_feeds_state_and_parity()
     finally:
         D2.build_levels = orig
     print("ok  такт намерений: хвост источников, файлы с seq, сводка в состоянии, сверка с бумагой, сброс")
+
+
+
+def test_intents_for_live_sub_use_executor_cash_names_levels_and_guard_exits():
+    """Живая подписка: уровни на КАЖДОЙ глубине — `levels_of` по плановым
+    ценам рунгов; касса — депозит + реализованное исполнителем; имена и
+    деньги держат позиции исполнителя (односторонний счёт: любое имя
+    исполнителя занято для обеих сторон); намерение, прочитанное
+    исполнителем, денег не держит; охрана рынком даёт выход один раз."""
+    import intents as I
+    c = I.core()
+    R, D2, L = c["R"], c["D2"], c["L"]
+    t0 = 1_791_000_000 - 1_791_000_000 % 3600
+    at = t0 + 1440 * 60
+    bars = _flat_bars(t0, n=1440 + 5)
+    now = at + 4 * 60 + 5
+    orig = D2.build_levels
+    D2.build_levels = lambda w, i: [97.0, 94.0, 91.0, 103.0]
+    try:
+        g = {"arm": "nn", "sym": "AAAUSDT", "hour": "x", "at": float(at), "side": "long",
+             "fwd": 120.0, "fz": 2.0, "adv_q": -300.0, "fav": 250.0, "rr": 2.5}
+        sub = {"id": "sub_l", "book": "optimal", "deposit": 1000.0, "created": at - 10, "mode": "live"}
+        env = {"now": now, "bars": _bars_fn(bars), "launch": {}, "tiers": {}}
+        ints, _sk, it = I.decide(sub, {"sizing": "compound"}, {"sit": [g]}, None, env, log=lambda *a: None)
+        r = ints[0]
+        look = lambda notl: L.mmr_for_notional([], notl, flat=D2.FLAT_MMR)      # noqa: E731
+        assert [x["px"] for x in r["rungs"]] == [100.0, 97.0, 94.0, 91.0]
+        for k in range(1, 5):
+            row = {"sym": "AAAUSDT", "side": "long", "entry_px": 100.0, "margin": r["margin_usd"], "lev": r["lev"],
+                   "fav_bp": 250.0, "sched_end": r["term_ts"],
+                   "fills": [[r["entry_ts"], x["px"], x["share"]] for x in r["rungs"][:k]]}
+            lv = R.levels_of(row, "optimal", look=look)
+            got = r["rungs"][k - 1]
+            assert abs(got["floor_px"] - lv["floor_px"]) < 1e-9 and abs(got["avg"] - lv["avg"]) < 1e-9, (k, got, lv)
+        floors = [x["floor_px"] for x in r["rungs"]]
+        assert floors == sorted(floors), "у лонга пол поднимается с глубиной (средняя ниже, ликвидация выше)"
+        assert r["notional_full_usd"] == round(r["margin_usd"] * r["lev"], 4)
+        # исполнитель держит AAAUSDT шортом другой книги — лонг того же имени не входит
+        ex = {"seq_done": 3, "realized_usd": 50.0, "positions": [
+            {"sym": "AAAUSDT", "side": "short", "book": "optimal_h", "pos_at": at - 3600, "margin_usd": 25.0,
+             "term_ts": at + 3600}]}
+        _i, sk, _ = I.decide(sub, {"sizing": "compound"}, {"sit": [g]}, None, dict(env, exec=ex), log=lambda *a: None)
+        assert not _i and sk[0]["why"] == "одна позиция на имя: исполнитель держит (односторонний счёт)", sk
+        # касса = депозит + реализованное исполнителем; маржа исполнителя занята
+        g2 = dict(g, sym="BBBUSDT")
+        i2, _s, it2 = I.decide(sub, {"sizing": "compound"}, {"sit": [g2]}, None, dict(env, exec=ex), log=lambda *a: None)
+        assert i2[0]["cash_usd"] == 1050.0 and abs(i2[0]["margin_usd"] - 1050.0 * R.share(1000.0, "optimal")) < 1e-9
+        assert any(v.get("exec") for v in it2["live"].values())
+        # намерение, прочитанное исполнителем (seq ≤ seq_done), денег не держит
+        st_live = {"sizing": "compound", "intents": {"live": {
+            "optimal:CCCUSDT:1": {"sym": "CCCUSDT", "book": "optimal", "margin_usd": 1000.0, "term_ts": now + 999, "seq": 2},
+            "optimal:DDDUSDT:1": {"sym": "DDDUSDT", "book": "optimal", "margin_usd": 1040.0, "term_ts": now + 999, "seq": 9}}}}
+        _i3, sk3, it3 = I.decide(sub, st_live, {"sit": [dict(g, sym="EEEUSDT")]}, None, dict(env, exec=dict(ex, positions=[])),
+                                 log=lambda *a: None)
+        assert "optimal:CCCUSDT:1" not in it3["live"] and "optimal:DDDUSDT:1" in it3["live"]
+        assert sk3 and sk3[0]["why"].startswith("нет кассы"), "непрочитанное намерение на 1040 $ держит кассу 1050 $"
+    finally:
+        D2.build_levels = orig
+
+    class Mkt:
+        def __init__(self):
+            self.calls = []
+
+        def k_star(self, at, pct, kmax):
+            self.calls.append((at, pct, kmax))
+            return (3, 0) if at == 100.0 else (None, 0)
+    mkt = Mkt()
+    ex = {"positions": [{"sym": "SSSUSDT", "side": "short", "book": "aggr_h", "pos_at": 100.0},
+                        {"sym": "TTTUSDT", "side": "short", "book": "aggr_h", "pos_at": 200.0},
+                        {"sym": "LLLUSDT", "side": "long", "book": "aggr", "pos_at": 100.0}]}
+    it = {}
+    out = I.guard_exits({"id": "s"}, ex, it, {"market": mkt, "now": 1000.0})
+    assert [(o["kind"], o["sym"], o["reason"], o["wave_k"]) for o in out] == [("exit", "SSSUSDT", "market", 3)], out
+    assert mkt.calls[0] == (100.0, R.wave_guard_of("aggr_h"), R.H24_HOLD_H - 1)
+    assert len(mkt.calls) == 2, "длинная книга охраны не имеет"
+    assert I.guard_exits({"id": "s"}, ex, it, {"market": mkt, "now": 1001.0}) == [], "выход пишется один раз"
+    print("ok  намерения живой подписки: уровни по глубинам, касса и имена исполнителя, охрана рынком")
+
+
+# ------------------------------------------------------------ живой режим (L3)
+
+def test_arm_needs_word_switch_fresh_equity_and_one_live_per_key():
+    """Перевод в живые сделки — только кнопкой владельца с подтверждением
+    словом `книга:депозит`; рубильник оператора, свежее эквити не ниже
+    кассы и одна живая подписка на ключ проверяются машиной, отказ —
+    словами. После перевода: входы выключаются файлом (позиции ведутся),
+    KILL — файлом, обратно в сухой — только без позиций; следователь
+    живую подписку не ведёт; состояние берёт позиции у исполнителя."""
+    with tempfile.TemporaryDirectory() as tmp:
+        root = os.path.join(tmp, "exec")
+        app, _ = _app(tmp, out=tmp, exec_root=root)
+        acc = _login(app)
+        st, k = app.add_key(acc, "bybit", "ABCD1234KEY", SECRET)
+        st, sub = app.add_subscription(acc, k["key_id"], "optimal_h", 1000)
+        sid = sub["subscription_id"]
+        code, r = app.arm(acc, sid, "optimal_h:100")
+        assert code == 400 and "optimal_h:1000" in r["error"], r
+        code, r = app.arm(acc, sid, "optimal_h:1000")
+        assert code == 409 and "рубильник" in r["error"], r
+        assert app.set_live_enabled(acc, True)[1]["live_enabled"] is True
+        # эквити от добавления ключа (1500) свежее суток и не ниже кассы 1000
+        code, r = app.arm(acc, sid, "optimal_h:1000")
+        assert code == 200 and r["mode"] == "live", r
+        row = app.db.subscription(sid, acc["id"])
+        assert row["mode"] == "live" and row["armed_by"] == acc["id"]
+        # вторая подписка на тот же ключ — отказ
+        st, sub2 = app.add_subscription(acc, k["key_id"], "pair_optimal", 1000)
+        code, r = app.arm(acc, sub2["subscription_id"], "pair_optimal:1000")
+        assert code == 409 and "уже есть живая подписка" in r["error"], r
+        # эквити протухло или ниже кассы — отказ
+        app.db.c.execute("UPDATE subscriptions SET mode='dry' WHERE id=?", (sid,))
+        app.db.c.execute("UPDATE exchange_keys SET equity_at=? WHERE id=?", (time.time() - 2 * 86400, k["key_id"]))
+        assert "не измерено за сутки" in app.arm(acc, sid, "optimal_h:1000")[1]["error"]
+        app.db.set_equity(k["key_id"], 900.0)
+        assert "касса подписки 1,000.00" in app.arm(acc, sid, "optimal_h:1000")[1]["error"]
+        app.db.set_equity(k["key_id"], 1500.0)
+        assert app.arm(acc, sid, "optimal_h:1000")[0] == 200
+        # входы выключены файлом, повторный arm их включает
+        assert app.disarm(acc, sid)[0] == 200 and os.path.exists(os.path.join(root, sid, "NO_ENTRIES"))
+        assert app.arm(acc, sid, "optimal_h:1000")[0] == 200 and not os.path.exists(os.path.join(root, sid, "NO_ENTRIES"))
+        # KILL — файлом, только оператору
+        assert app.kill(acc, sid, True)[1]["kill"] and os.path.exists(os.path.join(root, sid, "KILL"))
+        assert app.kill(acc, sid, False)[0] == 200 and not os.path.exists(os.path.join(root, sid, "KILL"))
+        # состояние: исполнитель ещё не поднят — сказано словами
+        stt = app.state(acc)[1]["subscriptions"][0]
+        assert stt["mode"] == "live" and stt["executor"]["why_none"].startswith("исполнитель ещё не поднят"), stt["executor"]
+        # исполнитель поднят: позиции и касса — его
+        with open(os.path.join(root, sid, "ladder_status.json"), "w") as f:
+            json.dump({"at_ms": time.time() * 1000, "mode": "live", "realized_usd": -3.5, "positions": [
+                {"sym": "XUSDT", "side": "short", "pos_at": 1.0, "avg": 2.0, "qty": 5.0, "lev": 4.0,
+                 "margin_usd": 25.0, "depth": "1/1", "take_px": 1.8, "floor_px": 2.1, "term_ts": 9.0}]}, f)
+        stt = app.state(acc)[1]["subscriptions"][0]
+        assert stt["cash_usd"] == 996.5 and stt["positions"][0]["sym"] == "XUSDT" and stt["positions"][0]["live"]
+        assert stt["executor"]["status"]["realized_usd"] == -3.5 and stt["executor"]["age_s"] < 60
+        # обратно в сухой — только без позиций
+        code, r = app.to_dry(acc, sid)
+        assert code == 409 and "открыто позиций 1" in r["error"], r
+        os.remove(os.path.join(root, sid, "ladder_status.json"))
+        assert app.to_dry(acc, sid)[0] == 200
+        # следователь живую подписку не ведёт
+        import follow as F
+        app.db.c.execute("UPDATE subscriptions SET mode='live' WHERE id=?", (sid,))
+        rows = app.db.c.execute("SELECT * FROM subscriptions WHERE status='active' AND mode!='live'").fetchall()
+        assert sid not in {r["id"] for r in rows}
+        # проверка счёта — текст отдельного процесса, ключа в ответе нет
+        fake = type("R", (), {"stdout": "ключ: открывается\nитог: годен\n", "stderr": ""})
+        code, r = app.check_account(acc, sid, runner=lambda c: fake)
+        assert code == 200 and r["ok"] and SECRET not in json.dumps(r)
+    print("ok  живой режим: слово, рубильник, эквити, один на ключ, файлы входов и KILL, позиции исполнителя")
+
+
+def test_supervisor_starts_armed_subs_with_key_on_stdin_and_stops_unarmed():
+    """Супервизор: подписке в live — ровно один процесс, ключ ТОЛЬКО трубой;
+    первый подъём не читает сухие намерения; подписка вышла из live —
+    мягкая остановка файлом STOP; сухие подписки не трогаются."""
+    import ladder_run as LR
+    with tempfile.TemporaryDirectory() as tmp:
+        root = os.path.join(tmp, "exec")
+        app, _ = _app(tmp, out=tmp, exec_root=root)
+        acc = _login(app)
+        st, k = app.add_key(acc, "bybit", "ABCD1234KEY", SECRET)
+        st, a = app.add_subscription(acc, k["key_id"], "optimal_h", 1000)
+        st, b = app.add_subscription(acc, k["key_id"], "pair_optimal", 1000)
+        sa, sb = a["subscription_id"], b["subscription_id"]
+        os.makedirs(os.path.join(root, sa))
+        with open(os.path.join(root, sa, "intents.jsonl"), "w") as f:
+            f.write(json.dumps({"seq": 7, "kind": "entry"}) + "\n")
+        app.db.c.execute("UPDATE subscriptions SET mode='live' WHERE id=?", (sa,))
+        started, stopped, built = [], [], []
+
+        class P:
+            pid = 4242
+
+            def __init__(self, cmd, **kw):
+                self.cmd = cmd
+                self.kw = kw
+                self.stdin = self
+                self.data = b""
+
+            def write(self, d):
+                self.data += d
+
+            def close(self):
+                started.append((self.cmd, self.data))
+
+        bin_path = os.path.join(tmp, "bot")
+        with open(bin_path, "w") as f:
+            f.write("x")
+        r = LR.ensure(app.db, root=root, bin_path=bin_path, run={}, builder=lambda: built.append(1) or True,
+                      starter=lambda db, sid, root, bin_path: LR.start(db, sid, root=root, bin_path=bin_path,
+                                                                       opener=lambda db, s: ("KEYK", "SECS"), popen=P),
+                      stopper=lambda sid, pids, root: stopped.append(sid) or True)
+        assert r["started"] == 1 and len(started) == 1, (r, started)
+        cmd, data = started[0]
+        assert cmd[1:3] == ["ladder", "--dir"] and cmd[3].endswith(sa) and "--keys-stdin" in cmd
+        assert "KEYK" not in " ".join(cmd) and "SECS" not in " ".join(cmd), "ключ не в аргументах"
+        assert data == b"BYBIT_KEY=KEYK\nBYBIT_SECRET=SECS\n"
+        assert json.load(open(os.path.join(root, sa, "ladder_state.json")))["seq_done"] == 7
+        # работает — второй не запускается
+        r = LR.ensure(app.db, root=root, bin_path=bin_path, run={sa: [111]}, builder=lambda: True,
+                      starter=lambda *x, **y: started.append("лишний") or True, stopper=lambda *x, **y: True)
+        assert r["started"] == 0 and len(started) == 1
+        # подписка вышла из live — мягкая остановка; сухая b не трогается
+        app.db.c.execute("UPDATE subscriptions SET mode='dry' WHERE id=?", (sa,))
+        LR.ensure(app.db, root=root, bin_path=bin_path, run={sa: [111]}, builder=lambda: True,
+                  starter=lambda *x, **y: True, stopper=lambda sid, pids, root: stopped.append(sid) or True)
+        assert stopped == [sa] and sb not in stopped
+        # мягкая остановка — файл STOP
+        assert LR.stop(sa, [999999999], root=root, wait_s=1) is True
+        assert os.path.exists(os.path.join(root, sa, "STOP"))
+        # разбор pgrep
+        got = LR.running(pgrep=lambda: f"123 /x/bot ladder --dir {root}/{sa} --base B --keys-stdin\n456 python other\n")
+        assert got == {sa: [123]}, got
+    print("ok  супервизор: один процесс на live, ключ трубой, сухие намерения не исполняются, STOP при выходе из live")
 
 
 TESTS = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]

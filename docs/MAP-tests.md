@@ -4491,6 +4491,51 @@
 - L131 `SIT_OUT = os.path.join(HERE, 'fixtures', 'parity_…`
 - L134 `sit()` — Фикстура ситуационной книги: без срока, живые входы и выходы.
 
+## bot/tests/ladder.rs · 566 строк
+
+Проверки исполнителя Ladder (спека 15 §10a) на подставной бирже.
+
+- L18 `struct Ord`
+- L32 `struct Inner`
+- L46 `struct Mock`
+- L48 `impl Mock`
+  - L49 `Mock::new`
+  - L54 `Mock::set_px`
+  - L58 `Mock::fill`
+  - L83 `Mock::cross` — Лежащие лимитки исполняются, когда лучшая цена ПРОШЛА уровень.
+  - L101 `Mock::partial`
+  - L106 `Mock::orders_of`
+  - L109 `Mock::resting`
+  - L118 `Mock::pos`
+- L123 `impl Exchange for Mock`
+  - L124 `Mock::best_prices`
+  - L127 `Mock::open_orders`
+  - L137 `Mock::set_leverage`
+  - L145 `Mock::instrument`
+  - L148 `Mock::place_limit`
+  - L151 `Mock::place_limit_idx`
+  - L191 `Mock::cancel`
+  - L202 `Mock::order_status`
+  - L212 `Mock::positions`
+  - L221 `Mock::wallet_usdt`
+  - L224 `Mock::closed_pnl`
+- L231 `dir`
+- L238 `write_intents`
+- L243 `events`
+- L251 `kinds`
+- L255 `short_intent`
+- L263 `long_intent`
+- L274 `ladder`
+- L279 `шорт_с_одним_рунгом_входит_ставит_цель_и_выходит_по_ней`
+- L322 `лонг_лестница_доливает_переставляет_цель_и_выходит_по_полу`
+- L378 `срок_и_выход_по_намерению_закрывают_позицию`
+- L412 `ликвидация_мимо_исполнителя_и_расхождение_ставят_паузу_входов`
+- L449 `частичное_исполнение_рунга_видно_сверке_а_не_паузе`
+- L466 `хедж_режим_счёта_узнаётся_отказом_и_дальше_индекс_по_стороне`
+- L481 `отказы_входа_названы_причиной_и_ничего_не_ставят`
+- L529 `сухой_режим_пишет_вход_и_ничего_не_отправляет`
+- L545 `перезапуск_продолжает_позиции_и_нумерацию_журнала`
+
 ## bot/tests/live_x1.rs · 1429 строк
 
 X1: исполнитель против подставной биржи.
@@ -4583,7 +4628,7 @@ X1: исполнитель против подставной биржи.
 - L291 `такт_демона_пишет_статус_и_не_молчит_об_ошибке`
 - L375 `which_python`
 
-## tools/app_api/test_app_api.py · 845 строк
+## tools/app_api/test_app_api.py · 1062 строк
 
 Проверки API приложения (спека 15 Y0): конверт открывается только приватной половиной и ломается от подмены;…
 
@@ -4604,21 +4649,24 @@ X1: исполнитель против подставной биржи.
 - L172 `test_subscriptions_cells_hedge_warning_and_state()`
 - L227 `_http(port, method, path, body=None, token=None)`
 - L239 `test_http_routing_auth_and_stage_gates()`
-- L272 `test_init_is_idempotent_and_prints_pin()`
-- L282 `test_apple_verify_names_the_audience_and_accepts_listed_ones()`
-- L305 `_ec_pem()`
-- L316 `test_push_key_is_checked_by_signing_and_words_come_from_the_rec…` — Ключ APNs принимается только если им можно подписать; слова пуша — из записи сделки, деньги печатаются, а не…
-- L366 `test_devices_trades_ingest_and_push_chain()` — Журнал исполнителя → запись → пуш на устройства; повтор чтения не дублирует; мёртвый токен выключается; пробн…
-- L465 `_pos(sym, at, fills, side='long', closed=None, lev=4.0, margin=…`
-- L482 `test_follower_turns_cell_positions_into_executor_events_once()` — Сухой исполнитель: позиции ячейки подписки → события §7.6 — первый рунг вход, следующие доливы с переездом це…
-- L526 `test_follower_tick_feeds_trades_and_pushes_for_the_subscribed_c…` — Такт сервера: следователь → журнал подписки → записи `trades` с mode dry → пуш на устройство; чужие ячейки не…
-- L574 `_flat_bars(t0, n=1440, px=100.0, jitter=0.0)`
-- L582 `_bars_fn(bars)`
-- L588 `_sheet_line(hour, written_at, rows, arm='nn')`
-- L592 `_pick_line(hour, shorts, arm='nn')`
-- L596 `test_intents_plan_entry_like_paper_and_size_from_subscription_c…` — Намерение входа считается теми же функциями, что бумага: вход, плечо, рунги, цель, пол и ликвидация совпадают…
-- L712 `test_intents_sources_are_read_as_tail_once_and_tick_feeds_state…` — Такт сервера: источники читаются хвостом от смещения (первое чтение — хвост, неполная строка остаётся), ноги…
-- L832 `TESTS = [v for k, v in sorted(globals().items()…`
+- L275 `test_init_is_idempotent_and_prints_pin()`
+- L285 `test_apple_verify_names_the_audience_and_accepts_listed_ones()`
+- L308 `_ec_pem()`
+- L319 `test_push_key_is_checked_by_signing_and_words_come_from_the_rec…` — Ключ APNs принимается только если им можно подписать; слова пуша — из записи сделки, деньги печатаются, а не…
+- L369 `test_devices_trades_ingest_and_push_chain()` — Журнал исполнителя → запись → пуш на устройства; повтор чтения не дублирует; мёртвый токен выключается; пробн…
+- L468 `_pos(sym, at, fills, side='long', closed=None, lev=4.0, margin=…`
+- L485 `test_follower_turns_cell_positions_into_executor_events_once()` — Сухой исполнитель: позиции ячейки подписки → события §7.6 — первый рунг вход, следующие доливы с переездом це…
+- L529 `test_follower_tick_feeds_trades_and_pushes_for_the_subscribed_c…` — Такт сервера: следователь → журнал подписки → записи `trades` с mode dry → пуш на устройство; чужие ячейки не…
+- L577 `_flat_bars(t0, n=1440, px=100.0, jitter=0.0)`
+- L585 `_bars_fn(bars)`
+- L591 `_sheet_line(hour, written_at, rows, arm='nn')`
+- L595 `_pick_line(hour, shorts, arm='nn')`
+- L599 `test_intents_plan_entry_like_paper_and_size_from_subscription_c…` — Намерение входа считается теми же функциями, что бумага: вход, плечо, рунги, цель, пол и ликвидация совпадают…
+- L715 `test_intents_sources_are_read_as_tail_once_and_tick_feeds_state…` — Такт сервера: источники читаются хвостом от смещения (первое чтение — хвост, неполная строка остаётся), ноги…
+- L836 `test_intents_for_live_sub_use_executor_cash_names_levels_and_gu…` — Живая подписка: уровни на КАЖДОЙ глубине — `levels_of` по плановым ценам рунгов; касса — депозит + реализован…
+- L914 `test_arm_needs_word_switch_fresh_equity_and_one_live_per_key()` — Перевод в живые сделки — только кнопкой владельца с подтверждением словом `книга:депозит`; рубильник оператор…
+- L984 `test_supervisor_starts_armed_subs_with_key_on_stdin_and_stops_u…` — Супервизор: подписке в live — ровно один процесс, ключ ТОЛЬКО трубой; первый подъём не читает сухие намерения…
+- L1049 `TESTS = [v for k, v in sorted(globals().items()…`
 
 ## tools/test_disk_alarm.py · 64 строк
 

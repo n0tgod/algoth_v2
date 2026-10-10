@@ -22,6 +22,7 @@ import os
 import socket
 import ssl
 import sys
+import subprocess
 import threading
 import time
 import urllib.parse
@@ -367,6 +368,143 @@ class App:
         self.db.event(acc["id"], "subscription", f"подписка {s['book']} закрыта")
         return 200, {"ok": True}
 
+    # ------------------------------------------------------------ живой режим
+    def live_enabled(self):
+        return os.path.exists(os.path.join(self.out, "LIVE_ENABLED"))
+
+    def set_live_enabled(self, acc, on):
+        """Рубильник оператора (§7a.5): без него ни одна подписка в live
+        не переводится. Выключение НЕ останавливает работающих — для
+        этого у подписки `disarm` и `kill`."""
+        if acc["role"] != "operator":
+            return 403, {"error": "рубильник — только оператору"}
+        path = os.path.join(self.out, "LIVE_ENABLED")
+        if on:
+            with open(path, "w") as f:
+                f.write(str(time.time()))
+        elif os.path.exists(path):
+            os.remove(path)
+        self.db.event(acc["id"], "live", "рубильник живой торговли " + ("ВКЛЮЧЁН" if on else "выключен"))
+        return 200, {"live_enabled": self.live_enabled()}
+
+    def sub_dir(self, sid):
+        return os.path.join(self.exec_root, sid)
+
+    def exec_status(self, sid):
+        try:
+            with open(os.path.join(self.sub_dir(sid), "ladder_status.json"), encoding="utf-8") as f:
+                return json.load(f)
+        except (OSError, ValueError):
+            return None
+
+    def arm(self, acc, sid, confirm):
+        """Перевод подписки в живые сделки — кнопкой владельца (§7a.4).
+        Подтверждение — словом `книга:депозит`: случайное нажатие его не
+        наберёт. Проверки машиной; любая не прошла — отказ словами."""
+        s = self.db.subscription(sid, acc["id"])
+        if s is None:
+            return 404, {"error": "подписки нет"}
+        want = f"{s['book']}:{int(float(s['deposit']))}"
+        if (confirm or "").strip() != want:
+            return 400, {"error": f"подтверждение не совпало: нужно «{want}»"}
+        why = []
+        if not self.live_enabled():
+            why.append("рубильник живой торговли выключен (оператор)")
+        k = self.db.key(s["key_id"])
+        if k is None or k["status"] != "ok":
+            why.append("ключ подписки отозван")
+        others = [o for o in self.db.subs_on_key(s["key_id"], live_only=True) if o["id"] != sid]
+        if others:
+            why.append(f"на этом ключе уже есть живая подписка {others[0]['book']} — две делили бы одни позиции")
+        st = json.loads(s["state_json"] or "{}")
+        cash = self.sub_cash(s, st)
+        if k is not None:
+            age = (time.time() - k["equity_at"]) if k["equity_at"] else None
+            if k["equity_usd"] is None or age is None or age > 24 * 3600:
+                why.append("эквити счёта не измерено за сутки — нажмите «Check account»")
+            elif k["equity_usd"] < cash:
+                why.append(f"на счёте {k['equity_usd']:,.2f} $, касса подписки {cash:,.2f} $")
+        if why:
+            self.db.event(acc["id"], "live", f"перевод {s['book']} в live отвергнут: " + "; ".join(why))
+            return 409, {"error": "; ".join(why), "reasons": why}
+        d = self.sub_dir(sid)
+        os.makedirs(d, exist_ok=True)
+        for f in ("NO_ENTRIES", "STOP"):
+            try:
+                os.remove(os.path.join(d, f))
+            except OSError:
+                pass
+        was = s["mode"]
+        self.db.c.execute("UPDATE subscriptions SET mode='live', armed_at=?, armed_by=? WHERE id=?",
+                          (time.time(), acc["id"], sid))
+        self.db.event(acc["id"], "live", (f"подписка {s['book']} {float(s['deposit']):g} $ переведена в ЖИВЫЕ сделки"
+                                          if was != "live" else f"подписка {s['book']}: входы снова включены"),
+                      {"subscription_id": sid})
+        return 200, {"ok": True, "mode": "live",
+                     "note": "исполнитель поднимет сторож в течение 5 минут; первые входы — со следующих выборов"}
+
+    def disarm(self, acc, sid):
+        """Входы выключены, открытые позиции исполнитель ведёт дальше
+        (цель, пол, срок, охрана рынком). Режим остаётся live."""
+        s = self.db.subscription(sid, acc["id"])
+        if s is None:
+            return 404, {"error": "подписки нет"}
+        if s["mode"] != "live":
+            return 409, {"error": "подписка не в живом режиме"}
+        d = self.sub_dir(sid)
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, "NO_ENTRIES"), "w") as f:
+            f.write(str(time.time()))
+        self.db.event(acc["id"], "live", f"подписка {s['book']}: новые входы выключены, позиции ведутся")
+        return 200, {"ok": True, "entries": False}
+
+    def to_dry(self, acc, sid):
+        """Обратно в сухой режим — только без открытых позиций."""
+        s = self.db.subscription(sid, acc["id"])
+        if s is None:
+            return 404, {"error": "подписки нет"}
+        ex = self.exec_status(sid) or {}
+        if ex.get("positions"):
+            return 409, {"error": f"у исполнителя открыто позиций {len(ex['positions'])}: сперва «Stop entries» и дождаться закрытия"}
+        self.db.c.execute("UPDATE subscriptions SET mode='dry' WHERE id=?", (sid,))
+        self.db.event(acc["id"], "live", f"подписка {s['book']} переведена в сухой режим")
+        return 200, {"ok": True, "mode": "dry"}
+
+    def kill(self, acc, sid, on):
+        """KILL подписки: исполнитель не делает НИЧЕГО (ни заявок, ни отмен)."""
+        if acc["role"] != "operator":
+            return 403, {"error": "KILL — только оператору"}
+        s = self.db.subscription(sid, acc["id"])
+        if s is None:
+            return 404, {"error": "подписки нет"}
+        d = self.sub_dir(sid)
+        os.makedirs(d, exist_ok=True)
+        path = os.path.join(d, "KILL")
+        if on:
+            with open(path, "w") as f:
+                f.write(str(time.time()))
+        elif os.path.exists(path):
+            os.remove(path)
+        self.db.event(acc["id"], "live", f"подписка {s['book']}: KILL " + ("ВКЛЮЧЁН" if on else "снят"))
+        return 200, {"kill": bool(on)}
+
+    def check_account(self, acc, sid, runner=None):
+        """Предполётная проверка счёта по кнопке владельца: ключ открывает
+        отдельный процесс (`preflight.py`), сюда приходит только текст —
+        числа и да/нет, без ключа. Эквити записывается в базу."""
+        s = self.db.subscription(sid, acc["id"])
+        if s is None:
+            return 404, {"error": "подписки нет"}
+        cmd = [sys.executable, os.path.join(HERE, "preflight.py"), "--db", self.db.path,
+               "--sub", sid, "--update-equity"]
+        try:
+            r = (runner or (lambda c: subprocess.run(c, capture_output=True, text=True, timeout=60)))(cmd)
+            text = (r.stdout or "") + (("\n" + r.stderr[-800:]) if r.stderr else "")
+        except Exception as e:                                  # noqa: BLE001
+            return 502, {"error": f"проверка не выполнилась: {type(e).__name__}"}
+        self.db.event(acc["id"], "live", f"проверка счёта {s['book']}", {"subscription_id": sid})
+        return 200, {"text": text.strip(), "ok": "итог: годен" in text}
+
     # ------------------------------------------------------------ состояние
     def state(self, acc):
         d = self.dca() or {}
@@ -392,7 +530,10 @@ class App:
             # `followed` — открыта после подписки, то есть её ведёт исполнитель
             since = float((st.get("follow") or {}).get("since") or s["created"])
             positions = []
-            for q in ((b.get("open") or {}).get("positions") or []):
+            ex = self.exec_status(s["id"]) if s["mode"] == "live" else None
+            if ex is not None:
+                cash = float(s["deposit"]) + float(ex.get("realized_usd") or 0.0)
+            for q in ([] if ex is not None else ((b.get("open") or {}).get("positions") or [])):
                 lv = q.get("levels") or {}
                 w = (q.get("walk") or [{}])[-1]
                 positions.append({"sym": q.get("sym"), "side": q.get("side"), "at": q.get("at"),
@@ -403,7 +544,27 @@ class App:
                                   "floor_px": lv.get("floor_px"), "liq_px": lv.get("liq_px"),
                                   "term_ts": q.get("sched_end"),
                                   "followed": bool(q.get("at") is not None and float(q["at"]) >= since)})
+            if ex is not None:
+                for q in ex.get("positions") or []:
+                    positions.append({"sym": q.get("sym"), "side": q.get("side"), "at": q.get("pos_at"),
+                                      "avg": q.get("avg"), "qty": q.get("qty"), "lev": q.get("lev"),
+                                      "margin_usd": q.get("margin_usd"), "depth": q.get("depth"),
+                                      "take_px": q.get("take_px"), "floor_px": q.get("floor_px"),
+                                      "liq_px": q.get("liq_px"), "term_ts": q.get("term_ts"),
+                                      "closing": q.get("closing"), "live": True, "followed": True})
+            d_sub = self.sub_dir(s["id"])
+            executor = None
+            if s["mode"] == "live":
+                executor = {"status": ({k: ex.get(k) for k in ("at_ms", "mode", "kill", "no_entries", "paused",
+                                                              "realized_usd", "realized_today_usd", "entries_n",
+                                                              "closed_n", "rejects_n", "last_error",
+                                                              "margin_open_usd", "hedge")} if ex else None),
+                            "age_s": (time.time() - float(ex["at_ms"]) / 1000.0) if ex and ex.get("at_ms") else None,
+                            "kill": os.path.exists(os.path.join(d_sub, "KILL")),
+                            "no_entries": os.path.exists(os.path.join(d_sub, "NO_ENTRIES")),
+                            "why_none": (None if ex else "исполнитель ещё не поднят: сторож запускает его в течение 5 минут")}
             subs.append({"subscription_id": s["id"], "book": s["book"], "deposit": s["deposit"],
+                         "executor": executor, "armed_at": s["armed_at"],
                          "mode": s["mode"], "side": st.get("side"), "sizing": sizing,
                          "positions": positions, "follow": {k: v for k, v in (st.get("follow") or {}).items()
                                                             if k in ("since", "at", "gaps")},
@@ -421,7 +582,7 @@ class App:
                          "orders": [], "reconcile": None,
                          "halt": None, "warnings": warnings})
         ev = [dict(e) for e in self.db.events_of(acc["id"], since=0, limit=10**9)][-20:]
-        return 200, {"schema": SCHEMA, "at": time.time(), "live_enabled": os.path.exists(os.path.join(OUT, "LIVE_ENABLED")),
+        return 200, {"schema": SCHEMA, "at": time.time(), "live_enabled": self.live_enabled(),
                      "sheet_age_s": None if not d.get("window") else d.get("stale"),
                      "subscriptions": subs, "events_tail": ev}
 
@@ -648,8 +809,22 @@ class Handler(http.server.BaseHTTPRequestHandler):
                                                          body.get("deposit"), body.get("sizing")))
         if len(rest) == 2 and rest[0] == "subscriptions" and method == "DELETE":
             return self._send(*self.app.delete_subscription(acc, rest[1]))
-        if len(rest) == 3 and rest[0] == "subscriptions" and rest[2] in ("arm", "disarm", "cmd"):
-            return self._send(501, {"error": STAGE_NOT_BUILT})
+        if len(rest) == 3 and rest[0] == "subscriptions" and method == "POST":
+            sid, act = rest[1], rest[2]
+            if act == "arm":
+                return self._send(*self.app.arm(acc, sid, body.get("confirm")))
+            if act == "disarm":
+                return self._send(*self.app.disarm(acc, sid))
+            if act == "dry":
+                return self._send(*self.app.to_dry(acc, sid))
+            if act == "kill":
+                return self._send(*self.app.kill(acc, sid, bool(body.get("on"))))
+            if act == "check":
+                return self._send(*self.app.check_account(acc, sid))
+            if act == "cmd":
+                return self._send(501, {"error": STAGE_NOT_BUILT})
+        if rest == ["operator", "live"] and method == "POST":
+            return self._send(*self.app.set_live_enabled(acc, bool(body.get("on"))))
         if rest == ["cmd"]:
             return self._send(501, {"error": STAGE_NOT_BUILT})
         if rest == ["state"] and method == "GET":

@@ -48,6 +48,23 @@ impl Keys {
     pub fn load(path: &Path) -> Result<Keys, String> {
         let text = std::fs::read_to_string(path)
             .map_err(|e| format!("файл ключа {} не читается: {e}", path.display()))?;
+        Keys::parse(&text, &path.display().to_string())
+    }
+
+    /// Ключ из стандартного ввода (исполнитель Ladder, спека 15 §8):
+    /// запечатанный ключ подписки открывает запускающий процесс и
+    /// отдаёт его трубой — на диске и в аргументах процесса ключа нет.
+    pub fn from_stdin() -> Result<Keys, String> {
+        use std::io::Read;
+        let mut text = String::new();
+        std::io::stdin()
+            .read_to_string(&mut text)
+            .map_err(|e| format!("ключ из stdin не читается: {e}"))?;
+        Keys::parse(&text, "stdin")
+    }
+
+    /// Разбор текста вида `BYBIT_KEY=…` / `BYBIT_SECRET=…`.
+    pub fn parse(text: &str, whence: &str) -> Result<Keys, String> {
         let mut key = None;
         let mut secret = None;
         for line in text.lines() {
@@ -69,10 +86,7 @@ impl Keys {
             (Some(k), Some(s)) if !k.is_empty() && !s.is_empty() => {
                 Ok(Keys { key: k, secret: s })
             }
-            _ => Err(format!(
-                "в {} нет BYBIT_KEY и BYBIT_SECRET",
-                path.display()
-            )),
+            _ => Err(format!("в {whence} нет BYBIT_KEY и BYBIT_SECRET")),
         }
     }
 
@@ -289,11 +303,32 @@ impl Venue {
 
     /// Открытые заявки: (symbol, orderId, side, qty, price).
     pub fn open_orders(&self) -> Result<Vec<(String, String, String, f64, f64)>, String> {
-        let r = self.get(
-            "/v5/order/realtime",
-            "category=linear&settleCoin=USDT&limit=50",
-        )?;
+        // Страницами по 50: у книги Ladder лежат рунги и цели десятков
+        // позиций, и первая страница молча теряла бы заявки — заявка,
+        // которой нет в списке, читалась бы исполненной.
         let mut out = Vec::new();
+        let mut cursor = String::new();
+        for _ in 0..10 {
+            let q = if cursor.is_empty() {
+                "category=linear&settleCoin=USDT&limit=50".to_string()
+            } else {
+                format!("category=linear&settleCoin=USDT&limit=50&cursor={cursor}")
+            };
+            let r = self.get("/v5/order/realtime", &q)?;
+            self.push_orders(&r, &mut out);
+            cursor = r
+                .get("nextPageCursor")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_string();
+            if cursor.is_empty() {
+                break;
+            }
+        }
+        Ok(out)
+    }
+
+    fn push_orders(&self, r: &Value, out: &mut Vec<(String, String, String, f64, f64)>) {
         for o in r
             .get("list")
             .and_then(Value::as_array)
@@ -316,7 +351,6 @@ impl Venue {
                 f("price"),
             ));
         }
-        Ok(out)
     }
 
     /// Реализованный результат ЗАКРЫТЫХ позиций по имени за окно:
@@ -420,6 +454,63 @@ impl Venue {
             .and_then(Value::as_str)
             .map(String::from)
             .ok_or_else(|| "order/create: нет orderId".into())
+    }
+
+    /// Лимитная заявка с индексом позиции: 0 — односторонний режим
+    /// счёта, 1/2 — хедж (лонг/шорт). Исполнитель Ladder узнаёт режим
+    /// первой заявкой: площадка отвечает отказом на чужой индекс.
+    #[allow(clippy::too_many_arguments)]
+    pub fn place_limit_idx(
+        &self,
+        symbol: &str,
+        side: &str,
+        qty: &str,
+        price: &str,
+        tif: &str,
+        link_id: &str,
+        reduce_only: bool,
+        position_idx: i64,
+    ) -> Result<String, String> {
+        let body = serde_json::json!({
+            "category": "linear",
+            "symbol": symbol,
+            "side": side,
+            "orderType": "Limit",
+            "qty": qty,
+            "price": price,
+            "timeInForce": tif,
+            "orderLinkId": link_id,
+            "reduceOnly": reduce_only,
+            "positionIdx": position_idx,
+        });
+        let r = self.post("/v5/order/create", &body)?;
+        r.get("orderId")
+            .and_then(Value::as_str)
+            .map(String::from)
+            .ok_or_else(|| "order/create: нет orderId".into())
+    }
+
+    /// Лучшие цены всех линейных перпов одним запросом: имя → (bid, ask).
+    pub fn tickers_all(&self) -> Result<std::collections::BTreeMap<String, (f64, f64)>, String> {
+        let r = self.get("/v5/market/tickers", "category=linear")?;
+        let mut out = std::collections::BTreeMap::new();
+        for t in r
+            .get("list")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default()
+        {
+            let f = |k: &str| {
+                t.get(k)
+                    .and_then(Value::as_str)
+                    .and_then(|s| s.parse::<f64>().ok())
+                    .unwrap_or(0.0)
+            };
+            if let Some(sym) = t.get("symbol").and_then(Value::as_str) {
+                out.insert(sym.to_string(), (f("bid1Price"), f("ask1Price")));
+            }
+        }
+        Ok(out)
     }
 
     /// Плечо 1× — спека 12 §2. «Не изменилось» (110043) — не отказ.

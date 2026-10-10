@@ -129,6 +129,35 @@ pub trait Exchange {
         start_ms: i64,
         end_ms: i64,
     ) -> Result<Vec<(i64, f64)>, String>;
+    /// Заявка с индексом позиции (исполнитель Ladder): 0 — односторонний
+    /// режим, 1/2 — хедж. Умолчание знает только односторонний — X3 и
+    /// его проверки этого метода не касаются.
+    #[allow(clippy::too_many_arguments)]
+    fn place_limit_idx(
+        &self,
+        symbol: &str,
+        side: &str,
+        qty: &str,
+        price: &str,
+        tif: &str,
+        link_id: &str,
+        reduce_only: bool,
+        position_idx: i64,
+    ) -> Result<String, String> {
+        if position_idx == 0 {
+            self.place_limit(symbol, side, qty, price, tif, link_id, reduce_only)
+        } else {
+            Err("площадка без хедж-индекса".into())
+        }
+    }
+    /// Котировки всех имён одним запросом; умолчание — по одному.
+    fn tickers(&self, syms: &[String]) -> Result<BTreeMap<String, (f64, f64)>, String> {
+        let mut out = BTreeMap::new();
+        for s in syms {
+            out.insert(s.clone(), self.best_prices(s)?);
+        }
+        Ok(out)
+    }
 }
 
 impl Exchange for crate::venue::Venue {
@@ -198,6 +227,28 @@ impl Exchange for crate::venue::Venue {
         end_ms: i64,
     ) -> Result<Vec<(i64, f64)>, String> {
         crate::venue::Venue::closed_pnl(self, symbol, start_ms, end_ms)
+    }
+    fn place_limit_idx(
+        &self,
+        symbol: &str,
+        side: &str,
+        qty: &str,
+        price: &str,
+        tif: &str,
+        link_id: &str,
+        reduce_only: bool,
+        position_idx: i64,
+    ) -> Result<String, String> {
+        crate::venue::Venue::place_limit_idx(
+            self, symbol, side, qty, price, tif, link_id, reduce_only, position_idx,
+        )
+    }
+    fn tickers(&self, syms: &[String]) -> Result<BTreeMap<String, (f64, f64)>, String> {
+        let all = crate::venue::Venue::tickers_all(self)?;
+        Ok(syms
+            .iter()
+            .filter_map(|s| all.get(s).map(|v| (s.clone(), *v)))
+            .collect())
     }
 }
 

@@ -37,7 +37,7 @@ KIND_WORDS = {
     "take": "Closed at target", "floor": "Closed at floor", "term": "Closed on time",
     "market": "Closed by market guard", "cmd_close": "Closed by command",
     "liq": "Liquidated",
-    "reject": "Entry not filled", "halt": "Executor halted", "resume": "Executor resumed",
+    "reject": "Not executed", "halt": "Executor halted", "resume": "Executor resumed",
     "mismatch": "Reconcile mismatch", "test": "Test event"}
 # Что пушится: ВСЁ, что записал исполнитель (решение владельца). Список
 # здесь, чтобы будущий фильтр по видам был правкой одной строки.
