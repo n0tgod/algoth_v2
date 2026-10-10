@@ -366,3 +366,13 @@
     434396   434113      4   00:00  ps -eo pid,ppid,rss,etimes,args --no-headers
    1496656        1      4  309:35  /usr/lib/polkit-1/polkitd --no-debug
 конец: 2026-10-10T03:38:03Z, код 0
+публикуется в ветку main:
+ jobs/done/memtop-fix1.done          |   1 +
+ jobs/done/memtop-fix1.log           | 368 ++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |   3 +
+ research/s8_loop/out/day_brake.json |   2 +-
+ 4 files changed, 373 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   7d7d4bf5..6c7d680d  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
