@@ -170,6 +170,11 @@ def census(c, deep=False):
             others.append((b, name, _count(v)))
     for b, name, n in sorted(others, reverse=True)[:12]:
         parts[f"прочее: {name}"] = {"n": n, "mb": round(b / 2 ** 20, 1)}
+    # Кеш кусков DCA-журналов: бюджет и оборот — рядом с его размером
+    for name in list(parts):
+        if name.startswith("_dca_parts"):
+            parts[name]["budget_mb"] = round(getattr(type(c), "_DCA_PARTS_BUDGET", 0) / 2 ** 20)
+            parts[name]["stats"] = dict(getattr(type(c), "_DCA_PARTS_STATS", {}) or {})
     # Кеш разобранных журналов живёт на КЛАССЕ, не на экземпляре —
     # `vars(c)` его не видит, а 06.10 именно он держал 1.3 ГБ.
     jc = getattr(type(c), "_JSONL_CACHE", None)

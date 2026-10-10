@@ -986,6 +986,8 @@ class Collector:
         if isinstance(dp, dict):
             gone["dca_parts"] = len(dp)
             dp.clear()
+        if isinstance(getattr(self, "_dca_parts_meta", None), dict):
+            self._dca_parts_meta.clear()
         if getattr(self, "_dca_cache", None):
             gone["dca"] = len(self._dca_cache[1]) if isinstance(self._dca_cache, tuple) else 1
             self._dca_cache = (0.0, {})
@@ -3687,6 +3689,89 @@ class Collector:
                 "hour": time.strftime("%Y-%m-%d-%H", time.gmtime(at))})
         return out
 
+    # Бюджет кеша кусков DCA-журналов: байты объектов (оценка
+    # `memsize.deep_size`). 256 МБ держат журналы одного-двух семейств;
+    # пересборка свода идёт по подписи файлов (раз в час, когда книги
+    # дописали), и выброс между пересборками ничего не стоит.
+    _DCA_PARTS_BUDGET = 256 * 1024 * 1024
+    _DCA_PARTS_STATS = {"parsed": 0, "evict": 0, "evicted_mb": 0.0}
+
+    @staticmethod
+    def _dca_part_cost(m):
+        return int(m.get("est") or 0)
+
+    def _dca_parts_trim(self, exclude_prefix=()):
+        cache, meta = self._dca_parts, self._dca_parts_meta
+        for k in [k for k in meta if k not in cache]:
+            del meta[k]
+        cost = Collector._dca_part_cost
+        total = sum(cost(m) for m in meta.values())
+        if total <= Collector._DCA_PARTS_BUDGET:
+            return
+        st = Collector._DCA_PARTS_STATS
+        gone_any = False
+        for part, m in sorted(meta.items(), key=lambda kv: kv[1]["used"]):
+            if exclude_prefix and (part == exclude_prefix[0]
+                                   or part.startswith(exclude_prefix[1])):
+                continue
+            gone = cost(m)
+            cache.pop(part, None)
+            del meta[part]
+            total -= gone
+            st["evict"] += 1
+            st["evicted_mb"] = round(st["evicted_mb"] + gone / 2 ** 20, 1)
+            gone_any = True
+            if total <= Collector._DCA_PARTS_BUDGET:
+                break
+        if gone_any:
+            MG.malloc_trim()
+
+    def _dca_sig(self, DR):
+        """Подпись всего, из чего собирается свод DCA: куски шести
+        журналов и три артефакта (путь, mtime, размер). Та же подпись —
+        тот же ответ; книги дописывают раз в час, и свод пересобирается
+        тогда, а не раз в две минуты по часам."""
+        sig = []
+        twin = getattr(DR, "fixed_twin", None)
+        for attr in ("JOURNAL", "H24_JOURNAL", "PAIR_JOURNAL"):
+            jp = getattr(DR, attr, None)
+            if not jp:
+                continue
+            for pth in ([jp] + ([twin(jp)] if twin else [])):
+                for part in DR.journal_parts(pth):
+                    try:
+                        st = os.stat(part)
+                        sig.append((part, st.st_mtime_ns, st.st_size))
+                    except OSError:
+                        continue
+        for attr in ("ARTIFACT", "H24_ARTIFACT", "PAIR_ARTIFACT"):
+            ap = getattr(DR, attr, None)
+            try:
+                st = os.stat(ap)
+                sig.append((ap, st.st_mtime_ns, st.st_size))
+            except (OSError, TypeError):
+                sig.append((ap, None, None))
+        return tuple(sig)
+
+    @staticmethod
+    def _dca_freshen(out, DR, now):
+        """Свежесть — на каждом ответе, не на пересборке: кешированный
+        свод, у которого возраст застыл, скрыл бы остановку книг."""
+        def age(path):
+            try:
+                return round((now - os.path.getmtime(path)) / 3600.0, 1)
+            except (OSError, TypeError):
+                return None
+        if out.get("present"):
+            out["age_h"] = age(DR.ARTIFACT)
+            out["stale"] = bool(out["age_h"] is not None and out["age_h"] > 36)
+        for blk, attr in (("short", "H24_ARTIFACT"), ("pair", "PAIR_ARTIFACT")):
+            b = out.get(blk)
+            if isinstance(b, dict) and b.get("present"):
+                b["age_h"] = age(getattr(DR, attr, None))
+                b["stale"] = bool(b["age_h"] is not None and b["age_h"] > 3)
+        return out
+
     def _dca_rows(self, DR, path, acc=None):
         """Строки журнала DCA-книг ТЕКУЩИХ правил — через кеш кусков
         сборщика.
@@ -3707,9 +3792,30 @@ class Collector:
         cache = getattr(self, "_dca_parts", None)
         if cache is None:
             cache = self._dca_parts = {}
+        meta = getattr(self, "_dca_parts_meta", None)
+        if meta is None:
+            meta = self._dca_parts_meta = {}
         st = {}
         rows, bad = DR.read_journal(path, stats=st, keep=DR.is_current,
                                     cache=cache)
+        # Бюджет кеша кусков — в байтах ОБЪЕКТОВ, выброс самых давних
+        # по обращению (починка 10.10: кеш рос без предела, 245 МБ, и
+        # удвоился журналами-близнецами фиксированного билета). Куски
+        # этого вызова помечаются свежими и не выбрасываются: ответ
+        # собирается из них прямо сейчас.
+        now = time.time()
+        base = os.path.splitext(path)[0] + "-"
+        for part, ent in cache.items():
+            if part != path and not part.startswith(base):
+                continue
+            m = meta.get(part)
+            if m is None or m["id"] != id(ent[1]):
+                meta[part] = {"id": id(ent[1]), "est": MS.deep_size(ent[1]),
+                              "used": now}
+                Collector._DCA_PARTS_STATS["parsed"] += 1
+            else:
+                m["used"] = now
+        self._dca_parts_trim(exclude_prefix=(path, base))
         if acc is not None:
             for k in ("parsed", "cached", "parts", "dups"):
                 acc[k] = acc.get(k, 0) + st.get(k, 0)
@@ -4002,17 +4108,24 @@ class Collector:
         # больше» две минуты отдавался бы прежним хвостом, и кнопка
         # выглядела бы нажатой впустую.
         key = f"{ruler or ''}:{dep or ''}:{full or ''}:{sizing or ''}"
-        cat, cached = getattr(self, "_dca_cache", (0.0, {}))
-        if now - cat < 120 and key in cached:
-            return cached[key]
-        if now - cat >= 120:
-            cached = {}
         root = os.path.join(os.path.dirname(HERE), "dca_paper")
         sys.path.insert(0, root)
         try:
             import rules as DR
         except Exception as e:
             return {"present": False, "why": f"модуль правил не читается: {e}"}
+        # Кеш свода — ПО ПОДПИСИ файлов (куски журналов и артефакты), а
+        # не по часам (починка 10.10): два минутных таймера заставляли
+        # собирать все книги заново при тех же файлах, а свежесть
+        # обновляется на каждом ответе (`_dca_freshen`). Ответов в кеше
+        # не больше трёх: каждый весит десятки МБ.
+        sig = self._dca_sig(DR)
+        cat, cached = getattr(self, "_dca_cache", (0.0, {}))
+        if cat == sig and key in cached:
+            return self._dca_freshen(cached[key], DR, now)
+        if cat != sig:
+            cached = {}
+        cat = sig
         try:
             import tail as DT
             _CUT_UNK = DT.CUT_UNKNOWN
@@ -4030,7 +4143,7 @@ class Collector:
             out.setdefault(
                 "why", "прогона ещё не было: артефакта нет на этой машине")
             cached[key] = out
-            self._dca_cache = (now if now - cat >= 120 else cat, cached)
+            self._dca_cache = (cat, cached)
             return out
         acc = {}
         rows, bad = self._dca_rows(DR, DR.JOURNAL, acc)
@@ -4230,8 +4343,10 @@ class Collector:
             k = ckey(rk0, float(dep), sizing if sizing in sizings else sizings[0])
             if k in books:
                 out["selected"] = k
+        if len(cached) >= 3:
+            cached.pop(next(iter(cached)))
         cached[key] = out
-        self._dca_cache = (now if now - cat >= 120 else cat, cached)
+        self._dca_cache = (cat, cached)
         return out
 
     def _dca_family(self, DR, now, art_attr, journal_attr, family, what):

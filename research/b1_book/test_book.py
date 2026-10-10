@@ -8771,6 +8771,157 @@ def test_collector_drop_caches_empties_every_page_cache_and_counts_churn():
         cache.clear(); files.clear()
 
 
+def test_dca_parts_cache_has_a_budget_and_evicts_the_least_used():
+    """Кеш кусков DCA-журналов ограничен бюджетом в байтах объектов
+    (починка 10.10: рос без предела, 245 МБ, удвоен журналами-близнецами).
+    Куски текущего вызова не выбрасываются; давние — выбрасываются и
+    считаются. Контроль: счёт байтами файла оставил бы все."""
+    import json as _json
+    import tempfile
+
+    import collect as C
+
+    root = os.path.join(os.path.dirname(HERE), "dca_paper")
+    sys.path.insert(0, root)
+    import rules as DR
+
+    td = tempfile.mkdtemp()
+    ja = os.path.join(td, "a.jsonl")
+    jb = os.path.join(td, "b.jsonl")
+    t0 = (int(DR.RULES_SINCE) // 3600 + 1) * 3600
+    for k, (jp, day) in enumerate(((ja, "2026-10-01"), (ja, "2026-10-02"), (jb, "2026-10-03"))):
+        part = jp[:-6] + f"-{day}.jsonl"
+        with open(part, "w", encoding="utf-8") as f:
+            for i in range(80):
+                # момент решения свой у каждого куска: одинаковые ключи
+                # дедуп на чтении снял бы как повторы
+                at = t0 + 1000 * k + i
+                f.write(_json.dumps({"dep": 1000, "ruler": "safe", "at": at, "exit_ts": at + 3600,
+                                     "sym": f"S{i}USDT", "usd": 1.0, "written_at": t0 + 700, "rules": DR.RULES,
+                                     "fills": [[t0, 2.0, 0.25]] * 6, "ladder": [[1, 2]] * 20}) + "\n")
+
+    class FakeC(C.Collector):
+        def __init__(self):
+            pass
+    c = FakeC()
+    budget_was = C.Collector._DCA_PARTS_BUDGET
+    st = C.Collector._DCA_PARTS_STATS
+    st.update(parsed=0, evict=0, evicted_mb=0.0)
+    try:
+        C.Collector._DCA_PARTS_BUDGET = 10 ** 12
+        rows, _ = c._dca_rows(DR, ja)
+        est = c._dca_parts_meta[next(iter(c._dca_parts_meta))]["est"]
+        check("куски журнала в кеше с оценкой байтов объектов",
+              len(c._dca_parts) == 2 and est > 50 * 1024 and len(rows) == 160, str((len(c._dca_parts), est)))
+        # бюджет — на два куска из трёх; читаем второй журнал: давние куски первого уходят
+        C.Collector._DCA_PARTS_BUDGET = int(est * 2.5)
+        c._dca_rows(DR, jb)
+        check("по бюджету выбрасывается самый давний кусок ЧУЖОГО журнала, свой остаётся",
+              len(c._dca_parts) == 2 and any(k.startswith(jb[:-6]) for k in c._dca_parts)
+              and st["evict"] == 1 and st["evicted_mb"] > 0, str((sorted(c._dca_parts), st)))
+        # куски текущего вызова не выбрасываются даже при бюджете меньше одного
+        C.Collector._DCA_PARTS_BUDGET = 1
+        rows, _ = c._dca_rows(DR, ja)
+        check("куски текущего вызова неприкосновенны: ответ собирается из них",
+              len(rows) == 160 and all(k.startswith(ja[:-6]) for k in c._dca_parts), str(sorted(c._dca_parts)))
+        # Контроль: счёт байтами файла оставил бы все три куска
+        cost_was = C.Collector.__dict__["_dca_part_cost"]
+        C.Collector._dca_part_cost = staticmethod(lambda m: 1)
+        assert C.Collector._dca_part_cost({"est": 10 ** 9}) == 1
+        try:
+            C.Collector._DCA_PARTS_BUDGET = 3
+            c._dca_parts.clear(); c._dca_parts_meta.clear()
+            c._dca_rows(DR, ja); c._dca_rows(DR, jb)
+            check("контроль: подделка стоимости (единица на кусок) оставляет все три",
+                  len(c._dca_parts) == 3, str(len(c._dca_parts)))
+        finally:
+            C.Collector._dca_part_cost = cost_was
+    finally:
+        C.Collector._DCA_PARTS_BUDGET = budget_was
+
+
+def test_dca_summary_is_rebuilt_by_file_signature_not_by_clock():
+    """Свод `/dca` пересобирается, когда меняются файлы (куски журналов,
+    артефакты), а не раз в две минуты; свежесть (возраст, stale)
+    обновляется на каждом ответе. Контроль: без обновления свежести
+    застывший возраст скрыл бы остановку книг."""
+    import json as _json
+    import tempfile
+
+    import collect as C
+
+    root = os.path.join(os.path.dirname(HERE), "dca_paper")
+    sys.path.insert(0, root)
+    import rules as DR
+    import run_paper as DP
+
+    _snap = DP.rules_snapshot()
+    saved = {k: getattr(DR, k) for k in ("JOURNAL", "ARTIFACT", "H24_ARTIFACT", "H24_JOURNAL",
+                                          "PAIR_ARTIFACT", "PAIR_JOURNAL")}
+    td = tempfile.mkdtemp()
+    try:
+        DR.JOURNAL = os.path.join(td, "journal.jsonl")
+        DR.ARTIFACT = os.path.join(td, "art.json")
+        DR.H24_ARTIFACT = os.path.join(td, "short-art.json"); DR.H24_JOURNAL = os.path.join(td, "short.jsonl")
+        DR.PAIR_ARTIFACT = os.path.join(td, "pair-art.json"); DR.PAIR_JOURNAL = os.path.join(td, "pair.jsonl")
+        t0 = (int(DR.RULES_SINCE) // 3600 + 1) * 3600
+
+        def row(sym, at):
+            return {"dep": 1000, "at": at, "exit_ts": at + 3600, "sym": sym, "usd": 1.0,
+                    "written_at": at + 600, "rules": DR.RULES, "ruler": "safe", "lev": 2.0, "margin": 25.0,
+                    "pnl_frac": 0.04, "exit": "тейк", "entry_px": 2.0, "exit_px": 2.2, "avg": 1.9,
+                    "depth": 1, "fills": [[at, 2.0, 0.25]], "fav_bp": 500.0}
+        with open(DR.JOURNAL, "w", encoding="utf-8") as f:
+            f.write(_json.dumps(row("AAAUSDT", t0)) + "\n")
+        art = {"rules": {"RULES": DR.RULES, "DEPOSITS": [1000.0], "AHEAD_H": DR.AHEAD_H,
+                         "RULERS": _snap["RULERS"], "RULER_ORDER": list(_snap["RULER_ORDER"])},
+               "books": {f"{k}:1000": {"deposit": 1000.0, "ruler": k} for k in _snap["RULER_ORDER"]}}
+        with open(DR.ARTIFACT, "w", encoding="utf-8") as f:
+            _json.dump(art, f)
+
+        class FakeC(C.Collector):
+            def __init__(self):
+                self._dca_cache = (0.0, {})
+        c = FakeC()
+        o1 = c.dca_paper()
+        o2 = c.dca_paper()
+        check("те же файлы — тот же ответ без пересборки (один и тот же объект)",
+              o1 is o2 and o1["present"] and o1["books"]["safe:1000"]["n_journal"] == 1, str(o1.get("read")))
+        with open(DR.JOURNAL, "a", encoding="utf-8") as f:
+            f.write(_json.dumps(row("BBBUSDT", t0 + 60)) + "\n")
+        o3 = c.dca_paper()
+        check("дописанная строка журнала меняет подпись — свод пересобран",
+              o3 is not o2 and o3["books"]["safe:1000"]["n_journal"] == 2, str(o3["books"]["safe:1000"].get("n_journal")))
+        # свежесть — на каждом ответе: файлы те же, прошло 40 часов (часы
+        # сборщика подменены), книги не писали — свод обязан стать устаревшим
+        real_time = C.time.time
+        C.time.time = lambda: real_time() + 40 * 3600
+        try:
+            o4 = c.dca_paper()
+            check("возраст артефакта пересчитан на ответе без пересборки: свод устарел",
+                  o4 is o3 and o4["stale"] is True and o4["age_h"] >= 39, str((o4 is o3, o4["stale"], o4["age_h"])))
+        finally:
+            C.time.time = real_time
+        # Контроль: без обновления свежести застывший возраст промолчал бы
+        fresh_was = C.Collector.__dict__["_dca_freshen"]
+        C.Collector._dca_freshen = staticmethod(lambda out, DR_, now: out)
+        try:
+            c._dca_cache = (0.0, {})
+            c.dca_paper()
+            C.time.time = lambda: real_time() + 40 * 3600
+            try:
+                o5 = c.dca_paper()
+            finally:
+                C.time.time = real_time
+            check("контроль: без обновления свежести возраст застывает (ложная свежесть)",
+                  o5["stale"] is False, str((o5["stale"], o5["age_h"])))
+        finally:
+            C.Collector._dca_freshen = fresh_was
+    finally:
+        for k, v in saved.items():
+            setattr(DR, k, v)
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
@@ -8804,6 +8955,8 @@ def main():
     test_jsonl_cache_matches_plain_read()
     test_memguard_drops_then_stops_only_above_hard_and_counts()
     test_collector_drop_caches_empties_every_page_cache_and_counts_churn()
+    test_dca_parts_cache_has_a_budget_and_evicts_the_least_used()
+    test_dca_summary_is_rebuilt_by_file_signature_not_by_clock()
     test_book_built_twice_gives_same_numbers()
     test_overview_and_trades_page_agree()
     test_model_trades_lite_matches_full()

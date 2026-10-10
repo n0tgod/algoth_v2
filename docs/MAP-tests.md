@@ -289,7 +289,7 @@
 - L700 `paperStub()`
 - L835 `bookDaysStub()`
 
-## research/b1_book/test_book.py · 8923 строк
+## research/b1_book/test_book.py · 9076 строк
 
 Тесты стакана. Закрывают место, где ошибка портит все данные молча.
 
@@ -431,7 +431,9 @@
 - L8586 `test_dca_list_counts_rules_of_the_family_not_of_the_project()` — Список сделок книги живёт по версии правил СВОЕГО семейства.
 - L8661 `test_memguard_drops_then_stops_only_above_hard_and_counts()` — Самоограничитель памяти (починка 10.10): выше мягкого порога — сброс кешей, сбор мусора и возврат памяти ядру…
 - L8722 `test_collector_drop_caches_empties_every_page_cache_and_counts_…` — Сброс кешей сборщика опустошает кеш журналов (класс), кеш кусков DCA, ответы `/dca` и `/model` — и называет,…
-- L8774 `main()`
+- L8774 `test_dca_parts_cache_has_a_budget_and_evicts_the_least_used()` — Кеш кусков DCA-журналов ограничен бюджетом в байтах объектов (починка 10.10: рос без предела, 245 МБ, удвоен…
+- L8843 `test_dca_summary_is_rebuilt_by_file_signature_not_by_clock()` — Свод `/dca` пересобирается, когда меняются файлы (куски журналов, артефакты), а не раз в две минуты; свежесть…
+- L8925 `main()`
 
 ## research/b1_book/test_measure_pack.py · 133 строк
 
