@@ -8666,7 +8666,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L64 `operator_token(out)`
 - L76 `main(out=OUT, ip=SERVER_IP)`
 
-## tools/app_api/push.py · 201 строк
+## tools/app_api/push.py · 206 строк
 
 Пуши APNs для событий живого исполнителя (спека 15 §7.5).
 
@@ -8688,7 +8688,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
   - L147 `Sender.token(self, cfg)`
   - L156 `Sender._curl(url, headers, body)`
   - L175 `Sender.send(self, device_token, env, payload, cfg=None)` — → {"status": код APNs, "reason": причина Apple или слова, "dead": токен мёртв}.
-- L198 `_strip(o)`
+- L203 `_strip(o)`
 
 ## tools/app_api/restart.py · 32 строк
 
@@ -8790,6 +8790,15 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L629 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
 - L640 `read_operator_token(path)`
 - L648 `main(argv=None)`
+
+## tools/app_api/set_topic.py · 44 строк
+
+Сменить тему пушей APNs (Bundle ID приложения) в `out/apns.json`.
+
+- L17 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L18 `PATH = os.path.join(HERE, 'out', 'apns.json')`
+- L19 `OK = re.compile('^[A-Za-z0-9._-]{1,120}$')`
+- L22 `main(argv)`
 
 ## tools/app_api/trades.py · 172 строк
 

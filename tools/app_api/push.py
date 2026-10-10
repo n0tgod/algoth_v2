@@ -192,7 +192,12 @@ class Sender:
         if code == 200:
             return {"status": 200, "reason": None, "dead": False}
         dead = code == 410 or reason in ("BadDeviceToken", "Unregistered", "DeviceTokenNotForTopic")
-        return {"status": code, "reason": reason or f"HTTP {code}", "dead": dead}
+        words = reason or f"HTTP {code}"
+        if reason == "TopicDisallowed":
+            # 10.10: тема из project.yml не совпала с Bundle ID сборки
+            words = (f"TopicDisallowed: тема {cfg['topic']!r} не разрешена ключу — "
+                     "задайте Bundle ID приложения как тему (Replace APNs key → Bundle ID)")
+        return {"status": code, "reason": words, "dead": dead}
 
 
 def _strip(o):
