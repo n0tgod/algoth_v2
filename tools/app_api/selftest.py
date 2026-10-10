@@ -65,6 +65,13 @@ def main():
               f"позиций {len(x.get('positions') or [])}, намерений {it.get('n')}, отказов {it.get('n_skips')}, "
               f"возраст источников {it.get('source_age_s')}"
               + (f"; исполнитель: {('нет — ' + str(ex.get('why_none'))) if not ex.get('status') else 'есть'}" if ex else ""))
+    st, ps = call(base, "/api/v1/positions", token=sess, ctx=ctx)
+    print(f"positions: {st}, открытых {ps.get('open')}, закрытых {ps.get('closed')}")
+    for p in ps.get("positions") or []:
+        lv = p.get("levels") or {}
+        print(f"  {p.get('state')} {p.get('sym')} {p.get('side')} x{p.get('lev')} вход {p.get('entry_px')} "
+              f"средняя {p.get('avg')} пол {lv.get('floor_px')} цель {lv.get('take_px')} "
+              f"отметка {p.get('mark_usd')} ({p.get('mark_why') or 'есть'}) исход {p.get('exit')} {p.get('usd')}")
     call(base, "/api/v1/auth/logout", {}, token=sess, ctx=ctx)
     print("ок")
 
