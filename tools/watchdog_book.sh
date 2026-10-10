@@ -53,6 +53,31 @@ pair_due() {
     p=$(computed_ts "$1"); s=$(computed_ts "$2"); l=$(computed_ts "$3")
     [ "$s" -gt "$p" ] && [ "$l" -gt "$p" ]
 }
+# Гейт памяти для прогонов книг (починка 10.10). Обучение S8 теперь
+# начинается, когда память позволяет, а не в фиксированный час, и
+# пропуск часов 02 и 06 его не защищает: 05:05 UTC ядро убило
+# обучение (3.3 ГБ) рядом с часовыми прогонами книг (≈1.2 ГБ каждый).
+# Прогон книг переносится на следующий такт, пока доступной памяти
+# меньше порога; строка называет числа. Нет меры (/proc не читается)
+# — идём без гейта, и это сказано. `MEMINFO` подменяется проверками.
+MEMINFO=${MEMINFO:-/proc/meminfo}
+BOOK_MEM_MIN_MB=2500
+mem_avail_mb() {
+    awk '/^MemAvailable:/ {print int($2/1024)}' "$MEMINFO" 2>/dev/null
+}
+books_mem_ok() {
+    local a
+    a=$(mem_avail_mb)
+    if [ -z "$a" ]; then
+        echo "[$(now)] память не измерена ($MEMINFO) — прогон книг без гейта"
+        return 0
+    fi
+    if [ "$a" -ge "$BOOK_MEM_MIN_MB" ]; then
+        return 0
+    fi
+    echo "[$(now)] прогон книг отложен: доступно ${a} МБ при пороге"          "${BOOK_MEM_MIN_MB} — рядом обучение или тяжёлый прогон"
+    return 1
+}
 
 # --- сборщик ---------------------------------------------------------
 need_restart=""
@@ -343,7 +368,7 @@ if ! pgrep -f "dca_paper/run_paper.py" >/dev/null; then
     fi
     dca_hh=$(date -u +%H)
     if [ "$dca_hh" != "02" ] && [ "$dca_hh" != "06" ] \
-       && [ "$dca_age" -gt 3600 ]; then
+       && [ "$dca_age" -gt 3600 ] && books_mem_ok; then
         echo "[$(now)] DCA-книги: последний счёт ${dca_age} с назад — прогон"
         setsid nohup bash -c "
             nice -n 10 .venv/bin/python research/dca_paper/run_paper.py \
@@ -373,7 +398,7 @@ if ! pgrep -f "dca_paper/run_short.py" >/dev/null; then
     fi
     dcs_hh=$(date -u +%H)
     if [ "$dcs_hh" != "02" ] && [ "$dcs_hh" != "06" ] \
-       && [ "$dcs_age" -gt 3600 ]; then
+       && [ "$dcs_age" -gt 3600 ] && books_mem_ok; then
         echo "[$(now)] короткие книги h24: последний счёт ${dcs_age} с назад — прогон"
         setsid nohup bash -c "
             nice -n 10 .venv/bin/python research/dca_paper/run_short.py \
@@ -399,7 +424,7 @@ if ! pgrep -f "dca_paper/run_pair.py" >/dev/null \
     # `pair_due`); идущий прогон книги — ждать следующего такта, иначе
     # кэш читался бы на середине записи. Часы обучения книги пропускают
     # сами, общий счёт за ними.
-    if pair_due "$DCAP" "$PAIR_SRC_SHORT" "$PAIR_SRC_LONG"; then
+    if pair_due "$DCAP" "$PAIR_SRC_SHORT" "$PAIR_SRC_LONG" && books_mem_ok; then
         echo "[$(now)] общий счёт: книги-источники свежее — прогон"
         setsid nohup bash -c "
             nice -n 10 .venv/bin/python research/dca_paper/run_pair.py \

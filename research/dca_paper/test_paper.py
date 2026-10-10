@@ -1892,9 +1892,19 @@ def _run_watchdog_cases(block, art_name="DCA-paper.json"):
 
     stub("pgrep", "#!/bin/sh\nexit ${PGREP_RC:-1}\n")
     stub("setsid", '#!/bin/sh\nshift 2\necho "$@" >> ran.log\n')
-    env = dict(os.environ,
+    # память — подставным /proc/meminfo: по умолчанию её много
+    meminfo = os.path.join(d, "meminfo")
+
+    def set_mem(mb):
+        with open(meminfo, "w") as f:
+            f.write(f"MemTotal: 7931000 kB\nMemAvailable: {mb * 1024} kB\n")
+    set_mem(5000)
+    env = dict(os.environ, MEMINFO=meminfo,
                PATH=os.path.join(d, "stubs") + os.pathsep + os.environ["PATH"])
-    wrap = "now() { echo T; }\n" + block
+    wd_src = open(os.path.join(HERE, os.pardir, os.pardir, "tools",
+                               "watchdog_book.sh"), encoding="utf-8").read()
+    fns = wd_src[wd_src.index("computed_ts() {"):wd_src.index("need_restart=\"\"")]
+    wrap = "now() { echo T; }\n" + fns + block
 
     def run(hour, counted_age, busy=False, stamp=True, touch=True):
         """`counted_age` — возраст ПОСЛЕДНЕГО СЧЁТА; None — артефакта нет."""
@@ -1940,8 +1950,27 @@ def _run_watchdog_cases(block, art_name="DCA-paper.json"):
     # Тот самый случай: `--restat` минуту назад, а счёт был два часа назад.
     assert run("12", 7200, touch=True) is True, \
         "свежий файл со старой меткой обязан читаться как «давно не считали»"
+    # Гейт памяти (10.10): рядом обучение — прогон откладывается на такт,
+    # не измерено — идёт без гейта; подделка «порог 0» кусается.
+    set_mem(1900)
+    assert run("12", 7200) is False, "при 1900 МБ доступных прогон обязан ждать"
+    set_mem(2500)
+    assert run("12", 7200) is True, "ровно порог — прогон идёт"
+    os.remove(meminfo)
+    assert run("12", 7200) is True, "нет меры — без гейта, не стоять"
+    set_mem(1900)
+    e0 = env.copy()
+    env["MEMINFO"] = meminfo
+    wrap_was = wrap
+    wrap = wrap.replace("BOOK_MEM_MIN_MB=2500", "BOOK_MEM_MIN_MB=0")
+    assert "BOOK_MEM_MIN_MB=0" in wrap
+    got = run("12", 7200)
+    wrap = wrap_was
+    env.update(e0)
+    assert got is True, "контроль: порог 0 обязан пропустить прогон при 1900 МБ"
+    set_mem(5000)
     print("ok  сторож: книга идёт каждый час, вопрос — когда СЧИТАЛИ, "
-          "а не когда трогали файл")
+          "а не когда трогали файл; гейт памяти откладывает при обучении")
     return True
 
 def _run_pair_cases(block):
@@ -1959,7 +1988,10 @@ def _run_pair_cases(block):
 
     stub("pgrep", "#!/bin/sh\nexit ${PGREP_RC:-1}\n")
     stub("setsid", '#!/bin/sh\nshift 2\necho "$@" >> ran.log\n')
-    env = dict(os.environ,
+    meminfo = os.path.join(d, "meminfo")
+    with open(meminfo, "w") as f:
+        f.write("MemAvailable: 5120000 kB\n")
+    env = dict(os.environ, MEMINFO=meminfo,
                PATH=os.path.join(d, "stubs") + os.pathsep + os.environ["PATH"])
     wrap = "now() { echo T; }\n" + block
 
