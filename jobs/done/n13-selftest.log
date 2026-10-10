@@ -16,3 +16,14 @@ trades: 200, записей 7, отказов 1
   отказ CTUSDT short: плечо 25.00× не выставилось: /v5/position/set-leverage: retCode 110013 cannot set leverage [2500] gt maxLeverage [2000] by risk limit
 ок
 конец: 2026-10-10T21:13:27Z, код 0
+публикуется в ветку main:
+ jobs/done/n12-status.done   |  1 +
+ jobs/done/n12-status.log    | 11 +++++++++++
+ jobs/done/n13-selftest.done |  1 +
+ jobs/done/n13-selftest.log  | 18 ++++++++++++++++++
+ jobs/poke.log               |  4 ++++
+ 5 files changed, 35 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   df8b7d30..b7594bf0  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
