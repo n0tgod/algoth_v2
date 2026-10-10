@@ -36,6 +36,10 @@ BIN = os.path.join(ROOT, "bot", "target", "release", "bot")
 BASE = "https://api.bybit.com"
 EXEC_ROOT = os.environ.get("ALGOTH_EXEC_ROOT") or os.path.join(ROOT, "bot", "out", "dca")
 STOP_WAIT_S = 30
+# Такт исполнителя: отметка позиции в статусе обновляется каждым тактом
+# (владелец 10.10: «пнл как можно чаще, как на бирже»). Три запроса к
+# площадке за такт — далеко от её пределов.
+INTERVAL_S = 2
 
 
 def log(*a):
@@ -129,7 +133,7 @@ def start(db, sub_id, root=EXEC_ROOT, bin_path=BIN, opener=None, popen=subproces
         log(f"{sub_id}: ключ не открылся — исполнитель не запущен: {e}")
         return False
     logf = open(os.path.join(d, "ladder.log"), "ab")
-    p = popen([bin_path, "ladder", "--dir", d, "--base", BASE, "--keys-stdin"],
+    p = popen([bin_path, "ladder", "--dir", d, "--base", BASE, "--keys-stdin", "--interval-sec", str(INTERVAL_S)],
               stdin=subprocess.PIPE, stdout=logf, stderr=subprocess.STDOUT,
               cwd=ROOT, start_new_session=True)
     try:

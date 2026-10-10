@@ -385,7 +385,9 @@ fn main() {
             let mut dir = None;
             let mut base: Option<String> = None;
             let mut keys_stdin = false;
-            let mut interval = 5u64;
+            // Такт 2 с (владелец 10.10: «пнл как можно чаще, как на бирже»):
+            // отметка позиции в статусе обновляется каждым тактом.
+            let mut interval = 2u64;
             let mut dry = false;
             let mut once = false;
             let mut it = args[2..].iter();
@@ -395,7 +397,7 @@ fn main() {
                     "--dir" => dir = Some(val()),
                     "--base" => base = Some(val()),
                     "--keys-stdin" => keys_stdin = true,
-                    "--interval-sec" => interval = val().parse().unwrap_or(5),
+                    "--interval-sec" => interval = val().parse().unwrap_or(2),
                     "--dry" => dry = true,
                     "--once" => once = true,
                     other => {

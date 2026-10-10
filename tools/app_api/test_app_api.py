@@ -1131,6 +1131,7 @@ def test_supervisor_starts_armed_subs_with_key_on_stdin_and_stops_unarmed():
         assert r["started"] == 1 and len(started) == 1, (r, started)
         cmd, data = started[0]
         assert cmd[1:3] == ["ladder", "--dir"] and cmd[3].endswith(sa) and "--keys-stdin" in cmd
+        assert cmd[cmd.index("--interval-sec") + 1] == "2", "такт 2 с — отметка позиции как можно чаще"
         assert "KEYK" not in " ".join(cmd) and "SECS" not in " ".join(cmd), "ключ не в аргументах"
         assert data == b"BYBIT_KEY=KEYK\nBYBIT_SECRET=SECS\n"
         assert json.load(open(os.path.join(root, sa, "ladder_state.json")))["seq_done"] == 7
