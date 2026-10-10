@@ -1768,3 +1768,6 @@ Terminated
 
 == сигнал 1791636239 ==
 [2026-10-10T12:44:00Z] задание memtop-fix6 запущено: tools/memtop.py
+
+== сигнал 1791636358 ==
+[2026-10-10T12:46:00Z] задание api-restart-12 запущено: tools/app_api/restart.py
