@@ -681,6 +681,14 @@ def test_intents_plan_entry_like_paper_and_size_from_subscription_cash():
         # решение, увиденное впервые через 20+ мин после себя, — отказ «поздно», не вход задним числом
         _il, skl, _ = I.decide(sub, st, {"sit": [g_long]}, None, dict(env, now=at + I.PENDING_MAX_S + 60), log=lambda *a: None)
         assert not _il and len(skl) == 1 and skl[0]["why"].startswith("решение пришло поздно: возраст 21 мин"), skl
+        # …но решение, ДОСТУПНОЕ нам минуту (прошлое чтение источника минуту назад), свежее при любой метке часа:
+        # цикл пишет выборы часа с опозданием — это отставание едет числом, не отказом
+        il2, skl2, _ = I.decide(sub, st, {"sit": [g_long]}, None,
+                                dict(env, now=at + I.PENDING_MAX_S + 60, avail_age={"sit": 60.0}), log=lambda *a: None)
+        assert len(il2) == 1 and not skl2 and il2[0]["lag_s"] == I.PENDING_MAX_S + 60, (il2, skl2)
+        il3, skl3, _ = I.decide(sub, st, {"sit": [g_long]}, None,
+                                dict(env, now=at + I.PENDING_MAX_S + 60, avail_age={"sit": I.PENDING_MAX_S + 1}), log=lambda *a: None)
+        assert not il3 and len(skl3) == 1, "доступно дольше предела и метка стара — поздно"
         # решение до подписки не ведётся; повтор того же решения не дублируется
         _i7, sk7, it7 = I.decide(dict(sub, created=at + 1), {}, {"sit": [g_long]}, None, env, log=lambda *a: None)
         assert not _i7 and not sk7
@@ -732,7 +740,7 @@ def test_intents_sources_are_read_as_tail_once_and_tick_feeds_state_and_parity()
             lines, sst, why = I.read_tail(picks, {}, first_tail=10 ** 9)
             assert len(lines) == 2 and why is None and sst["offset"] == os.path.getsize(picks) - len('{"arm": "nn", "hour": "2026-'), sst
             lines2, sst2, _ = I.read_tail(picks, sst)
-            assert lines2 == [] and sst2["offset"] == sst["offset"]
+            assert lines2 == [] and sst2["offset"] == sst["offset"] and sst2["prev_at"] == sst["at"]
             with open(picks, "a", encoding="utf-8") as f:
                 f.write('01-01"}\n')
             lines3, sst3, _ = I.read_tail(picks, sst2)

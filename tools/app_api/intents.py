@@ -144,6 +144,9 @@ def read_tail(path, st, first_tail=FIRST_TAIL):
         return [], st, "файла нет"
     off = st.get("offset")
     fresh = off is None
+    # момент ПРОШЛОГО чтения: строки, прочитанные сейчас, не старше
+    # него — это и есть мера свежести решения (см. `decide`)
+    st["prev_at"] = st.get("at")
     if fresh:
         off = max(0, size - int(first_tail))
     elif off > size:
@@ -300,7 +303,8 @@ def intent_row(sub, st, rk, sk, g, pl, margin, share, base, now):
             "sizing": (st.get("sizing") or R.DEFAULT_SIZING),
             "sym": g["sym"], "side": side, "arm": g.get("arm"), "hour": g.get("hour"),
             "decided_at": float(g["at"]), "entry_ts": pl["entry_ts"],
-            "computed_at": float(now), "px_ref": pl["entry"],
+            "computed_at": float(now), "lag_s": round(float(now) - float(g["at"]), 1),
+            "px_ref": pl["entry"],
             "lev": pl["lev"], "binder": pl.get("binder"),
             "margin_usd": round(float(margin), 4), "notional_usd": round(float(margin) * pl["lev"], 4),
             "share": share, "cash_usd": round(float(base), 4),
@@ -415,14 +419,22 @@ def decide(sub, st, legs_by_family, book_cell, env, log=print):
             k = leg_key(sk, g)
             if k in seen:
                 continue
-            # Решение, впервые увиденное позже `PENDING_MAX_S` после себя,
-            # исполнять нельзя: вход был бы на другой цене, чем у бумаги
-            # (подъём API после решения, источник отстал). Это отказ с
-            # причиной и возрастом, а не намерение задним числом.
-            if float(g["at"]) + PENDING_MAX_S <= now:
+            # Свежесть решения — по тому, сколько оно ДОСТУПНО нам, а не по
+            # метке часа: цикл пишет выборы часа xx:00 в xx:02, а после
+            # перезапуска или под памятью — и в xx:31 (16:08 10.10: шесть
+            # решений 15:00 отвергнуты «поздно», хотя появились минуту
+            # назад). Строка, прочитанная в этот такт, не старше прошлого
+            # чтения источника (`avail_age`); при первом чтении меры нет —
+            # судится возраст самой метки. Отставание от метки часа едет в
+            # намерение числом (`lag_s`): исполнитель решит по цене
+            # (потолок от `px_ref`), а не по календарю.
+            age = now - float(g["at"])
+            avail = (env.get("avail_age") or {}).get(fam)
+            fresh = (avail is not None and avail <= PENDING_MAX_S) or age <= PENDING_MAX_S
+            if not fresh:
                 seen[k] = float(g["at"])
                 skips.append(skip_row(sub, rk, sk, g,
-                                      f"решение пришло поздно: возраст {int((now - float(g['at'])) // 60)} мин "
+                                      f"решение пришло поздно: возраст {int(age // 60)} мин "
                                       f"(подъём после решения или источник отстал)", now))
                 continue
             todo.append((sk, g, now))
@@ -515,6 +527,7 @@ def decide(sub, st, legs_by_family, book_cell, env, log=print):
         else:
             keep.append(p)
     it.update({"seen": seen, "live": live, "pending": keep, "at": now,
+               "last_lag_s": (max(r["lag_s"] for r in out) if out else it.get("last_lag_s")),
                "n": int(it.get("n") or 0) + len(out), "n_skips": int(it.get("n_skips") or 0) + len(skips),
                "last_decided_at": (max([r["decided_at"] for r in out]) if out else it.get("last_decided_at")),
                "cash_usd": cash, "sizing": sizing})
@@ -622,7 +635,7 @@ def summary(st):
     return {"at": it.get("at"), "n": it.get("n"), "n_skips": it.get("n_skips"),
             "live": len(it.get("live") or {}), "pending": len(it.get("pending") or []),
             "last_decided_at": it.get("last_decided_at"), "cash_usd": it.get("cash_usd"),
-            "source_age_s": it.get("source_age_s"),
+            "source_age_s": it.get("source_age_s"), "last_lag_s": it.get("last_lag_s"),
             "parity": it.get("parity"), "error": it.get("error")}
 
 
@@ -666,6 +679,10 @@ def tick(db, dca, root, log=print, env=None):
         if why:
             log(f"намерения: {os.path.basename(path)} — {why}")
         legs_by_family[fam] = legs_from_lines(fam, lines, log=log) if lines else []
+        prev = st2.get("prev_at")
+        env.setdefault("avail_age", {})
+        if fam not in env["avail_age"]:
+            env["avail_age"][fam] = (now - float(prev)) if prev else None
     save_sources_state(root, sst)
     # возраст источников — в состояние каждой подписки: «0 намерений» при
     # стоящем источнике и при тихом часе выглядят одинаково, различает их
@@ -780,7 +797,7 @@ def main(argv=None):
               f"ждут бар {len(it.get('pending') or [])}"
               + (f"; ошибка: {it['error']}" if it.get("error") else ""))
         for r in read_rows(intents_path(root, s["id"]), a.tail):
-            print(f"  вход {time.strftime('%m-%d %H:%M', time.gmtime(r['decided_at']))} {r['sym']} {r['side']} "
+            print(f"  вход {time.strftime('%m-%d %H:%M', time.gmtime(r['decided_at']))} (+{int((r.get('lag_s') or 0) // 60)} мин) {r['sym']} {r['side']} "
                   f"x{r['lev']:.2f} маржа {r['margin_usd']:.2f} $ вход {r['px_ref']} цель {r.get('take_px')} "
                   f"пол {r.get('floor_px')} рунгов {len(r.get('rungs') or [])} срок {r['hold_h']:g} ч")
         for r in read_rows(skips_path(root, s["id"]), a.tail):

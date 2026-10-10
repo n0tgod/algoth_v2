@@ -8684,7 +8684,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L64 `operator_token(out)`
 - L76 `main(out=OUT, ip=SERVER_IP)`
 
-## tools/app_api/intents.py · 801 строк
+## tools/app_api/intents.py · 818 строк
 
 Намерения живого исполнителя Ladder (спека 15 §10a, этап L1).
 
@@ -8704,33 +8704,33 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L103 `tiers()` — Тиры площадки — один разбор на изменение файла.
 - L122 `source_files(files=None)` — Файл источника по семейству книги: `sit` — листы ситуационной, `h24` — выборы книги со сроком. Подмена — для…
 - L131 `read_tail(path, st, first_tail=FIRST_TAIL)` — Новые ПОЛНЫЕ строки файла от сохранённого смещения.
-- L173 `legs_from_lines(family, lines, log=print)` — Строки источника → ноги ТЕМ ЖЕ правилом, что реплей: лист — через `tournament._leg`, выборы h24 — через `run_…
-- L212 `sources_state_path(root)`
-- L216 `load_sources_state(root)`
-- L224 `save_sources_state(root, st)`
-- L234 `leg_key(book, g)`
-- L238 `cell_sources(rk)` — Книги-источники ячейки: у общего счёта две, у обычной — она сама.
-- L244 `sub_cash(sub, st)` — Касса подписки — депозит плюс своё реализованное (§2). Одно правило с `server.App.sub_cash`; здесь — чтобы мо…
-- L250 `size_for(rk, sk, deposit, sizing, cash)` — Маржа позиции источника `sk` в ячейке `rk`: доля счёта по правилу книги (`rules.share_in`) от кассы подписки…
-- L260 `plan_entry(g, sk, bars, src_tiers, now, why)` — Геометрия входа ТЕМИ ЖЕ функциями, что бумага. None — причина в `why`.
-- L286 `intent_row(sub, st, rk, sk, g, pl, margin, share, base, now)` — Строка намерения входа — числа ядра, не копия.
-- L317 `skip_row(sub, rk, sk, g, why, now)`
-- L323 `_append(path, rows)` — Дозапись с растущим `seq`; возвращает число строк.
-- L345 `intents_path(root, sub_id)`
-- L349 `skips_path(root, sub_id)`
-- L353 `read_rows(path, limit=None)`
-- L367 `busy_names(st, book_cell, rk, sk, now)` — Имена, занятые у источника: живые намерения подписки по той же книге-источнику и открытые позиции той же книг…
-- L383 `decide(sub, st, legs_by_family, book_cell, env, log=print)` — Решения одной подписки по новым ногам. Возвращает (намерения, отказы, новое состояние `intents`).
-- L526 `_bp(a, b)`
-- L534 `paper_rows(book_cell, rk)` — Позиции бумажной ячейки — открытые и хвост закрытых — с книгой-источником.
-- L544 `match_paper(intent, rows)` — Строка бумаги того же решения: имя, источник, секунда решения.
-- L557 `parity_one(intent, q)` — Расхождение намерения с бумажной строкой — числом по полю.
-- L574 `parity(root, sub, st, book_cell, since=None, tail=PARITY_TAIL)` — Сверка намерений подписки с бумажной ячейкой: совпавшие — с расхождениями по полю (медиана и максимум |Δ|), н…
-- L619 `summary(st)` — Что отдаёт состояние подписки приложению (§10a L1: «намерения за час»).
-- L631 `cell_key(book, deposit, sizing)`
-- L636 `tick(db, dca, root, log=print, env=None)` — Один такт по всем активным подпискам. Возвращает число намерений.
-- L718 `reset_sub(db, root, sub_id, now=None)` — Сброс намерений подписки: файлы НЕ удаляются — переименовываются в `*-stale-<момент>.jsonl` (запись остаётся)…
-- L742 `main(argv=None)`
+- L176 `legs_from_lines(family, lines, log=print)` — Строки источника → ноги ТЕМ ЖЕ правилом, что реплей: лист — через `tournament._leg`, выборы h24 — через `run_…
+- L215 `sources_state_path(root)`
+- L219 `load_sources_state(root)`
+- L227 `save_sources_state(root, st)`
+- L237 `leg_key(book, g)`
+- L241 `cell_sources(rk)` — Книги-источники ячейки: у общего счёта две, у обычной — она сама.
+- L247 `sub_cash(sub, st)` — Касса подписки — депозит плюс своё реализованное (§2). Одно правило с `server.App.sub_cash`; здесь — чтобы мо…
+- L253 `size_for(rk, sk, deposit, sizing, cash)` — Маржа позиции источника `sk` в ячейке `rk`: доля счёта по правилу книги (`rules.share_in`) от кассы подписки…
+- L263 `plan_entry(g, sk, bars, src_tiers, now, why)` — Геометрия входа ТЕМИ ЖЕ функциями, что бумага. None — причина в `why`.
+- L289 `intent_row(sub, st, rk, sk, g, pl, margin, share, base, now)` — Строка намерения входа — числа ядра, не копия.
+- L321 `skip_row(sub, rk, sk, g, why, now)`
+- L327 `_append(path, rows)` — Дозапись с растущим `seq`; возвращает число строк.
+- L349 `intents_path(root, sub_id)`
+- L353 `skips_path(root, sub_id)`
+- L357 `read_rows(path, limit=None)`
+- L371 `busy_names(st, book_cell, rk, sk, now)` — Имена, занятые у источника: живые намерения подписки по той же книге-источнику и открытые позиции той же книг…
+- L387 `decide(sub, st, legs_by_family, book_cell, env, log=print)` — Решения одной подписки по новым ногам. Возвращает (намерения, отказы, новое состояние `intents`).
+- L539 `_bp(a, b)`
+- L547 `paper_rows(book_cell, rk)` — Позиции бумажной ячейки — открытые и хвост закрытых — с книгой-источником.
+- L557 `match_paper(intent, rows)` — Строка бумаги того же решения: имя, источник, секунда решения.
+- L570 `parity_one(intent, q)` — Расхождение намерения с бумажной строкой — числом по полю.
+- L587 `parity(root, sub, st, book_cell, since=None, tail=PARITY_TAIL)` — Сверка намерений подписки с бумажной ячейкой: совпавшие — с расхождениями по полю (медиана и максимум |Δ|), н…
+- L632 `summary(st)` — Что отдаёт состояние подписки приложению (§10a L1: «намерения за час»).
+- L644 `cell_key(book, deposit, sizing)`
+- L649 `tick(db, dca, root, log=print, env=None)` — Один такт по всем активным подпискам. Возвращает число намерений.
+- L735 `reset_sub(db, root, sub_id, now=None)` — Сброс намерений подписки: файлы НЕ удаляются — переименовываются в `*-stale-<момент>.jsonl` (запись остаётся)…
+- L759 `main(argv=None)`
 
 ## tools/app_api/push.py · 214 строк
 
