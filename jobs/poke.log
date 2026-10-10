@@ -1781,3 +1781,9 @@ Terminated
 == сигнал 1791638897 ==
 [2026-10-10T13:28:19Z] задание l1-api-restart запущено: tools/app_api/restart.py
 [2026-10-10T13:28:24Z] задание l1-status: состояние снято
+
+== сигнал 1791638991 ==
+
+== сигнал 1791639009 ==
+[2026-10-10T13:30:10Z] задание l1b-api-restart запущено: tools/app_api/restart.py
+[2026-10-10T13:30:10Z] задание l1-check запущено: tools/app_api/intents.py
