@@ -2056,27 +2056,50 @@ class Collector:
                        "manifest.json", "train_log.jsonl", "ic_history.jsonl",
                        "readiness.json", "last_run.json")
 
-    def _model_sig(self, s8):
-        """Подпись файлов всех книг: (имя, mtime, размер) по каталогам —
-        только тех файлов, из которых сборка берёт числа."""
+    def _model_sig_book(self, key, d):
+        """Подпись ОДНОЙ книги: читаемые файлы её каталога (имя, mtime,
+        размер). По ней книга пересобирается отдельно от соседей."""
         sig = []
         want = self.MODEL_SIG_FILES
-        for key in sorted(self.BOOK_DIRS):
-            d = os.path.join(s8, self.BOOK_DIRS[key])
-            try:
-                names = sorted(os.listdir(d))
-            except OSError:
-                sig.append((key, None))
+        try:
+            names = sorted(os.listdir(d))
+        except OSError:
+            return ((key, None),)
+        for fn in names:
+            if want is not None and fn not in want:
                 continue
-            for fn in names:
-                if want is not None and fn not in want:
-                    continue
-                try:
-                    st = os.stat(os.path.join(d, fn))
-                except OSError:
-                    continue
-                sig.append((key, fn, st.st_mtime_ns, st.st_size))
+            try:
+                st = os.stat(os.path.join(d, fn))
+            except OSError:
+                continue
+            sig.append((key, fn, st.st_mtime_ns, st.st_size))
         return tuple(sig)
+
+    def _model_sig(self, s8):
+        """Подпись файлов всех книг — склейка подписей по книгам."""
+        sig = []
+        for key in sorted(self.BOOK_DIRS):
+            sig.extend(self._model_sig_book(key, os.path.join(s8, self.BOOK_DIRS[key])))
+        return tuple(sig)
+
+    def _model_book_state(self, key, mdir, now, rr_min=None):
+        """Состояние книги из кеша ПО КНИГЕ (починка 10.10): живые файлы
+        ситуационных книг меняются каждые несколько минут, и пересборка
+        всего ответа перечитывала все книги — 7 раз за 35 мин, по
+        400+ МБ объектов разбора, которые кеш журналов не удерживал.
+        Теперь перечитывается только книга, чьи файлы изменились;
+        потолок возраста действует и здесь."""
+        cache = getattr(self, "_model_book_cache", None)
+        if cache is None:
+            cache = self._model_book_cache = {}
+        bsig = self._model_sig_book(key, mdir)
+        ck = (key, rr_min)
+        hit = cache.get(ck)
+        if hit is not None and hit[0] == bsig and now - hit[1] < self.MODEL_CACHE_MAX_SEC:
+            return hit[2], True
+        st = self._model_dir_state(mdir, rr_min=rr_min)
+        cache[ck] = (bsig, now, st)
+        return st, False
 
     def _day_brake_view(self, now):
         """Дневной тормоз для ответа страницы — живой, не из кеша."""
@@ -2129,10 +2152,13 @@ class Collector:
         # наугад. Ответ `/model` в какой-то момент перестал
         # укладываться в минуту, и понять это можно было только
         # таймаутом снаружи.
-        took = {}
+        took, reused = {}, []
         t_book = time.time()
-        out = self._model_dir_state(os.path.join(s8, self.BOOK_DIRS["h4"]))
+        out, hit = self._model_book_state("h4", os.path.join(s8, self.BOOK_DIRS["h4"]), now)
+        out = dict(out)
         took["h4"] = round((time.time() - t_book) * 1000)
+        if hit:
+            reused.append("h4")
         # Турнир темпов: книги остальных горизонтов — те же веса, свой
         # срок удержания и свой счёт. Отдаются отдельными ключами, а не
         # подмешаны: смесь двух книг в одной таблице выглядела бы
@@ -2147,10 +2173,12 @@ class Collector:
         books = {}
         for key in (k for k in self.BOOK_DIRS if k != "h4"):
             t_book = time.time()
-            st = self._model_dir_state(
-                os.path.join(s8, self.BOOK_DIRS[key]),
+            st, hit = self._model_book_state(
+                key, os.path.join(s8, self.BOOK_DIRS[key]), now,
                 rr_min=rr_min if key.startswith("sit") else None)
             took[key] = round((time.time() - t_book) * 1000)
+            if hit:
+                reused.append(key)
             if st.get("present"):
                 books[key] = st
         # Ситуационная секция одна: под ключом `sit` едет та запись,
@@ -2172,6 +2200,9 @@ class Collector:
         # которой молча нет»). None до первого счёта — тоже состояние.
         out["day_brake"] = self._day_brake_view(now)
         out["took_ms"] = took
+        # какие книги взяты из кеша по книге, а какие пересобраны: число
+        # в ответе, а не догадка по времени
+        out["books_reused"] = reused
         out["took_total_ms"] = round((time.time() - now) * 1000)
         self._model_cache = (now, out, rr_min, sig)
         return out
@@ -7129,6 +7160,18 @@ class Collector:
         return [(hz, name) for hz, name in self.BOOKS
                 if hz not in self.ECHO_BOOKS]
 
+    def _brake_sig_book(self, name):
+        s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
+        sig = []
+        for fn in self.BRAKE_FILES:
+            p = os.path.join(s8, name, fn)
+            try:
+                st = os.stat(p)
+                sig.append((p, st.st_mtime_ns, st.st_size))
+            except OSError:
+                sig.append((p, None))
+        return tuple(sig)
+
     def _brake_sig(self, now):
         """Подпись входов тормоза: журналы торгуемых книг и день UTC.
 
@@ -7140,17 +7183,30 @@ class Collector:
         выброшенных объектов: сторож тормоза вытеснял из кеша файлы
         сторожа ситуационной книги, тот через минуту разбирал их снова.
         """
-        s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
         sig = [time.strftime("%Y-%m-%d", time.gmtime(now))]
         for _hz, name in self._brake_books():
-            for fn in self.BRAKE_FILES:
-                p = os.path.join(s8, name, fn)
-                try:
-                    st = os.stat(p)
-                    sig.append((p, st.st_mtime_ns, st.st_size))
-                except OSError:
-                    sig.append((p, None))
+            sig.extend(self._brake_sig_book(name))
         return tuple(sig)
+
+    def _brake_rows(self, mem):
+        """Закрытые сделки считаемых книг — из кеша ПО КНИГЕ: перечитывается
+        только книга, чьи файлы изменились (починка 10.10: пересчёт по
+        любому живому событию читал все книги, 5 раз за 35 мин)."""
+        per = mem.setdefault("books", {})
+        rows = []
+        names = set()
+        for hz, name in self._brake_books():
+            names.add(name)
+            bsig = self._brake_sig_book(name)
+            hit = per.get(name)
+            if hit is None or hit[0] != bsig:
+                got, _err, _sc, _op = self.closed_rows([(hz, name)])
+                hit = (bsig, list(got))
+                per[name] = hit
+            rows.extend(hit[1])
+        for name in [n for n in per if n not in names]:
+            del per[name]
+        return rows
 
     def _brake_step(self, TR, path, limit, mem, now=None):
         """Один шаг тормоза: счёт при изменившихся входах, иначе прежнее
@@ -7163,7 +7219,7 @@ class Collector:
             st = dict(mem["st"], at=round(now, 1), skips=self.brake_skips)
         else:
             try:
-                rows, _err, _sc, _op = self.closed_rows(self._brake_books())
+                rows = self._brake_rows(mem)
                 realized = TR.day_realized(
                     ((r["at"], r["pnl"]) for r in rows
                      if r["hz"] not in self.ECHO_BOOKS), now)

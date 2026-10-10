@@ -2073,17 +2073,20 @@ def test_model_state_cache_follows_journal_signature():
               and a["day_brake"].get("at") == 1.0, str(b["day_brake"]))
         with open(os.path.join(s8, "model_h24", "picks.jsonl"), "w") as f:
             f.write(_json.dumps({"hour": "2026-10-06-04"}) + "\n")
-        c.model_state()
-        check("изменился файл книги — пересборка", len(calls) == 2 * n1, str(len(calls)))
+        r = c.model_state()
+        check("изменился файл ОДНОЙ книги — пересобрана только она (кеш по книге, 10.10)",
+              len(calls) == n1 + 1 and calls[-1].endswith("model_h24") and r["books_reused"] == ["h4"],
+              f"{len(calls)} {calls[-1:]} {r.get('books_reused')}")
         c.model_state(rr_min=1.0)
-        check("другой порог — своя сборка", len(calls) == 3 * n1, str(len(calls)))
+        check("другой порог — своя сборка ответа, книги без порога из кеша по книге",
+              len(calls) == n1 + 1, str(len(calls)))
         # Контроль: потолок возраста — рухнувший в ноль — пересобирает всегда.
         was = C.Collector.MODEL_CACHE_MAX_SEC
         C.Collector.MODEL_CACHE_MAX_SEC = 0
         try:
             c.model_state(rr_min=1.0)
-            check("подставной потолок возраста 0 кусается (контроль): пересборка без изменений",
-                  len(calls) == 4 * n1, str(len(calls)))
+            check("подставной потолок возраста 0 кусается (контроль): пересборка всех книг без изменений",
+                  len(calls) == 2 * n1 + 1, str(len(calls)))
         finally:
             C.Collector.MODEL_CACHE_MAX_SEC = was
     finally:
@@ -2135,7 +2138,8 @@ def test_brake_recomputes_only_when_journals_or_day_change():
         c._brake_step(TRf, path, 10.0, mem, now=day0 + 900)
         check("дописанный журнал — пересчёт", len(calls) == 2, str(len(calls)))
         c._brake_step(TRf, path, 10.0, mem, now=day0 + 86400 + 60)
-        check("новый день UTC — пересчёт", len(calls) == 3, str(len(calls)))
+        check("новый день UTC — пересчёт суммы без перечитывания журналов (кеш по книге)",
+              len(calls) == 2, str(len(calls)))
         written = _json.load(open(path))
         check("состояние пишется в файл каждым шагом", written["at"] == day0 + 86400 + 60)
         # ошибка счёта не запоминается: при тех же входах следующий шаг
@@ -2147,7 +2151,7 @@ def test_brake_recomputes_only_when_journals_or_day_change():
         c.closed_rows = lambda *a, **k: (calls.append(1) or ([], [], [], []))
         st = c._brake_step(TRf, path, 10.0, mem, now=day0 + 86400 + 180)
         check("ошибка счёта названа и не запоминается: следующий шаг считает заново",
-              "журнал бит" in bad.get("error", "") and len(calls) == 4 and "error" not in st,
+              "журнал бит" in bad.get("error", "") and len(calls) == 3 and "error" not in st,
               f"{bad} | {len(calls)} | {st}")
     finally:
         C.HERE, C.Collector.BOOKS = here_was, books_was
