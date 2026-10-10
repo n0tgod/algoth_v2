@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 565, строк: 245150, каталогов: 86.
+Модулей кода: 565, строк: 245167, каталогов: 86.
 
 
 ## корень — память проекта, идеи, README
@@ -807,7 +807,7 @@
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
 - документы: `README.md` — Очередь заданий, `queue-state.md` — 
-- заданий `.job`: 680, логов `done/*.log`: 681 (в карту не перечисляются — их читают по имени)
+- заданий `.job`: 682, логов `done/*.log`: 681 (в карту не перечисляются — их читают по имени)
 
 ## tools — команды сервера, защита коммитов, хуки
 
@@ -820,7 +820,7 @@
 - `app_api/diag.py` · 58 строк — Диагностика API приложения на сервере, только чтение: слушает ли порт, хвост журнала запросов (адрес, метод,…
 - `app_api/follow.py` · 168 строк — Сухой исполнитель-следователь (спека 15, Y2 в сухом режиме).
 - `app_api/init.py` · 88 строк — Разовая подготовка API на сервере: пара конвертов, токен оператора, самоподписанный сертификат. Существующее…
-- `app_api/intents.py` · 785 строк — Намерения живого исполнителя Ladder (спека 15 §10a, этап L1).
+- `app_api/intents.py` · 801 строк — Намерения живого исполнителя Ladder (спека 15 §10a, этап L1).
 - `app_api/push.py` · 214 строк — Пуши APNs для событий живого исполнителя (спека 15 §7.5).
 - `app_api/restart.py` · 32 строк — Перезапуск процесса API приложения со свежим кодом (через очередь). Останавливает процесс и сразу поднимает н…
 - `app_api/sealed.py` · 87 строк — Запечатанный конверт для секретов ключей биржи (спека 15 §7a.2).
@@ -858,4 +858,4 @@
 - `unstick_publish.py` · 77 строк — Разморозить публикацию: вернуть разрезанный журнал к версии git.
 - `venv_add.py` · 75 строк — Установка пакетов в окружение сервера через очередь заданий.
 - `watchdog_book.sh` · 533 строк — Сторож сбора: поднимает умершее и перезапускает зависшее.
-- тесты: `app_api/test_app_api.py` (836), `test_disk_alarm.py` (64), `test_jobs.sh` (239), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (49), `test_watchdog_ship.sh` (49)
+- тесты: `app_api/test_app_api.py` (837), `test_disk_alarm.py` (64), `test_jobs.sh` (239), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (49), `test_watchdog_ship.sh` (49)

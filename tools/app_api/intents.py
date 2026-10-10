@@ -622,6 +622,7 @@ def summary(st):
     return {"at": it.get("at"), "n": it.get("n"), "n_skips": it.get("n_skips"),
             "live": len(it.get("live") or {}), "pending": len(it.get("pending") or []),
             "last_decided_at": it.get("last_decided_at"), "cash_usd": it.get("cash_usd"),
+            "source_age_s": it.get("source_age_s"),
             "parity": it.get("parity"), "error": it.get("error")}
 
 
@@ -666,6 +667,16 @@ def tick(db, dca, root, log=print, env=None):
             log(f"намерения: {os.path.basename(path)} — {why}")
         legs_by_family[fam] = legs_from_lines(fam, lines, log=log) if lines else []
     save_sources_state(root, sst)
+    # возраст источников — в состояние каждой подписки: «0 намерений» при
+    # стоящем источнике и при тихом часе выглядят одинаково, различает их
+    # только это число (часовой шаг цикла молчит на время обучения)
+    src_age = {}
+    for fam in sorted(fams):
+        path = files.get(fam)
+        try:
+            src_age[fam] = round(now - os.path.getmtime(path), 1) if path else None
+        except OSError:
+            src_age[fam] = None
     if "bars" not in env:
         src = env.get("src") or bars_source(log=None)
         env["bars"] = src.bars
@@ -697,6 +708,8 @@ def tick(db, dca, root, log=print, env=None):
             it = dict(st.get("intents") or {})
             it["error"] = f"{type(e).__name__}: {e}"[:200]
             log(f"намерения {s['book']}: {it['error']}")
+        it["source_age_s"] = {fam: src_age.get(fam) for fam in
+                              {R.family_of(sk) for sk in cell_sources(s["book"])}}
         st["intents"] = it
         db.set_sub_state(s["id"], st)
     return n
@@ -759,7 +772,10 @@ def main(argv=None):
         sizing = st.get("sizing") or "compound"
         print(f"\n== {s['book']} {float(s['deposit']):g} $ {sizing} ({s['id']}), касса {sub_cash(s, st):.2f} $")
         it = st.get("intents") or {}
+        ages = ", ".join(f"{k} {int(v // 60)} мин" if v is not None else f"{k} —"
+                         for k, v in (it.get("source_age_s") or {}).items())
         print(f"такт {time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(it.get('at') or 0))} UTC; "
+              f"возраст источников: {ages or '—'}; "
               f"намерений {it.get('n', 0)}, отказов {it.get('n_skips', 0)}, живых {len(it.get('live') or {})}, "
               f"ждут бар {len(it.get('pending') or [])}"
               + (f"; ошибка: {it['error']}" if it.get("error") else ""))

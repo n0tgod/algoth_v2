@@ -8684,7 +8684,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L64 `operator_token(out)`
 - L76 `main(out=OUT, ip=SERVER_IP)`
 
-## tools/app_api/intents.py · 785 строк
+## tools/app_api/intents.py · 801 строк
 
 Намерения живого исполнителя Ladder (спека 15 §10a, этап L1).
 
@@ -8727,10 +8727,10 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L557 `parity_one(intent, q)` — Расхождение намерения с бумажной строкой — числом по полю.
 - L574 `parity(root, sub, st, book_cell, since=None, tail=PARITY_TAIL)` — Сверка намерений подписки с бумажной ячейкой: совпавшие — с расхождениями по полю (медиана и максимум |Δ|), н…
 - L619 `summary(st)` — Что отдаёт состояние подписки приложению (§10a L1: «намерения за час»).
-- L630 `cell_key(book, deposit, sizing)`
-- L635 `tick(db, dca, root, log=print, env=None)` — Один такт по всем активным подпискам. Возвращает число намерений.
-- L705 `reset_sub(db, root, sub_id, now=None)` — Сброс намерений подписки: файлы НЕ удаляются — переименовываются в `*-stale-<момент>.jsonl` (запись остаётся)…
-- L729 `main(argv=None)`
+- L631 `cell_key(book, deposit, sizing)`
+- L636 `tick(db, dca, root, log=print, env=None)` — Один такт по всем активным подпискам. Возвращает число намерений.
+- L718 `reset_sub(db, root, sub_id, now=None)` — Сброс намерений подписки: файлы НЕ удаляются — переименовываются в `*-stale-<момент>.jsonl` (запись остаётся)…
+- L742 `main(argv=None)`
 
 ## tools/app_api/push.py · 214 строк
 

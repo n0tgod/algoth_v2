@@ -782,6 +782,7 @@ def test_intents_sources_are_read_as_tail_once_and_tick_feeds_state_and_parity()
             st_, stt = app.state(acc)
             summ = stt["subscriptions"][0]["intents"]
             assert summ["n"] == 1 and summ["n_skips"] == 1 and summ["live"] == 1 and summ["error"] is None, summ
+            assert set(summ["source_age_s"]) == {"h24"} and summ["source_age_s"]["h24"] is not None, summ
             p = summ["parity"]
             assert p["intents"] == 1 and p["matched"] == 1 and p["paper_only"] == 1 and p["intent_only"] == 0, p
             assert p["fields"]["entry_bp"] == {"n": 1, "median": 0.0, "max": 0.0} and p["fields"]["lev_d"]["max"] == 0.0
