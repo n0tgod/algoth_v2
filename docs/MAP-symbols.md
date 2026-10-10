@@ -2247,6 +2247,14 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L24 `T = lambda t: time.strftime('%m-%d %H:%M', …`
 - L27 `main(argv=None)`
 
+## research/dca_paper/probe_live_hour3.py · 105 строк
+
+Зонд 10.10 (третий): касса общего счёта `pair_aggr` 100 $ в моменты решений, которые взял живой исполнитель и…
+
+- L19 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L26 `T = lambda t: time.strftime('%m-%d %H:%M', …`
+- L29 `main(argv=None)`
+
 ## research/dca_paper/repeat_entry.py · 449 строк
 
 Пропустить первый вход: насколько «ювелирны» второй, третий, четвёртый выбор имени моделью — и что это даёт к…
