@@ -72,6 +72,13 @@ def main():
         print(f"  {p.get('state')} {p.get('sym')} {p.get('side')} x{p.get('lev')} вход {p.get('entry_px')} "
               f"средняя {p.get('avg')} пол {lv.get('floor_px')} цель {lv.get('take_px')} "
               f"отметка {p.get('mark_usd')} ({p.get('mark_why') or 'есть'}) исход {p.get('exit')} {p.get('usd')}")
+    # Отказы исполнителя полным текстом: в приложении причина обрезана
+    # строкой, а код площадки стоит в её хвосте.
+    st, tr = call(base, "/api/v1/trades?limit=200", token=sess, ctx=ctx)
+    rej = [t for t in tr.get("trades") or [] if t.get("kind") == "reject"]
+    print(f"trades: {st}, записей {len(tr.get('trades') or [])}, отказов {len(rej)}")
+    for t in rej[-8:]:
+        print(f"  отказ {t.get('sym')} {t.get('side')}: {t.get('reason') or (t.get('extra') or {}).get('reason')}")
     call(base, "/api/v1/auth/logout", {}, token=sess, ctx=ctx)
     print("ок")
 
