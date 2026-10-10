@@ -8658,6 +8658,119 @@ def test_dca_list_counts_rules_of_the_family_not_of_the_project():
         DR.H24_JOURNAL, DR.H24_ARTIFACT = hp0, ha0
 
 
+def test_memguard_drops_then_stops_only_above_hard_and_counts():
+    """Самоограничитель памяти (починка 10.10): выше мягкого порога —
+    сброс кешей, сбор мусора и возврат памяти ядру; выше жёсткого после
+    сброса — просьба остановиться; ниже — ничего; RSS не прочитан — «не
+    измерено», не ноль и не действие. Каждое действие — числом в
+    счётчиках. Контроль: подделка без возврата памяти обязана кусаться
+    в названной проверке.
+    """
+    import memguard as MG
+
+    calls = []
+    seq = []
+
+    def rss():
+        return seq.pop(0) if seq else None
+
+    g = MG.MemGuard(drop=lambda: (calls.append("drop") or {"journals": 3}),
+                    rss=rss, trim=lambda: (calls.append("trim") or 1),
+                    die=lambda: calls.append("die"), log=lambda m: calls.append(("log", m)),
+                    soft_mb=1000, hard_mb=1500)
+    seq[:] = [900]
+    r = g.tick()
+    check("ниже мягкого порога — ничего не делается",
+          r["action"] is None and calls == [], str((r, calls)))
+    seq[:] = [1200, 950]                       # до сброса 1200, после 950
+    r = g.tick()
+    check("выше мягкого — сброс, возврат памяти, без остановки",
+          r["action"] == "drop" and calls[:2] == ["drop", "trim"] and "die" not in calls
+          and r["after_mb"] == 950, str((r, calls)))
+    check("строка лога несёт числа до и после",
+          any(isinstance(c, tuple) and "1200" in c[1] and "950" in c[1] for c in calls), str(calls))
+    calls.clear()
+    seq[:] = [1700, 1600]                      # после сброса всё ещё выше жёсткого
+    r = g.tick()
+    check("выше жёсткого после сброса — просьба остановиться",
+          r["action"] == "stop" and calls[:2] == ["drop", "trim"] and "die" in calls, str((r, calls)))
+    seq[:] = []
+    r = g.tick()
+    check("RSS не прочитан — «не измерено», без действий",
+          r["action"] == "не измерено" and g.stats["unmeasured"] == 1, str(r))
+    st = g.stats
+    check("счётчики: тактов 4, сбросов 2, остановок 1, максимум RSS 1700, возвращено 350",
+          st["ticks"] == 4 and st["drops"] == 2 and st["dies"] == 1 and st["max_rss_mb"] == 1700
+          and st["trim_total_mb"] == 250 + 100, str(st))
+    # Контроль: подделка, у которой возврат памяти вырезан, — проверка
+    # «сброс, возврат памяти» обязана упасть (trim в вызовах нет).
+    calls.clear()
+    g2 = MG.MemGuard(drop=lambda: (calls.append("drop") or {}), rss=rss, trim=None,
+                     die=lambda: None, log=lambda m: None, soft_mb=1000, hard_mb=1500)
+    g2.trim = lambda: None
+    seq[:] = [1200, 950]
+    g2.tick()
+    check("контроль: без возврата памяти ядру проверка кусается",
+          "trim" not in calls, str(calls))
+    # живые помощники: RSS этого процесса читается, malloc_trim отвечает числом или None
+    check("rss_mb читает /proc и даёт положительное число",
+          (MG.rss_mb() or 0) > 0, str(MG.rss_mb()))
+    check("malloc_trim отвечает 0/1 либо None (не glibc), не падает",
+          MG.malloc_trim() in (0, 1, None), str(MG.malloc_trim()))
+
+
+def test_collector_drop_caches_empties_every_page_cache_and_counts_churn():
+    """Сброс кешей сборщика опустошает кеш журналов (класс), кеш кусков
+    DCA, ответы `/dca` и `/model` — и называет, сколько чего ушло.
+    Счётчики тасования по файлам: полный разбор и выброс считаются
+    по имени файла, восьмёрка тасуемых едет в перепись."""
+    import json as _json
+    import tempfile
+
+    import collect as C
+    import memsize as MS
+
+    d = tempfile.mkdtemp()
+    p = os.path.join(d, "bookx", "picks.jsonl")
+    os.makedirs(os.path.dirname(p))
+    with open(p, "w", encoding="utf-8") as f:
+        for i in range(50):
+            f.write(_json.dumps({"i": i, "ladder": [[1, 2]] * 8}) + "\n")
+    cache, files = C.Collector._JSONL_CACHE, C.Collector._JSONL_FILES
+    cache.clear(); files.clear()
+    try:
+        C.Collector._jsonl(p)
+        C.Collector._jsonl(p)
+        check("разбор по файлу посчитан: один полный, попадание не считается разбором",
+              files[p] == {"full": 1, "tail": 0, "evict": 0}, str(files))
+
+        class Fake:
+            pass
+        c = Fake()
+        c._dca_parts = {"a": [1], "b": [2]}
+        c._dca_cache = (1.0, {"k1": {}, "k2": {}})
+        c._dca_art = (1, {})
+        c._model_cache = (1.0, {"x": 1}, object(), None)
+        gone = C.Collector.drop_caches(c)
+        check("сброс опустошает все кеши и считает их",
+              gone == {"journals": 1, "dca_parts": 2, "dca": 2, "model": 1}
+              and not cache and c._dca_parts == {} and c._dca_cache == (0.0, {})
+              and c._model_cache[1] is None, str((gone, len(cache))))
+        # перепись несёт тасование по файлам
+        class FakeC(C.Collector):
+            def __init__(self):
+                pass
+        fc = FakeC()
+        fc.guard = C.MG.MemGuard(drop=lambda: {}, rss=lambda: 1, log=lambda m: None)
+        rep = MS.census(fc)
+        jc = rep["parts"]["_JSONL_CACHE (разобранные журналы книг, класс)"]
+        check("перепись: восьмёрка тасуемых файлов есть и несёт счётчики",
+              isinstance(jc.get("churn"), list) and jc["churn"][0]["full"] == 1
+              and jc["churn"][0]["file"].endswith("bookx/picks.jsonl"), str(jc.get("churn")))
+    finally:
+        cache.clear(); files.clear()
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
@@ -8689,6 +8802,8 @@ def main():
     test_live_exec_paper_side_follows_the_book_marker()
     test_live_exec_measures_slippage_against_signal()
     test_jsonl_cache_matches_plain_read()
+    test_memguard_drops_then_stops_only_above_hard_and_counts()
+    test_collector_drop_caches_empties_every_page_cache_and_counts_churn()
     test_book_built_twice_gives_same_numbers()
     test_overview_and_trades_page_agree()
     test_model_trades_lite_matches_full()

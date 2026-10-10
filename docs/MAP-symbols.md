@@ -689,7 +689,7 @@ A3 — кандидаты в пары на момент окна.
   - L169 `Book._sample(self, ladder=LADDER, bands=BANDS)`
 - L202 `parse_trades(msg)` — Сделки темы `publicTrade` в компактный вид.
 
-## research/b1_book/collect.py · 7721 строк
+## research/b1_book/collect.py · 7769 строк
 
 Сбор стакана и ленты площадки исполнения живьём.
 
@@ -698,171 +698,173 @@ A3 — кандидаты в пары на момент окна.
 - L76 `SHADOW_OFF = os.path.join(os.path.dirname(os.path.di…`
 - L78 `OUT = os.path.join(HERE, 'out')`
 - L82 `DCA_TRADES = 200` — Сколько сделок DCA-книги уезжает на страницу. Не «сколько их есть»: счёт закрытых позиций считает свод, а уре…
-- L101 `WS_URL = 'wss://stream.bybit.com/v5/public/linea…`
-- L120 `DEPTH = 50` — Глубина темы orderbook. Пятьдесят уровней — это НЕ проценты, а полсотни цен подряд, и у плотных инструментов…
-- L121 `DEEP_DEPTH = 200`
-- L122 `DEEP = ('BTCUSDT', 'ETHUSDT')`
-- L125 `DEPTH_LADDER = (500, 200, 50)` — Лестница отступления: площадка может не принять глубину, и тогда берём мельче, а не остаёмся без стакана вовс…
-- L126 `PING_SEC = 20`
-- L127 `SAMPLE_SEC = 1`
-- L132 `SHARD_SYMBOLS = 40` — Символов на одно соединение. Полный список площадки — это больше тысячи тем, и одно соединение их не унесёт:…
-- L133 `REST_HOST = 'https://api.bybit.com'`
-- L134 `UNIVERSE_JSON = os.path.join(os.path.dirname(HERE), 'a1…`
-- L138 `RECOUNT_HOURS = 24` — Глубина автоматического пересчёта. Живые сделки свежее него дописываются как есть — они уже под нынешними пра…
-- L139 `STATUS_SEC = 5`
-- L150 `SYMBOLS_DEFAULT = 'all'` — Состав сбора живёт ЗДЕСЬ, а не в строке запуска. Пока он был только в консоли, перезапуск командой из README…
-- L151 `SYMBOLS = ('BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPU…`
-- L159 `RAW = ('ARBUSDT',)` — Сырой поток изменений книги тяжёл, поэтому пишется по одной монете: по нему меряется восполнение уровня внутр…
-- L162 `_median(xs)` — Медиана списка. Пустой список сюда не приходит — вызывающий обязан проверить: медиана пустоты есть ноль ровно…
-- L171 `HEAT_BIN_BP = 5.0`
-- L172 `HEAT_LEVELS = 50`
-- L175 `_nice(x)` — Округление до двух значащих цифр: корзина цены читается с оси.
-- L183 `heat_minutes(rows, levels=HEAT_LEVELS)` — Снимки стакана часа → покоящийся нотионал по минутам и корзинам цены.
-- L234 `minute_bars(rows)` — Сделки -> минутные свечи `[t, o, h, l, c, объём]`.
-- L259 `signals_version()` — Текущая версия правил — одним местом, чтобы не разъехалась.
-- L264 `METRICS_POLL_SEC = 300`
-- L267 `metrics_rows(tickers, have)` — Разбор ответа tickers: funding, интерес, базис по каждому символу.
-- L295 `WRITE_KINDS = ('book', 'trades', 'metrics', 'liq', 's…` — Виды рядов, у каждого свой файл на символ. Список — источник числа дескрипторов; при добавлении вида запрос о…
-- L298 `nofile_want(n_syms)` — Сколько дескрипторов нужно писателю при n символах.
-- L313 `raise_nofile(log, want)` — Поднять лимит открытых файлов под полный список символов.
-- L335 `fetch_instruments(host=REST_HOST)` — Справочник линейных контрактов площадки, все страницы.
-- L353 `usdt_perps(instruments)` — Из справочника — торгуемые линейные USDT-перпы.
-- L361 `non_crypto_bybit(universe_path=UNIVERSE_JSON)` — Не-крипто символы Bybit: справочник плюс курируемый список.
-- L375 `recent_pick_symbols(hours=6, s8_root=None)` — Символы из выборов модели за последние часы.
-- L413 `HOUR = 3600.0`
-- L414 `PHASE_TOL = 120.0`
-- L417 `disk_rate(samples, now, total)` — Скорость роста занятого места — байт в час, или `None`.
-- L450 `disk_symbols(root)` — Символы, по которым на диске уже лежат ряды книги.
-- L460 `resolve_symbols(arg, log, root=OUT)` — `--symbols all` — всё, что торгуется, минус не-крипто.
-- L492 `shard_split(symbols, size=SHARD_SYMBOLS)` — Разбивка списка на шарды соединений, устойчивая по порядку.
-- L498 `GROUPS_YAML = os.path.join(os.path.dirname(HERE), 'as…`
-- L502 `parse_groups_yaml(path=GROUPS_YAML)` — Разметка A3 `группа: [активы]` — крошечный разбор под наш формат.
-- L528 `symbol_groups(symbols, groups_path=GROUPS_YAML, universe_path=U…` — Символы сбора по группам A3: [{id, symbols}, …] + «прочие».
-- L559 `class LogBuf` — Журнал для страницы: кольцо строк плюс сквозной номер.
-  - L567 `LogBuf.__init__(self, keep=60)`
-  - L571 `LogBuf.add(self, line)`
-  - L575 `LogBuf.since(self, k)` — Вернуть `(всего строк, новые для того, у кого есть k)`.
-- L583 `class Shard` — Одно соединение с площадкой: свои темы и свой цикл переподключения.
-  - L592 `Shard.__init__(self, idx, symbols, coll)`
-  - L603 `Shard.topics(self)`
-  - L614 `Shard.send_sub(self, ws, topics)` — Подписка по одной теме, с именем темы в `req_id`: одним запросом площадка отвергает ВСЁ из-за одной негодной…
-  - L625 `Shard.on_open(self, ws)`
-  - L631 `Shard.on_op(self, ws, msg)` — Служебный ответ. Отклонённая подписка неотличима от тишины рынка, молчать о ней нельзя.
-  - L644 `Shard.downgrade(self, ws, topic)` — Стакан не принят на этой глубине — пробуем мельче: мельче хуже, но это данные, а отказ — их отсутствие.
-  - L663 `Shard.on_message(self, ws, raw)`
-  - L732 `Shard.run(self)`
-- L763 `rss_mb()` — RSS этого процесса в МБ по `/proc/self/status`; None — не прочитан.
-- L779 `class Collector`
-  - L780 `Collector.__init__(self, symbols, raw_symbols, root, log, deep=DEEP, pape…`
-  - L870 `Collector.n_msg(self)` — --- агрегаты по шардам -------------------------------------------- Сеть живёт в шардах; здесь только суммы д…
-  - L874 `Collector.n_trades(self)`
-  - L878 `Collector.n_resets(self)`
-  - L882 `Collector.last_msg(self)`
-  - L885 `Collector.topics_count(self)`
-  - L888 `Collector.live_count(self)`
-  - L891 `Collector.shard_state(self)`
-  - L901 `Collector.sampler(self)` — Снимок стакана раз в секунду по всем символам.
-  - L973 `Collector.mem_report(self, deep=False, trace=None)` — Кто держит память процесса — по структурам (`memsize.census`).
-  - L985 `Collector.health(self)` — Здоровье сбора — ОДНО определение на страницу и на файл.
-  - L1021 `Collector.warm_mid(self, sym)` — Дочитать середину с диска — по одному символу и по запросу.
-  - L1072 `Collector.snapshot(self, sym=None, since=0.0, logn=None)` — Состояние для страницы наблюдения — прямо из памяти.
-  - L1139 `Collector.candles_files(self, sym, hours=12, end=None)` — Минутные свечи из записей — история глубже памяти сборщика.
-  - L1200 `Collector.heat_files(self, sym, hours=12, end=None)` — Тепловая карта лесенки стакана под свечи: записи, не память.
-  - L1259 `Collector.rec_path(self)`
-  - L1262 `Collector.load_recount(self)` — Поднять сохранённый пересчёт. Отказ не вправе ронять сбор.
-  - L1272 `Collector.save_recount(self)` — Записать пересчёт целиком и атомарно.
-  - L1288 `Collector.recount(self, hours=24, start=True, sym=None)` — Все сделки под ТЕКУЩИМИ правилами — единственный вид.
-  - L1357 `Collector.merge_live(self, rows, at)` — Пересчитанные сделки плюс живые, сделанные ПОСЛЕ счёта.
-  - L1380 `Collector._recount_watch(self)` — Сам пересчитывает, когда это нужно, и не чаще.
-  - L1417 `Collector._recount_job(self, hours)`
-  - L1472 `Collector.jobs_poke(self)` — Немедленно посмотреть очередь заданий (`jobs/`).
-  - L1506 `Collector.bot_status(self)` — Статус исполнительного ядра (Rust-тень) — из его файла.
-  - L1539 `Collector.journal_marker(text)` — Разобрать маркер журнала тени: (каталог книги, версия кассы).
-  - L1557 `Collector.bot_full(self)` — Полные данные страницы ядра: статус, журнал, переоценка.
-  - L1705 `Collector._median(a)` — Медиана с честной серединой на чётном числе: sorted[n//2] на двух заполнениях выдавал верхнее из двух за меди…
-  - L1717 `Collector._model_round_bp()` — Модельный круг издержек — у самого ядра расчёта, не числом здесь: две записи одной константы однажды разошлис…
-  - L1729 `Collector.live_exec(self)` — Живые сделки исполнителя ПРОТИВ бумажного сигнала книги.
-  - L2009 `Collector.sit_source(rr_min, traded_gate)` — Ситуационная книга на странице ОДНА, а записей две: торгуемая (свой гейт по отношению, 6 мест, её ведёт тень…
-  - L2016 `Collector._model_sig(self, s8)` — Подпись файлов всех книг: (имя, mtime, размер) по каталогам.
-  - L2034 `Collector._day_brake_view(self, now)` — Дневной тормоз для ответа страницы — живой, не из кеша.
-  - L2045 `Collector.model_state(self, rr_min=None)` — Состояние модели S8 для страницы: манифест, мысли, живой IC.
-  - L2132 `Collector.live_overlay(self, mdir, tr, reviews)` — Живые события сборщика поверх истории выборов и разбора.
-  - L2216 `Collector._book_view(self, mdir, mman, rr_min=None, lite=False)` — Сделки, деньги и сводки книги — ОДНИМ кодом на обе дороги.
-  - L2316 `Collector.slim_pick(pk)` — Строка выбора без лесенок стакана — то, что читает обзор.
-  - L2332 `Collector.slim_review(rv)` — Строка разбора без лесенок — обзор берёт из неё «last: got».
-  - L2341 `Collector._model_dir_state(self, mdir, rr_min=None)`
-  - L2428 `Collector.model_trades(self, page=0, per=100, arm=None, state=None, sym=N…` — ВСЯ история сделок модели, страницами, со сводкой по всему.
-  - L2629 `Collector.ic_summary(rows)` — Живой IC — МЕДИАНА по накопленным сечениям, а не последний час.
-  - L2661 `Collector.hour_rows(self, pairs)` — Строки почасовых сводок с кэшом: цена, максимум и минимум часа.
-  - L2696 `Collector.model_league(self)` — Лига: что ведёт себя лучше — руки, книги, ситуации, стороны.
-  - L2748 `Collector.book_dir_of(self, hz)` — Ключ книги → (каталог, причина отказа).
-  - L2773 `Collector.book_rec(self, hz)` — Запись книги по ключу — (запись или None, причина отказа).
-  - L2801 `Collector.book_hold(mman, default_h)` — Срок сборки сделок книги; None — у книги нет таймера.
-  - L2828 `Collector.arms_twins(trades)` — Тождественны ли руки книги — проверка ЧИСЛОМ, не словом.
-  - L3281 `Collector.closed_rows(self, books=None)` — Закрытые сделки всех торгуемых книг — с деньгами.
-  - L3402 `Collector._book_pairs(self, rows)` — Парное сравнение книг по ОБЩИМ часам, с интервалом.
-  - L3455 `Collector._league_from(self, rows, errors, scanned, now)` — Агрегаты лиги из готовых строк — арифметика без чтения.
-  - L3590 `Collector._spearman(xs, ys)` — Ранговая связь — одна реализация на весь сборщик.
-  - L3613 `Collector._dca_take_frac(rules_mod, row, ruler=None)` — Доля цели у записи позиции. None — правило по ней неизвестно.
-  - L3633 `Collector._dca_adds(fills, notional)` — Доливы позиции для графика: деньги и контракты, а не доля.
-  - L3661 `Collector._dca_rows(self, DR, path, acc=None)` — Строки журнала DCA-книг ТЕКУЩИХ правил — через кеш кусков сборщика.
-  - L3689 `Collector.dca_trades(self, sym, book)` — Позиции DCA-книги по одной монете — В ФОРМЕ, ЖДАННОЙ ГРАФИКОМ.
-  - L3868 `Collector.dca_marks(self, dep=None, ruler=None, sizing=None)` — Живая переоценка открытых позиций DCA-книги — частый опрос.
-  - L3951 `Collector.dca_paper(self, dep=None, ruler=None, full=None, sizing=None)` — Бумажные DCA-книги: свод из артефакта, сделки из журнала.
-  - L4208 `Collector._dca_family(self, DR, now, art_attr, journal_attr, family, what)` — Свод СЕМЕЙСТВА книг из его артефакта — одним кодом на все.
-  - L4248 `Collector.paper_book(self, at=None)` — Бумажная месячная книга: свод из артефакта, транши из журнала.
-  - L4335 `Collector.learning(self)` — Умнеет ли модель и переходит ли это в деньги — по дням.
-  - L4433 `Collector.book_days(self, hz)` — Дневная статистика ОДНОЙ книги — по просьбе владельца.
-  - L4550 `Collector._day_cell(rows)` — Числа одной клетки «день × рука». Одно определение на день, на итог и на обе руки: три реализации одного счёт…
-  - L4582 `Collector.market_vol(self)` — Волатильность рынка по часам — из наших же почасовых сводок.
-  - L4675 `Collector.vol_vs_models(self)` — Влияет ли волатильность рынка на результат книг.
-  - L4830 `Collector.model_glossary(self)` — Справочник: какие ситуации модель вообще способна читать.
-  - L4935 `Collector.model_tournament(self)` — Полный лист турнира политик: все 72 ветки и селектор.
-  - L5009 `Collector._run_row(r, now)` — Строка прогона для показа: заметка урезается, не выбрасывается.
-  - L5026 `Collector._produced(root, rel, now)` — Файл, который роль обязана была оставить.
-  - L5048 `Collector.owner_asks(self)` — Чего система ждёт ОТ ВЛАДЕЛЬЦА, и чем это подтверждено.
-  - L5090 `Collector.agents_state(self)` — Автономная система: конвейер, границы и что уже построено.
-  - L5278 `Collector._cand_live(self, cid)` — Живая книга кандидата: закрытые сделки и деньги по рукам.
-  - L5319 `Collector.factory_built(self)` — Что автономная система объявила: механика в корне, книги ветками.
-  - L5495 `Collector._cand_decisions(self, cid, rec)` — Множество РЕШЕНИЙ живой книги кандидата.
-  - L5516 `Collector.factory_strategy(self, cid)` — Полная карточка ОДНОЙ стратегии автономной системы.
-  - L5656 `Collector.model_tree(self)` — Дерево моделей: две руки и их книги, с логикой каждой ветки.
-  - L5836 `Collector.entry_px(self, picks)` — Цены входа для выборов, которые их не несут.
-  - L5853 `Collector.paths(self, trades, hold_h=None)` — Просадка по каждой сделке — из тех же почасовых сводок.
-  - L5874 `Collector.dd_money(trades)` — Просадку в деньги и в доли депозита — ПОСЛЕ расчёта счёта.
-  - L5885 `Collector.marks(self, trades)` — Текущая середина по символам открытых сделок.
-  - L5903 `Collector.model_marks(self, hz=None)` — Только переоценка открытых сделок — для частого опроса.
-  - L5960 `Collector.trade_by_id(self, tid)` — Сделка по короткому id — поиск по всем книгам разом.
-  - L6049 `Collector._jsonl_cost(entry)` — Сколько памяти держит запись кеша — байты объектов.
-  - L6054 `Collector._jsonl(path)`
-  - L6116 `Collector._jsonl_trim()`
-  - L6131 `Collector.trades(self, sym=None)` — История бумажных сделок и сводка — по требованию, не в опросе.
-  - L6159 `Collector.disk_view(self)` — Диск в человеческих единицах, с запасом хода в сутках.
-  - L6182 `Collector.diskstat(self)` — Сколько занято, с какой скоростью растёт и надолго ли хватит.
-  - L6214 `Collector.statuser(self)`
-  - L6234 `Collector.reporter(self)` — Строка в журнал раз в минуту: прогон, который молчит, неотличим от повисшего.
-  - L6258 `Collector.metrics_poll(self)` — Funding, открытый интерес и базис — раз в 5 минут, один запрос на все символы. Ставка и интерес доказали ценн…
-  - L6282 `Collector.sit_load_positions(self, books)` — Открытые позиции КАЖДОЙ книги сканера, без исключений.
-  - L6301 `Collector.sit_watch(self)` — Живой сторож выходов ситуационной книги.
-  - L6469 `Collector.sit_noise(self, sym, now)` — Живой шум монеты: минутный размах середины, б.п. (v12).
-  - L6536 `Collector.sit_absorb_now(self, mdir)` — Живое поглощение событий книги: pnl сразу после закрытия.
-  - L6580 `Collector._sit_scan(self, root, sheet, want, books, now, armed)` — Один тик сканера входов: лист сечения против живых цен.
-  - L6907 `Collector._brake_sig(self, now)` — Подпись входов тормоза: журналы торгуемых книг и день UTC.
-  - L6930 `Collector._brake_step(self, TR, path, limit, mem, now=None)` — Один шаг тормоза: счёт при изменившихся входах, иначе прежнее состояние со свежей меткой. Ошибка счёта не зап…
-  - L6966 `Collector.brake_watch(self)` — Дневной тормоз: реализованный день торгуемых книг против порога −1 % суммарного капитала (`trades.DAY_BRAKE_S…
-  - L7009 `Collector.run(self, hours)`
-- L7045 `sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc, n…` — Живой вход по ситуации: якорим прогноз листа к живой цене.
-- L7190 `sit_cross(side, entry_px, adv, mid, fav=None, hi=None, lo=None)` — Дошёл ли живой ход цены до обещанного уровня.
-- L7246 `take_limit_fill(side, entry_px, fav, hi, lo)` — Цена исполнения тейка-лимитки, если принты прошли уровень.
-- L7282 `sit_exit_event(pos, mid, hi, lo, now)` — Событие живого выхода по уровню — или None.
-- L7315 `sit_watched(want, root)` — Каталоги книг, у которых 5-секундный сторож ведёт УРОВНИ.
-- L7333 `sit_open_levels(picks, reviews, entries=None)` — Открытые позиции ситуационной книги с уровнями против.
-- L7383 `_unfinished(rows)` — Записи об открытии, у которых нет парного закрытия.
-- L7395 `warm_start(root, symbols, collector, log, hours=4, trade_hours=…` — Поднять историю из собственных файлов сборщика.
-- L7496 `stable_token(root)` — Ключ доступа, переживающий перезапуск.
-- L7524 `selftest(root)` — Прогнать поддельный поток через путь записи и показать итог.
-- L7564 `dropped_symbols(root, syms, days=3)` — Символы, по которым на диске есть свежие ряды, а в запуске их нет.
-- L7607 `main()`
+- L102 `WS_URL = 'wss://stream.bybit.com/v5/public/linea…`
+- L121 `DEPTH = 50` — Глубина темы orderbook. Пятьдесят уровней — это НЕ проценты, а полсотни цен подряд, и у плотных инструментов…
+- L122 `DEEP_DEPTH = 200`
+- L123 `DEEP = ('BTCUSDT', 'ETHUSDT')`
+- L126 `DEPTH_LADDER = (500, 200, 50)` — Лестница отступления: площадка может не принять глубину, и тогда берём мельче, а не остаёмся без стакана вовс…
+- L127 `PING_SEC = 20`
+- L128 `SAMPLE_SEC = 1`
+- L133 `SHARD_SYMBOLS = 40` — Символов на одно соединение. Полный список площадки — это больше тысячи тем, и одно соединение их не унесёт:…
+- L134 `REST_HOST = 'https://api.bybit.com'`
+- L135 `UNIVERSE_JSON = os.path.join(os.path.dirname(HERE), 'a1…`
+- L139 `RECOUNT_HOURS = 24` — Глубина автоматического пересчёта. Живые сделки свежее него дописываются как есть — они уже под нынешними пра…
+- L140 `STATUS_SEC = 5`
+- L151 `SYMBOLS_DEFAULT = 'all'` — Состав сбора живёт ЗДЕСЬ, а не в строке запуска. Пока он был только в консоли, перезапуск командой из README…
+- L152 `SYMBOLS = ('BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPU…`
+- L160 `RAW = ('ARBUSDT',)` — Сырой поток изменений книги тяжёл, поэтому пишется по одной монете: по нему меряется восполнение уровня внутр…
+- L163 `_median(xs)` — Медиана списка. Пустой список сюда не приходит — вызывающий обязан проверить: медиана пустоты есть ноль ровно…
+- L172 `HEAT_BIN_BP = 5.0`
+- L173 `HEAT_LEVELS = 50`
+- L176 `_nice(x)` — Округление до двух значащих цифр: корзина цены читается с оси.
+- L184 `heat_minutes(rows, levels=HEAT_LEVELS)` — Снимки стакана часа → покоящийся нотионал по минутам и корзинам цены.
+- L235 `minute_bars(rows)` — Сделки -> минутные свечи `[t, o, h, l, c, объём]`.
+- L260 `signals_version()` — Текущая версия правил — одним местом, чтобы не разъехалась.
+- L265 `METRICS_POLL_SEC = 300`
+- L268 `metrics_rows(tickers, have)` — Разбор ответа tickers: funding, интерес, базис по каждому символу.
+- L296 `WRITE_KINDS = ('book', 'trades', 'metrics', 'liq', 's…` — Виды рядов, у каждого свой файл на символ. Список — источник числа дескрипторов; при добавлении вида запрос о…
+- L299 `nofile_want(n_syms)` — Сколько дескрипторов нужно писателю при n символах.
+- L314 `raise_nofile(log, want)` — Поднять лимит открытых файлов под полный список символов.
+- L336 `fetch_instruments(host=REST_HOST)` — Справочник линейных контрактов площадки, все страницы.
+- L354 `usdt_perps(instruments)` — Из справочника — торгуемые линейные USDT-перпы.
+- L362 `non_crypto_bybit(universe_path=UNIVERSE_JSON)` — Не-крипто символы Bybit: справочник плюс курируемый список.
+- L376 `recent_pick_symbols(hours=6, s8_root=None)` — Символы из выборов модели за последние часы.
+- L414 `HOUR = 3600.0`
+- L415 `PHASE_TOL = 120.0`
+- L418 `disk_rate(samples, now, total)` — Скорость роста занятого места — байт в час, или `None`.
+- L451 `disk_symbols(root)` — Символы, по которым на диске уже лежат ряды книги.
+- L461 `resolve_symbols(arg, log, root=OUT)` — `--symbols all` — всё, что торгуется, минус не-крипто.
+- L493 `shard_split(symbols, size=SHARD_SYMBOLS)` — Разбивка списка на шарды соединений, устойчивая по порядку.
+- L499 `GROUPS_YAML = os.path.join(os.path.dirname(HERE), 'as…`
+- L503 `parse_groups_yaml(path=GROUPS_YAML)` — Разметка A3 `группа: [активы]` — крошечный разбор под наш формат.
+- L529 `symbol_groups(symbols, groups_path=GROUPS_YAML, universe_path=U…` — Символы сбора по группам A3: [{id, symbols}, …] + «прочие».
+- L560 `class LogBuf` — Журнал для страницы: кольцо строк плюс сквозной номер.
+  - L568 `LogBuf.__init__(self, keep=60)`
+  - L572 `LogBuf.add(self, line)`
+  - L576 `LogBuf.since(self, k)` — Вернуть `(всего строк, новые для того, у кого есть k)`.
+- L584 `class Shard` — Одно соединение с площадкой: свои темы и свой цикл переподключения.
+  - L593 `Shard.__init__(self, idx, symbols, coll)`
+  - L604 `Shard.topics(self)`
+  - L615 `Shard.send_sub(self, ws, topics)` — Подписка по одной теме, с именем темы в `req_id`: одним запросом площадка отвергает ВСЁ из-за одной негодной…
+  - L626 `Shard.on_open(self, ws)`
+  - L632 `Shard.on_op(self, ws, msg)` — Служебный ответ. Отклонённая подписка неотличима от тишины рынка, молчать о ней нельзя.
+  - L645 `Shard.downgrade(self, ws, topic)` — Стакан не принят на этой глубине — пробуем мельче: мельче хуже, но это данные, а отказ — их отсутствие.
+  - L664 `Shard.on_message(self, ws, raw)`
+  - L733 `Shard.run(self)`
+- L764 `rss_mb()` — RSS этого процесса в МБ по `/proc/self/status`; None — не прочитан.
+- L780 `class Collector`
+  - L781 `Collector.__init__(self, symbols, raw_symbols, root, log, deep=DEEP, pape…`
+  - L875 `Collector.n_msg(self)` — --- агрегаты по шардам -------------------------------------------- Сеть живёт в шардах; здесь только суммы д…
+  - L879 `Collector.n_trades(self)`
+  - L883 `Collector.n_resets(self)`
+  - L887 `Collector.last_msg(self)`
+  - L890 `Collector.topics_count(self)`
+  - L893 `Collector.live_count(self)`
+  - L896 `Collector.shard_state(self)`
+  - L906 `Collector.sampler(self)` — Снимок стакана раз в секунду по всем символам.
+  - L978 `Collector.drop_caches(self)` — Сбросить всё, что пересчитывается с диска: кеши страниц и журналов. Возвращает, сколько чего ушло, — для стро…
+  - L999 `Collector.mem_report(self, deep=False, trace=None)` — Кто держит память процесса — по структурам (`memsize.census`).
+  - L1012 `Collector.health(self)` — Здоровье сбора — ОДНО определение на страницу и на файл.
+  - L1050 `Collector.warm_mid(self, sym)` — Дочитать середину с диска — по одному символу и по запросу.
+  - L1101 `Collector.snapshot(self, sym=None, since=0.0, logn=None)` — Состояние для страницы наблюдения — прямо из памяти.
+  - L1168 `Collector.candles_files(self, sym, hours=12, end=None)` — Минутные свечи из записей — история глубже памяти сборщика.
+  - L1229 `Collector.heat_files(self, sym, hours=12, end=None)` — Тепловая карта лесенки стакана под свечи: записи, не память.
+  - L1288 `Collector.rec_path(self)`
+  - L1291 `Collector.load_recount(self)` — Поднять сохранённый пересчёт. Отказ не вправе ронять сбор.
+  - L1301 `Collector.save_recount(self)` — Записать пересчёт целиком и атомарно.
+  - L1317 `Collector.recount(self, hours=24, start=True, sym=None)` — Все сделки под ТЕКУЩИМИ правилами — единственный вид.
+  - L1386 `Collector.merge_live(self, rows, at)` — Пересчитанные сделки плюс живые, сделанные ПОСЛЕ счёта.
+  - L1409 `Collector._recount_watch(self)` — Сам пересчитывает, когда это нужно, и не чаще.
+  - L1446 `Collector._recount_job(self, hours)`
+  - L1501 `Collector.jobs_poke(self)` — Немедленно посмотреть очередь заданий (`jobs/`).
+  - L1535 `Collector.bot_status(self)` — Статус исполнительного ядра (Rust-тень) — из его файла.
+  - L1568 `Collector.journal_marker(text)` — Разобрать маркер журнала тени: (каталог книги, версия кассы).
+  - L1586 `Collector.bot_full(self)` — Полные данные страницы ядра: статус, журнал, переоценка.
+  - L1734 `Collector._median(a)` — Медиана с честной серединой на чётном числе: sorted[n//2] на двух заполнениях выдавал верхнее из двух за меди…
+  - L1746 `Collector._model_round_bp()` — Модельный круг издержек — у самого ядра расчёта, не числом здесь: две записи одной константы однажды разошлис…
+  - L1758 `Collector.live_exec(self)` — Живые сделки исполнителя ПРОТИВ бумажного сигнала книги.
+  - L2038 `Collector.sit_source(rr_min, traded_gate)` — Ситуационная книга на странице ОДНА, а записей две: торгуемая (свой гейт по отношению, 6 мест, её ведёт тень…
+  - L2045 `Collector._model_sig(self, s8)` — Подпись файлов всех книг: (имя, mtime, размер) по каталогам.
+  - L2063 `Collector._day_brake_view(self, now)` — Дневной тормоз для ответа страницы — живой, не из кеша.
+  - L2074 `Collector.model_state(self, rr_min=None)` — Состояние модели S8 для страницы: манифест, мысли, живой IC.
+  - L2161 `Collector.live_overlay(self, mdir, tr, reviews)` — Живые события сборщика поверх истории выборов и разбора.
+  - L2245 `Collector._book_view(self, mdir, mman, rr_min=None, lite=False)` — Сделки, деньги и сводки книги — ОДНИМ кодом на обе дороги.
+  - L2345 `Collector.slim_pick(pk)` — Строка выбора без лесенок стакана — то, что читает обзор.
+  - L2361 `Collector.slim_review(rv)` — Строка разбора без лесенок — обзор берёт из неё «last: got».
+  - L2370 `Collector._model_dir_state(self, mdir, rr_min=None)`
+  - L2457 `Collector.model_trades(self, page=0, per=100, arm=None, state=None, sym=N…` — ВСЯ история сделок модели, страницами, со сводкой по всему.
+  - L2658 `Collector.ic_summary(rows)` — Живой IC — МЕДИАНА по накопленным сечениям, а не последний час.
+  - L2690 `Collector.hour_rows(self, pairs)` — Строки почасовых сводок с кэшом: цена, максимум и минимум часа.
+  - L2725 `Collector.model_league(self)` — Лига: что ведёт себя лучше — руки, книги, ситуации, стороны.
+  - L2777 `Collector.book_dir_of(self, hz)` — Ключ книги → (каталог, причина отказа).
+  - L2802 `Collector.book_rec(self, hz)` — Запись книги по ключу — (запись или None, причина отказа).
+  - L2830 `Collector.book_hold(mman, default_h)` — Срок сборки сделок книги; None — у книги нет таймера.
+  - L2857 `Collector.arms_twins(trades)` — Тождественны ли руки книги — проверка ЧИСЛОМ, не словом.
+  - L3310 `Collector.closed_rows(self, books=None)` — Закрытые сделки всех торгуемых книг — с деньгами.
+  - L3431 `Collector._book_pairs(self, rows)` — Парное сравнение книг по ОБЩИМ часам, с интервалом.
+  - L3484 `Collector._league_from(self, rows, errors, scanned, now)` — Агрегаты лиги из готовых строк — арифметика без чтения.
+  - L3619 `Collector._spearman(xs, ys)` — Ранговая связь — одна реализация на весь сборщик.
+  - L3642 `Collector._dca_take_frac(rules_mod, row, ruler=None)` — Доля цели у записи позиции. None — правило по ней неизвестно.
+  - L3662 `Collector._dca_adds(fills, notional)` — Доливы позиции для графика: деньги и контракты, а не доля.
+  - L3690 `Collector._dca_rows(self, DR, path, acc=None)` — Строки журнала DCA-книг ТЕКУЩИХ правил — через кеш кусков сборщика.
+  - L3718 `Collector.dca_trades(self, sym, book)` — Позиции DCA-книги по одной монете — В ФОРМЕ, ЖДАННОЙ ГРАФИКОМ.
+  - L3897 `Collector.dca_marks(self, dep=None, ruler=None, sizing=None)` — Живая переоценка открытых позиций DCA-книги — частый опрос.
+  - L3980 `Collector.dca_paper(self, dep=None, ruler=None, full=None, sizing=None)` — Бумажные DCA-книги: свод из артефакта, сделки из журнала.
+  - L4237 `Collector._dca_family(self, DR, now, art_attr, journal_attr, family, what)` — Свод СЕМЕЙСТВА книг из его артефакта — одним кодом на все.
+  - L4277 `Collector.paper_book(self, at=None)` — Бумажная месячная книга: свод из артефакта, транши из журнала.
+  - L4364 `Collector.learning(self)` — Умнеет ли модель и переходит ли это в деньги — по дням.
+  - L4462 `Collector.book_days(self, hz)` — Дневная статистика ОДНОЙ книги — по просьбе владельца.
+  - L4579 `Collector._day_cell(rows)` — Числа одной клетки «день × рука». Одно определение на день, на итог и на обе руки: три реализации одного счёт…
+  - L4611 `Collector.market_vol(self)` — Волатильность рынка по часам — из наших же почасовых сводок.
+  - L4704 `Collector.vol_vs_models(self)` — Влияет ли волатильность рынка на результат книг.
+  - L4859 `Collector.model_glossary(self)` — Справочник: какие ситуации модель вообще способна читать.
+  - L4964 `Collector.model_tournament(self)` — Полный лист турнира политик: все 72 ветки и селектор.
+  - L5038 `Collector._run_row(r, now)` — Строка прогона для показа: заметка урезается, не выбрасывается.
+  - L5055 `Collector._produced(root, rel, now)` — Файл, который роль обязана была оставить.
+  - L5077 `Collector.owner_asks(self)` — Чего система ждёт ОТ ВЛАДЕЛЬЦА, и чем это подтверждено.
+  - L5119 `Collector.agents_state(self)` — Автономная система: конвейер, границы и что уже построено.
+  - L5307 `Collector._cand_live(self, cid)` — Живая книга кандидата: закрытые сделки и деньги по рукам.
+  - L5348 `Collector.factory_built(self)` — Что автономная система объявила: механика в корне, книги ветками.
+  - L5524 `Collector._cand_decisions(self, cid, rec)` — Множество РЕШЕНИЙ живой книги кандидата.
+  - L5545 `Collector.factory_strategy(self, cid)` — Полная карточка ОДНОЙ стратегии автономной системы.
+  - L5685 `Collector.model_tree(self)` — Дерево моделей: две руки и их книги, с логикой каждой ветки.
+  - L5865 `Collector.entry_px(self, picks)` — Цены входа для выборов, которые их не несут.
+  - L5882 `Collector.paths(self, trades, hold_h=None)` — Просадка по каждой сделке — из тех же почасовых сводок.
+  - L5903 `Collector.dd_money(trades)` — Просадку в деньги и в доли депозита — ПОСЛЕ расчёта счёта.
+  - L5914 `Collector.marks(self, trades)` — Текущая середина по символам открытых сделок.
+  - L5932 `Collector.model_marks(self, hz=None)` — Только переоценка открытых сделок — для частого опроса.
+  - L5989 `Collector.trade_by_id(self, tid)` — Сделка по короткому id — поиск по всем книгам разом.
+  - L6082 `Collector._jsonl_file_stat(path, what)`
+  - L6087 `Collector._jsonl_cost(entry)` — Сколько памяти держит запись кеша — байты объектов.
+  - L6092 `Collector._jsonl(path)`
+  - L6155 `Collector._jsonl_trim()`
+  - L6175 `Collector.trades(self, sym=None)` — История бумажных сделок и сводка — по требованию, не в опросе.
+  - L6203 `Collector.disk_view(self)` — Диск в человеческих единицах, с запасом хода в сутках.
+  - L6226 `Collector.diskstat(self)` — Сколько занято, с какой скоростью растёт и надолго ли хватит.
+  - L6258 `Collector.statuser(self)`
+  - L6278 `Collector.reporter(self)` — Строка в журнал раз в минуту: прогон, который молчит, неотличим от повисшего.
+  - L6306 `Collector.metrics_poll(self)` — Funding, открытый интерес и базис — раз в 5 минут, один запрос на все символы. Ставка и интерес доказали ценн…
+  - L6330 `Collector.sit_load_positions(self, books)` — Открытые позиции КАЖДОЙ книги сканера, без исключений.
+  - L6349 `Collector.sit_watch(self)` — Живой сторож выходов ситуационной книги.
+  - L6517 `Collector.sit_noise(self, sym, now)` — Живой шум монеты: минутный размах середины, б.п. (v12).
+  - L6584 `Collector.sit_absorb_now(self, mdir)` — Живое поглощение событий книги: pnl сразу после закрытия.
+  - L6628 `Collector._sit_scan(self, root, sheet, want, books, now, armed)` — Один тик сканера входов: лист сечения против живых цен.
+  - L6955 `Collector._brake_sig(self, now)` — Подпись входов тормоза: журналы торгуемых книг и день UTC.
+  - L6978 `Collector._brake_step(self, TR, path, limit, mem, now=None)` — Один шаг тормоза: счёт при изменившихся входах, иначе прежнее состояние со свежей меткой. Ошибка счёта не зап…
+  - L7014 `Collector.brake_watch(self)` — Дневной тормоз: реализованный день торгуемых книг против порога −1 % суммарного капитала (`trades.DAY_BRAKE_S…
+  - L7057 `Collector.run(self, hours)`
+- L7093 `sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc, n…` — Живой вход по ситуации: якорим прогноз листа к живой цене.
+- L7238 `sit_cross(side, entry_px, adv, mid, fav=None, hi=None, lo=None)` — Дошёл ли живой ход цены до обещанного уровня.
+- L7294 `take_limit_fill(side, entry_px, fav, hi, lo)` — Цена исполнения тейка-лимитки, если принты прошли уровень.
+- L7330 `sit_exit_event(pos, mid, hi, lo, now)` — Событие живого выхода по уровню — или None.
+- L7363 `sit_watched(want, root)` — Каталоги книг, у которых 5-секундный сторож ведёт УРОВНИ.
+- L7381 `sit_open_levels(picks, reviews, entries=None)` — Открытые позиции ситуационной книги с уровнями против.
+- L7431 `_unfinished(rows)` — Записи об открытии, у которых нет парного закрытия.
+- L7443 `warm_start(root, symbols, collector, log, hours=4, trade_hours=…` — Поднять историю из собственных файлов сборщика.
+- L7544 `stable_token(root)` — Ключ доступа, переживающий перезапуск.
+- L7572 `selftest(root)` — Прогнать поддельный поток через путь записи и показать итог.
+- L7612 `dropped_symbols(root, syms, days=3)` — Символы, по которым на диске есть свежие ряды, а в запуске их нет.
+- L7655 `main()`
 
 ## research/b1_book/layout_check.py · 148 строк
 
@@ -913,7 +915,20 @@ A3 — кандидаты в пары на момент окна.
 - L349 `report(res)`
 - L381 `main(argv=None)`
 
-## research/b1_book/memsize.py · 271 строк
+## research/b1_book/memguard.py · 104 строк
+
+Самоограничитель памяти сборщика (починка 10.10).
+
+- L33 `SOFT_MB = 1700`
+- L34 `HARD_MB = 2100`
+- L37 `rss_mb()` — RSS процесса по `/proc/self/status`; None — не прочитан.
+- L49 `malloc_trim()` — Вернуть ядру свободные страницы арен glibc. 1 — что-то вернулось, 0 — нечего, None — не glibc (не измерено, н…
+- L59 `ask_stop()` — Остановиться тем же путём, что при деплое: SIGTERM себе.
+- L64 `class MemGuard`
+  - L65 `MemGuard.__init__(self, drop, rss=rss_mb, trim=malloc_trim, die=ask_stop…`
+  - L73 `MemGuard.tick(self)` — Один такт: вернуть, что сделано. Чистая логика вокруг вызовов.
+
+## research/b1_book/memsize.py · 275 строк
 
 Перепись памяти сборщика: кто сколько держит — числом, по структурам.
 
@@ -927,9 +942,9 @@ A3 — кандидаты в пары на момент окна.
 - L126 `_get(obj, dotted)`
 - L135 `_count(v)`
 - L142 `census(c, deep=False)` — Перепись структур сборщика `c`: части, сумма, RSS, неучтённое.
-- L220 `_TRACE = {'since': None}`
-- L223 `trace_state()`
-- L232 `trace_control(cmd, top=25, now=None, rss=None)` — `start` / `top` / `stop` для tracemalloc — с отказом, когда тесно.
+- L224 `_TRACE = {'since': None}`
+- L227 `trace_state()`
+- L236 `trace_control(cmd, top=25, now=None, rss=None)` — `start` / `top` / `stop` для tracemalloc — с отказом, когда тесно.
 
 ## research/b1_book/paper.py · 111 строк
 

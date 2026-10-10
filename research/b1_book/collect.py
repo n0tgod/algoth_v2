@@ -96,6 +96,7 @@ from common import universe_filter as UF                   # noqa: E402
 import books as BK                                        # noqa: E402
 import stall as ST                                        # noqa: E402
 import memsize as MS                                      # noqa: E402
+import memguard as MG                                     # noqa: E402
 import web                                                # noqa: E402
 
 WS_URL = "wss://stream.bybit.com/v5/public/linear"
@@ -819,6 +820,10 @@ class Collector:
         # кешируется: страница опрашивает раз в минуту, файлы меняются
         # раз в сутки.
         self._model_cache = (0.0, None, object(), None)
+        # Самоограничитель памяти (`memguard.py`, починка 10.10): раз в
+        # минуту из `reporter`; выше мягкого порога сбрасывает кеши и
+        # возвращает память ядру, выше жёсткого — просит остановки.
+        self.guard = MG.MemGuard(drop=self.drop_caches, log=log)
         # Цены входа по (символ, час). Закрытый час не меняется, значит
         # прочитанное можно помнить навсегда.
         self._px_cache = {}
@@ -970,6 +975,27 @@ class Collector:
                          f"держали {tr['held']} с")
                 self.w.write("signals", tr["sym"], dict(tr, ev="close"), ts=now)
 
+    def drop_caches(self):
+        """Сбросить всё, что пересчитывается с диска: кеши страниц и
+        журналов. Возвращает, сколько чего ушло, — для строки лога."""
+        gone = {}
+        jc = Collector._JSONL_CACHE
+        gone["journals"] = len(jc)
+        jc.clear()
+        dp = getattr(self, "_dca_parts", None)
+        if isinstance(dp, dict):
+            gone["dca_parts"] = len(dp)
+            dp.clear()
+        if getattr(self, "_dca_cache", None):
+            gone["dca"] = len(self._dca_cache[1]) if isinstance(self._dca_cache, tuple) else 1
+            self._dca_cache = (0.0, {})
+        if getattr(self, "_dca_art", None):
+            self._dca_art = (None, None)
+        if getattr(self, "_model_cache", None) and self._model_cache[1] is not None:
+            gone["model"] = 1
+            self._model_cache = (0.0, None, object(), None)
+        return gone
+
     def mem_report(self, deep=False, trace=None):
         """Кто держит память процесса — по структурам (`memsize.census`).
 
@@ -978,6 +1004,7 @@ class Collector:
         `/mem` живого процесса.
         """
         out = MS.census(self, deep=deep)
+        out["guard"] = dict(self.guard.stats, soft_mb=self.guard.soft, hard_mb=self.guard.hard)
         if trace:
             out["trace"] = MS.trace_control(trace)
         return out
@@ -998,6 +1025,8 @@ class Collector:
             # стояло пять суток, пока никто не видел этого числа.
             # Сторож перезапускает по потолку (`COLLECT_RSS_MAX_MB`).
             "rss_mb": rss_mb(),
+            # самоограничитель: сбросы кеша и остановки по памяти — числом
+            "mem_guard": {k: self.guard.stats[k] for k in ("drops", "dies", "max_rss_mb")},
             "messages": self.n_msg, "trades": self.n_trades,
             "resets": self.n_resets,
             "last_msg_age_sec": (round(time.time() - self.last_msg, 1)
@@ -6044,6 +6073,15 @@ class Collector:
     # только числом: «выброшено» против «разобрано целиком».
     _JSONL_STATS = {"hit": 0, "tail": 0, "full": 0, "evict": 0,
                     "parsed_mb": 0.0, "evicted_mb": 0.0}
+    # По файлам: кто разбирается целиком снова и снова. 10.10: 290 полных
+    # разборов за 2.5 ч при 332 попаданиях — тасование, виновник которого
+    # без счёта по файлам не назвать.
+    _JSONL_FILES = {}
+
+    @staticmethod
+    def _jsonl_file_stat(path, what):
+        d = Collector._JSONL_FILES.setdefault(path, {"full": 0, "tail": 0, "evict": 0})
+        d[what] += 1
 
     @staticmethod
     def _jsonl_cost(entry):
@@ -6108,6 +6146,7 @@ class Collector:
                        "rows": rows, "used": time.time(),
                        "est": MS.deep_size(rows)}
         stats["tail" if offset else "full"] += 1
+        Collector._jsonl_file_stat(path, "tail" if offset else "full")
         stats["parsed_mb"] = round(stats["parsed_mb"] + len(buf) / 2 ** 20, 2)
         Collector._jsonl_trim()
         return rows
@@ -6124,9 +6163,14 @@ class Collector:
             gone = cost(cache.pop(path))
             total -= gone
             stats["evict"] += 1
+            Collector._jsonl_file_stat(path, "evict")
             stats["evicted_mb"] = round(stats["evicted_mb"] + gone / 2 ** 20, 1)
             if total <= Collector._JSONL_BUDGET:
                 break
+        # Выброшенные объекты лежат в аренах аллокатора, пока их не
+        # вернуть ядру: без этого RSS после выброса не падает (10.10:
+        # неучтённые 630 МБ при 11.7 ГБ выброшенного за 2.5 ч).
+        MG.malloc_trim()
 
     def trades(self, sym=None):
         """История бумажных сделок и сводка — по требованию, не в опросе.
@@ -6236,6 +6280,10 @@ class Collector:
         от повисшего."""
         last = (0, 0)
         while not self.stop.wait(60):
+            try:
+                self.guard.tick()
+            except Exception as e:                        # noqa: BLE001
+                self.log(f"самоограничитель памяти: {e}")
             ready = sum(1 for b in self.books.values() if b.ready)
             ages = [(s.idx, time.time() - s.last_msg)
                     for s in self.shards if s.last_msg]

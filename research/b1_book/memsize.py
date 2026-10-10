@@ -184,6 +184,10 @@ def census(c, deep=False):
             "n": len(ents), "mb": round(tot / 2 ** 20, 1),
             "budget_mb": round(getattr(type(c), "_JSONL_BUDGET", 0) / 2 ** 20),
             "stats": dict(getattr(type(c), "_JSONL_STATS", {}) or {}),
+            # кто тасуется: восьмёрка файлов по числу ПОЛНЫХ разборов
+            "churn": [{"file": "/".join(p.rsplit("/", 2)[-2:]), **d}
+                      for p, d in sorted((getattr(type(c), "_JSONL_FILES", {}) or {}).items(),
+                                         key=lambda kv: -kv[1]["full"])[:8]],
             "top": [{"file": "/".join(p.rsplit("/", 2)[-2:]),
                      "rows": len(e.get("rows") or ()),
                      "mb": round(est / 2 ** 20, 1),
