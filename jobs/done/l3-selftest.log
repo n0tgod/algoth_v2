@@ -13,3 +13,13 @@ Traceback (most recent call last):
                                                                                                              ~~~~~~~~^^^^^^^^^^^^
 KeyError: 'cash_usd'
 конец: 2026-10-10T17:19:20Z, код 1
+публикуется в ветку main:
+ jobs/done/l3-api-restart.log | 11 +++++++++++
+ jobs/done/l3-selftest.done   |  1 +
+ jobs/done/l3-selftest.log    | 15 +++++++++++++++
+ jobs/poke.log                |  3 +++
+ 4 files changed, 30 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   7a0726f8..ff04c52e  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

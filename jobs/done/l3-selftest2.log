@@ -1,0 +1,12 @@
+== задание l3-selftest2 ==
+строка: run tools/app_api/selftest.py
+начало: 2026-10-10T17:20:01Z
+запускаю: .venv/bin/python tools/app_api/selftest.py 
+health: 200 {'ok': True, 'schema': 1}
+вход оператора: 200, аккаунт acc_05bccaa551a6df40, роль operator
+me: 200, роль operator, Apple ID привязан
+ячеек стратегий: 72, первая pair_safe 100 $, касса бумаги 108.91
+state: 200, подписок 1, live_enabled False
+  pair_aggr 100 $ режим dry: касса 100.0, позиций 1, намерений 0, отказов 6, возраст источников {'h24': 6533.0, 'sit': 6279.3}
+ок
+конец: 2026-10-10T17:20:01Z, код 0
