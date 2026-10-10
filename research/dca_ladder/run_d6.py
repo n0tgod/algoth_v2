@@ -338,7 +338,7 @@ SIZING_FIXED = "fixed"            # маржа = доля СТАРТОВОГО �
 
 
 def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
-           keep_rows=False, sizing=SIZING_COMPOUND, profit_to_cash=False):
+           keep_rows=False, sizing=SIZING_COMPOUND, profit_to_cash=True):
     """Хронологическая раздача кассы. Возвращает сводку и кривую счёта.
 
     `sizing` — формат размера (решение владельца 2026-10-09): при

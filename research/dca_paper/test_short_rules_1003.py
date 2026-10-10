@@ -43,7 +43,8 @@ def test_floor_of_safe_stays_and_the_cache_signature_is_untouched_by_the_ticket(
 
 def test_versions_day_and_page_text():
     assert R.FAMILY_RULES == {"pair": 8, "h24": 4}, R.FAMILY_RULES
-    assert R.FAMILY_SINCE == {"pair": "2026-10-03", "h24": "2026-10-03"}, R.FAMILY_SINCE
+    # день записи вперёд сдвинут общей версией 7 (касса, 2026-10-10)
+    assert R.FAMILY_SINCE == {"pair": "2026-10-10", "h24": "2026-10-10"}, R.FAMILY_SINCE
     assert not R.is_current({"rules": R.RULES, "book_rules": 3, "ruler": "safe_h"})
     assert R.is_current({"rules": R.RULES, "book_rules": 4, "ruler": "safe_h"})
     assert not R.is_current({"rules": R.RULES, "book_rules": 7, "ruler": "pair_safe"})

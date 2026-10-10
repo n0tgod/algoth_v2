@@ -88,7 +88,8 @@ def test_rule_is_declared_for_short_books_with_versions_and_page_text():
     for lk in ("safe", "optimal", "aggr"):
         assert R.wave_guard_of(lk) is None, lk         # длинные не трогаются
     assert R.FAMILY_RULES == {"pair": 8, "h24": 4}, R.FAMILY_RULES
-    assert R.FAMILY_SINCE == {"pair": "2026-10-03", "h24": "2026-10-03"}, R.FAMILY_SINCE
+    # день записи вперёд сдвинут общей версией 7 (касса, 2026-10-10)
+    assert R.FAMILY_SINCE == {"pair": "2026-10-10", "h24": "2026-10-10"}, R.FAMILY_SINCE
     # строка прежней версии в счёт не идёт, текущей — идёт
     old = {"rules": R.RULES, "book_rules": 3, "ruler": "safe_h"}
     new = {"rules": R.RULES, "book_rules": 4, "ruler": "safe_h"}
@@ -99,7 +100,7 @@ def test_rule_is_declared_for_short_books_with_versions_and_page_text():
         assert "охрана рынком" in plain and "≥ 2 %" in plain, (k, plain[-200:])
     assert "охрана рынком" not in R.RULERS["safe"]["plain"]
     print("ok  правило объявлено: порог 2 % у трёх коротких книг и короткой стороны "
-          "общего счёта, версии h24 4 / pair 8 с 2026-10-03, прежние строки не в счёт, "
+          "общего счёта, версии h24 4 / pair 8, запись вперёд с 2026-10-10, прежние строки не в счёт, "
           "текст на вкладке")
 
 

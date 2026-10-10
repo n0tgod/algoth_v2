@@ -1197,7 +1197,7 @@
 - L66 `test_an_extra_point_of_ours_breaks_the_match()`
 - L77 `test_venue_silence_is_a_reason_not_a_match()`
 
-## research/dca_paper/test_guard.py · 201 строк
+## research/dca_paper/test_guard.py · 202 строк
 
 Проверки охраны рынком — правила выхода коротких книг (спека 14 §13).
 
@@ -1210,9 +1210,9 @@
 - L45 `_rec(marks, state='closed', sym='AAAUSDT', exit='срок', lev=20.…`
 - L52 `test_guard_closes_strictly_before_the_exit_and_only_in_lived_ho…`
 - L83 `test_rule_is_declared_for_short_books_with_versions_and_page_te…`
-- L106 `test_guard_shorts_reads_the_summaries_end_to_end()`
-- L138 `test_cache_signature_does_not_carry_the_guard_on_purpose()`
-- L147 `test_guard_exit_price_comes_from_the_fills_not_from_the_whole_m…` — Цена выхода охраны — из заполненных ступеней, а не «вся маржа на плече».
+- L107 `test_guard_shorts_reads_the_summaries_end_to_end()`
+- L139 `test_cache_signature_does_not_carry_the_guard_on_purpose()`
+- L148 `test_guard_exit_price_comes_from_the_fills_not_from_the_whole_m…` — Цена выхода охраны — из заполненных ступеней, а не «вся маржа на плече».
 
 ## research/dca_paper/test_guard_fill.py · 75 строк
 
@@ -1575,7 +1575,7 @@
 - L112 `test_run_wiring_with_stub_cash_and_report_without_none()`
 - L177 `test_halves_split_and_hold_run_report_without_none()`
 
-## research/dca_paper/test_short_rules_1003.py · 62 строк
+## research/dca_paper/test_short_rules_1003.py · 63 строк
 
 Правила 03.10 у безопасной короткой книги: билет 0.5.
 
