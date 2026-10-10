@@ -18,3 +18,4 @@ state: 200, подписок 1, live_enabled True
  jobs/poke.log                       |  3 +++
  research/s8_loop/out/day_brake.json |  2 +-
  6 files changed, 39 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at 9492afcc7244390deec11be4a94ad5fb70ce23d9 but expected 6d5c5ee2ff3eae2cbd07ece8b8526ed3f4dea8fb
