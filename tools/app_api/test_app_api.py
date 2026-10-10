@@ -338,6 +338,10 @@ def test_push_key_is_checked_by_signing_and_words_come_from_the_record():
         assert claims == {"iss": "TEAM123456", "iat": 1_700_000_000}
         assert jwt.get_unverified_header(tok)["kid"] == "KEY1234567"
         assert PUSH.public_config(tmp)["configured"] is True and "p8" not in PUSH.public_config(tmp)
+        # тема задаётся явно и переживает замену ключа без темы
+        assert PUSH.save_config(tmp, "TEAM123456", "KEY1234567", priv, topic="algoth")["topic"] == "algoth"
+        assert PUSH.save_config(tmp, "TEAM123456", "KEY7654321", priv)["topic"] == "algoth"
+        assert PUSH.load_config(tmp)["key_id"] == "KEY7654321"
         # слова
         t = {"kind": "entry", "mode": "live", "sym": "KAITOUSDT", "side": "long", "margin_usd": 25.0,
              "lev": 4.0, "px": 1.2345, "subscription_id": "sub_1", "id": 7}

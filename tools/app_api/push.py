@@ -68,11 +68,16 @@ def save_config(out, team_id, key_id, p8, topic=None):
     jwt_for(team_id, key_id, p8)                        # ValueError/TypeError при битом ключе
     os.makedirs(out, exist_ok=True)
     path = config_path(out)
+    # Тема без явного значения — ПРЕЖНЯЯ, если ключ уже был: замена ключа
+    # не вправе молча вернуть тему из project.yml (10.10: Bundle ID сборки
+    # `algoth`, а не `pl.mdsauto.algoth` — первый пуш ответил TopicDisallowed)
+    was = load_config(out)
+    topic = (topic or (was or {}).get("topic") or TOPIC_DEFAULT).strip()
     with open(path, "w", encoding="utf-8") as f:
         json.dump({"team_id": team_id, "key_id": key_id, "p8": p8,
-                   "topic": (topic or TOPIC_DEFAULT).strip(), "saved": time.time()}, f)
+                   "topic": topic, "saved": time.time()}, f)
     os.chmod(path, 0o600)
-    return {"team_id": team_id[:3] + "…", "key_id": key_id, "topic": (topic or TOPIC_DEFAULT).strip()}
+    return {"team_id": team_id[:3] + "…", "key_id": key_id, "topic": topic}
 
 
 def public_config(out):

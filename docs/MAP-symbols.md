@@ -8666,7 +8666,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L64 `operator_token(out)`
 - L76 `main(out=OUT, ip=SERVER_IP)`
 
-## tools/app_api/push.py · 206 строк
+## tools/app_api/push.py · 211 строк
 
 Пуши APNs для событий живого исполнителя (спека 15 §7.5).
 
@@ -8679,16 +8679,16 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L46 `config_path(out)`
 - L50 `load_config(out)`
 - L62 `save_config(out, team_id, key_id, p8, topic=None)` — Проверяет ключ подписью (битый `.p8` отвергается словами), пишет 600.
-- L78 `public_config(out)`
-- L86 `jwt_for(team_id, key_id, p8, now=None)`
-- L96 `_words(t)` — Слова пуша из записи сделки (словарь строки `trades`).
-- L126 `payload_for(trade, book=None)` — APNs-полезная нагрузка по записи сделки; `book` — подпись книги.
-- L139 `class Sender` — Отправка с кешем JWT; `runner` подменяется в проверках.
-  - L142 `Sender.__init__(self, out, runner=None)`
-  - L147 `Sender.token(self, cfg)`
-  - L156 `Sender._curl(url, headers, body)`
-  - L175 `Sender.send(self, device_token, env, payload, cfg=None)` — → {"status": код APNs, "reason": причина Apple или слова, "dead": токен мёртв}.
-- L203 `_strip(o)`
+- L83 `public_config(out)`
+- L91 `jwt_for(team_id, key_id, p8, now=None)`
+- L101 `_words(t)` — Слова пуша из записи сделки (словарь строки `trades`).
+- L131 `payload_for(trade, book=None)` — APNs-полезная нагрузка по записи сделки; `book` — подпись книги.
+- L144 `class Sender` — Отправка с кешем JWT; `runner` подменяется в проверках.
+  - L147 `Sender.__init__(self, out, runner=None)`
+  - L152 `Sender.token(self, cfg)`
+  - L161 `Sender._curl(url, headers, body)`
+  - L180 `Sender.send(self, device_token, env, payload, cfg=None)` — → {"status": код APNs, "reason": причина Apple или слова, "dead": токен мёртв}.
+- L208 `_strip(o)`
 
 ## tools/app_api/restart.py · 32 строк
 
