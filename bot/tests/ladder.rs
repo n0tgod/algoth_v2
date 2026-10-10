@@ -6,7 +6,7 @@
 //! позицию; хедж-режим отвергает индекс 0 тем же текстом, что Bybit.
 
 use bot::events::Side;
-use bot::ladder::{Ladder, LadderCfg};
+use bot::ladder::{venue_max_lev, Ladder, LadderCfg};
 use bot::live::{ExchPos, Exchange, Instrument, OrderStatus, Resting};
 use serde_json::{json, Value};
 use std::cell::RefCell;
@@ -37,6 +37,7 @@ struct Inner {
     hedge: bool,
     lev: Vec<(String, String)>,
     lev_error: Option<String>,
+    lev_max: Option<f64>,
     closed_pnl: Vec<(String, f64)>,
     fee_bp: f64,
     order_calls: u64,
@@ -138,6 +139,12 @@ impl Exchange for Mock {
         let mut i = self.0.borrow_mut();
         if let Some(e) = i.lev_error.clone() {
             return Err(e);
+        }
+        if let Some(mx) = i.lev_max {
+            if lev.parse::<f64>().unwrap() > mx {
+                return Err(format!("/v5/position/set-leverage: retCode 110013 cannot set leverage [{:.0}] gt maxLeverage [{:.0}] by risk limit",
+                                   lev.parse::<f64>().unwrap() * 100.0, mx * 100.0));
+            }
         }
         i.lev.push((symbol.into(), lev.into()));
         Ok(())
@@ -601,4 +608,37 @@ fn перезапуск_продолжает_позиции_и_нумераци�
     let st: Value = serde_json::from_str(&std::fs::read_to_string(d.join("ladder_status.json")).unwrap()).unwrap();
     assert_eq!(st["positions"].as_array().unwrap().len(), 0);
     assert!(st["realized_usd"].as_f64().unwrap() > 0.0);
+}
+
+#[test]
+fn предел_плеча_площадки_ниже_забора_ставится_а_объём_остаётся_от_забора() {
+    // CT 10.10: забор 25×, площадка 20× (отказ 110013). Вход обязан
+    // состояться тем же объёмом, что у бумаги, на пределе площадки.
+    assert_eq!(venue_max_lev("/v5/position/set-leverage: retCode 110013 cannot set leverage [2500] gt maxLeverage [2000] by risk limit"), Some(20.0));
+    assert_eq!(venue_max_lev("retCode 110013 cannot set leverage"), None);
+    assert_eq!(venue_max_lev("retCode 10001 maxLeverage [2000]"), None);
+    let d = dir("lev-cap");
+    let m = Mock::new();
+    m.0.borrow_mut().lev_max = Some(20.0);
+    m.set_px("SSSUSDT", 99.99, 100.01);
+    write_intents(&d, &[short_intent(1)]);
+    let mut lx = ladder(&d, &m, false);
+    let rep = lx.tick(T0 + 120_000);
+    assert_eq!(rep.opened, 1, "{:?}", lx.last_error);
+    assert_eq!(m.0.borrow().lev, vec![("SSSUSDT".to_string(), "20.00".to_string())]);
+    // объём от забора 25×: 0.25 × 6.25 × 25 / 100 = 0.39
+    assert!((m.pos("SSSUSDT") + 0.39).abs() < 1e-9, "позиция {}", m.pos("SSSUSDT"));
+    let e0 = &events(&d)[0];
+    assert_eq!(e0["ev"], "entry");
+    assert_eq!(e0["lev_venue"], "20.00");
+    assert!(e0["note"].as_str().unwrap().contains("ниже забора"));
+    // предел выше забора не помогает — отказ остаётся отказом
+    let d = dir("lev-cap-none");
+    let m = Mock::new();
+    m.0.borrow_mut().lev_error = Some("retCode 110013 cannot set leverage".into());
+    m.set_px("SSSUSDT", 99.99, 100.01);
+    write_intents(&d, &[short_intent(1)]);
+    ladder(&d, &m, false).tick(T0 + 120_000);
+    assert!(events(&d)[0]["reason"].as_str().unwrap().starts_with("плечо 25.00× не выставилось"));
+    assert_eq!(m.0.borrow().order_calls, 0);
 }

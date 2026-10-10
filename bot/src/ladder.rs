@@ -664,11 +664,30 @@ impl<E: Exchange> Ladder<E> {
         }
         // Плечо инструмента = плечо забора, до входа: начальная маржа
         // заявок та же, что бумага держит. Отказ площадки — отказ входа.
+        // Предел площадки ниже забора (110013: тиры бумаги устарели, CT
+        // 10.10 — забор 25×, площадка 20×) — ставится предел площадки, а
+        // объём и уровни остаются от забора: та же позиция, что у бумаги,
+        // только начальной маржи заморожено больше (счёт cross).
         let lev_s = format!("{:.2}", (lev * 100.0).floor() / 100.0);
+        let mut lev_venue: Option<String> = None;
         if self.lev_set.get(&sym) != Some(&lev_s) {
             if let Err(e) = self.ex.set_leverage(&sym, &lev_s) {
-                self.reject(it, format!("плечо {lev_s}× не выставилось: {e}"), now_ms, rep);
-                return;
+                let cap = venue_max_lev(&e).filter(|m| *m > 0.0 && *m < lev);
+                let Some(m) = cap else {
+                    self.reject(it, format!("плечо {lev_s}× не выставилось: {e}"), now_ms, rep);
+                    return;
+                };
+                let m_s = format!("{:.2}", (m * 100.0).floor() / 100.0);
+                if let Err(e2) = self.ex.set_leverage(&sym, &m_s) {
+                    self.reject(
+                        it,
+                        format!("плечо {lev_s}× не выставилось: {e}; предел площадки {m_s}× тоже: {e2}"),
+                        now_ms,
+                        rep,
+                    );
+                    return;
+                }
+                lev_venue = Some(m_s);
             }
             self.lev_set.insert(sym.clone(), lev_s.clone());
         }
@@ -746,6 +765,11 @@ impl<E: Exchange> Ladder<E> {
             })));
             o.insert("take_px".into(), json!(p.take_px()));
             o.insert("fee_usd".into(), json!(st.fee_usd));
+            if let Some(m) = &lev_venue {
+                o.insert("lev_venue".into(), json!(m));
+                o.insert("note".into(), json!(format!(
+                    "плечо площадки {m}× ниже забора {lev_s}×: объём от забора, маржи заморожено больше")));
+            }
             if st.filled_qty + 1e-12 < q0 {
                 o.insert("reason".into(), json!(format!("исполнено частично: {} из {}", st.filled_qty, q0)));
             }
@@ -1264,6 +1288,17 @@ fn wall_ms() -> i64 {
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_millis() as i64)
         .unwrap_or(0)
+}
+
+/// Предел плеча площадки из отказа 110013 («... gt maxLeverage [2000] by
+/// risk limit» — сотые доли): `None`, если отказ другой.
+pub fn venue_max_lev(err: &str) -> Option<f64> {
+    if !err.contains("110013") {
+        return None;
+    }
+    let tail = &err[err.find("maxLeverage [")? + "maxLeverage [".len()..];
+    let n: f64 = tail[..tail.find(']')?].trim().parse().ok()?;
+    Some(n / 100.0)
 }
 
 /// Цикл демона: такт раз в `interval_sec`.
