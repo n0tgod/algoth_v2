@@ -33,7 +33,8 @@ sys.path.insert(0, HERE)
 import db as DBM                                              # noqa: E402
 import sealed
 import push as PUSH
-import trades as TRADES                                                 # noqa: E402
+import trades as TRADES
+import follow as FOLLOW                                                 # noqa: E402
 import bybit                                                  # noqa: E402
 
 DEFAULT_SIZING = "compound"     # формат размера по умолчанию — как у бумаги
@@ -465,9 +466,9 @@ class App:
         for r in self.db.c.execute("SELECT mode, COUNT(*) AS n FROM trades WHERE account_id=? GROUP BY mode",
                                    (acc["id"],)).fetchall():
             by_mode[r["mode"]] = r["n"]
-        return 200, {"trades": rows, "by_mode": by_mode, "executor_running": False,
-                     "note": ("исполнитель DCA (этап Y2) ещё не запущен: записи вида test — проверка канала, "
-                              "в деньгах не участвуют")}
+        return 200, {"trades": rows, "by_mode": by_mode, "executor_running": "dry",
+                     "note": ("сухой исполнитель: записи dry — действия книги подписки как их исполнил бы "
+                              "исполнитель, на биржу ничего не отправлено; test — проверка канала")}
 
     def trade_test(self, acc, text=None):
         """Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой."""
@@ -480,8 +481,13 @@ class App:
         return 200, {"ingested": n, "trade": (TRADES.view(row) if row else None)}
 
     def push_tick(self):
-        """Такт фонового потока: новые строки журналов → записи → пуши."""
+        """Такт фонового потока: следователь пишет события ячеек подписок
+        (сухой исполнитель), затем новые строки журналов → записи → пуши."""
         try:
+            try:
+                FOLLOW.tick(self.db, self.dca(), self.exec_root, log=log)
+            except Exception as e:                              # noqa: BLE001
+                log(f"следователь: {e}")
             return TRADES.tick(self.db, self.exec_root, self.sender, log=log)
         except Exception as e:                                  # noqa: BLE001
             log(f"такт приёма журнала исполнителя: {e}")

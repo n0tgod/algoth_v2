@@ -36,6 +36,7 @@ KIND_WORDS = {
     "entry": "Entry", "rung": "Averaging", "take_set": "Target moved",
     "take": "Closed at target", "floor": "Closed at floor", "term": "Closed on time",
     "market": "Closed by market guard", "cmd_close": "Closed by command",
+    "liq": "Liquidated",
     "reject": "Entry not filled", "halt": "Executor halted", "resume": "Executor resumed",
     "mismatch": "Reconcile mismatch", "test": "Test event"}
 # Что пушится: ВСЁ, что записал исполнитель (решение владельца). Список
@@ -107,6 +108,8 @@ def _words(t):
     parts = []
     if t.get("margin_usd") is not None and kind in ("entry", "rung"):
         parts.append(f"{float(t['margin_usd']):.2f} $")
+    if t.get("qty") is not None and kind in ("entry", "rung"):
+        parts.append(f"qty {float(t['qty']):g}")
     if t.get("lev") is not None and kind == "entry":
         parts.append(f"×{float(t['lev']):g}")
     if t.get("px") is not None:

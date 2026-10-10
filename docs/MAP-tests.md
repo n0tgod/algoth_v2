@@ -4581,7 +4581,7 @@ X1: исполнитель против подставной биржи.
 - L291 `такт_демона_пишет_статус_и_не_молчит_об_ошибке`
 - L375 `which_python`
 
-## tools/app_api/test_app_api.py · 476 строк
+## tools/app_api/test_app_api.py · 576 строк
 
 Проверки API приложения (спека 15 Y0): конверт открывается только приватной половиной и ломается от подмены;…
 
@@ -4594,20 +4594,23 @@ X1: исполнитель против подставной биржи.
   - L55 `FakeVenue.wallet_equity(self, key, secret)`
   - L60 `FakeVenue.position_mode(self, key, secret, symbols=None)`
 - L64 `_app(tmp, venue=None, **kw)`
-- L71 `test_sealed_box_opens_only_with_private_half_and_detects_tamper…`
-- L94 `test_permission_judgement()`
-- L104 `test_operator_login_account_cap_and_apple_link()`
-- L129 `_login(app)`
-- L134 `test_key_add_rejects_money_moving_and_readonly_warns_on_ip_and_…`
-- L170 `test_subscriptions_cells_hedge_warning_and_state()`
-- L225 `_http(port, method, path, body=None, token=None)`
-- L237 `test_http_routing_auth_and_stage_gates()`
-- L270 `test_init_is_idempotent_and_prints_pin()`
-- L280 `test_apple_verify_names_the_audience_and_accepts_listed_ones()`
-- L303 `_ec_pem()`
-- L314 `test_push_key_is_checked_by_signing_and_words_come_from_the_rec…` — Ключ APNs принимается только если им можно подписать; слова пуша — из записи сделки, деньги печатаются, а не…
-- L364 `test_devices_trades_ingest_and_push_chain()` — Журнал исполнителя → запись → пуш на устройства; повтор чтения не дублирует; мёртвый токен выключается; пробн…
-- L463 `TESTS = [v for k, v in sorted(globals().items()…`
+- L72 `test_sealed_box_opens_only_with_private_half_and_detects_tamper…`
+- L95 `test_permission_judgement()`
+- L105 `test_operator_login_account_cap_and_apple_link()`
+- L130 `_login(app)`
+- L135 `test_key_add_rejects_money_moving_and_readonly_warns_on_ip_and_…`
+- L171 `test_subscriptions_cells_hedge_warning_and_state()`
+- L226 `_http(port, method, path, body=None, token=None)`
+- L238 `test_http_routing_auth_and_stage_gates()`
+- L271 `test_init_is_idempotent_and_prints_pin()`
+- L281 `test_apple_verify_names_the_audience_and_accepts_listed_ones()`
+- L304 `_ec_pem()`
+- L315 `test_push_key_is_checked_by_signing_and_words_come_from_the_rec…` — Ключ APNs принимается только если им можно подписать; слова пуша — из записи сделки, деньги печатаются, а не…
+- L365 `test_devices_trades_ingest_and_push_chain()` — Журнал исполнителя → запись → пуш на устройства; повтор чтения не дублирует; мёртвый токен выключается; пробн…
+- L464 `_pos(sym, at, fills, side='long', closed=None, lev=4.0, margin=…`
+- L481 `test_follower_turns_cell_positions_into_executor_events_once()` — Сухой исполнитель: позиции ячейки подписки → события §7.6 — первый рунг вход, следующие доливы с переездом це…
+- L524 `test_follower_tick_feeds_trades_and_pushes_for_the_subscribed_c…` — Такт сервера: следователь → журнал подписки → записи `trades` с mode dry → пуш на устройство; чужие ячейки не…
+- L563 `TESTS = [v for k, v in sorted(globals().items()…`
 
 ## tools/test_disk_alarm.py · 64 строк
 

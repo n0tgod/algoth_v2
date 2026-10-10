@@ -63,8 +63,9 @@ class FakeVenue:
 
 def _app(tmp, venue=None, **kw):
     pem, pub = sealed.keygen()
+    fetch = kw.pop("dca_fetch", lambda full=None: DCA)
     app = SV.App(os.path.join(tmp, "app.sqlite"), pub, operator_token="OPTOKEN",
-                 venue=venue or FakeVenue(), dca_fetch=lambda full=None: DCA, **kw)
+                 venue=venue or FakeVenue(), dca_fetch=fetch, **kw)
     return app, pem
 
 
@@ -456,7 +457,106 @@ def test_devices_trades_ingest_and_push_chain():
         assert r["trade"]["reason"] == "hello" and r["trade"]["pushed"]["sent"] == 1
         assert calls[-1][0].startswith(PUSH.HOSTS["sandbox"])
         st, tr = app.list_trades(acc)
-        assert tr["by_mode"] == {"dry": 4, "test": 1} and tr["executor_running"] is False
+        assert tr["by_mode"] == {"dry": 4, "test": 1} and tr["executor_running"] == "dry"
+        assert SECRET not in json.dumps(tr)
+
+
+def _pos(sym, at, fills, side="long", closed=None, lev=4.0, margin=25.0):
+    walk, cash, qty = [], 0.0, 0.0
+    for ts, px, w in fills:
+        dq = w * margin * lev / px
+        cash += w * margin * lev; qty += dq
+        avg = cash / qty
+        walk.append({"at": ts, "px": px, "w": w, "avg": avg, "dq": dq, "qty": qty,
+                     "take": avg * (1.1 if side == "long" else 0.9)})
+    p = {"sym": sym, "at": at, "side": side, "lev": lev, "margin": margin, "fills": [list(f) for f in fills],
+         "walk": walk, "entry_px": fills[0][1], "avg": walk[-1]["avg"], "depth": len(fills),
+         "sched_end": at + 72 * 3600, "state": "open"}
+    if closed:
+        p.update({"exit": closed, "exit_ts": at + 7200, "exit_px": walk[-1]["avg"] * 1.1,
+                  "usd": 2.5, "pnl_frac": 0.1, "state": "closed", "tail": False})
+    return p
+
+
+def test_follower_turns_cell_positions_into_executor_events_once():
+    """Сухой исполнитель: позиции ячейки подписки → события §7.6 — первый
+    рунг вход, следующие доливы с переездом цели, исход по виду; позиции
+    до подписки не ведутся; повторное чтение свода не дублирует; закрытие
+    ранее открытой даёт только событие исхода. Контроль: без состояния
+    слежения те же события отдаются второй раз."""
+    import follow as F
+    since = 1_791_000_000.0
+    older = _pos("OLDUSDT", since - 10, [(since - 10, 1.0, 0.25)], closed="тейк")
+    opened = _pos("AUSDT", since + 60, [(since + 60, 2.0, 0.25), (since + 600, 1.8, 0.25)])
+    done = _pos("BUSDT", since + 120, [(since + 120, 5.0, 0.25)], side="short", closed="рынок")
+    book = {"open": {"positions": [opened]}, "trades": [done, older], "trades_total": 2}
+    evs, fl = F.plan(book, {}, since)
+    kinds = [(e["ev"], e["sym"]) for e in evs]
+    # по времени решения: входы, долив с переездом цели, потом исход
+    assert kinds == [("entry", "AUSDT"), ("entry", "BUSDT"), ("rung", "AUSDT"), ("take_set", "AUSDT"), ("market", "BUSDT")], kinds
+    e0 = evs[0]
+    assert e0["depth"] == "1/2" and e0["qty"] == 0.25 * 25 * 4 / 2.0 and e0["term_ts"] == since + 60 + 72 * 3600
+    assert e0["paper_margin_usd"] == 25.0 and e0["mode"] == "dry" and e0["take_px"] == 2.0 * 1.1
+    rung = evs[2]
+    assert rung["depth"] == "2/2" and abs(rung["avg"] - (50 / (25 / 2.0 + 25 / 1.8))) < 1e-9 and rung["px"] == 1.8
+    mk = evs[4]
+    assert mk["pnl_usd"] == 2.5 and mk["pnl_bp"] == 250.0 and mk["px"] == done["exit_px"] and mk["ts"] == done["exit_ts"]
+    assert "OLDUSDT" not in {e["sym"] for e in evs}, "позиция до подписки не ведётся"
+    # повтор — ничего нового
+    evs2, fl2 = F.plan(book, {"follow": fl}, since)
+    assert evs2 == [], evs2
+    # открытая закрылась по полу — только исход
+    closed_a = dict(opened, exit="пол", exit_ts=since + 9000, exit_px=1.7, usd=-3.0, pnl_frac=-0.12, state="closed")
+    book2 = {"open": {"positions": []}, "trades": [closed_a, done, older], "trades_total": 3}
+    evs3, fl3 = F.plan(book2, {"follow": fl2}, since)
+    assert [(e["ev"], e["sym"]) for e in evs3] == [("floor", "AUSDT")] and evs3[0]["pnl_bp"] == -300.0, evs3
+    # контроль: без состояния — всё заново (дедуп держится состоянием, не журналом)
+    evs4, _ = F.plan(book2, {}, since)
+    assert len(evs4) == 6, len(evs4)
+    # запись с растущим seq
+    with tempfile.TemporaryDirectory() as root:
+        assert F.append_events(root, "sub_x", evs) == 5
+        assert F.append_events(root, "sub_x", evs3) == 1
+        seqs = [json.loads(l)["seq"] for l in open(os.path.join(root, "sub_x", "events.jsonl"))]
+        assert seqs == [1, 2, 3, 4, 5, 6], seqs
+
+
+def test_follower_tick_feeds_trades_and_pushes_for_the_subscribed_cell():
+    """Такт сервера: следователь → журнал подписки → записи `trades` с
+    mode dry → пуш на устройство; чужие ячейки не трогаются."""
+    calls = []
+
+    def runner(url, headers, body):
+        calls.append(json.loads(body)); return 200, ""
+    since = 1_791_000_000.0
+    pos = _pos("KAITOUSDT", since + 3600, [(since + 3600, 1.25, 0.25)], side="short", lev=4.0)
+    dca = dict(DCA)
+    dca["books"] = dict(DCA["books"])
+    dca["books"]["optimal_h:1000"] = {"all": {"usd": 123.4, "final": 0.12, "n": 50},
+                                      "open": {"positions": [pos]}, "trades": [], "trades_total": 0}
+    dca["books"]["pair_optimal:1000"] = {"all": {"usd": -20.0}, "open": {"positions": [pos]}, "trades": []}
+    with tempfile.TemporaryDirectory() as tmp:
+        root = os.path.join(tmp, "dca")
+        app, _ = _app(tmp, out=tmp, exec_root=root, sender=SV.PUSH.Sender(tmp, runner=runner),
+                      dca_fetch=lambda full=None: dca)
+        acc = _login(app)
+        priv, _pub = _ec_pem()
+        app.push_config(acc, "TEAM123456", "KEY1234567", priv)
+        app.add_device(acc, "ab" * 32, "prod", "117")
+        st, k = app.add_key(acc, "bybit", "ABCD1234KEY", SECRET)
+        st, sub = app.add_subscription(acc, k["key_id"], "optimal_h", 1000)
+        # подписка создана «сейчас», позиция — в будущем относительно неё
+        app.db.c.execute("UPDATE subscriptions SET created=? WHERE id=?", (since, sub["subscription_id"]))
+        assert app.push_tick() == 1
+        st, tr = app.list_trades(acc)
+        t = tr["trades"][0]
+        assert t["kind"] == "entry" and t["mode"] == "dry" and t["sym"] == "KAITOUSDT" and t["side"] == "short"
+        assert t["subscription_id"] == sub["subscription_id"] and t["pushed"]["sent"] == 1
+        assert calls[-1]["aps"]["alert"]["title"] == "Entry [dry] · KAITO short", calls[-1]
+        assert tr["executor_running"] == "dry" and tr["by_mode"] == {"dry": 1}
+        assert app.push_tick() == 0                     # повтор такта — ничего
+        stt = json.loads(app.db.subscription(sub["subscription_id"], acc["id"])["state_json"])
+        assert stt["follow"]["seen"]["KAITOUSDT:%d" % (since + 3600)] == {"fills": 1, "closed": False}
         assert SECRET not in json.dumps(tr)
 
 
