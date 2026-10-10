@@ -398,3 +398,13 @@
        922        1      3 1794:57  /usr/lib/systemd/systemd-logind
     501222        1      3   00:00  bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     ec
 конец: 2026-10-10T08:41:45Z, код 0
+публикуется в ветку main:
+ jobs/done/memtop-fix5.done          |   1 +
+ jobs/done/memtop-fix5.log           | 400 ++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |   3 +
+ research/s8_loop/out/day_brake.json |   2 +-
+ 4 files changed, 405 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   60b53d51..3e354d96  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
