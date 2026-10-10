@@ -107,3 +107,13 @@ VKTXUSDT:
   10-10 02:00 плечо 1.00 open срок выход 10-10 20:59 конец срока 10-11 02:00 → возраст
   10-10 15:00 плечо 1.00 open срок выход 10-10 20:59 конец срока 10-11 15:00 → возраст
 конец: 2026-10-10T21:36:35Z, код 0
+публикуется в ветку main:
+ jobs/done/n16-probe.log  |  12 ++++++
+ jobs/done/n17-probe.done |   1 +
+ jobs/done/n17-probe.log  | 109 +++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log            |   3 ++
+ 4 files changed, 125 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   8a404f2b..13c4822c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
