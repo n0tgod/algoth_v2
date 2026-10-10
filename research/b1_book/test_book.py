@@ -8741,8 +8741,9 @@ def test_collector_drop_caches_empties_every_page_cache_and_counts_churn():
     try:
         C.Collector._jsonl(p)
         C.Collector._jsonl(p)
-        check("разбор по файлу посчитан: один полный, попадание не считается разбором",
-              files[p] == {"full": 1, "tail": 0, "evict": 0}, str(files))
+        check("разбор по файлу посчитан: один полный, попадание не считается разбором, читатель назван",
+              files[p]["full"] == 1 and files[p]["tail"] == 0 and files[p]["evict"] == 0
+              and len(files[p]["by"]) == 1 and next(iter(files[p]["by"])).startswith("full:"), str(files))
 
         class Fake:
             pass

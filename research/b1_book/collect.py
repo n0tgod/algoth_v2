@@ -6217,9 +6217,25 @@ class Collector:
     _JSONL_FILES = {}
 
     @staticmethod
-    def _jsonl_file_stat(path, what):
-        d = Collector._JSONL_FILES.setdefault(path, {"full": 0, "tail": 0, "evict": 0})
+    def _jsonl_file_stat(path, what, who=None):
+        d = Collector._JSONL_FILES.setdefault(path, {"full": 0, "tail": 0, "evict": 0, "by": {}})
         d[what] += 1
+        if who:
+            # кто разбирал целиком: без имени читателя счётчик говорит
+            # «что», но не «кто» (10.10: три починки по догадке)
+            k = f"{what}:{who}"
+            d["by"][k] = d["by"].get(k, 0) + 1
+
+    @staticmethod
+    def _jsonl_who(depth=2):
+        """Имена двух вызывающих выше `_jsonl`: читатель и его заказчик."""
+        try:
+            f = sys._getframe(depth)
+            a = f.f_code.co_name
+            b = f.f_back.f_code.co_name if f.f_back else "?"
+            return f"{a}<{b}"
+        except (ValueError, AttributeError):
+            return "?"
 
     @staticmethod
     def _jsonl_cost(entry):
@@ -6291,7 +6307,7 @@ class Collector:
                        "pin": bool(pin or (hit or {}).get("pin")),
                        "est": MS.deep_size(rows)}
         stats["tail" if offset else "full"] += 1
-        Collector._jsonl_file_stat(path, "tail" if offset else "full")
+        Collector._jsonl_file_stat(path, "tail" if offset else "full", Collector._jsonl_who())
         stats["parsed_mb"] = round(stats["parsed_mb"] + len(buf) / 2 ** 20, 2)
         Collector._jsonl_trim()
         return rows
