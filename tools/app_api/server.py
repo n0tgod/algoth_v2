@@ -764,10 +764,61 @@ class App:
             p["closing"] = q.get("closing")
             p["levels"].update({"take_px": q.get("take_px") or p["levels"].get("take_px"),
                                 "floor_px": q.get("floor_px"), "liq_px": q.get("liq_px")})
+        self.attach_paper(out, subs)
         out.sort(key=lambda p: (p["state"] != "open", -float(p.get("exit_ts") or p["at"] or 0)))
         return 200, {"positions": out, "open": sum(1 for p in out if p["state"] == "open"),
                      "closed": sum(1 for p in out if p["state"] == "closed"),
                      "pnl": self.live_pnl(out, subs), "at": time.time()}
+
+    def attach_paper(self, rows, subs):
+        """Та же сделка в бумажной книге — СЫРОЙ сигнал (журнал книги без
+        издержек): строка ячейки подписки с тем же именем и секундой
+        решения. Сравнение (владелец 10.10: «насколько отличие от сырого
+        сигнала, проскальзывание и итоговый пнл»):
+          * вход и выход — в % цены, знак «+ = хуже для нас»: лонг купил
+            дороже / продал дешевле, шорт продал дешевле / откупил дороже;
+          * результат бумаги — в долях ЕЁ маржи (`usd / margin`), переведённый
+            на живую маржу: у бумаги маржа своя (её касса выросла), и
+            доллары двух касс несравнимы, а доля маржи — сравнима;
+          * разница = живое нетто − бумага сырая на той же марже: в неё
+            входят проскальзывание, комиссии и задержка входа.
+        Нет строки бумаги — причина словами, не ноль."""
+        d = self.dca() or {}
+        books = d.get("books") or {}
+        for p in rows:
+            book = books.get(p.get("cell") or "") or {}
+            cands = list(book.get("trades") or []) + list((book.get("open") or {}).get("positions") or [])
+            q = next((x for x in cands if x.get("sym") == p["sym"]
+                      and abs(float(x.get("at") or 0) - float(p["pos_at"])) < 1.0), None)
+            if q is None:
+                last = max([float(x.get("at") or 0) for x in cands] or [0.0])
+                p["paper_why"] = ("бумага ещё не считала этот час" if float(p["pos_at"]) > last else
+                                  "бумага это решение не брала (касса или одна позиция на имя)")
+                continue
+            closed = q.get("exit_ts") is not None and q.get("exit") is not None
+            pm = float(q.get("margin") or 0) or None
+            if closed:
+                frac = (float(q["usd"]) / pm) if (pm and q.get("usd") is not None) else q.get("pnl_frac")
+            else:
+                frac = (float(q["mark_usd"]) / pm) if (pm and q.get("mark_usd") is not None) else q.get("mark_frac")
+            short = (p.get("side") == "short")
+            pe, le = q.get("entry_px"), p.get("entry_px")
+            entry_cost = None
+            if pe and le:
+                entry_cost = ((float(pe) - float(le)) if short else (float(le) - float(pe))) / float(pe) * 100.0
+            exit_cost = None
+            if closed and p["state"] == "closed" and q.get("exit_px") and p.get("exit_px"):
+                px, lx = float(q["exit_px"]), float(p["exit_px"])
+                exit_cost = ((lx - px) if short else (px - lx)) / px * 100.0
+            paper_usd = (float(frac) * float(p["margin"])) if (frac is not None and p.get("margin")) else None
+            live_usd = p.get("usd") if p["state"] == "closed" else p.get("mark_usd")
+            p["paper"] = {"state": "closed" if closed else "open", "entry_px": pe, "exit_px": q.get("exit_px"),
+                          "exit": q.get("exit"), "exit_ts": q.get("exit_ts"), "pnl_frac": frac,
+                          "margin": q.get("margin"), "usd_at_live_margin": paper_usd}
+            p["vs_paper"] = {"entry_cost_pct": entry_cost, "exit_cost_pct": exit_cost,
+                             "live_usd": live_usd, "paper_usd": paper_usd,
+                             "diff_usd": (None if live_usd is None or paper_usd is None
+                                          else float(live_usd) - paper_usd)}
 
     @staticmethod
     def live_pnl(rows, subs):
@@ -785,7 +836,15 @@ class App:
         dep = sum(float(s["deposit"]) for s in subs.values() if s["mode"] == "live")
         total = realized + open_usd
         wins = sum(1 for p in closed if (p.get("usd") or 0) > 0)
-        return {"realized_usd": round(realized, 4), "open_usd": round(open_usd, 4),
+        # те же решения в бумаге — только сопоставленные и с числом у обеих
+        pair = [p["vs_paper"] for p in rows if p.get("vs_paper") and p["vs_paper"].get("diff_usd") is not None]
+        ec = [v["entry_cost_pct"] for v in (p.get("vs_paper") or {} for p in rows) if v.get("entry_cost_pct") is not None]
+        vs = {"matched_n": len(pair), "unmatched_n": sum(1 for p in rows if p.get("paper_why")),
+              "live_usd": round(sum(float(v["live_usd"]) for v in pair), 4),
+              "paper_usd": round(sum(float(v["paper_usd"]) for v in pair), 4),
+              "diff_usd": round(sum(float(v["diff_usd"]) for v in pair), 4),
+              "entry_cost_pct_mean": (round(sum(ec) / len(ec), 4) if ec else None)}
+        return {"vs_paper": vs, "realized_usd": round(realized, 4), "open_usd": round(open_usd, 4),
                 "total_usd": round(total, 4), "deposit_usd": dep,
                 "total_pct": (round(total / dep * 100.0, 3) if dep else None),
                 "closed_n": len(closed), "open_n": len(opened), "wins_n": wins,

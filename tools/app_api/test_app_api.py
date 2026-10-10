@@ -1012,6 +1012,17 @@ def test_live_positions_are_built_from_executor_journal_in_paper_row_shape():
         d = os.path.join(root, sid)
         os.makedirs(d)
         T = 1_791_000_000.0
+        # бумажная ячейка: та же короткая сделка (сырой журнал, своя маржа 42)
+        # и та же длинная открытой; позиции позже последней строки бумаги нет
+        dca = dict(DCA)
+        dca["books"] = dict(DCA["books"])
+        dca["books"]["optimal_h:1000"] = {"all": {"usd": 1.0}, "trades": [
+            {"sym": "SUSDT", "at": T + 60, "side": "short", "entry_px": 2.02, "exit_px": 1.81, "exit": "тейк",
+             "exit_ts": T + 900, "margin": 42.0, "usd": 4.2, "pnl_frac": 0.1}],
+            "open": {"positions": [{"sym": "AUSDT", "at": T, "side": "long", "entry_px": 99.8, "margin": 42.0,
+                                    "mark_usd": 2.1, "mark_frac": 0.05}]}}
+        app.dca_fetch = lambda full=None: dca
+        app._dca = {"at": 0.0, "data": None}
         evs = [
             {"ev": "entry", "sym": "AUSDT", "side": "long", "book": "optimal", "pos_at": T, "qty": 0.5, "px": 100.0,
              "avg": 100.0, "margin_usd": 25.0, "lev": 8.0, "take_px": 104.0, "floor_px": 80.0, "liq_px": 78.0,
@@ -1045,6 +1056,18 @@ def test_live_positions_are_built_from_executor_journal_in_paper_row_shape():
         assert a["levels"]["floor_px"] == 85.0 and a["at"] == T + 101 and a["pos_at"] == T
         assert s_["state"] == "closed" and s_["exit"] == "тейк" and s_["usd"] == 0.59 and abs(s_["pnl_frac"] - 0.59 / 6.25) < 1e-12
         assert all(p["sym"] != "DRYUSDT" for p in r["positions"]), "сухая запись — не позиция"
+        vs = s_["vs_paper"]
+        # шорт: бумага продала по 2.02, живой по 2.00 — дешевле, хуже на 0.99 %;
+        # откупили 1.80 против 1.81 бумаги — лучше: стоимость выхода −0.55 %
+        assert abs(vs["entry_cost_pct"] - (2.02 - 2.0) / 2.02 * 100) < 1e-9, vs
+        assert abs(vs["exit_cost_pct"] - (1.8 - 1.81) / 1.81 * 100) < 1e-9, vs
+        assert abs(vs["paper_usd"] - 0.1 * 6.25) < 1e-9 and abs(vs["diff_usd"] - (0.59 - 0.625)) < 1e-9, vs
+        assert s_["paper"]["exit"] == "тейк" and s_["paper"]["state"] == "closed"
+        va = a["vs_paper"]
+        assert abs(va["entry_cost_pct"] - (100.0 - 99.8) / 99.8 * 100) < 1e-9 and va["exit_cost_pct"] is None
+        assert abs(va["paper_usd"] - 2.1 / 42.0 * 25.0) < 1e-9 and abs(va["diff_usd"] - (1.44 - 1.25)) < 1e-9, va
+        pv = r["pnl"]["vs_paper"]
+        assert pv["matched_n"] == 2 and abs(pv["diff_usd"] - (0.59 - 0.625 + 1.44 - 1.25)) < 1e-9, pv
         pn = r["pnl"]
         assert pn["realized_usd"] == 0.59 and abs(pn["open_usd"] - 1.44) < 1e-9 and abs(pn["total_usd"] - 2.03) < 1e-9, pn
         assert pn["deposit_usd"] == 1000.0 and abs(pn["total_pct"] - 0.203) < 1e-9 and pn["closed_n"] == 1
@@ -1053,6 +1076,12 @@ def test_live_positions_are_built_from_executor_journal_in_paper_row_shape():
         os.remove(os.path.join(d, "ladder_status.json"))
         a = app.live_positions(acc)[1]["positions"][0]
         assert "mark_usd" not in a and a["mark_why"] == "исполнитель не прислал статус"
+        # бумага не считала час — причина словами
+        dca["books"]["optimal_h:1000"]["trades"] = []
+        dca["books"]["optimal_h:1000"]["open"] = {"positions": [{"sym": "ZUSDT", "at": T - 3600}]}
+        app._dca = {"at": 0.0, "data": None}
+        a = app.live_positions(acc)[1]["positions"][0]
+        assert a["paper_why"] == "бумага ещё не считала этот час" and "vs_paper" not in a, a.get("paper_why")
         pn = app.live_positions(acc)[1]["pnl"]
         assert pn["open_unmarked"] == 1 and pn["open_usd"] == 0.0 and pn["total_usd"] == 0.59, "без отметки — названо числом"
     print("ok  живые позиции: форма строки книги, доливы с целью, исход словом бумаги, отметка исполнителя нетто")
