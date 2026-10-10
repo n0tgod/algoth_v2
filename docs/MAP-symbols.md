@@ -8910,7 +8910,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L17 `call(base, path, body=None, token=None, ctx=None)`
 - L26 `main()`
 
-## tools/app_api/server.py · 1040 строк
+## tools/app_api/server.py · 1064 строк
 
 HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 
@@ -8974,24 +8974,25 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
   - L631 `App.push_test(self, acc)` — Пробный пуш на устройства аккаунта — без записи сделки.
   - L649 `App.list_trades(self, acc, since=0, limit=200, mode='live')` — Записи журнала исполнителя. По умолчанию — только ЖИВЫЕ (решение владельца 10.10: «на вкладке Trades — реальн…
   - L679 `App.live_positions(self, acc)` — Живые позиции — в ФОРМЕ строки бумажной книги (`sym, side, at, lev, margin, entry_px, avg, fills, walk, exit,…
-  - L771 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
-  - L781 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
-  - L795 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
-  - L812 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
-- L830 `fetch_dca(full=None)`
-- L843 `class Handler`
-  - L847 `Handler.log_message(self, fmt, *a)`
-  - L851 `Handler._send(self, code, obj)`
-  - L860 `Handler._body(self)`
-  - L870 `Handler._acc(self)`
-  - L878 `Handler._route(self, method)`
-  - L970 `Handler.do_GET(self)`
-  - L973 `Handler.do_POST(self)`
-  - L976 `Handler.do_DELETE(self)`
-- L980 `class Server`
-- L985 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
-- L996 `read_operator_token(path)`
-- L1004 `main(argv=None)`
+  - L773 `App.live_pnl(rows, subs)` — Общий результат живых сделок (владелец 10.10: «на странице trades общий пнл по всем сделкам»): реализованное…
+  - L795 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
+  - L805 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
+  - L819 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
+  - L836 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
+- L854 `fetch_dca(full=None)`
+- L867 `class Handler`
+  - L871 `Handler.log_message(self, fmt, *a)`
+  - L875 `Handler._send(self, code, obj)`
+  - L884 `Handler._body(self)`
+  - L894 `Handler._acc(self)`
+  - L902 `Handler._route(self, method)`
+  - L994 `Handler.do_GET(self)`
+  - L997 `Handler.do_POST(self)`
+  - L1000 `Handler.do_DELETE(self)`
+- L1004 `class Server`
+- L1009 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
+- L1020 `read_operator_token(path)`
+- L1028 `main(argv=None)`
 
 ## tools/app_api/set_topic.py · 44 строк
 

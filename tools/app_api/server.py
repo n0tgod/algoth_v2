@@ -766,7 +766,31 @@ class App:
                                 "floor_px": q.get("floor_px"), "liq_px": q.get("liq_px")})
         out.sort(key=lambda p: (p["state"] != "open", -float(p.get("exit_ts") or p["at"] or 0)))
         return 200, {"positions": out, "open": sum(1 for p in out if p["state"] == "open"),
-                     "closed": sum(1 for p in out if p["state"] == "closed"), "at": time.time()}
+                     "closed": sum(1 for p in out if p["state"] == "closed"),
+                     "pnl": self.live_pnl(out, subs), "at": time.time()}
+
+    @staticmethod
+    def live_pnl(rows, subs):
+        """Общий результат живых сделок (владелец 10.10: «на странице trades
+        общий пнл по всем сделкам»): реализованное — сумма нетто закрытых
+        (исход записан исполнителем, комиссии вычтены), открытое — сумма
+        отметок нетто; процент — от суммы депозитов живых подписок.
+        Открытая без отметки не превращается в ноль: она считается и
+        называется числом (`open_unmarked`)."""
+        closed = [p for p in rows if p["state"] == "closed"]
+        opened = [p for p in rows if p["state"] == "open"]
+        realized = sum(float(p["usd"]) for p in closed if p.get("usd") is not None)
+        marked = [p for p in opened if p.get("mark_usd") is not None]
+        open_usd = sum(float(p["mark_usd"]) for p in marked)
+        dep = sum(float(s["deposit"]) for s in subs.values() if s["mode"] == "live")
+        total = realized + open_usd
+        wins = sum(1 for p in closed if (p.get("usd") or 0) > 0)
+        return {"realized_usd": round(realized, 4), "open_usd": round(open_usd, 4),
+                "total_usd": round(total, 4), "deposit_usd": dep,
+                "total_pct": (round(total / dep * 100.0, 3) if dep else None),
+                "closed_n": len(closed), "open_n": len(opened), "wins_n": wins,
+                "open_unmarked": len(opened) - len(marked),
+                "fees_usd": round(sum(float(p.get("fees") or 0.0) for p in rows), 4)}
 
     def trade_test(self, acc, text=None):
         """Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой."""

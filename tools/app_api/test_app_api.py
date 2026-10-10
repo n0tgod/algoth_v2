@@ -1045,10 +1045,16 @@ def test_live_positions_are_built_from_executor_journal_in_paper_row_shape():
         assert a["levels"]["floor_px"] == 85.0 and a["at"] == T + 101 and a["pos_at"] == T
         assert s_["state"] == "closed" and s_["exit"] == "тейк" and s_["usd"] == 0.59 and abs(s_["pnl_frac"] - 0.59 / 6.25) < 1e-12
         assert all(p["sym"] != "DRYUSDT" for p in r["positions"]), "сухая запись — не позиция"
+        pn = r["pnl"]
+        assert pn["realized_usd"] == 0.59 and abs(pn["open_usd"] - 1.44) < 1e-9 and abs(pn["total_usd"] - 2.03) < 1e-9, pn
+        assert pn["deposit_usd"] == 1000.0 and abs(pn["total_pct"] - 0.203) < 1e-9 and pn["closed_n"] == 1
+        assert pn["open_n"] == 1 and pn["wins_n"] == 1 and pn["open_unmarked"] == 0
         # нет статуса исполнителя — отметки нет, причина словами
         os.remove(os.path.join(d, "ladder_status.json"))
         a = app.live_positions(acc)[1]["positions"][0]
         assert "mark_usd" not in a and a["mark_why"] == "исполнитель не прислал статус"
+        pn = app.live_positions(acc)[1]["pnl"]
+        assert pn["open_unmarked"] == 1 and pn["open_usd"] == 0.0 and pn["total_usd"] == 0.59, "без отметки — названо числом"
     print("ok  живые позиции: форма строки книги, доливы с целью, исход словом бумаги, отметка исполнителя нетто")
 
 
