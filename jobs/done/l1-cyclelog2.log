@@ -1,0 +1,10 @@
+== задание l1-cyclelog2 ==
+строка: run tools/loggrep.py --preset cycle
+начало: 2026-10-10T15:13:29Z
+запускаю: .venv/bin/python tools/loggrep.py --preset cycle
+usage: loggrep.py [-h] --file {collect,daily,pair,ship,short,train,watchdog}
+                  [--pattern PATTERN]
+                  [--preset {books,cycle,mem,oom,raise,train}] [--days DAYS]
+                  [--last LAST]
+loggrep.py: error: the following arguments are required: --file
+конец: 2026-10-10T15:13:29Z, код 2

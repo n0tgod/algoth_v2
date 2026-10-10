@@ -398,3 +398,16 @@
    2329854        1      4  224:45  /usr/lib/systemd/systemd-udevd
    2329858        1      4  224:45  /usr/lib/systemd/systemd-networkd
 конец: 2026-10-10T15:08:45Z, код 0
+публикуется в ветку main:
+ jobs/done/l1-cyclelog.done |   1 +
+ jobs/done/l1-cyclelog.log  |   4 +
+ jobs/done/l1-memtop.done   |   1 +
+ jobs/done/l1-memtop.log    | 400 +++++++++++++++++++++++++++++++++++++++++++++
+ jobs/done/l1-status3.done  |   1 +
+ jobs/done/l1-status3.log   |   9 +
+ jobs/poke.log              |   4 +
+ 7 files changed, 420 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   521b45fd..d39a9397  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
