@@ -39,3 +39,12 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-10-10T21:10:05Z
+публикуется в ветку main:
+ jobs/done/n10-status.log  | 41 +++++++++++++++++++++++++++++++++++++++++
+ jobs/done/n9-selftest.log | 11 +++++++++++
+ jobs/poke.log             |  2 ++
+ 3 files changed, 54 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   81c68773..3f0976f3  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
