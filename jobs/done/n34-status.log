@@ -45,3 +45,11 @@ Filesystem      Size  Used Avail Use% Mounted on
 sub_3f11698eb30279fa: статусу 3 с, режим live, позиций 3 (отметка у 3), пауза None, без входов False, ошибка None
   чужое на счёте: нет
 конец: 2026-10-11T08:08:50Z
+публикуется в ветку main:
+ jobs/done/n34-status.log | 47 +++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log            |  2 ++
+ 2 files changed, 49 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   2e3b0da7..9e3913a0  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
