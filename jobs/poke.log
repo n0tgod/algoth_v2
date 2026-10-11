@@ -1956,3 +1956,7 @@ Terminated
 
 == сигнал 1791725309 ==
 [2026-10-11T13:28:31Z] задание n35-selftest запущено: tools/app_api/selftest.py
+
+== сигнал 1791725484 ==
+[2026-10-11T13:31:26Z] задание n36-ev-strk запущено: tools/app_api/events_of.py
+[2026-10-11T13:31:26Z] задание n37-ev-cfx запущено: tools/app_api/events_of.py
