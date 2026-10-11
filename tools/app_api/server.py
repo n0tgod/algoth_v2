@@ -935,6 +935,9 @@ def fetch_dca(full=None):
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
+    # Предел на чтение запроса и запись ответа: клиент, замолчавший посреди
+    # запроса, не держит поток вечно.
+    timeout = 60
     app = None
     server_version = "AlgothAPI/0.1"
 
@@ -1072,8 +1075,34 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 
 class Server(http.server.ThreadingHTTPServer):
+    """TLS-рукопожатие — в ПОТОКЕ соединения и с пределом времени.
+
+    Прежде слушающий сокет оборачивался целиком (`wrap_socket` на нём), и
+    рукопожатие шло внутри `accept()` главного потока: одно соединение,
+    открытое и замолчавшее (сканер порта, обрыв мобильной сети), держало
+    приём ВСЕХ остальных. 11.10 ночью API так стоял часами при живом
+    процессе — сторож видел процесс и молчал, приложение писало «не
+    отвечает». Теперь главный поток только принимает TCP, а рукопожатие и
+    чтение запроса идут в потоке соединения с пределами `HANDSHAKE_S` и
+    `Handler.timeout`.
+    """
     daemon_threads = True
     allow_reuse_address = True
+    tls = None                  # ssl.SSLContext; None — без TLS (проверки)
+    HANDSHAKE_S = 10
+
+    def finish_request(self, request, client_address):
+        if self.tls is None:
+            return super().finish_request(request, client_address)
+        request.settimeout(self.HANDSHAKE_S)
+        try:
+            conn = self.tls.wrap_socket(request, server_side=True)
+        except (ssl.SSLError, OSError):
+            return              # сырой сокет закроет `shutdown_request`
+        try:
+            super().finish_request(conn, client_address)
+        finally:
+            self.shutdown_request(conn)
 
 
 def make_server(app, host="0.0.0.0", port=443, tls_dir=None):
@@ -1083,7 +1112,7 @@ def make_server(app, host="0.0.0.0", port=443, tls_dir=None):
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ctx.minimum_version = ssl.TLSVersion.TLSv1_2
         ctx.load_cert_chain(os.path.join(tls_dir, "cert.pem"), os.path.join(tls_dir, "key.pem"))
-        srv.socket = ctx.wrap_socket(srv.socket, server_side=True)
+        srv.tls = ctx
     return srv
 
 

@@ -8958,7 +8958,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L17 `call(base, path, body=None, token=None, ctx=None)`
 - L26 `main()`
 
-## tools/app_api/server.py · 1134 строк
+## tools/app_api/server.py · 1163 строк
 
 HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 
@@ -9030,18 +9030,19 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
   - L906 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
 - L924 `fetch_dca(full=None)`
 - L937 `class Handler`
-  - L941 `Handler.log_message(self, fmt, *a)`
-  - L945 `Handler._send(self, code, obj)`
-  - L954 `Handler._body(self)`
-  - L964 `Handler._acc(self)`
-  - L972 `Handler._route(self, method)`
-  - L1064 `Handler.do_GET(self)`
-  - L1067 `Handler.do_POST(self)`
-  - L1070 `Handler.do_DELETE(self)`
-- L1074 `class Server`
-- L1079 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
-- L1090 `read_operator_token(path)`
-- L1098 `main(argv=None)`
+  - L944 `Handler.log_message(self, fmt, *a)`
+  - L948 `Handler._send(self, code, obj)`
+  - L957 `Handler._body(self)`
+  - L967 `Handler._acc(self)`
+  - L975 `Handler._route(self, method)`
+  - L1067 `Handler.do_GET(self)`
+  - L1070 `Handler.do_POST(self)`
+  - L1073 `Handler.do_DELETE(self)`
+- L1077 `class Server` — TLS-рукопожатие — в ПОТОКЕ соединения и с пределом времени.
+  - L1094 `Server.finish_request(self, request, client_address)`
+- L1108 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
+- L1119 `read_operator_token(path)`
+- L1127 `main(argv=None)`
 
 ## tools/app_api/set_topic.py · 44 строк
 
@@ -9392,7 +9393,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 566 строк
+## tools/watchdog_book.sh · 583 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 

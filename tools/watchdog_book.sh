@@ -231,8 +231,25 @@ API_STATUS=$API_OUT/status.json
 API_OFF=$API_OUT/API_OFF
 if [ -f "$API_OUT/master.pub" ] && [ -f "$API_OUT/tls/cert.pem" ] && [ ! -f "$API_OFF" ]; then
     api_restart=""
+    API_DEAF=$API_OUT/deaf.since
     if ! pgrep -f "app_api/server.py" >/dev/null; then
         api_restart="процесс API не найден"
+    elif ! curl -sk -m 10 -o /dev/null "https://127.0.0.1:${API_PORT:-443}/api/v1/health"; then
+        # Живой процесс — не отвечающий (11.10: TLS-рукопожатие в главном
+        # потоке, один молчащий клиент держал приём часами). Два такта
+        # подряд без ответа — перезапуск; один — может быть перезапуск
+        # из очереди в эту же минуту.
+        if [ -f "$API_DEAF" ]; then
+            api_restart="процесс есть, но не отвечает на health с $(cat "$API_DEAF")"
+            pkill -f "app_api/server.py" || true
+            sleep 2
+            rm -f "$API_DEAF"
+        else
+            now > "$API_DEAF"
+            echo "[$(now)] API не ответил на health — проверю следующим тактом"
+        fi
+    else
+        rm -f "$API_DEAF"
     fi
     if [ -n "$api_restart" ]; then
         echo "[$(now)] ЗАПУСК API ПРИЛОЖЕНИЯ: $api_restart"

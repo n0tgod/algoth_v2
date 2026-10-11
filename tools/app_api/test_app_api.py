@@ -272,6 +272,61 @@ def test_http_routing_auth_and_stage_gates():
             srv.shutdown()
 
 
+def _tls_get(port, timeout=5.0):
+    import ssl
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    c = http.client.HTTPSConnection("127.0.0.1", port, timeout=timeout, context=ctx)
+    c.request("GET", "/api/v1/health")
+    r = c.getresponse()
+    r.read()
+    c.close()
+    return r.status
+
+
+def test_silent_connection_does_not_block_tls_api():
+    """Соединение, открытое и замолчавшее, не держит API (11.10, ночь).
+
+    Прежде TLS-рукопожатие шло в `accept()` главного потока, и один
+    молчащий клиент останавливал приём всех. Отрицательный контроль: тот
+    же сервер, обёрнутый прежним способом, на том же молчащем клиенте не
+    отвечает — проверка кусается.
+    """
+    import socket
+    import ssl
+    with tempfile.TemporaryDirectory() as tmp:
+        app, _ = _app(tmp)
+        tls = os.path.join(tmp, "tls")
+        INIT.certgen(tls, ip="127.0.0.1")
+
+        def run(srv):
+            threading.Thread(target=srv.serve_forever, daemon=True).start()
+            port = srv.server_address[1]
+            silent = socket.create_connection(("127.0.0.1", port))   # ни байта
+            time.sleep(0.3)
+            try:
+                return _tls_get(port, timeout=3.0)
+            except (OSError, ssl.SSLError) as e:
+                return type(e).__name__
+            finally:
+                silent.close()
+                srv.shutdown()
+
+        srv = SV.make_server(app, host="127.0.0.1", port=0, tls_dir=tls)
+        assert srv.tls is not None and not isinstance(srv.socket, ssl.SSLSocket)
+        got = run(srv)
+        assert got == 200, got
+        # контроль: прежняя обёртка слушающего сокета
+        old = SV.Server(("127.0.0.1", 0), SV.Handler)
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ctx.load_cert_chain(os.path.join(tls, "cert.pem"), os.path.join(tls, "key.pem"))
+        old.socket = ctx.wrap_socket(old.socket, server_side=True)
+        bad = run(old)
+        assert bad != 200, f"контроль не кусается: прежний сервер ответил {bad}"
+    print(f"ok  молчащее соединение не держит API (контроль прежней обёртки: {bad})")
+
+
 def test_init_is_idempotent_and_prints_pin():
     with tempfile.TemporaryDirectory() as tmp:
         pin1 = INIT.main(out=tmp, ip="127.0.0.1")
