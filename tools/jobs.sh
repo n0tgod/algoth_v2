@@ -301,7 +301,12 @@ for f in fs:
     print(f"{os.path.basename(os.path.dirname(f))}: статусу {time.time() - os.path.getmtime(f):.0f} с, "
           f"режим {d.get('mode')}, позиций {len(ps)} (отметка у {sum(1 for p in ps if p.get('mark_px') is not None)}), "
           f"пауза {d.get('paused')}, без входов {d.get('no_entries')}, ошибка {d.get('last_error')}, "
-          f"стоп пола на бирже у {sum(1 for p in ps if p.get('stop_px') is not None)} из {len(ps)}")
+          f"стоп пола на бирже у {sum(1 for p in ps if p.get('stop_px') is not None)} из {len(ps)}, "
+          f"цель лимиткой у {sum(1 for p in ps if p.get('take_px') is not None)} из {len(ps)}")
+    for p in ps:
+        print(f"    {p.get('sym')} {p.get('side')} глубина {p.get('depth')}: средняя {p.get('avg')}, "
+              f"цель {p.get('take_px')}, пол {p.get('floor_px')}, стоп биржи {p.get('stop_px')}, "
+              f"рунгов лежит {p.get('rungs_resting')}, закрытие {p.get('closing')}")
     fo = d.get("foreign")
     print("  чужое на счёте: " + ("не измерено (исполнитель прежней версии)" if fo is None else
           ("нет" if not fo else "; ".join(f"{x.get('sym')} {x.get('side')} {x.get('qty')}" for x in fo)))
