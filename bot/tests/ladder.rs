@@ -38,6 +38,9 @@ struct Inner {
     lev: Vec<(String, String)>,
     lev_error: Option<String>,
     lev_max: Option<f64>,
+    /// Сколько чтений статуса IOC отвечать «New» без исполнения, хотя
+    /// площадка её уже свела (асинхронный приём заявки).
+    ioc_lag: u32,
     closed_pnl: Vec<(String, f64)>,
     fee_bp: f64,
     order_calls: u64,
@@ -207,6 +210,14 @@ impl Exchange for Mock {
         Ok(())
     }
     fn order_status(&self, _symbol: &str, id: &str) -> Result<OrderStatus, String> {
+        {
+            let mut i = self.0.borrow_mut();
+            let is_ioc = i.orders.get(id).map(|o| o.tif == "IOC").unwrap_or(false);
+            if is_ioc && i.ioc_lag > 0 {
+                i.ioc_lag -= 1;
+                return Ok(OrderStatus { status: "New".into(), filled_qty: 0.0, avg_px: 0.0, fee_usd: 0.0 });
+            }
+        }
         let i = self.0.borrow();
         let o = i.orders.get(id).ok_or("нет заявки")?;
         Ok(OrderStatus {
@@ -641,4 +652,48 @@ fn предел_плеча_площадки_ниже_забора_ставитс
     ladder(&d, &m, false).tick(T0 + 120_000);
     assert!(events(&d)[0]["reason"].as_str().unwrap().starts_with("плечо 25.00× не выставилось"));
     assert_eq!(m.0.borrow().order_calls, 0);
+}
+
+#[test]
+fn статус_ioc_читается_до_окончательного_а_неясный_вход_под_присмотром_сверки() {
+    // XDP 11.10: отказ «IOC не исполнилась» — первое чтение статуса могло
+    // застать заявку принятой, но ещё не сведённой.
+    let d = dir("ioc-lag");
+    let m = Mock::new();
+    m.set_px("SSSUSDT", 99.99, 100.01);
+    m.0.borrow_mut().ioc_lag = 2;
+    write_intents(&d, &[short_intent(1)]);
+    let mut lx = ladder(&d, &m, false);
+    let rep = lx.tick(T0 + 120_000);
+    assert_eq!(rep.opened, 1, "два чтения «New» — вход всё равно состоялся: {:?}", events(&d));
+    assert!(lx.st.watch.is_empty());
+    // статус так и не стал окончательным, а позиция на бирже есть
+    let d = dir("ioc-stuck");
+    let m = Mock::new();
+    m.set_px("SSSUSDT", 99.99, 100.01);
+    m.0.borrow_mut().ioc_lag = 100;
+    write_intents(&d, &[short_intent(1)]);
+    let mut lx = ladder(&d, &m, false);
+    let rep = lx.tick(T0 + 120_000);
+    assert_eq!(rep.opened, 0);
+    let r = events(&d)[0]["reason"].as_str().unwrap().to_string();
+    assert!(r.contains("не окончателен"), "{r}");
+    assert!(lx.st.watch.contains_key("SSSUSDT"));
+    assert!(m.pos("SSSUSDT") < 0.0, "на бирже позиция есть");
+    lx.tick(T0 + 125_000);
+    let p = lx.st.paused.clone().unwrap_or_default();
+    assert!(p.contains("SSSUSDT") && p.contains("не ведёт"), "пауза названа: {p}");
+    let st = lx.status_json(T0 + 125_000, None);
+    assert_eq!(st["foreign"][0]["sym"], "SSSUSDT", "{st}");
+    assert!(kinds(&d).contains(&"mismatch".to_string()));
+    // честный отказ: встречных нет — названы стакан и лимит
+    let d = dir("ioc-thin");
+    let m = Mock::new();
+    m.set_px("SSSUSDT", 90.0, 110.0);
+    write_intents(&d, &[short_intent(1)]);
+    let mut lx = ladder(&d, &m, false);
+    lx.tick(T0 + 120_000);
+    let r = events(&d)[0]["reason"].as_str().unwrap().to_string();
+    assert!(r.starts_with("IOC не исполнилась") && r.contains("bid 90") && r.contains("лимит"), "{r}");
+    assert!(lx.st.watch.is_empty() && lx.st.paused.is_none());
 }

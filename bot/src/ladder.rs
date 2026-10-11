@@ -30,7 +30,7 @@
 //! начальная маржа заявок была той же, что бумага держит под позицию.
 
 use crate::journal::utc_day;
-use crate::live::{cap_price, ceil_step, floor_step, fmt_step, Exchange, Instrument};
+use crate::live::{cap_price, ceil_step, floor_step, fmt_step, Exchange, Instrument, OrderStatus};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
@@ -214,6 +214,10 @@ pub struct LState {
     pub closed_n: u64,
     pub entries_n: u64,
     pub rejects_n: u64,
+    /// Имена с ВХОДОМ НЕЯСНОГО ИСХОДА (статус IOC не окончателен или не
+    /// читается) → момент мс. Сверка смотрит на них, хотя позиции у
+    /// исполнителя нет: заявка могла исполниться после чтения статуса.
+    pub watch: BTreeMap<String, i64>,
 }
 
 pub struct LadderCfg {
@@ -290,6 +294,9 @@ pub struct Ladder<E: Exchange> {
     lev_set: BTreeMap<String, String>,
     /// Середина цены имени на последнем такте — отметка позиции в статусе.
     marks: BTreeMap<String, (f64, i64)>,
+    /// Позиции счёта, которых исполнитель не ведёт (имя, сторона,
+    /// количество) — в статус: «чужое на счёте» видно, а не угадывается.
+    foreign: Vec<(String, String, f64)>,
     pub last_error: Option<String>,
 }
 
@@ -332,6 +339,7 @@ impl<E: Exchange> Ladder<E> {
             ins: BTreeMap::new(),
             lev_set: BTreeMap::new(),
             marks: BTreeMap::new(),
+            foreign: Vec::new(),
             last_error: None,
         })
     }
@@ -417,6 +425,8 @@ impl<E: Exchange> Ladder<E> {
             "paused": self.st.paused,
             "hedge": self.st.hedge,
             "seq_done": self.st.seq_done,
+            "foreign": self.foreign.iter().map(|(s, d, q)| json!({"sym": s, "side": d, "qty": q})).collect::<Vec<_>>(),
+            "watch": self.st.watch.keys().cloned().collect::<Vec<_>>(),
             "positions": ps,
             "margin_open_usd": self.st.positions.values().map(|p| p.margin_usd).sum::<f64>(),
             "realized_usd": self.st.realized_usd,
@@ -440,6 +450,26 @@ impl<E: Exchange> Ladder<E> {
     }
 
     // --- площадка ------------------------------------------------------
+
+    /// Окончательный ли статус заявки площадки.
+    fn terminal(status: &str) -> bool {
+        matches!(status, "Filled" | "Cancelled" | "PartiallyFilledCanceled" | "Rejected" | "Deactivated")
+    }
+
+    /// Статус заявки — до окончательного, не дольше `SETTLE_READS` чтений
+    /// через `SETTLE_SLEEP_MS`. Последнее прочитанное возвращается и
+    /// неокончательным: решать, что с ним делать, вызывающему.
+    fn settled(&self, sym: &str, oid: &str) -> Result<OrderStatus, String> {
+        let mut st = self.ex.order_status(sym, oid)?;
+        for _ in 1..SETTLE_READS {
+            if Self::terminal(&st.status) {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(SETTLE_SLEEP_MS));
+            st = self.ex.order_status(sym, oid)?;
+        }
+        Ok(st)
+    }
 
     fn instrument(&mut self, sym: &str) -> Result<Instrument, String> {
         if let Some(i) = self.ins.get(sym) {
@@ -708,19 +738,36 @@ impl<E: Exchange> Ladder<E> {
                 return;
             }
         };
-        let st = match self.ex.order_status(&sym, &oid) {
+        // Статус читается до ОКОНЧАТЕЛЬНОГО: площадка принимает заявку
+        // раньше, чем сводит её, и первое чтение может застать «New» без
+        // исполнения (XDP 11.10 — отказ без причины видимой в стакане).
+        let st = match self.settled(&sym, &oid) {
             Ok(s) => s,
             Err(e) => {
-                // Заявка ушла, статус неизвестен — сверка следующего
-                // такта увидит позицию без записи и поставит паузу.
+                // Заявка ушла, статус неизвестен — имя под присмотром
+                // сверки: позиция без записи поставит паузу.
+                self.st.watch.insert(sym.clone(), now_ms);
                 self.reject(it, format!("статус входа не читается: {e}"), now_ms, rep);
                 return;
             }
         };
+        if !Self::terminal(&st.status) {
+            self.st.watch.insert(sym.clone(), now_ms);
+            self.reject(
+                it,
+                format!("статус входа не окончателен ({}, исполнено {}) — имя под присмотром сверки", st.status, st.filled_qty),
+                now_ms,
+                rep,
+            );
+            return;
+        }
         if st.filled_qty <= 0.0 {
             self.reject(
                 it,
-                format!("IOC не исполнилась в потолке {} б.п. от середины", ENTRY_CAP_BP),
+                format!(
+                    "IOC не исполнилась в потолке {} б.п. от середины: bid {}, ask {}, лимит {}, статус {}",
+                    ENTRY_CAP_BP, bid, ask, fmt_step(px, ins.tick), st.status
+                ),
                 now_ms,
                 rep,
             );
@@ -1076,13 +1123,35 @@ impl<E: Exchange> Ladder<E> {
     // --- сверка ----------------------------------------------------------
 
     fn reconcile(&mut self, now_ms: i64, rep: &mut LTick) -> Result<(), String> {
-        if self.st.positions.is_empty() {
-            return Ok(());
-        }
         let exch = self
             .ex
             .positions()
             .map_err(|e| format!("сверка: позиции не читаются: {e}"))?;
+        // чужое на счёте — в статус каждым тактом
+        self.foreign = exch
+            .iter()
+            .filter(|e| !self.st.positions.contains_key(&e.sym))
+            .map(|e| (e.sym.clone(), if e.side == crate::events::Side::Long { "long".to_string() } else { "short".to_string() }, e.qty))
+            .collect();
+        // Вход неясного исхода: позиция по имени на счёте без записи у
+        // исполнителя — пауза входов с названной причиной; нет позиции
+        // за WATCH_MS — присмотр снят.
+        let watched: Vec<(String, i64)> = self.st.watch.iter().map(|(k, v)| (k.clone(), *v)).collect();
+        for (sym, since) in watched {
+            if self.st.positions.contains_key(&sym) {
+                self.st.watch.remove(&sym);
+                continue;
+            }
+            let q: f64 = exch.iter().filter(|e| e.sym == sym).map(|e| e.qty).sum();
+            if q > 0.0 {
+                let why = format!("на счёте позиция {sym} ({q}) после входа неясного исхода — исполнитель её не ведёт; входы на паузе до RESUME");
+                self.event(now_ms, "mismatch", json!({"sym": sym, "reason": why}));
+                self.st.paused = Some(why);
+                self.st.watch.remove(&sym);
+            } else if now_ms - since > WATCH_MS {
+                self.st.watch.remove(&sym);
+            }
+        }
         let syms: Vec<String> = self.st.positions.keys().cloned().collect();
         for sym in syms {
             let Some(p) = self.st.positions.get(&sym).cloned() else { continue };
@@ -1289,6 +1358,13 @@ fn wall_ms() -> i64 {
         .map(|d| d.as_millis() as i64)
         .unwrap_or(0)
 }
+
+/// Чтений статуса IOC до окончательного и пауза между ними.
+const SETTLE_READS: usize = 8;
+const SETTLE_SLEEP_MS: u64 = 250;
+
+/// Сколько держать присмотр за именем входа неясного исхода.
+const WATCH_MS: i64 = 120_000;
 
 /// Предел плеча площадки из отказа 110013 («... gt maxLeverage [2000] by
 /// risk limit» — сотые доли): `None`, если отказ другой.

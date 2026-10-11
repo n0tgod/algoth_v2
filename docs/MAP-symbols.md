@@ -8428,7 +8428,7 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L298 `mod tests`
   - L302 `calendar_matches_known_dates`
 
-## bot/src/ladder.rs · 1331 строк
+## bot/src/ladder.rs · 1407 строк
 
 Исполнитель книг Ladder (спека 15 §10a, этапы L2–L3).
 
@@ -8445,52 +8445,54 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
   - L178 `LPos::rebase`
   - L185 `LPos::take_px` — Цель от ТЕКУЩЕЙ средней: `avg × (1 ± доля)`, округление внутрь.
 - L205 `struct LState`
-- L219 `struct LadderCfg`
-- L224 `impl LadderCfg`
-  - L225 `LadderCfg::intents`
-  - L228 `LadderCfg::events`
-  - L231 `LadderCfg::state`
-  - L234 `LadderCfg::status`
-  - L237 `LadderCfg::kill`
-  - L240 `LadderCfg::no_entries`
-  - L243 `LadderCfg::resume`
-  - L249 `LadderCfg::stop` — Мягкая остановка: процесс выходит МЕЖДУ тактами, состояние сохранено (деплой и перевод подписки в сухой режим…
-  - L252 `LadderCfg::pid`
-- L259 `claim_pid` — Второй исполнитель на ту же подписку делил бы одни позиции и удваивал заявки: живой pid в файле с процессом `…
-- L276 `struct LTick`
-- L284 `struct Ladder`
-- L296 `mode`
-- L304 `read_jsonl`
-- L313 `impl Ladder`
-  - L314 `Ladder::open`
-  - L341 `Ladder::event`
-  - L362 `Ladder::pos_fields`
-  - L373 `Ladder::save`
-  - L382 `Ladder::status_json`
-  - L432 `Ladder::write_status`
-  - L444 `Ladder::instrument`
-  - L456 `Ladder::place`
-  - L496 `Ladder::tick`
-  - L537 `Ladder::new_intents`
-  - L549 `Ladder::reject`
-  - L560 `Ladder::enter`
-  - L785 `Ladder::place_rungs`
-  - L832 `Ladder::place_take` — Цель reduceOnly на всё открытое количество от текущей средней.
-  - L870 `Ladder::ensure_takes`
-  - L887 `Ladder::delta` — Учитывает приращение исполнения лежащей заявки по её статусу. Возвращает (приращение кол-ва, цена приращения,…
-  - L902 `Ladder::apply_rung_fill`
-  - L927 `Ladder::apply_exit_fill` — Частичный или полный выход: деньги и количество.
-  - L943 `Ladder::finish` — Позиция закрыта: событие исхода, реализованное, снятие рунгов.
-  - L978 `Ladder::discover_fills` — Исполнения лежащих заявок, ушедших из списка открытых.
-  - L998 `Ladder::poll_sym` — Опрос заявок одного имени: `open` — список открытых (опрашиваются только ушедшие из него); None — опрашиваютс…
-  - L1059 `Ladder::replace_take` — После рунга цель переезжает: старая снимается (с учётом того, что успела исполниться), новая ставится от ново…
-  - L1078 `Ladder::reconcile`
-  - L1154 `Ladder::check_exits`
-  - L1189 `Ladder::exit_intent`
-  - L1211 `Ladder::close` — Закрытие: снять рунги и цель (учтя успевшее исполниться), затем reduceOnly-IOC с потолком 100 б.п. Недоисполн…
-- L1286 `wall_ms`
-- L1295 `venue_max_lev` — Предел плеча площадки из отказа 110013 («... gt maxLeverage [2000] by risk limit» — сотые доли): `None`, если…
-- L1305 `run_loop` — Цикл демона: такт раз в `interval_sec`.
+- L223 `struct LadderCfg`
+- L228 `impl LadderCfg`
+  - L229 `LadderCfg::intents`
+  - L232 `LadderCfg::events`
+  - L235 `LadderCfg::state`
+  - L238 `LadderCfg::status`
+  - L241 `LadderCfg::kill`
+  - L244 `LadderCfg::no_entries`
+  - L247 `LadderCfg::resume`
+  - L253 `LadderCfg::stop` — Мягкая остановка: процесс выходит МЕЖДУ тактами, состояние сохранено (деплой и перевод подписки в сухой режим…
+  - L256 `LadderCfg::pid`
+- L263 `claim_pid` — Второй исполнитель на ту же подписку делил бы одни позиции и удваивал заявки: живой pid в файле с процессом `…
+- L280 `struct LTick`
+- L288 `struct Ladder`
+- L303 `mode`
+- L311 `read_jsonl`
+- L320 `impl Ladder`
+  - L321 `Ladder::open`
+  - L349 `Ladder::event`
+  - L370 `Ladder::pos_fields`
+  - L381 `Ladder::save`
+  - L390 `Ladder::status_json`
+  - L442 `Ladder::write_status`
+  - L455 `Ladder::terminal` — Окончательный ли статус заявки площадки.
+  - L462 `Ladder::settled` — Статус заявки — до окончательного, не дольше `SETTLE_READS` чтений через `SETTLE_SLEEP_MS`. Последнее прочита…
+  - L474 `Ladder::instrument`
+  - L486 `Ladder::place`
+  - L526 `Ladder::tick`
+  - L567 `Ladder::new_intents`
+  - L579 `Ladder::reject`
+  - L590 `Ladder::enter`
+  - L832 `Ladder::place_rungs`
+  - L879 `Ladder::place_take` — Цель reduceOnly на всё открытое количество от текущей средней.
+  - L917 `Ladder::ensure_takes`
+  - L934 `Ladder::delta` — Учитывает приращение исполнения лежащей заявки по её статусу. Возвращает (приращение кол-ва, цена приращения,…
+  - L949 `Ladder::apply_rung_fill`
+  - L974 `Ladder::apply_exit_fill` — Частичный или полный выход: деньги и количество.
+  - L990 `Ladder::finish` — Позиция закрыта: событие исхода, реализованное, снятие рунгов.
+  - L1025 `Ladder::discover_fills` — Исполнения лежащих заявок, ушедших из списка открытых.
+  - L1045 `Ladder::poll_sym` — Опрос заявок одного имени: `open` — список открытых (опрашиваются только ушедшие из него); None — опрашиваютс…
+  - L1106 `Ladder::replace_take` — После рунга цель переезжает: старая снимается (с учётом того, что успела исполниться), новая ставится от ново…
+  - L1125 `Ladder::reconcile`
+  - L1223 `Ladder::check_exits`
+  - L1258 `Ladder::exit_intent`
+  - L1280 `Ladder::close` — Закрытие: снять рунги и цель (учтя успевшее исполниться), затем reduceOnly-IOC с потолком 100 б.п. Недоисполн…
+- L1355 `wall_ms`
+- L1371 `venue_max_lev` — Предел плеча площадки из отказа 110013 («... gt maxLeverage [2000] by risk limit» — сотые доли): `None`, если…
+- L1381 `run_loop` — Цикл демона: такт раз в `interval_sec`.
 
 ## bot/src/lib.rs · 12 строк
 
@@ -9128,7 +9130,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L45 `check(paths, pct=PCT, asks_out=ASKS_OUT, statvfs=os.statvfs, no…` — Возвращает список путей над порогом; просьба пишется один раз.
 - L78 `main(argv=None, asks_out=ASKS_OUT, paths=None)`
 
-## tools/jobs.sh · 323 строк
+## tools/jobs.sh · 327 строк
 
 Очередь заданий: сессия кладёт задание в git, сервер его выполняет.
 
