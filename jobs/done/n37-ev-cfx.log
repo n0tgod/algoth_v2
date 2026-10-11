@@ -22,3 +22,12 @@ an editor opened by 'git commit'. Please make sure all processes
 are terminated then try again. If it still fails, a git process
 may have crashed in this repository earlier:
 remove the file manually to continue.
+публикуется в ветку main:
+ jobs/done/n35-selftest.log | 10 ++++++++++
+ jobs/done/n36-ev-strk.done |  1 +
+ jobs/done/n36-ev-strk.log  | 10 ++++++++++
+ jobs/done/n37-ev-cfx.done  |  1 +
+ jobs/done/n37-ev-cfx.log   | 24 ++++++++++++++++++++++++
+ jobs/poke.log              |  4 ++++
+ 6 files changed, 50 insertions(+)
+fatal: cannot lock ref 'HEAD': is at 80f35d42e971d5ce3bac615997280064b57bf73f but expected faa37b19e5f59a50e6e8054f097d8c5e47989417

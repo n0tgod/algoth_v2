@@ -8,3 +8,15 @@
 10-11 01:36:58 {"avg": 0.0, "book": "aggr_h", "depth": "1/1", "ev": "floor", "exit_ts_pos": 1791682618.221, "fee_usd": 0.04572135, "floor_px": 0.10666071428571428, "lev": 25.0, "liq_px": 0.11377142857142857, "margin_usd": 6.25, "mode": "live", "pnl_bp": -1301.6514630298586, "pnl_usd": -5.082489350000002, "pos_at": 1791662400.0, "px": 0.11483, "seq": 13, "side": "short", "sym": "STRKUSDT", "term_ts": 1791748800.0, "ts": 1791682618.221, "written_at": 1791682618.221}
 -- ladder.log: строк с STRKUSDT 0
 конец: 2026-10-11T13:31:26Z, код 0
+публикуется в ветку main:
+ jobs/done/n35-selftest.log | 10 ++++++++++
+ jobs/done/n36-ev-strk.done |  1 +
+ jobs/done/n36-ev-strk.log  | 10 ++++++++++
+ jobs/done/n37-ev-cfx.done  |  1 +
+ jobs/done/n37-ev-cfx.log   | 24 ++++++++++++++++++++++++
+ jobs/poke.log              |  4 ++++
+ 6 files changed, 50 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   faa37b19..80f35d42  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
