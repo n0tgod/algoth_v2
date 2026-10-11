@@ -72,6 +72,17 @@ def main():
         print(f"  {p.get('state')} {p.get('sym')} {p.get('side')} x{p.get('lev')} вход {p.get('entry_px')} "
               f"средняя {p.get('avg')} пол {lv.get('floor_px')} цель {lv.get('take_px')} "
               f"отметка {p.get('mark_usd')} ({p.get('mark_why') or 'есть'}) исход {p.get('exit')} {p.get('usd')}")
+        # сравнение с бумагой по позиции: исходы, цены, деньги — разбор
+        # «откуда разница» (владелец 11.10)
+        v, q = p.get("vs_paper") or {}, p.get("paper") or {}
+        if v:
+            print(f"      бумага: {q.get('state')} {q.get('exit')} вход {q.get('entry_px')} выход {q.get('exit_px')} "
+                  f"маржа {q.get('margin')} доля {q.get('pnl_frac') if q.get('pnl_frac') is not None else q.get('mark_frac')}; "
+                  f"живой: выход {p.get('exit_px')} маржа {p.get('margin')} плечо {p.get('lev')}; "
+                  f"вход {v.get('entry_cost_pct')} % выход {v.get('exit_cost_pct')} %; "
+                  f"бумага {v.get('paper_usd')} $ живой {v.get('live_usd')} $ разница {v.get('diff_usd')} $")
+        elif p.get("paper_why"):
+            print(f"      бумага: {p.get('paper_why')}")
     # Отказы исполнителя полным текстом: в приложении причина обрезана
     # строкой, а код площадки стоит в её хвосте.
     st, tr = call(base, "/api/v1/trades?limit=200", token=sess, ctx=ctx)
