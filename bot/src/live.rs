@@ -76,6 +76,10 @@ pub struct OrderStatus {
     pub fee_usd: f64,
 }
 
+/// Ответ площадки, не умеющей стоп позиции (умолчание трейта): не отказ,
+/// а отсутствие возможности — событием не пишется.
+pub const STOP_UNSUPPORTED: &str = "площадка без стопа позиции";
+
 /// Позиция на бирже: имя, сторона, количество.
 #[derive(Clone, Debug)]
 pub struct ExchPos {
@@ -157,6 +161,20 @@ pub trait Exchange {
             out.insert(s.clone(), self.best_prices(s)?);
         }
         Ok(out)
+    }
+    /// Стоп на всю позицию на бирже (Ladder, пол). Умолчание — не умеет:
+    /// исполнитель сам закрывает по полу, как прежде.
+    fn set_stop(&self, _symbol: &str, _position_idx: i64, _stop: &str) -> Result<(), String> {
+        Err(STOP_UNSUPPORTED.into())
+    }
+    /// Стопы открытых позиций: (имя, сторона, стоп; 0 — нет).
+    fn stops(&self) -> Result<Vec<(String, String, f64)>, String> {
+        Ok(Vec::new())
+    }
+    /// Закрытые позиции: (мс, деньги, средняя цена выхода); умолчание —
+    /// из `closed_pnl` без цены.
+    fn closed_exits(&self, symbol: &str, start_ms: i64, end_ms: i64) -> Result<Vec<(i64, f64, f64)>, String> {
+        Ok(self.closed_pnl(symbol, start_ms, end_ms)?.into_iter().map(|(t, p)| (t, p, f64::NAN)).collect())
     }
 }
 
@@ -249,6 +267,15 @@ impl Exchange for crate::venue::Venue {
             .iter()
             .filter_map(|s| all.get(s).map(|v| (s.clone(), *v)))
             .collect())
+    }
+    fn set_stop(&self, symbol: &str, position_idx: i64, stop: &str) -> Result<(), String> {
+        crate::venue::Venue::set_stop(self, symbol, position_idx, stop)
+    }
+    fn stops(&self) -> Result<Vec<(String, String, f64)>, String> {
+        crate::venue::Venue::stops(self)
+    }
+    fn closed_exits(&self, symbol: &str, start_ms: i64, end_ms: i64) -> Result<Vec<(i64, f64, f64)>, String> {
+        crate::venue::Venue::closed_exits(self, symbol, start_ms, end_ms)
     }
 }
 

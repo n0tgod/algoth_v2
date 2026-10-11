@@ -140,6 +140,24 @@ pub struct LPos {
     pub min_notional: f64,
     /// Выход начат и не дошёл (IOC исполнилась частично): причина.
     pub closing: Option<String>,
+    /// Стоп позиции, стоящий НА БИРЖЕ (пол, владелец 11.10); None — не
+    /// стоит (площадка не умеет, отказ) — тогда пол закрывает сторож сразу.
+    #[serde(default)]
+    pub stop_px: Option<f64>,
+    /// Последний отказ постановки стопа — событие пишется при смене текста.
+    #[serde(default)]
+    pub stop_err: Option<String>,
+    /// Когда сторож впервые увидел цену за полом при стоящем стопе биржи.
+    #[serde(default)]
+    pub floor_seen_ms: Option<i64>,
+    /// Журнал выхода (владелец 11.10): что видел исполнитель, когда выход
+    /// начался — bid, ask, мс; число попыток IOC и потолок последней.
+    #[serde(default)]
+    pub exit_trigger: Option<(f64, f64, i64)>,
+    #[serde(default)]
+    pub exit_tries: u32,
+    #[serde(default)]
+    pub exit_cap: Option<f64>,
 }
 
 impl LPos {
@@ -297,6 +315,8 @@ pub struct Ladder<E: Exchange> {
     /// Позиции счёта, которых исполнитель не ведёт (имя, сторона,
     /// количество) — в статус: «чужое на счёте» видно, а не угадывается.
     foreign: Vec<(String, String, f64)>,
+    /// Когда стопы биржи сверялись с позициями в последний раз.
+    stops_checked_ms: i64,
     pub last_error: Option<String>,
 }
 
@@ -340,6 +360,7 @@ impl<E: Exchange> Ladder<E> {
             lev_set: BTreeMap::new(),
             marks: BTreeMap::new(),
             foreign: Vec::new(),
+            stops_checked_ms: 0,
             last_error: None,
         })
     }
@@ -374,6 +395,7 @@ impl<E: Exchange> Ladder<E> {
             "margin_usd": p.margin_usd, "avg": p.avg(),
             "depth": format!("{}/{}", p.depth, p.n()),
             "floor_px": p.floor_px(), "liq_px": p.liq_px(),
+            "stop_px": p.stop_px,
             "term_ts": p.term_ms as f64 / 1000.0,
         })
     }
@@ -558,10 +580,96 @@ impl<E: Exchange> Ladder<E> {
         }
         if !self.cfg.dry {
             self.ensure_takes(now_ms);
+            self.ensure_stops(now_ms);
         }
         self.save();
         self.write_status(now_ms, rep.note.as_deref());
         rep
+    }
+
+    // --- пол на бирже (владелец 11.10) -----------------------------------
+    //
+    // Пол стоит стоп-заявкой БИРЖИ на всю позицию (срабатывает по
+    // последней цене без задержки опроса); после каждого долива пол
+    // переставляется. Исполнитель — сторож: сверяет стоп с биржей, и если
+    // цена за полом, а позиция жива дольше `FLOOR_GRACE_MS`, закрывает сам.
+
+    /// Индекс позиции для запросов позиции: хедж — 1/2 по стороне.
+    fn pos_idx(&self, long: bool) -> i64 {
+        if self.st.hedge {
+            if long { 1 } else { 2 }
+        } else {
+            0
+        }
+    }
+
+    /// Уровень стопа: пол, округлённый наружу (не раньше правила).
+    fn stop_target(p: &LPos) -> Option<f64> {
+        let f = p.floor_px()?;
+        if !(f > 0.0) || p.tick <= 0.0 {
+            return None;
+        }
+        Some(if p.long() { floor_step(f, p.tick) } else { ceil_step(f, p.tick) })
+    }
+
+    fn ensure_stops(&mut self, now_ms: i64) {
+        // сверка с биржей раз в `STOP_CHECK_MS`: стоп, снятый на бирже
+        // (руками, сменой режима), ставится заново
+        if now_ms - self.stops_checked_ms >= STOP_CHECK_MS
+            && self.st.positions.values().any(|p| p.stop_px.is_some())
+        {
+            self.stops_checked_ms = now_ms;
+            if let Ok(list) = self.ex.stops() {
+                let syms: Vec<String> = self.st.positions.keys().cloned().collect();
+                for sym in syms {
+                    let Some(p) = self.st.positions.get(&sym).cloned() else { continue };
+                    let Some(want) = p.stop_px else { continue };
+                    let side = if p.long() { "Buy" } else { "Sell" };
+                    let have = list.iter().find(|(s, d, _)| s == &sym && d == side).map(|x| x.2);
+                    let ok = matches!(have, Some(h) if (h - want).abs() <= p.tick * 0.5);
+                    if !ok && have.is_some() {
+                        self.event(now_ms, "stop_reset", json!({"sym": sym, "side": p.side, "pos_at": p.decided_at,
+                            "reason": format!("на бирже стоп {:?} вместо {} — ставлю заново", have, want)}));
+                        if let Some(q) = self.st.positions.get_mut(&sym) {
+                            q.stop_px = None;
+                        }
+                    }
+                }
+            }
+        }
+        let syms: Vec<String> = self.st.positions.keys().cloned().collect();
+        for sym in syms {
+            let Some(p) = self.st.positions.get(&sym).cloned() else { continue };
+            if p.closing.is_some() || p.qty <= 0.0 {
+                continue;
+            }
+            let Some(t) = Self::stop_target(&p) else { continue };
+            if matches!(p.stop_px, Some(x) if (x - t).abs() <= p.tick * 0.5) {
+                continue;
+            }
+            match self.ex.set_stop(&sym, self.pos_idx(p.long()), &fmt_step(t, p.tick)) {
+                Ok(()) => {
+                    if let Some(q) = self.st.positions.get_mut(&sym) {
+                        q.stop_px = Some(t);
+                        q.stop_err = None;
+                    }
+                    self.event(now_ms, "stop_set", json!({"sym": sym, "side": p.side, "pos_at": p.decided_at,
+                        "stop_px": t, "depth": format!("{}/{}", p.depth, p.n()),
+                        "reason": "пол стоит стоп-заявкой на бирже (последняя цена, на всю позицию)"}));
+                }
+                Err(e) => {
+                    let first = p.stop_err.as_deref() != Some(e.as_str()) && e != crate::live::STOP_UNSUPPORTED;
+                    if let Some(q) = self.st.positions.get_mut(&sym) {
+                        q.stop_px = None;
+                        q.stop_err = Some(e.clone());
+                    }
+                    if first {
+                        self.event(now_ms, "reject", json!({"sym": sym, "side": p.side, "pos_at": p.decided_at,
+                            "reason": format!("стоп пола на бирже не встал: {e} — пол закрывает сторож")}));
+                    }
+                }
+            }
+        }
     }
 
     fn new_intents(&self) -> Vec<Intent> {
@@ -798,6 +906,12 @@ impl<E: Exchange> Ladder<E> {
             min_qty: ins.min_qty,
             min_notional: ins.min_notional,
             closing: None,
+            stop_px: None,
+            stop_err: None,
+            floor_seen_ms: None,
+            exit_trigger: None,
+            exit_tries: 0,
+            exit_cap: None,
         };
         self.st.entries_n += 1;
         rep.opened += 1;
@@ -1013,6 +1127,18 @@ impl<E: Exchange> Ladder<E> {
             o.insert("fee_usd".into(), json!(p.fees));
             o.insert("exit_ts_pos".into(), json!(now_ms as f64 / 1000.0));
             o.insert("depth".into(), json!(format!("{}/{}", p.depth, p.n())));
+            // журнал выхода: что было на входе в выход и сколько попыток
+            if let Some((b, a, t)) = p.exit_trigger {
+                o.insert("trigger_bid".into(), json!(b));
+                o.insert("trigger_ask".into(), json!(a));
+                o.insert("trigger_ts".into(), json!(t as f64 / 1000.0));
+            }
+            if p.exit_tries > 0 {
+                o.insert("exit_tries".into(), json!(p.exit_tries));
+                o.insert("exit_cap_px".into(), json!(p.exit_cap));
+            }
+            o.insert("floor_live_px".into(), json!(p.floor_px()));
+            o.insert("stop_px".into(), json!(p.stop_px));
             if let Some(r) = reason {
                 o.insert("reason".into(), json!(r));
             }
@@ -1172,14 +1298,31 @@ impl<E: Exchange> Ladder<E> {
                 continue;
             }
             if theirs <= 0.0 {
-                // Позиции на бирже нет — закрыта мимо исполнителя
-                // (ликвидация, вручную). Деньги знает только биржа.
-                let money = self
+                // Позиции на бирже нет — закрыта мимо исполнителя: стопом
+                // пола на бирже (он стоял) или ликвидацией, вручную. Деньги
+                // и цену выхода знает только биржа.
+                let closed = self
                     .ex
-                    .closed_pnl(&sym, p.opened_ms, now_ms)
+                    .closed_exits(&sym, p.opened_ms, now_ms)
                     .ok()
-                    .filter(|l| !l.is_empty())
-                    .map(|l| l.iter().map(|(_, x)| x).sum::<f64>());
+                    .filter(|l| !l.is_empty());
+                let money = closed.as_ref().map(|l| l.iter().map(|x| x.1).sum::<f64>());
+                let exit_px = closed.as_ref().and_then(|l| l.iter().max_by_key(|x| x.0).map(|x| x.2)).filter(|x| x.is_finite());
+                if p.stop_px.is_some() {
+                    if let Some(q) = self.st.positions.get_mut(&sym) {
+                        q.realized = money.unwrap_or(0.0);
+                        q.fees = 0.0;
+                        q.qty = 0.0;
+                        q.cost = 0.0;
+                    }
+                    let why = if money.is_some() {
+                        "пол сработал стоп-заявкой на бирже; деньги и цена — closed-pnl биржи".to_string()
+                    } else {
+                        "позиция закрыта при стоящем стопе пола; денег биржа не отдала — записан ноль с этой оговоркой".to_string()
+                    };
+                    self.finish(&sym, "floor", exit_px, Some(why), now_ms, rep);
+                    continue;
+                }
                 if let Some(q) = self.st.positions.get_mut(&sym) {
                     // деньги — с биржи (уже нетто): реализованное и
                     // комиссии позиции заменяются её числом
@@ -1248,7 +1391,24 @@ impl<E: Exchange> Ladder<E> {
             }
             if let Some(fl) = p.floor_px() {
                 let hit = if p.long() { bid > 0.0 && bid <= fl } else { ask > 0.0 && ask >= fl };
-                if hit {
+                if !hit {
+                    if p.floor_seen_ms.is_some() {
+                        if let Some(q) = self.st.positions.get_mut(&sym) {
+                            q.floor_seen_ms = None;
+                        }
+                    }
+                    continue;
+                }
+                // Стоп стоит на бирже — даём ей сработать; позиция жива
+                // дольше `FLOOR_GRACE_MS` при цене за полом — закрывает сторож.
+                let seen = p.floor_seen_ms.unwrap_or(now_ms);
+                if let Some(q) = self.st.positions.get_mut(&sym) {
+                    q.floor_seen_ms = Some(seen);
+                    if q.exit_trigger.is_none() {
+                        q.exit_trigger = Some((bid, ask, now_ms));
+                    }
+                }
+                if p.stop_px.is_none() || now_ms - seen >= FLOOR_GRACE_MS {
                     self.close(&sym, "floor", now_ms, rep);
                 }
             }
@@ -1316,6 +1476,13 @@ impl<E: Exchange> Ladder<E> {
         let buy = !p.long();
         let px = cap_price(mid, buy, EXIT_CAP_BP, p.tick);
         let q = ceil_step(p.qty, p.step);
+        if let Some(pp) = self.st.positions.get_mut(sym) {
+            if pp.exit_trigger.is_none() {
+                pp.exit_trigger = Some((bid, ask, now_ms));
+            }
+            pp.exit_tries += 1;
+            pp.exit_cap = Some(px);
+        }
         let link = format!("ld-x-{}-{}", sym, now_ms);
         let oid = match self.place(
             sym,
@@ -1362,6 +1529,12 @@ fn wall_ms() -> i64 {
 /// Чтений статуса IOC до окончательного и пауза между ними.
 const SETTLE_READS: usize = 8;
 const SETTLE_SLEEP_MS: u64 = 250;
+
+/// Сторож пола: цена за полом дольше этого при стоящем стопе биржи —
+/// исполнитель закрывает сам.
+const FLOOR_GRACE_MS: i64 = 5_000;
+/// Сверка стопов с биржей.
+const STOP_CHECK_MS: i64 = 30_000;
 
 /// Сколько держать присмотр за именем входа неясного исхода.
 const WATCH_MS: i64 = 120_000;

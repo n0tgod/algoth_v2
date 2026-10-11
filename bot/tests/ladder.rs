@@ -41,6 +41,15 @@ struct Inner {
     /// Сколько чтений статуса IOC отвечать «New» без исполнения, хотя
     /// площадка её уже свела (асинхронный приём заявки).
     ioc_lag: u32,
+    /// Стоп позиции на бирже: умеет ли площадка, срабатывает ли он сам,
+    /// отказ постановки; стоящие стопы по имени; закрытия стопом (имя,
+    /// деньги, цена выхода).
+    stops_on: bool,
+    stop_fires: bool,
+    stop_error: Option<String>,
+    stops: BTreeMap<String, f64>,
+    stop_closed: Vec<(String, f64, f64)>,
+    set_stop_calls: u32,
     closed_pnl: Vec<(String, f64)>,
     fee_bp: f64,
     order_calls: u64,
@@ -58,6 +67,26 @@ impl Mock {
     fn set_px(&self, sym: &str, bid: f64, ask: f64) {
         self.0.borrow_mut().prices.insert(sym.into(), (bid, ask));
         self.cross(sym);
+        self.fire_stop(sym);
+    }
+    /// Стоп биржи: цена прошла уровень — позиция закрыта рынком по
+    /// худшей стороне стакана, стоп снят; деньги — в закрытиях.
+    fn fire_stop(&self, sym: &str) {
+        let mut i = self.0.borrow_mut();
+        if !(i.stops_on && i.stop_fires) {
+            return;
+        }
+        let Some(&stop) = i.stops.get(sym) else { return };
+        let (bid, ask) = *i.prices.get(sym).unwrap_or(&(0.0, 0.0));
+        let cur = *i.pos.get(sym).unwrap_or(&0.0);
+        let hit = if cur < 0.0 { ask >= stop } else if cur > 0.0 { bid <= stop } else { false };
+        if !hit {
+            return;
+        }
+        let px = if cur < 0.0 { ask } else { bid };
+        i.pos.remove(sym);
+        i.stops.remove(sym);
+        i.stop_closed.push((sym.to_string(), -1.75, px));
     }
     fn fill(i: &mut Inner, id: &str, q: f64, px: f64) {
         let fee_bp = i.fee_bp;
@@ -238,6 +267,30 @@ impl Exchange for Mock {
     }
     fn wallet_usdt(&self) -> Result<(f64, f64), String> {
         Ok((300.0, 300.0))
+    }
+    fn set_stop(&self, symbol: &str, _idx: i64, stop: &str) -> Result<(), String> {
+        let mut i = self.0.borrow_mut();
+        i.set_stop_calls += 1;
+        if !i.stops_on {
+            return Err(bot::live::STOP_UNSUPPORTED.into());
+        }
+        if let Some(e) = i.stop_error.clone() {
+            return Err(e);
+        }
+        i.stops.insert(symbol.into(), stop.parse().unwrap());
+        Ok(())
+    }
+    fn stops(&self) -> Result<Vec<(String, String, f64)>, String> {
+        let i = self.0.borrow();
+        Ok(i.pos.iter().map(|(s, q)| (s.clone(), if *q > 0.0 { "Buy".into() } else { "Sell".into() },
+                                       *i.stops.get(s).unwrap_or(&0.0))).collect())
+    }
+    fn closed_exits(&self, symbol: &str, _a: i64, _b: i64) -> Result<Vec<(i64, f64, f64)>, String> {
+        let i = self.0.borrow();
+        let mut out: Vec<(i64, f64, f64)> =
+            i.closed_pnl.iter().filter(|(s, _)| s == symbol).map(|(_, p)| (0, *p, f64::NAN)).collect();
+        out.extend(i.stop_closed.iter().filter(|(s, _, _)| s == symbol).map(|(_, p, x)| (1, *p, *x)));
+        Ok(out)
     }
     fn closed_pnl(&self, symbol: &str, _a: i64, _b: i64) -> Result<Vec<(i64, f64)>, String> {
         Ok(self.0.borrow().closed_pnl.iter().filter(|(s, _)| s == symbol).map(|(_, p)| (0, *p)).collect())
@@ -712,4 +765,98 @@ fn статус_ioc_читается_до_окончательного_а_нея
     let r = events(&d)[0]["reason"].as_str().unwrap().to_string();
     assert!(r.starts_with("IOC не исполнилась") && r.contains("bid 90") && r.contains("лимит"), "{r}");
     assert!(lx.st.watch.is_empty() && lx.st.paused.is_none());
+}
+
+#[test]
+fn пол_стоит_стопом_на_бирже_а_исполнитель_сторожит() {
+    // Владелец 11.10: «пол на бирже, исполнитель — сторож».
+    // 1. Вход шорта — стоп на бирже по полу, округлённому наружу.
+    let d = dir("stop-set");
+    let m = Mock::new();
+    m.0.borrow_mut().stops_on = true;
+    m.0.borrow_mut().stop_fires = true;
+    m.set_px("SSSUSDT", 99.99, 100.01);
+    write_intents(&d, &[short_intent(1)]);
+    let mut lx = ladder(&d, &m, false);
+    lx.tick(T0 + 120_000);
+    let fl = lx.st.positions["SSSUSDT"].floor_px().unwrap();
+    let want = (fl * 100.0).ceil() / 100.0;
+    assert!((m.0.borrow().stops["SSSUSDT"] - want).abs() < 1e-9, "стоп {:?}, пол {fl}", m.0.borrow().stops);
+    assert_eq!(lx.st.positions["SSSUSDT"].stop_px, Some(want));
+    assert!(kinds(&d).contains(&"stop_set".to_string()));
+    let calls = m.0.borrow().set_stop_calls;
+    lx.tick(T0 + 122_000);
+    assert_eq!(m.0.borrow().set_stop_calls, calls, "стоп не переставляется без причины");
+    // 2. Цена прошла пол — биржа закрыла стопом; сверка пишет «floor» с
+    // деньгами и ценой биржи, цель снята, паузы нет.
+    m.set_px("SSSUSDT", want + 0.5, want + 0.6);
+    assert_eq!(m.pos("SSSUSDT"), 0.0, "биржа закрыла");
+    let rep = lx.tick(T0 + 124_000);
+    assert_eq!(rep.closed, 1, "{:?}", events(&d));
+    let last = events(&d).last().cloned().unwrap();
+    assert_eq!(last["ev"], "floor");
+    assert!((last["pnl_usd"].as_f64().unwrap() + 1.75).abs() < 1e-9, "{last}");
+    assert!((last["px"].as_f64().unwrap() - (want + 0.6)).abs() < 1e-9, "{last}");
+    assert!(last["reason"].as_str().unwrap().contains("на бирже"), "{last}");
+    assert!(m.resting("SSSUSDT").is_empty(), "цель снята");
+    assert!(lx.st.paused.is_none());
+
+    // 3. Стоп стоит, но биржа не закрыла: сторож ждёт FLOOR_GRACE и
+    // закрывает сам; выход пишет триггер и попытки.
+    let d = dir("stop-grace");
+    let m = Mock::new();
+    m.0.borrow_mut().stops_on = true;
+    m.set_px("SSSUSDT", 99.99, 100.01);
+    write_intents(&d, &[short_intent(1)]);
+    let mut lx = ladder(&d, &m, false);
+    lx.tick(T0 + 120_000);
+    let fl = lx.st.positions["SSSUSDT"].floor_px().unwrap();
+    m.set_px("SSSUSDT", fl + 0.1, fl + 0.2);
+    assert_eq!(lx.tick(T0 + 130_000).closed, 0, "стоп биржи — сперва ей");
+    assert_eq!(lx.tick(T0 + 132_000).closed, 0);
+    let rep = lx.tick(T0 + 135_000);
+    assert_eq!(rep.closed, 1, "сторож закрыл через 5 с");
+    let last = events(&d).last().cloned().unwrap();
+    assert_eq!(last["ev"], "floor");
+    assert!((last["trigger_ask"].as_f64().unwrap() - (fl + 0.2)).abs() < 1e-9, "{last}");
+    assert_eq!(last["exit_tries"], 1);
+    assert!(last["exit_cap_px"].as_f64().is_some() && last["floor_live_px"].as_f64().is_some(), "{last}");
+
+    // 4. Долив лонга — стоп переставлен на новый пол.
+    let d = dir("stop-rung");
+    let m = Mock::new();
+    m.0.borrow_mut().stops_on = true;
+    m.set_px("LLLUSDT", 99.99, 100.01);
+    write_intents(&d, &[long_intent(1)]);
+    let mut lx = ladder(&d, &m, false);
+    lx.tick(T0 + 120_000);
+    let s1 = m.0.borrow().stops["LLLUSDT"];
+    m.set_px("LLLUSDT", 96.0, 96.02);
+    lx.tick(T0 + 130_000);
+    assert_eq!(lx.st.positions["LLLUSDT"].depth, 2);
+    let s2 = m.0.borrow().stops["LLLUSDT"];
+    assert!(s2 > s1, "пол глубины 2 выше: {s1} → {s2}");
+    assert!((s2 - (lx.st.positions["LLLUSDT"].floor_px().unwrap() * 100.0).floor() / 100.0).abs() < 1e-9);
+
+    // 5. Стоп снят на бирже — сверка через 30 с ставит заново.
+    m.0.borrow_mut().stops.clear();
+    lx.tick(T0 + 200_000);
+    assert!(kinds(&d).contains(&"stop_reset".to_string()), "{:?}", kinds(&d));
+    assert!(m.0.borrow().stops.contains_key("LLLUSDT"));
+
+    // 6. Отказ постановки — событие один раз, пол закрывает сторож сразу.
+    let d = dir("stop-fail");
+    let m = Mock::new();
+    m.0.borrow_mut().stops_on = true;
+    m.0.borrow_mut().stop_error = Some("retCode 10001 stopLoss invalid".into());
+    m.set_px("SSSUSDT", 99.99, 100.01);
+    write_intents(&d, &[short_intent(1)]);
+    let mut lx = ladder(&d, &m, false);
+    lx.tick(T0 + 120_000);
+    lx.tick(T0 + 122_000);
+    let rejects = events(&d).iter().filter(|e| e["ev"] == "reject").count();
+    assert_eq!(rejects, 1, "отказ стопа — одной записью");
+    let fl = lx.st.positions["SSSUSDT"].floor_px().unwrap();
+    m.set_px("SSSUSDT", fl + 0.1, fl + 0.2);
+    assert_eq!(lx.tick(T0 + 124_000).closed, 1, "без стопа биржи сторож закрывает сразу");
 }

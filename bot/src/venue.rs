@@ -528,6 +528,63 @@ impl Venue {
         }
     }
 
+    /// Стоп позиции на бирже (исполнитель Ladder, пол, 11.10): режим Full
+    /// — на ВСЮ позицию, рыночная заявка по срабатыванию, триггер по
+    /// последней цене (бумага судит пол по принтам). «Не изменилось»
+    /// (34040) — не отказ.
+    pub fn set_stop(&self, symbol: &str, position_idx: i64, stop: &str) -> Result<(), String> {
+        let body = serde_json::json!({
+            "category": "linear",
+            "symbol": symbol,
+            "tpslMode": "Full",
+            "stopLoss": stop,
+            "slTriggerBy": "LastPrice",
+            "positionIdx": position_idx,
+        });
+        match self.post("/v5/position/trading-stop", &body) {
+            Ok(_) => Ok(()),
+            Err(e) if e.contains("34040") => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
+    /// Стопы открытых позиций: (symbol, side, stopLoss); нет стопа — 0.
+    pub fn stops(&self) -> Result<Vec<(String, String, f64)>, String> {
+        let r = self.get("/v5/position/list", "category=linear&settleCoin=USDT&limit=200")?;
+        let mut out = Vec::new();
+        for p in r.get("list").and_then(Value::as_array).cloned().unwrap_or_default() {
+            let f = |k: &str| p.get(k).and_then(Value::as_str).and_then(|s| s.parse::<f64>().ok()).unwrap_or(0.0);
+            if f("size") == 0.0 {
+                continue;
+            }
+            out.push((
+                p.get("symbol").and_then(Value::as_str).unwrap_or("").into(),
+                p.get("side").and_then(Value::as_str).unwrap_or("").into(),
+                f("stopLoss"),
+            ));
+        }
+        Ok(out)
+    }
+
+    /// Закрытые позиции имени за окно: (момент мс, деньги $, средняя цена
+    /// выхода). Цена выхода — с биржи: позиция, закрытая стопом биржи,
+    /// иначе осталась бы без цены.
+    pub fn closed_exits(&self, symbol: &str, start_ms: i64, end_ms: i64) -> Result<Vec<(i64, f64, f64)>, String> {
+        let r = self.get(
+            "/v5/position/closed-pnl",
+            &format!("category=linear&symbol={symbol}&startTime={start_ms}&endTime={end_ms}&limit=100"),
+        )?;
+        let mut out = Vec::new();
+        for p in r.get("list").and_then(Value::as_array).cloned().unwrap_or_default() {
+            let f = |k: &str| p.get(k).and_then(Value::as_str).and_then(|s| s.parse::<f64>().ok());
+            let ts = p.get("createdTime").and_then(Value::as_str).and_then(|s| s.parse::<i64>().ok()).unwrap_or(0);
+            if let Some(pnl) = f("closedPnl") {
+                out.push((ts, pnl, f("avgExitPrice").unwrap_or(f64::NAN)));
+            }
+        }
+        Ok(out)
+    }
+
     pub fn cancel(&self, symbol: &str, order_id: &str) -> Result<(), String> {
         let body = serde_json::json!({
             "category": "linear",

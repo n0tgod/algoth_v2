@@ -8428,7 +8428,7 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L298 `mod tests`
   - L302 `calendar_matches_known_dates`
 
-## bot/src/ladder.rs · 1407 строк
+## bot/src/ladder.rs · 1580 строк
 
 Исполнитель книг Ladder (спека 15 §10a, этапы L2–L3).
 
@@ -8436,151 +8436,160 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L63 `struct Intent`
 - L100 `struct Rest`
 - L113 `struct LPos`
-- L145 `impl LPos`
-  - L146 `LPos::long`
-  - L149 `LPos::avg`
-  - L156 `LPos::n`
-  - L168 `LPos::floor_px` — Пол на текущей глубине — на той же ДОЛЕ от средней, что у бумаги. Намерение несёт пол абсолютной ценой от цен…
-  - L173 `LPos::liq_px`
-  - L178 `LPos::rebase`
-  - L185 `LPos::take_px` — Цель от ТЕКУЩЕЙ средней: `avg × (1 ± доля)`, округление внутрь.
-- L205 `struct LState`
-- L223 `struct LadderCfg`
-- L228 `impl LadderCfg`
-  - L229 `LadderCfg::intents`
-  - L232 `LadderCfg::events`
-  - L235 `LadderCfg::state`
-  - L238 `LadderCfg::status`
-  - L241 `LadderCfg::kill`
-  - L244 `LadderCfg::no_entries`
-  - L247 `LadderCfg::resume`
-  - L253 `LadderCfg::stop` — Мягкая остановка: процесс выходит МЕЖДУ тактами, состояние сохранено (деплой и перевод подписки в сухой режим…
-  - L256 `LadderCfg::pid`
-- L263 `claim_pid` — Второй исполнитель на ту же подписку делил бы одни позиции и удваивал заявки: живой pid в файле с процессом `…
-- L280 `struct LTick`
-- L288 `struct Ladder`
-- L303 `mode`
-- L311 `read_jsonl`
-- L320 `impl Ladder`
-  - L321 `Ladder::open`
-  - L349 `Ladder::event`
-  - L370 `Ladder::pos_fields`
-  - L381 `Ladder::save`
-  - L390 `Ladder::status_json`
-  - L442 `Ladder::write_status`
-  - L455 `Ladder::terminal` — Окончательный ли статус заявки площадки.
-  - L462 `Ladder::settled` — Статус заявки — до окончательного, не дольше `SETTLE_READS` чтений через `SETTLE_SLEEP_MS`. Последнее прочита…
-  - L474 `Ladder::instrument`
-  - L486 `Ladder::place`
-  - L526 `Ladder::tick`
-  - L567 `Ladder::new_intents`
-  - L579 `Ladder::reject`
-  - L590 `Ladder::enter`
-  - L832 `Ladder::place_rungs`
-  - L879 `Ladder::place_take` — Цель reduceOnly на всё открытое количество от текущей средней.
-  - L917 `Ladder::ensure_takes`
-  - L934 `Ladder::delta` — Учитывает приращение исполнения лежащей заявки по её статусу. Возвращает (приращение кол-ва, цена приращения,…
-  - L949 `Ladder::apply_rung_fill`
-  - L974 `Ladder::apply_exit_fill` — Частичный или полный выход: деньги и количество.
-  - L990 `Ladder::finish` — Позиция закрыта: событие исхода, реализованное, снятие рунгов.
-  - L1025 `Ladder::discover_fills` — Исполнения лежащих заявок, ушедших из списка открытых.
-  - L1045 `Ladder::poll_sym` — Опрос заявок одного имени: `open` — список открытых (опрашиваются только ушедшие из него); None — опрашиваютс…
-  - L1106 `Ladder::replace_take` — После рунга цель переезжает: старая снимается (с учётом того, что успела исполниться), новая ставится от ново…
-  - L1125 `Ladder::reconcile`
-  - L1223 `Ladder::check_exits`
-  - L1258 `Ladder::exit_intent`
-  - L1280 `Ladder::close` — Закрытие: снять рунги и цель (учтя успевшее исполниться), затем reduceOnly-IOC с потолком 100 б.п. Недоисполн…
-- L1355 `wall_ms`
-- L1371 `venue_max_lev` — Предел плеча площадки из отказа 110013 («... gt maxLeverage [2000] by risk limit» — сотые доли): `None`, если…
-- L1381 `run_loop` — Цикл демона: такт раз в `interval_sec`.
+- L163 `impl LPos`
+  - L164 `LPos::long`
+  - L167 `LPos::avg`
+  - L174 `LPos::n`
+  - L186 `LPos::floor_px` — Пол на текущей глубине — на той же ДОЛЕ от средней, что у бумаги. Намерение несёт пол абсолютной ценой от цен…
+  - L191 `LPos::liq_px`
+  - L196 `LPos::rebase`
+  - L203 `LPos::take_px` — Цель от ТЕКУЩЕЙ средней: `avg × (1 ± доля)`, округление внутрь.
+- L223 `struct LState`
+- L241 `struct LadderCfg`
+- L246 `impl LadderCfg`
+  - L247 `LadderCfg::intents`
+  - L250 `LadderCfg::events`
+  - L253 `LadderCfg::state`
+  - L256 `LadderCfg::status`
+  - L259 `LadderCfg::kill`
+  - L262 `LadderCfg::no_entries`
+  - L265 `LadderCfg::resume`
+  - L271 `LadderCfg::stop` — Мягкая остановка: процесс выходит МЕЖДУ тактами, состояние сохранено (деплой и перевод подписки в сухой режим…
+  - L274 `LadderCfg::pid`
+- L281 `claim_pid` — Второй исполнитель на ту же подписку делил бы одни позиции и удваивал заявки: живой pid в файле с процессом `…
+- L298 `struct LTick`
+- L306 `struct Ladder`
+- L323 `mode`
+- L331 `read_jsonl`
+- L340 `impl Ladder`
+  - L341 `Ladder::open`
+  - L370 `Ladder::event`
+  - L391 `Ladder::pos_fields`
+  - L403 `Ladder::save`
+  - L412 `Ladder::status_json`
+  - L464 `Ladder::write_status`
+  - L477 `Ladder::terminal` — Окончательный ли статус заявки площадки.
+  - L484 `Ladder::settled` — Статус заявки — до окончательного, не дольше `SETTLE_READS` чтений через `SETTLE_SLEEP_MS`. Последнее прочита…
+  - L496 `Ladder::instrument`
+  - L508 `Ladder::place`
+  - L548 `Ladder::tick`
+  - L598 `Ladder::pos_idx` — Индекс позиции для запросов позиции: хедж — 1/2 по стороне.
+  - L607 `Ladder::stop_target` — Уровень стопа: пол, округлённый наружу (не раньше правила).
+  - L615 `Ladder::ensure_stops`
+  - L675 `Ladder::new_intents`
+  - L687 `Ladder::reject`
+  - L698 `Ladder::enter`
+  - L946 `Ladder::place_rungs`
+  - L993 `Ladder::place_take` — Цель reduceOnly на всё открытое количество от текущей средней.
+  - L1031 `Ladder::ensure_takes`
+  - L1048 `Ladder::delta` — Учитывает приращение исполнения лежащей заявки по её статусу. Возвращает (приращение кол-ва, цена приращения,…
+  - L1063 `Ladder::apply_rung_fill`
+  - L1088 `Ladder::apply_exit_fill` — Частичный или полный выход: деньги и количество.
+  - L1104 `Ladder::finish` — Позиция закрыта: событие исхода, реализованное, снятие рунгов.
+  - L1151 `Ladder::discover_fills` — Исполнения лежащих заявок, ушедших из списка открытых.
+  - L1171 `Ladder::poll_sym` — Опрос заявок одного имени: `open` — список открытых (опрашиваются только ушедшие из него); None — опрашиваютс…
+  - L1232 `Ladder::replace_take` — После рунга цель переезжает: старая снимается (с учётом того, что успела исполниться), новая ставится от ново…
+  - L1251 `Ladder::reconcile`
+  - L1366 `Ladder::check_exits`
+  - L1418 `Ladder::exit_intent`
+  - L1440 `Ladder::close` — Закрытие: снять рунги и цель (учтя успевшее исполниться), затем reduceOnly-IOC с потолком 100 б.п. Недоисполн…
+- L1522 `wall_ms`
+- L1544 `venue_max_lev` — Предел плеча площадки из отказа 110013 («... gt maxLeverage [2000] by risk limit» — сотые доли): `None`, если…
+- L1554 `run_loop` — Цикл демона: такт раз в `interval_sec`.
 
 ## bot/src/lib.rs · 12 строк
 
 Исполнительное ядро (спека 09). Этап E1: журнал и состояние.
 
 
-## bot/src/live.rs · 1894 строк
+## bot/src/live.rs · 1921 строк
 
 Живой исполнитель — этапы X1–X3 спеки 12.
 
 - L63 `struct Instrument`
 - L72 `struct OrderStatus`
-- L81 `struct ExchPos`
-- L94 `struct Resting`
-- L102 `trait Exchange`
-  - L103 `best_prices`
-  - L104 `open_orders`
-  - L106 `set_leverage` — Плечо 1× — спека 12 §2; отказ не блокирует вход, но пишется.
-  - L107 `instrument`
-  - L109 `place_limit`
-  - L119 `cancel`
-  - L120 `order_status`
-  - L121 `positions`
-  - L122 `wallet_usdt`
-  - L126 `closed_pnl` — Реализованный результат закрытых позиций имени за окно: (момент мс, деньги $). Деньги сделки, закрытой мимо и…
-  - L136 `place_limit_idx`
-  - L154 `tickers` — Котировки всех имён одним запросом; умолчание — по одному.
-- L163 `impl Exchange for Venue`
-  - L164 `Venue::best_prices`
-  - L167 `Venue::open_orders`
-  - L175 `Venue::set_leverage`
-  - L178 `Venue::instrument`
-  - L183 `Venue::place_limit`
-  - L197 `Venue::cancel`
-  - L200 `Venue::order_status`
-  - L205 `Venue::positions`
-  - L220 `Venue::wallet_usdt`
-  - L223 `Venue::closed_pnl`
-  - L231 `Venue::place_limit_idx`
-  - L246 `Venue::tickers`
-- L260 `floor_step` — Вниз к кратному шага. Вверх округлять размер нельзя: нога 30 $ — это потолок забора (10 % капитала), и переша…
-- L267 `ceil_step`
-- L277 `step_decimals` — Число знаков после запятой у шага: печать заявки обязана нести ровно ту точность, которой шаг требует, — площ…
-- L287 `fmt_step`
-- L302 `lvl_bp` — Потолок цены входа/выхода: покупка — не дороже середины плюс `cap_bp`, продажа — не дешевле середины минус `c…
-- L307 `cap_price`
-- L320 `struct EntryEv`
-- L335 `struct ExitEv`
-- L344 `side_of`
-- L352 `side_str`
-- L360 `pos_key` — Ключ позиции — тот же, что у Python-счёта и тени: рука:час:имя:сторона.
-- L366 `struct LiveCfg`
-- L405 `impl LiveCfg`
-  - L406 `LiveCfg::leg_usd`
-  - L409 `LiveCfg::kill_file`
-  - L418 `LiveCfg::limits_off_file` — Файл LIMITS_OFF в каталоге журнала — снятые ДЕНЕЖНЫЕ пределы §5 (день и итог), решение владельца о риске. Мар…
-- L427 `struct LivePos`
-- L449 `struct TickReport`
-- L456 `struct Executor`
-- L515 `journal_rules_guard` — Версия правил книги и журнал ЖИВЫХ денег: никакого само-архива. Инцидент 2026-08-23: при переводе на новую кн…
-- L558 `impl Executor`
-  - L563 `Executor::open` — Поднять исполнителя: журнал перечитывается, позиции сверяются с биржей (точное количество знает она), решения…
-  - L838 `Executor::is_halted`
-  - L842 `Executor::append`
-  - L850 `Executor::halt`
-  - L882 `Executor::tick` — Один такт. Порядок существенен: KILL раньше всего (после него не совершается ничего); ОБНАРУЖЕНИЕ исполнивших…
-  - L954 `Executor::reconcile`
-  - L990 `Executor::limits_breached`
-  - L1032 `Executor::flatten`
-  - L1050 `Executor::ensure_targets` — Цель ставится с входа и переставляется, пока не встанет: позиция без лежащей цели проверяет не то правило, ко…
-  - L1119 `Executor::discover_target_fills` — Лимитка цели могла исполниться раньше, чем сторож записал событие, — биржа узнаёт первой. Обнаруженное исполн…
-  - L1180 `Executor::process_exits`
-  - L1260 `Executor::close_via_target` — Книга записала «дошла до цели». Если наша лимитка исполнилась — закрытие уже по её цене; если НЕТ — правило v…
-  - L1312 `Executor::close_pos` — Принудительное закрытие reduceOnly-IOC с потолком цены. Не исполнилось — записанный отказ и повтор следующим…
-  - L1405 `Executor::reject_exit`
-  - L1425 `Executor::record_close`
-  - L1464 `Executor::process_entries`
-  - L1520 `Executor::reject_entry`
-  - L1533 `Executor::try_enter`
-  - L1767 `Executor::status_json` — Статус — атомарным файлом: полусписанный JSON у читателя был бы отказом, неотличимым от «исполнитель не работ…
-  - L1809 `Executor::write_status`
-- L1822 `now_ms_wall`
-- L1831 `run_loop` — Цикл демона: такт раз в `interval_sec`, часы пересинхронизируются снаружи (в `main`) — здесь только логика.
-- L1848 `mod tests`
-  - L1852 `округления_вниз_и_вверх_по_шагу`
-  - L1865 `печать_несёт_точность_шага`
-  - L1873 `потолок_цены_округляется_внутрь`
-  - L1888 `ключ_позиции_как_у_питона`
+- L85 `struct ExchPos`
+- L98 `struct Resting`
+- L106 `trait Exchange`
+  - L107 `best_prices`
+  - L108 `open_orders`
+  - L110 `set_leverage` — Плечо 1× — спека 12 §2; отказ не блокирует вход, но пишется.
+  - L111 `instrument`
+  - L113 `place_limit`
+  - L123 `cancel`
+  - L124 `order_status`
+  - L125 `positions`
+  - L126 `wallet_usdt`
+  - L130 `closed_pnl` — Реализованный результат закрытых позиций имени за окно: (момент мс, деньги $). Деньги сделки, закрытой мимо и…
+  - L140 `place_limit_idx`
+  - L158 `tickers` — Котировки всех имён одним запросом; умолчание — по одному.
+  - L167 `set_stop` — Стоп на всю позицию на бирже (Ladder, пол). Умолчание — не умеет: исполнитель сам закрывает по полу, как преж…
+  - L171 `stops` — Стопы открытых позиций: (имя, сторона, стоп; 0 — нет).
+  - L176 `closed_exits` — Закрытые позиции: (мс, деньги, средняя цена выхода); умолчание — из `closed_pnl` без цены.
+- L181 `impl Exchange for Venue`
+  - L182 `Venue::best_prices`
+  - L185 `Venue::open_orders`
+  - L193 `Venue::set_leverage`
+  - L196 `Venue::instrument`
+  - L201 `Venue::place_limit`
+  - L215 `Venue::cancel`
+  - L218 `Venue::order_status`
+  - L223 `Venue::positions`
+  - L238 `Venue::wallet_usdt`
+  - L241 `Venue::closed_pnl`
+  - L249 `Venue::place_limit_idx`
+  - L264 `Venue::tickers`
+  - L271 `Venue::set_stop`
+  - L274 `Venue::stops`
+  - L277 `Venue::closed_exits`
+- L287 `floor_step` — Вниз к кратному шага. Вверх округлять размер нельзя: нога 30 $ — это потолок забора (10 % капитала), и переша…
+- L294 `ceil_step`
+- L304 `step_decimals` — Число знаков после запятой у шага: печать заявки обязана нести ровно ту точность, которой шаг требует, — площ…
+- L314 `fmt_step`
+- L329 `lvl_bp` — Потолок цены входа/выхода: покупка — не дороже середины плюс `cap_bp`, продажа — не дешевле середины минус `c…
+- L334 `cap_price`
+- L347 `struct EntryEv`
+- L362 `struct ExitEv`
+- L371 `side_of`
+- L379 `side_str`
+- L387 `pos_key` — Ключ позиции — тот же, что у Python-счёта и тени: рука:час:имя:сторона.
+- L393 `struct LiveCfg`
+- L432 `impl LiveCfg`
+  - L433 `LiveCfg::leg_usd`
+  - L436 `LiveCfg::kill_file`
+  - L445 `LiveCfg::limits_off_file` — Файл LIMITS_OFF в каталоге журнала — снятые ДЕНЕЖНЫЕ пределы §5 (день и итог), решение владельца о риске. Мар…
+- L454 `struct LivePos`
+- L476 `struct TickReport`
+- L483 `struct Executor`
+- L542 `journal_rules_guard` — Версия правил книги и журнал ЖИВЫХ денег: никакого само-архива. Инцидент 2026-08-23: при переводе на новую кн…
+- L585 `impl Executor`
+  - L590 `Executor::open` — Поднять исполнителя: журнал перечитывается, позиции сверяются с биржей (точное количество знает она), решения…
+  - L865 `Executor::is_halted`
+  - L869 `Executor::append`
+  - L877 `Executor::halt`
+  - L909 `Executor::tick` — Один такт. Порядок существенен: KILL раньше всего (после него не совершается ничего); ОБНАРУЖЕНИЕ исполнивших…
+  - L981 `Executor::reconcile`
+  - L1017 `Executor::limits_breached`
+  - L1059 `Executor::flatten`
+  - L1077 `Executor::ensure_targets` — Цель ставится с входа и переставляется, пока не встанет: позиция без лежащей цели проверяет не то правило, ко…
+  - L1146 `Executor::discover_target_fills` — Лимитка цели могла исполниться раньше, чем сторож записал событие, — биржа узнаёт первой. Обнаруженное исполн…
+  - L1207 `Executor::process_exits`
+  - L1287 `Executor::close_via_target` — Книга записала «дошла до цели». Если наша лимитка исполнилась — закрытие уже по её цене; если НЕТ — правило v…
+  - L1339 `Executor::close_pos` — Принудительное закрытие reduceOnly-IOC с потолком цены. Не исполнилось — записанный отказ и повтор следующим…
+  - L1432 `Executor::reject_exit`
+  - L1452 `Executor::record_close`
+  - L1491 `Executor::process_entries`
+  - L1547 `Executor::reject_entry`
+  - L1560 `Executor::try_enter`
+  - L1794 `Executor::status_json` — Статус — атомарным файлом: полусписанный JSON у читателя был бы отказом, неотличимым от «исполнитель не работ…
+  - L1836 `Executor::write_status`
+- L1849 `now_ms_wall`
+- L1858 `run_loop` — Цикл демона: такт раз в `interval_sec`, часы пересинхронизируются снаружи (в `main`) — здесь только логика.
+- L1875 `mod tests`
+  - L1879 `округления_вниз_и_вверх_по_шагу`
+  - L1892 `печать_несёт_точность_шага`
+  - L1900 `потолок_цены_округляется_внутрь`
+  - L1915 `ключ_позиции_как_у_питона`
 
 ## bot/src/main.rs · 554 строк
 
@@ -8634,7 +8643,7 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
   - L59 `StateError::fmt`
 - L73 `derive` — Вывести состояние из записей. Записи обязаны идти в порядке журнала (это гарантирует читатель `journal::read_…
 
-## bot/src/venue.rs · 726 строк
+## bot/src/venue.rs · 783 строк
 
 Площадка: подпись и запросы Bybit V5 (спека 12, этап X1).
 
@@ -8665,17 +8674,20 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
   - L463 `Venue::place_limit_idx`
   - L494 `Venue::tickers_all` — Лучшие цены всех линейных перпов одним запросом: имя → (bid, ask).
   - L517 `Venue::set_leverage` — Плечо 1× — спека 12 §2. «Не изменилось» (110043) — не отказ.
-  - L531 `Venue::cancel`
-  - L546 `Venue::order_status` — Статус заявки: (status, cumExecQty, avgPrice, cumExecFee). Сначала `realtime` (открытые и свежезакрытые), зат…
-  - L584 `Venue::instrument` — Живой справочник инструмента: (tick_size, qty_step, min_order_qty, min_notional_value). Снимок A1 на диске го…
-  - L618 `Venue::executions` — Исполнения по символу за последние `hours` часов: (orderLinkId, side, qty, price, fee).
-- L654 `mod tests`
-  - L657 `tmp`
-  - L667 `подпись_совпадает_с_независимой_реализацией`
-  - L680 `ключ_читается_как_вставил_владелец`
-  - L692 `ключ_без_секрета_это_отказ_словами`
-  - L703 `секрет_не_печатается`
-  - L714 `отказ_площадки_несёт_код_и_текст`
+  - L535 `Venue::set_stop` — Стоп позиции на бирже (исполнитель Ladder, пол, 11.10): режим Full — на ВСЮ позицию, рыночная заявка по сраба…
+  - L552 `Venue::stops` — Стопы открытых позиций: (symbol, side, stopLoss); нет стопа — 0.
+  - L572 `Venue::closed_exits` — Закрытые позиции имени за окно: (момент мс, деньги $, средняя цена выхода). Цена выхода — с биржи: позиция, з…
+  - L588 `Venue::cancel`
+  - L603 `Venue::order_status` — Статус заявки: (status, cumExecQty, avgPrice, cumExecFee). Сначала `realtime` (открытые и свежезакрытые), зат…
+  - L641 `Venue::instrument` — Живой справочник инструмента: (tick_size, qty_step, min_order_qty, min_notional_value). Снимок A1 на диске го…
+  - L675 `Venue::executions` — Исполнения по символу за последние `hours` часов: (orderLinkId, side, qty, price, fee).
+- L711 `mod tests`
+  - L714 `tmp`
+  - L724 `подпись_совпадает_с_независимой_реализацией`
+  - L737 `ключ_читается_как_вставил_владелец`
+  - L749 `ключ_без_секрета_это_отказ_словами`
+  - L760 `секрет_не_печатается`
+  - L771 `отказ_площадки_несёт_код_и_текст`
 
 ## tools/agents_run.sh · 383 строк
 
@@ -8969,7 +8981,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L17 `call(base, path, body=None, token=None, ctx=None)`
 - L26 `main()`
 
-## tools/app_api/server.py · 1216 строк
+## tools/app_api/server.py · 1251 строк
 
 HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 
@@ -9035,26 +9047,26 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
   - L692 `App.list_trades(self, acc, since=0, limit=200, mode='live')` — Записи журнала исполнителя. По умолчанию — только ЖИВЫЕ (решение владельца 10.10: «на вкладке Trades — реальн…
   - L722 `App.live_positions(self, acc)` — Живые позиции — в ФОРМЕ строки бумажной книги (`sym, side, at, lev, margin, entry_px, avg, fills, walk, exit,…
   - L820 `App.attach_paper(self, rows, subs)` — Та же сделка в бумажной книге — СЫРОЙ сигнал (журнал книги без издержек): строка ячейки подписки с тем же име…
-  - L880 `App.live_pnl(rows, subs)` — Общий результат живых сделок (владелец 10.10: «на странице trades общий пнл по всем сделкам»): реализованное…
-  - L915 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
-  - L925 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
-  - L940 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
-  - L957 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
-- L975 `fetch_dca(full=None)`
-- L988 `class Handler`
-  - L995 `Handler.log_message(self, fmt, *a)`
-  - L999 `Handler._send(self, code, obj)`
-  - L1008 `Handler._body(self)`
-  - L1018 `Handler._acc(self)`
-  - L1026 `Handler._route(self, method)`
-  - L1120 `Handler.do_GET(self)`
-  - L1123 `Handler.do_POST(self)`
-  - L1126 `Handler.do_DELETE(self)`
-- L1130 `class Server` — TLS-рукопожатие — в ПОТОКЕ соединения и с пределом времени.
-  - L1147 `Server.finish_request(self, request, client_address)`
-- L1161 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
-- L1172 `read_operator_token(path)`
-- L1180 `main(argv=None)`
+  - L897 `App.live_pnl(rows, subs)` — Общий результат живых сделок (владелец 10.10: «на странице trades общий пнл по всем сделкам»): реализованное…
+  - L950 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
+  - L960 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
+  - L975 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
+  - L992 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
+- L1010 `fetch_dca(full=None)`
+- L1023 `class Handler`
+  - L1030 `Handler.log_message(self, fmt, *a)`
+  - L1034 `Handler._send(self, code, obj)`
+  - L1043 `Handler._body(self)`
+  - L1053 `Handler._acc(self)`
+  - L1061 `Handler._route(self, method)`
+  - L1155 `Handler.do_GET(self)`
+  - L1158 `Handler.do_POST(self)`
+  - L1161 `Handler.do_DELETE(self)`
+- L1165 `class Server` — TLS-рукопожатие — в ПОТОКЕ соединения и с пределом времени.
+  - L1182 `Server.finish_request(self, request, client_address)`
+- L1196 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
+- L1207 `read_operator_token(path)`
+- L1215 `main(argv=None)`
 
 ## tools/app_api/set_topic.py · 44 строк
 

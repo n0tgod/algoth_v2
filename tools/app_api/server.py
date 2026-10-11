@@ -871,10 +871,27 @@ class App:
             p["paper"] = {"state": "closed" if closed else "open", "entry_px": pe, "exit_px": q.get("exit_px"),
                           "exit": q.get("exit"), "exit_ts": q.get("exit_ts"), "pnl_frac": frac,
                           "margin": q.get("margin"), "usd_at_live_margin": paper_usd}
+            diff = (None if live_usd is None or paper_usd is None else float(live_usd) - paper_usd)
+            # Разбор разницы в деньгах (владелец 11.10: «почему такая
+            # разница при проскальзывании 0»): цена входа и цена выхода на
+            # контрактах живой позиции; выходы РАЗНОГО состояния (одна
+            # закрыта, другая нет) — отдельной частью целиком; остаток —
+            # комиссии и масштаб маржи.
+            walk = p.get("walk") or []
+            qty = float(walk[-1].get("qty") or 0.0) if walk else 0.0
+            parts = None
+            if diff is not None:
+                live_closed = p["state"] == "closed"
+                if live_closed != closed:
+                    parts = {"entry_usd": 0.0, "exit_usd": 0.0, "exit_state_usd": diff, "other_usd": 0.0}
+                else:
+                    e_usd = (-(entry_cost / 100.0) * float(pe) * qty) if (entry_cost is not None and qty) else 0.0
+                    x_usd = (-(exit_cost / 100.0) * float(q["exit_px"]) * qty) if (exit_cost is not None and qty) else 0.0
+                    parts = {"entry_usd": e_usd, "exit_usd": x_usd, "exit_state_usd": 0.0,
+                             "other_usd": diff - e_usd - x_usd}
             p["vs_paper"] = {"entry_cost_pct": entry_cost, "exit_cost_pct": exit_cost,
-                             "live_usd": live_usd, "paper_usd": paper_usd,
-                             "diff_usd": (None if live_usd is None or paper_usd is None
-                                          else float(live_usd) - paper_usd)}
+                             "live_usd": live_usd, "paper_usd": paper_usd, "diff_usd": diff,
+                             "parts": parts}
 
     @staticmethod
     def live_pnl(rows, subs):
@@ -895,11 +912,29 @@ class App:
         # те же решения в бумаге — только сопоставленные и с числом у обеих
         pair = [p["vs_paper"] for p in rows if p.get("vs_paper") and p["vs_paper"].get("diff_usd") is not None]
         ec = [v["entry_cost_pct"] for v in (p.get("vs_paper") or {} for p in rows) if v.get("entry_cost_pct") is not None]
+        xc = [v["exit_cost_pct"] for v in (p.get("vs_paper") or {} for p in rows) if v.get("exit_cost_pct") is not None]
+
+        def med(xs):
+            xs = sorted(xs)
+            if not xs:
+                return None
+            n = len(xs)
+            return round(xs[n // 2] if n % 2 else (xs[n // 2 - 1] + xs[n // 2]) / 2.0, 4)
+        parts = {k: round(sum(float((v.get("parts") or {}).get(k) or 0.0) for v in pair), 4)
+                 for k in ("entry_usd", "exit_usd", "exit_state_usd", "other_usd")}
         vs = {"matched_n": len(pair), "unmatched_n": sum(1 for p in rows if p.get("paper_why")),
               "live_usd": round(sum(float(v["live_usd"]) for v in pair), 4),
               "paper_usd": round(sum(float(v["paper_usd"]) for v in pair), 4),
               "diff_usd": round(sum(float(v["diff_usd"]) for v in pair), 4),
-              "entry_cost_pct_mean": (round(sum(ec) / len(ec), 4) if ec else None)}
+              # среднее со знаком гасит хуже-лучше друг другом (11.10:
+              # «0.00 %» при шести входах хуже) — рядом медиана и выходы
+              "entry_cost_pct_mean": (round(sum(ec) / len(ec), 4) if ec else None),
+              "entry_cost_pct_median": med(ec), "entry_n": len(ec),
+              "entry_worse_n": sum(1 for x in ec if x > 0),
+              "exit_cost_pct_mean": (round(sum(xc) / len(xc), 4) if xc else None),
+              "exit_cost_pct_median": med(xc), "exit_n": len(xc),
+              "exit_state_n": sum(1 for v in pair if (v.get("parts") or {}).get("exit_state_usd")),
+              "parts": parts}
         return {"vs_paper": vs, "realized_usd": round(realized, 4), "open_usd": round(open_usd, 4),
                 "total_usd": round(total, 4), "deposit_usd": dep,
                 "total_pct": (round(total / dep * 100.0, 3) if dep else None),

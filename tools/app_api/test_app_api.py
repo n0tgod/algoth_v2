@@ -1162,6 +1162,13 @@ def test_live_positions_are_built_from_executor_journal_in_paper_row_shape():
         assert abs(va["paper_usd"] - 2.1 / 42.0 * 25.0) < 1e-9 and abs(va["diff_usd"] - (1.44 - 1.25)) < 1e-9, va
         pv = r["pnl"]["vs_paper"]
         assert pv["matched_n"] == 2 and abs(pv["diff_usd"] - (0.59 - 0.625 + 1.44 - 1.25)) < 1e-9, pv
+        # разбор разницы: части складываются в разницу — у позиции и в сумме
+        for v in (vs, va):
+            assert abs(sum(v["parts"].values()) - v["diff_usd"]) < 1e-9, v
+        assert vs["parts"]["entry_usd"] < 0 and vs["parts"]["exit_usd"] > 0, vs["parts"]
+        assert abs(sum(pv["parts"].values()) - pv["diff_usd"]) < 1e-9, pv
+        assert pv["entry_n"] == 2 and pv["entry_worse_n"] == 2 and pv["exit_n"] == 1, pv
+        assert abs(pv["exit_cost_pct_median"] - (1.8 - 1.81) / 1.81 * 100) < 1e-3, pv
         pn = r["pnl"]
         assert pn["realized_usd"] == 0.59 and abs(pn["open_usd"] - 1.44) < 1e-9 and abs(pn["total_usd"] - 2.03) < 1e-9, pn
         assert pn["deposit_usd"] == 1000.0 and abs(pn["total_pct"] - 0.203) < 1e-9 and pn["closed_n"] == 1
