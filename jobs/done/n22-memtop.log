@@ -398,3 +398,12 @@
    2329858        1      4  238:27  /usr/lib/systemd/systemd-networkd
        907        1      3 1815:06  @dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only
 конец: 2026-10-11T04:50:54Z, код 0
+публикуется в ветку main:
+ jobs/done/n21-status.done      |   1 +
+ jobs/done/n21-status.log       |   9 +
+ jobs/done/n22-memtop.done      |   1 +
+ jobs/done/n22-memtop.log       | 400 +++++++++++++++++++++++++++++++++++++++++
+ jobs/done/n23-api-restart.done |   1 +
+ jobs/done/n23-api-restart.log  |   4 +
+ jobs/poke.log                  |   5 +
+ 7 files changed, 421 insertions(+)
