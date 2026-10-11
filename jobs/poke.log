@@ -1928,3 +1928,6 @@ Terminated
 
 == сигнал 1791694450 ==
 [2026-10-11T04:54:12Z] задание n25-api-restart запущено: tools/app_api/restart.py
+
+== сигнал 1791694472 ==
+[2026-10-11T04:54:34Z] задание n26-selftest запущено: tools/app_api/selftest.py
