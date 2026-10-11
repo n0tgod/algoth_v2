@@ -300,7 +300,8 @@ for f in fs:
     ps = d.get("positions") or []
     print(f"{os.path.basename(os.path.dirname(f))}: статусу {time.time() - os.path.getmtime(f):.0f} с, "
           f"режим {d.get('mode')}, позиций {len(ps)} (отметка у {sum(1 for p in ps if p.get('mark_px') is not None)}), "
-          f"пауза {d.get('paused')}, без входов {d.get('no_entries')}, ошибка {d.get('last_error')}")
+          f"пауза {d.get('paused')}, без входов {d.get('no_entries')}, ошибка {d.get('last_error')}, "
+          f"стоп пола на бирже у {sum(1 for p in ps if p.get('stop_px') is not None)} из {len(ps)}")
     fo = d.get("foreign")
     print("  чужое на счёте: " + ("не измерено (исполнитель прежней версии)" if fo is None else
           ("нет" if not fo else "; ".join(f"{x.get('sym')} {x.get('side')} {x.get('qty')}" for x in fo)))
