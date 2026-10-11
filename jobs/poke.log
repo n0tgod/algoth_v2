@@ -1963,3 +1963,6 @@ Terminated
 
 == сигнал 1791726298 ==
 [2026-10-11T13:45:00Z] задание n38-api-restart запущено: tools/app_api/restart.py
+
+== сигнал 1791726474 ==
+[2026-10-11T13:47:56Z] задание n39-ev запущено: tools/app_api/events_of.py

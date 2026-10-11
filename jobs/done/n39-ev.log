@@ -1,0 +1,18 @@
+== задание n39-ev ==
+строка: run tools/app_api/events_of.py --sym CHIPUSDT
+начало: 2026-10-11T13:47:56Z
+запускаю: .venv/bin/python tools/app_api/events_of.py --sym CHIPUSDT
+== sub_3f11698eb30279fa
+10-11 03:12:20 {"avg": 0.06721, "book": "aggr_h", "depth": "1/1", "ev": "entry", "fee_usd": 0.01626482, "floor_px": 0.07294743902406585, "lev": 20.00000000098953, "liq_px": 0.07868487804813167, "margin_usd": 5.9323, "mode": "live", "pos_at": 1791687600.0, "px": 0.06721, "px_ref": 0.06749, "qty": 440.0, "seq": 14, "side": "short", "slip_bp": 41.48762779670911, "sym": "CHIPUSDT", "take_px": 0.052680000000000005, "term_ts": 1791774000.0, "ts": 1791688340.829, "written_at": 1791688340.829}
+10-11 03:12:20 {"avg": 0.06721, "book": "aggr_h", "depth": "1/1", "ev": "take_set", "floor_px": 0.07294743902406585, "lev": 20.00000000098953, "liq_px": 0.07868487804813167, "margin_usd": 5.9323, "mode": "live", "pos_at": 1791687600.0, "px": 0.052680000000000005, "qty": 440.0, "seq": 15, "side": "short", "sym": "CHIPUSDT", "term_ts": 1791774000.0, "ts": 1791688340.829, "written_at": 1791688340.829}
+10-11 13:45:11 {"depth": "1/1", "ev": "stop_set", "mode": "live", "pos_at": 1791687600.0, "reason": "пол стоит стоп-заявкой на бирже (последняя цена, на всю позицию)", "seq": 29, "side": "short", "stop_px": 0.07295, "sym": "CHIPUSDT", "ts": 1791726311.261, "written_at": 1791726311.261}
+-- ladder.log: строк с CHIPUSDT 0
+конец: 2026-10-11T13:47:56Z, код 0
+публикуется в ветку main:
+ jobs/done/n38-api-restart.log       | 10 ++++++++++
+ jobs/done/n39-ev.done               |  1 +
+ jobs/done/n39-ev.log                | 10 ++++++++++
+ jobs/done/n40-status.log            | 13 +++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 38 insertions(+), 1 deletion(-)
