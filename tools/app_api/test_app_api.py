@@ -1126,6 +1126,7 @@ def test_live_positions_are_built_from_executor_journal_in_paper_row_shape():
         pn = r["pnl"]
         assert pn["realized_usd"] == 0.59 and abs(pn["open_usd"] - 1.44) < 1e-9 and abs(pn["total_usd"] - 2.03) < 1e-9, pn
         assert pn["deposit_usd"] == 1000.0 and abs(pn["total_pct"] - 0.203) < 1e-9 and pn["closed_n"] == 1
+        assert abs(pn["open_pct"] - 0.144) < 1e-9 and abs(pn["realized_pct"] - 0.059) < 1e-9, pn
         assert pn["open_n"] == 1 and pn["wins_n"] == 1 and pn["open_unmarked"] == 0
         # нет статуса исполнителя — отметки нет, причина словами
         os.remove(os.path.join(d, "ladder_status.json"))

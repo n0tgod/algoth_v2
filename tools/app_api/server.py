@@ -858,6 +858,11 @@ class App:
         return {"vs_paper": vs, "realized_usd": round(realized, 4), "open_usd": round(open_usd, 4),
                 "total_usd": round(total, 4), "deposit_usd": dep,
                 "total_pct": (round(total / dep * 100.0, 3) if dep else None),
+                # открытый и закрытый результат — каждый своим процентом от
+                # депозита: заголовок вкладки показывает ОТКРЫТЫЙ, как биржа
+                # (владелец 11.10), итог — строкой ниже
+                "open_pct": (round(open_usd / dep * 100.0, 3) if dep else None),
+                "realized_pct": (round(realized / dep * 100.0, 3) if dep else None),
                 "closed_n": len(closed), "open_n": len(opened), "wins_n": wins,
                 "open_unmarked": len(opened) - len(marked),
                 "fees_usd": round(sum(float(p.get("fees") or 0.0) for p in rows), 4)}
