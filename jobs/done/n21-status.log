@@ -43,3 +43,12 @@ Filesystem      Size  Used Avail Use% Mounted on
 
 sub_3f11698eb30279fa: статусу 1 с, режим live, позиций 3 (отметка у 3), пауза None, без входов False, ошибка None
 конец: 2026-10-11T04:50:24Z
+публикуется в ветку main:
+ jobs/done/n21-status.log            | 45 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  4 ++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 3 files changed, 50 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   fbe2a081..c89cd91c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
