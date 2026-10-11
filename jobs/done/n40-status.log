@@ -44,3 +44,12 @@ Filesystem      Size  Used Avail Use% Mounted on
 sub_3f11698eb30279fa: статусу 1 с, режим live, позиций 5 (отметка у 5), пауза None, без входов False, ошибка None
   чужое на счёте: нет
 конец: 2026-10-11T13:47:56Z
+публикуется в ветку main:
+ jobs/done/n38-api-restart.log       | 10 ++++++++
+ jobs/done/n39-ev.done               |  1 +
+ jobs/done/n39-ev.log                | 18 +++++++++++++++
+ jobs/done/n40-status.log            | 46 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 79 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at b918204ff27e715198e408e6f1d85224cf8f8e5c but expected 34961a66bfe1c599cf76149e2a3f0a5ceedb8ee5
