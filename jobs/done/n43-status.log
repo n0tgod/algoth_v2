@@ -49,3 +49,14 @@ sub_3f11698eb30279fa: статусу 2 с, режим live, позиций 5 (о
     RLCUSDT short глубина 1/1: средняя 0.96405196, цель 0.7908000000000001, пол 1.2509316775334849, стоп биржи 1.2510000000000001, рунгов лежит 0, закрытие None
   чужое на счёте: нет
 конец: 2026-10-11T13:54:15Z
+публикуется в ветку main:
+ jobs/done/n42-status.done           |  1 +
+ jobs/done/n42-status.log            | 10 ++++++++
+ jobs/done/n43-status.log            | 51 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  5 ++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 68 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   61cb4652..9dbb3a2e  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
