@@ -368,10 +368,26 @@ class App:
         if s is None:
             return 404, {"error": "подписки нет"}
         if s["mode"] == "live":
-            return 409, {"error": "подписка в живом режиме: сперва disarm"}
+            # Живую подписку закрыть можно, когда у исполнителя нет
+            # открытых позиций (владелец 11.10 закрыл всё руками и нажал
+            # «Close subscription» — прежде отказ «сперва disarm» уходил в
+            # плашку вверху экрана, и кнопка казалась мёртвой). Входы
+            # выключаются файлом, исполнитель останавливает сторож
+            # (`ladder_run.ensure`: подписка не активна — мягкая остановка).
+            ex = self.exec_status(sid)
+            if ex is None:
+                return 409, {"error": "исполнитель не прислал статус — не видно, закрыты ли позиции; повтори через минуту"}
+            open_ = [p.get("sym") for p in ex.get("positions") or []]
+            if open_:
+                return 409, {"error": f"у исполнителя открыто позиций {len(open_)} ({', '.join(open_)}): закрой их кнопкой Close и повтори"}
+            d = self.sub_dir(sid)
+            os.makedirs(d, exist_ok=True)
+            with open(os.path.join(d, "NO_ENTRIES"), "w") as f:
+                f.write(str(time.time()))
+            self.db.c.execute("UPDATE subscriptions SET mode='dry' WHERE id=?", (sid,))
         self.db.close_subscription(sid)
         self.db.event(acc["id"], "subscription", f"подписка {s['book']} закрыта")
-        return 200, {"ok": True}
+        return 200, {"ok": True, "note": "подписка закрыта; исполнитель остановится в течение 5 минут"}
 
     # ------------------------------------------------------------ живой режим
     def live_enabled(self):

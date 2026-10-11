@@ -1086,7 +1086,20 @@ def test_manual_close_appends_exit_intent_for_the_executor():
         assert code == 200 and r.get("already"), r
         assert len(open(os.path.join(d, "intents.jsonl")).readlines()) == 2, "второе намерение не пишется"
         assert app.close_position(acc, "sub_nope", "AUSDT", T)[0] == 404
-    print("ok  ручное закрытие: намерение «manual» следующим seq, отказы названы")
+        # закрытие ЖИВОЙ подписки: с открытой позицией — отказ с именем,
+        # без позиций — закрыта, входы выключены файлом
+        with open(os.path.join(d, "ladder_status.json"), "w") as f:
+            json.dump({"positions": [{"sym": "AUSDT", "pos_at": T}]}, f)
+        code, r = app.delete_subscription(acc, sid)
+        assert code == 409 and "AUSDT" in r["error"] and "Close" in r["error"], (code, r)
+        with open(os.path.join(d, "ladder_status.json"), "w") as f:
+            json.dump({"positions": []}, f)
+        code, r = app.delete_subscription(acc, sid)
+        assert code == 200 and r["ok"], (code, r)
+        assert os.path.exists(os.path.join(d, "NO_ENTRIES"))
+        row = app.db.c.execute("SELECT status, mode FROM subscriptions WHERE id=?", (sid,)).fetchone()
+        assert row["status"] != "active" and row["mode"] == "dry", dict(row)
+    print("ok  ручное закрытие: намерение «manual» следующим seq, отказы названы; живая подписка без позиций закрывается")
 
 
 def test_live_positions_are_built_from_executor_journal_in_paper_row_shape():
