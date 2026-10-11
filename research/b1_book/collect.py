@@ -3891,15 +3891,23 @@ class Collector:
             return {"present": False, "why": f"модуль правил не читается: {e}",
                     "rows": [], "merged": []}
         sym = str(sym or "").upper()
-        rk, _, dep = str(book or "").partition(":")
-        if rk not in DR.RULERS or not dep.isdigit():
+        # Ключ книги — `rules.cell_key`: `линейка:депозит` у сложного
+        # процента и `линейка:депозит:fixed` у фиксированного билета.
+        # Хвост формата прежде попадал в депозит, и позиции сестры
+        # (приложение 11.10, переключатель формата) объявлялись «книга не
+        # опознана».
+        parts = str(book or "").split(":")
+        rk, dep = (parts + ["", ""])[:2]
+        sizing = parts[2] if len(parts) > 2 else DR.DEFAULT_SIZING
+        if (rk not in DR.RULERS or not dep.isdigit() or len(parts) > 3
+                or sizing not in DR.SIZINGS):
             return {"present": False, "why": f"книга «{book}» не опознана",
                     "rows": [], "merged": []}
         # Журнал — СВОЙ У СЕМЕЙСТВА (`rules.journal_of`): у коротких
         # книг и общего счёта он отдельный, и чтение журнала длинных
         # книг для любой книги отдавало графику пустоту — позиции этих
         # книг на графике не рисовались вовсе.
-        jp = DR.journal_of(rk)
+        jp = DR.journal_of(rk, sizing)
         # «Журнал есть» спрашивается ТЕМ ЖЕ кодом, что его читает
         # (`journal_parts`): журнал живёт суточными кусками, цельного
         # файла у семейств `h24` и `pair` нет вовсе, и проверка
@@ -3917,7 +3925,8 @@ class Collector:
                 if str(r.get("sym", "")).upper() == sym
                 and int(r.get("dep", 0)) == int(dep)
                 and DR.is_current(r)
-                and DR.ruler_of(r) == rk]
+                and DR.ruler_of(r) == rk
+                and DR.sizing_of(r) == sizing]
         # Тиры площадки читаются ОДИН раз на ответ: имя одно, а позиций
         # по нему может быть много.
         liq_look = DR.mmr_look(sym)
@@ -3982,7 +3991,7 @@ class Collector:
         # пишут все три семейства. Прежний общий блок `live` остался
         # только у длинного артефакта, и читать его одного значило
         # потерять открытые позиции коротких книг и общего счёта.
-        cellk = f"{rk}:{int(dep)}"
+        cellk = DR.cell_key(rk, int(dep), sizing)
         cell = ((((art.get("books") or {}).get(cellk) or {}).get("open"))
                 or ((art.get("live") or {}).get(cellk) or {}))
         now = time.time()

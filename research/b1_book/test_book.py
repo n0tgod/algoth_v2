@@ -8295,6 +8295,21 @@ def test_dca_trades_speak_the_language_of_the_chart():
         check("DCA-график: неизвестная книга названа отказом",
               bad.get("present") is False and bool(bad.get("why")),
               str(bad)[:200])
+        # Сестра фиксированного билета (ключ `линейка:депозит:fixed`):
+        # свой журнал рядом и свои строки. Хвост формата прежде попадал в
+        # депозит, и книга объявлялась «не опознана» (11.10).
+        fx = dict(row, sizing="fixed", exit_px=115.0)
+        with open(DR.fixed_twin(DR.JOURNAL), "w", encoding="utf-8") as f:
+            f.write(json.dumps(fx, ensure_ascii=False) + "\n")
+        dfx = c.dca_trades("AAAUSDT", "safe:10000:fixed")
+        rfx = dfx.get("rows") or []
+        check("DCA-график: фиксированный билет — своя книга и свой журнал",
+              len(rfx) == 1 and rfx[0].get("exit_px") == 115.0, str(dfx)[:300])
+        rco = c.dca_trades("AAAUSDT", "safe:10000").get("rows") or []
+        check("DCA-график: сложный процент сестру не подхватывает",
+              len(rco) == 1 and rco[0].get("exit_px") == 112.0, str(rco)[:300])
+        check("DCA-график: неизвестный формат — отказ",
+              c.dca_trades("AAAUSDT", "safe:10000:weird").get("present") is False)
 
         # ОТКРЫТАЯ позиция едет графику из АРТЕФАКТА: в журнал она не
         # идёт вовсе (её отметка меняется каждый час), а страница даёт
