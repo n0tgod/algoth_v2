@@ -8960,7 +8960,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L17 `call(base, path, body=None, token=None, ctx=None)`
 - L26 `main()`
 
-## tools/app_api/server.py · 1168 строк
+## tools/app_api/server.py · 1216 строк
 
 HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 
@@ -8986,65 +8986,66 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
   - L74 `RateLimiter.allow(self, who, kind)`
 - L87 `class App` — Логика API без HTTP: её гоняют проверки напрямую.
   - L90 `App.__init__(self, dbpath, pub, operator_token=None, venue=bybit, d…`
-  - L111 `App.auth_operator(self, token, device=None)` — ------------------------------------------------------------ вход
-  - L124 `App.auth_apple(self, identity_token, device=None, current=None)`
-  - L157 `App.logout(self, token)`
-  - L161 `App.me(self, acc)`
-  - L166 `App.add_key(self, acc, venue, key, secret)` — ------------------------------------------------------------ ключи
-  - L209 `App._key_view(self, r)`
-  - L216 `App.list_keys(self, acc)`
-  - L219 `App.delete_key(self, acc, kid)`
-  - L232 `App.dca(self)` — ------------------------------------------------------------ книги и ячейки
-  - L238 `App.strategies(self)`
-  - L269 `App.cell_key(book, deposit, sizing=None)` — Ключ книги в своде `/dca`: та же схема, что у `rules.cell_key` — `книга:депозит`, у фиксированного билета с х…
-  - L276 `App.paper_cash(book, deposit)` — Касса БУМАЖНОЙ книги сейчас: депозит плюс её накопленный нетто.
-  - L286 `App.ticket_of(book, deposit)` — Билет ячейки (маржа одной позиции на стартовом депозите), $.
-  - L297 `App.sub_cash(s, st)` — Касса ПОДПИСКИ: стартовый депозит плюс реализованный нетто её собственных живых позиций (`realized_usd` в сос…
-  - L305 `App.add_subscription(self, acc, key_id, book, deposit, sizing=None)` — ------------------------------------------------------------ подписки
-  - L345 `App.venue_modes(self, k)` — Режим позиций по ключу. Секрет открыть этот процесс НЕ может: режим читается ключом только при добавлении (см…
-  - L352 `App._sub_view(self, s)`
-  - L360 `App.list_subscriptions(self, acc)`
-  - L363 `App.delete_subscription(self, acc, sid)`
-  - L374 `App.live_enabled(self)` — ------------------------------------------------------------ живой режим
-  - L377 `App.set_live_enabled(self, acc, on)` — Рубильник оператора (§7a.5): без него ни одна подписка в live не переводится. Выключение НЕ останавливает раб…
-  - L392 `App.sub_dir(self, sid)`
-  - L395 `App.exec_status(self, sid)`
-  - L402 `App.arm(self, acc, sid, confirm)` — Перевод подписки в живые сделки — кнопкой владельца (§7a.4). Подтверждение — словом `книга:депозит`: случайно…
-  - L448 `App.disarm(self, acc, sid)` — Входы выключены, открытые позиции исполнитель ведёт дальше (цель, пол, срок, охрана рынком). Режим остаётся l…
-  - L463 `App.to_dry(self, acc, sid)` — Обратно в сухой режим — только без открытых позиций.
-  - L475 `App.kill(self, acc, sid, on)` — KILL подписки: исполнитель не делает НИЧЕГО (ни заявок, ни отмен).
-  - L493 `App.check_account(self, acc, sid, runner=None)` — Предполётная проверка счёта по кнопке владельца: ключ открывает отдельный процесс (`preflight.py`), сюда прих…
-  - L511 `App.state(self, acc)` — ------------------------------------------------------------ состояние
-  - L593 `App.events(self, acc, since)`
-  - L596 `App.books(self, full=None)`
-  - L604 `App.add_device(self, acc, token, env='prod', build=None)` — ------------------------------------------------------------ устройства и пуши (§7.5)
-  - L612 `App.list_devices(self, acc)`
-  - L618 `App.delete_device(self, acc, token)`
-  - L622 `App.push_config(self, acc, team_id, key_id, p8, topic=None)`
-  - L633 `App.push_test(self, acc)` — Пробный пуш на устройства аккаунта — без записи сделки.
-  - L651 `App.list_trades(self, acc, since=0, limit=200, mode='live')` — Записи журнала исполнителя. По умолчанию — только ЖИВЫЕ (решение владельца 10.10: «на вкладке Trades — реальн…
-  - L681 `App.live_positions(self, acc)` — Живые позиции — в ФОРМЕ строки бумажной книги (`sym, side, at, lev, margin, entry_px, avg, fills, walk, exit,…
-  - L775 `App.attach_paper(self, rows, subs)` — Та же сделка в бумажной книге — СЫРОЙ сигнал (журнал книги без издержек): строка ячейки подписки с тем же име…
-  - L835 `App.live_pnl(rows, subs)` — Общий результат живых сделок (владелец 10.10: «на странице trades общий пнл по всем сделкам»): реализованное…
-  - L870 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
-  - L880 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
-  - L894 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
-  - L911 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
-- L929 `fetch_dca(full=None)`
-- L942 `class Handler`
-  - L949 `Handler.log_message(self, fmt, *a)`
-  - L953 `Handler._send(self, code, obj)`
-  - L962 `Handler._body(self)`
-  - L972 `Handler._acc(self)`
-  - L980 `Handler._route(self, method)`
-  - L1072 `Handler.do_GET(self)`
-  - L1075 `Handler.do_POST(self)`
-  - L1078 `Handler.do_DELETE(self)`
-- L1082 `class Server` — TLS-рукопожатие — в ПОТОКЕ соединения и с пределом времени.
-  - L1099 `Server.finish_request(self, request, client_address)`
-- L1113 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
-- L1124 `read_operator_token(path)`
-- L1132 `main(argv=None)`
+  - L114 `App.auth_operator(self, token, device=None)` — ------------------------------------------------------------ вход
+  - L127 `App.auth_apple(self, identity_token, device=None, current=None)`
+  - L160 `App.logout(self, token)`
+  - L164 `App.me(self, acc)`
+  - L169 `App.add_key(self, acc, venue, key, secret)` — ------------------------------------------------------------ ключи
+  - L212 `App._key_view(self, r)`
+  - L219 `App.list_keys(self, acc)`
+  - L222 `App.delete_key(self, acc, kid)`
+  - L235 `App.dca(self)` — ------------------------------------------------------------ книги и ячейки
+  - L241 `App.strategies(self)`
+  - L272 `App.cell_key(book, deposit, sizing=None)` — Ключ книги в своде `/dca`: та же схема, что у `rules.cell_key` — `книга:депозит`, у фиксированного билета с х…
+  - L279 `App.paper_cash(book, deposit)` — Касса БУМАЖНОЙ книги сейчас: депозит плюс её накопленный нетто.
+  - L289 `App.ticket_of(book, deposit)` — Билет ячейки (маржа одной позиции на стартовом депозите), $.
+  - L300 `App.sub_cash(s, st)` — Касса ПОДПИСКИ: стартовый депозит плюс реализованный нетто её собственных живых позиций (`realized_usd` в сос…
+  - L308 `App.add_subscription(self, acc, key_id, book, deposit, sizing=None)` — ------------------------------------------------------------ подписки
+  - L348 `App.venue_modes(self, k)` — Режим позиций по ключу. Секрет открыть этот процесс НЕ может: режим читается ключом только при добавлении (см…
+  - L355 `App._sub_view(self, s)`
+  - L363 `App.list_subscriptions(self, acc)`
+  - L366 `App.delete_subscription(self, acc, sid)`
+  - L377 `App.live_enabled(self)` — ------------------------------------------------------------ живой режим
+  - L380 `App.set_live_enabled(self, acc, on)` — Рубильник оператора (§7a.5): без него ни одна подписка в live не переводится. Выключение НЕ останавливает раб…
+  - L395 `App.sub_dir(self, sid)`
+  - L398 `App.exec_status(self, sid)`
+  - L405 `App.arm(self, acc, sid, confirm)` — Перевод подписки в живые сделки — кнопкой владельца (§7a.4). Подтверждение — словом `книга:депозит`: случайно…
+  - L451 `App.disarm(self, acc, sid)` — Входы выключены, открытые позиции исполнитель ведёт дальше (цель, пол, срок, охрана рынком). Режим остаётся l…
+  - L466 `App.to_dry(self, acc, sid)` — Обратно в сухой режим — только без открытых позиций.
+  - L478 `App.close_position(self, acc, sid, sym, pos_at)` — Ручное закрытие ОДНОЙ позиции кнопкой владельца (11.10).
+  - L516 `App.kill(self, acc, sid, on)` — KILL подписки: исполнитель не делает НИЧЕГО (ни заявок, ни отмен).
+  - L534 `App.check_account(self, acc, sid, runner=None)` — Предполётная проверка счёта по кнопке владельца: ключ открывает отдельный процесс (`preflight.py`), сюда прих…
+  - L552 `App.state(self, acc)` — ------------------------------------------------------------ состояние
+  - L634 `App.events(self, acc, since)`
+  - L637 `App.books(self, full=None)`
+  - L645 `App.add_device(self, acc, token, env='prod', build=None)` — ------------------------------------------------------------ устройства и пуши (§7.5)
+  - L653 `App.list_devices(self, acc)`
+  - L659 `App.delete_device(self, acc, token)`
+  - L663 `App.push_config(self, acc, team_id, key_id, p8, topic=None)`
+  - L674 `App.push_test(self, acc)` — Пробный пуш на устройства аккаунта — без записи сделки.
+  - L692 `App.list_trades(self, acc, since=0, limit=200, mode='live')` — Записи журнала исполнителя. По умолчанию — только ЖИВЫЕ (решение владельца 10.10: «на вкладке Trades — реальн…
+  - L722 `App.live_positions(self, acc)` — Живые позиции — в ФОРМЕ строки бумажной книги (`sym, side, at, lev, margin, entry_px, avg, fills, walk, exit,…
+  - L820 `App.attach_paper(self, rows, subs)` — Та же сделка в бумажной книге — СЫРОЙ сигнал (журнал книги без издержек): строка ячейки подписки с тем же име…
+  - L880 `App.live_pnl(rows, subs)` — Общий результат живых сделок (владелец 10.10: «на странице trades общий пнл по всем сделкам»): реализованное…
+  - L915 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
+  - L925 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
+  - L940 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
+  - L957 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
+- L975 `fetch_dca(full=None)`
+- L988 `class Handler`
+  - L995 `Handler.log_message(self, fmt, *a)`
+  - L999 `Handler._send(self, code, obj)`
+  - L1008 `Handler._body(self)`
+  - L1018 `Handler._acc(self)`
+  - L1026 `Handler._route(self, method)`
+  - L1120 `Handler.do_GET(self)`
+  - L1123 `Handler.do_POST(self)`
+  - L1126 `Handler.do_DELETE(self)`
+- L1130 `class Server` — TLS-рукопожатие — в ПОТОКЕ соединения и с пределом времени.
+  - L1147 `Server.finish_request(self, request, client_address)`
+- L1161 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
+- L1172 `read_operator_token(path)`
+- L1180 `main(argv=None)`
 
 ## tools/app_api/set_topic.py · 44 строк
 

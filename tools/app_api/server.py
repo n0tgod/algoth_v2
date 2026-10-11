@@ -106,6 +106,9 @@ class App:
         # подмены источников и баров для проверок; None — настоящие
         self.intents_env = None
         self._intents_at = 0.0
+        # журнал намерений пишут двое: такт намерений (фоновый поток) и
+        # ручное закрытие (запрос) — `seq` обязан расти без дублей
+        self.intents_lock = threading.Lock()
 
     # ------------------------------------------------------------ вход
     def auth_operator(self, token, device=None):
@@ -472,6 +475,44 @@ class App:
         self.db.event(acc["id"], "live", f"подписка {s['book']} переведена в сухой режим")
         return 200, {"ok": True, "mode": "dry"}
 
+    def close_position(self, acc, sid, sym, pos_at):
+        """Ручное закрытие ОДНОЙ позиции кнопкой владельца (11.10).
+
+        Намерение выхода дописывается в журнал намерений подписки тем же
+        писателем, что и выходы охраны рынком (`intents._append`, общий
+        `seq`); исполнитель на следующем такте снимает рунги и цель и
+        закрывает reduceOnly-IOC с потолком 100 б.п. (`ladder.close`,
+        исход «cmd_close»). Позиция определяется ИМЕНЕМ И СЕКУНДОЙ РЕШЕНИЯ:
+        исполнитель отвергает выход чужой позиции того же имени."""
+        s = self.db.subscription(sid, acc["id"])
+        if s is None:
+            return 404, {"error": "подписки нет"}
+        if s["mode"] != "live":
+            return 409, {"error": "подписка не в живом режиме — закрывать нечего"}
+        sym = str(sym or "").upper()
+        try:
+            pos_at = float(pos_at)
+        except (TypeError, ValueError):
+            return 400, {"error": "нужны sym и pos_at позиции"}
+        ex = self.exec_status(sid)
+        if ex is None:
+            return 409, {"error": "исполнитель не прислал статус — закрыть через него нельзя"}
+        q = next((x for x in ex.get("positions") or []
+                  if x.get("sym") == sym and abs(float(x.get("pos_at") or 0) - pos_at) < 1.0), None)
+        if q is None:
+            return 404, {"error": f"у исполнителя нет открытой позиции {sym} этого решения"}
+        if q.get("closing"):
+            return 200, {"ok": True, "already": True, "closing": q.get("closing"),
+                         "note": "позиция уже закрывается"}
+        row = {"kind": "exit", "sub": sid, "sym": sym, "book": q.get("book"), "side": q.get("side"),
+               "decided_at": pos_at, "reason": "manual", "by": acc["id"], "computed_at": time.time()}
+        with self.intents_lock:
+            seqs = INTENTS._append(INTENTS.intents_path(self.exec_root, sid), [row], seqs=True)
+        self.db.event(acc["id"], "live", f"ручное закрытие {sym} ({s['book']})",
+                      {"subscription_id": sid, "sym": sym, "seq": seqs[0] if seqs else None})
+        return 200, {"ok": True, "seq": seqs[0] if seqs else None,
+                     "note": "исполнитель закроет позицию на ближайшем такте (около 2 с) заявкой reduceOnly с потолком 1 %"}
+
     def kill(self, acc, sid, on):
         """KILL подписки: исполнитель не делает НИЧЕГО (ни заявок, ни отмен)."""
         if acc["role"] != "operator":
@@ -756,6 +797,10 @@ class App:
                 p["mark_why"] = ("исполнитель не прислал статус" if not ex else
                                  "исполнитель этой позиции не держит — исход ждёт записи журнала")
                 continue
+            # закрытие идёт (ручное, срок, пол, недоисполненный выход) —
+            # приложение показывает его вместо кнопки
+            if q.get("closing"):
+                p["closing"] = q.get("closing")
             if q.get("upnl_usd") is not None:
                 net = float(q["upnl_usd"]) + float(q.get("realized_part_usd") or 0.0) - float(q.get("fee_usd") or 0.0)
                 p["mark_usd"] = net
@@ -886,7 +931,8 @@ class App:
             return 0
         self._intents_at = now
         try:
-            return INTENTS.tick(self.db, self.dca(), self.exec_root, log=log, env=self.intents_env)
+            with self.intents_lock:
+                return INTENTS.tick(self.db, self.dca(), self.exec_root, log=log, env=self.intents_env)
         except Exception as e:                                  # noqa: BLE001
             log(f"намерения: {e}")
             return 0
@@ -1033,6 +1079,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return self._send(*self.app.kill(acc, sid, bool(body.get("on"))))
             if act == "check":
                 return self._send(*self.app.check_account(acc, sid))
+            if act == "close":
+                return self._send(*self.app.close_position(acc, sid, body.get("sym"), body.get("pos_at")))
             if act == "cmd":
                 return self._send(501, {"error": STAGE_NOT_BUILT})
         if rest == ["operator", "live"] and method == "POST":

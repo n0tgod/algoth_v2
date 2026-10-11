@@ -462,6 +462,22 @@ fn срок_и_выход_по_намерению_закрывают_позиц�
     let last = events(&d2).last().cloned().unwrap();
     assert_eq!(last["ev"], "market");
     assert!(last["pnl_usd"].as_f64().unwrap() < 0.0);
+    // ручное закрытие кнопкой владельца (намерение с причиной «manual»)
+    let d3 = dir("manual");
+    let m3 = Mock::new();
+    m3.set_px("SSSUSDT", 99.99, 100.01);
+    write_intents(&d3, &[short_intent(1)]);
+    let mut lx3 = ladder(&d3, &m3, false);
+    lx3.tick(T0 + 120_000);
+    let mut man = short_intent(2);
+    man["kind"] = json!("exit");
+    man["reason"] = json!("manual");
+    write_intents(&d3, &[short_intent(1), man]);
+    let rep = lx3.tick(T0 + 600_000);
+    assert_eq!(rep.closed, 1);
+    assert_eq!(events(&d3).last().unwrap()["ev"], "cmd_close");
+    assert_eq!(m3.pos("SSSUSDT"), 0.0, "на бирже позиции нет");
+    assert!(m3.resting("SSSUSDT").is_empty(), "цель снята");
 }
 
 #[test]

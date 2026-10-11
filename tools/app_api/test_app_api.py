@@ -1050,6 +1050,45 @@ def test_arm_needs_word_switch_fresh_equity_and_one_live_per_key():
     print("ok  живой режим: слово, рубильник, эквити, один на ключ, файлы входов и KILL, позиции исполнителя")
 
 
+def test_manual_close_appends_exit_intent_for_the_executor():
+    """Кнопка Close (владелец 11.10): намерение выхода с причиной «manual»
+    дописывается в журнал намерений подписки следующим `seq`; позиция
+    определяется именем и секундой решения; чужой, нет позиции, не live,
+    уже закрывается — названы словами, а не тихим 200."""
+    with tempfile.TemporaryDirectory() as tmp:
+        root = os.path.join(tmp, "exec")
+        app, _ = _app(tmp, out=tmp, exec_root=root)
+        acc = _login(app)
+        st, k = app.add_key(acc, "bybit", "ABCD1234KEY", SECRET)
+        st, sub = app.add_subscription(acc, k["key_id"], "optimal_h", 1000)
+        sid = sub["subscription_id"]
+        T = 1_791_000_000.0
+        assert app.close_position(acc, sid, "AUSDT", T)[0] == 409, "не live — отказ"
+        app.db.c.execute("UPDATE subscriptions SET mode='live' WHERE id=?", (sid,))
+        d = os.path.join(root, sid)
+        os.makedirs(d)
+        assert app.close_position(acc, sid, "AUSDT", T)[0] == 409, "без статуса исполнителя — отказ"
+        with open(os.path.join(d, "intents.jsonl"), "w") as f:
+            f.write(json.dumps({"seq": 7, "kind": "entry", "sym": "AUSDT", "decided_at": T}) + "\n")
+        with open(os.path.join(d, "ladder_status.json"), "w") as f:
+            json.dump({"positions": [{"sym": "AUSDT", "side": "short", "book": "optimal_h", "pos_at": T}]}, f)
+        code, r = app.close_position(acc, sid, "AUSDT", T - 3600)
+        assert code == 404 and "нет открытой" in r["error"], (code, r)
+        code, r = app.close_position(acc, sid, "ausdt", T)
+        assert code == 200 and r["seq"] == 8, (code, r)
+        rows = [json.loads(x) for x in open(os.path.join(d, "intents.jsonl"))]
+        ex = rows[-1]
+        assert ex["kind"] == "exit" and ex["reason"] == "manual" and ex["sym"] == "AUSDT", ex
+        assert ex["decided_at"] == T and ex["seq"] == 8 and ex["side"] == "short", ex
+        with open(os.path.join(d, "ladder_status.json"), "w") as f:
+            json.dump({"positions": [{"sym": "AUSDT", "pos_at": T, "closing": "cmd_close"}]}, f)
+        code, r = app.close_position(acc, sid, "AUSDT", T)
+        assert code == 200 and r.get("already"), r
+        assert len(open(os.path.join(d, "intents.jsonl")).readlines()) == 2, "второе намерение не пишется"
+        assert app.close_position(acc, "sub_nope", "AUSDT", T)[0] == 404
+    print("ok  ручное закрытие: намерение «manual» следующим seq, отказы названы")
+
+
 def test_live_positions_are_built_from_executor_journal_in_paper_row_shape():
     """Живые позиции — строками той же формы, что бумажные: вход и доливы
     из журнала исполнителя (`fills`, `walk` с контрактами, средней и целью
