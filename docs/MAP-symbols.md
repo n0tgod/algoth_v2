@@ -8780,6 +8780,15 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L17 `OUT = os.path.join(HERE, 'out')`
 - L20 `main()`
 
+## tools/app_api/events_of.py · 52 строк
+
+События исполнителя Ladder по одному имени — разбор сделки (11.10).
+
+- L15 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L17 `EXEC = os.path.join(ROOT, 'bot', 'out', 'dca')`
+- L20 `main(argv=None)`
+
 ## tools/app_api/follow.py · 170 строк
 
 Сухой исполнитель-следователь (спека 15, Y2 в сухом режиме).
