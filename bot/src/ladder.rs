@@ -150,6 +150,10 @@ pub struct LPos {
     /// Когда сторож впервые увидел цену за полом при стоящем стопе биржи.
     #[serde(default)]
     pub floor_seen_ms: Option<i64>,
+    /// Не ставить стоп раньше этого момента (после отказа — раз в
+    /// `STOP_CHECK_MS`, а не каждым тактом).
+    #[serde(default)]
+    pub stop_retry_ms: i64,
     /// Журнал выхода (владелец 11.10): что видел исполнитель, когда выход
     /// начался — bid, ask, мс; число попыток IOC и потолок последней.
     #[serde(default)]
@@ -640,7 +644,7 @@ impl<E: Exchange> Ladder<E> {
         let syms: Vec<String> = self.st.positions.keys().cloned().collect();
         for sym in syms {
             let Some(p) = self.st.positions.get(&sym).cloned() else { continue };
-            if p.closing.is_some() || p.qty <= 0.0 {
+            if p.closing.is_some() || p.qty <= 0.0 || now_ms < p.stop_retry_ms {
                 continue;
             }
             let Some(t) = Self::stop_target(&p) else { continue };
@@ -658,14 +662,28 @@ impl<E: Exchange> Ladder<E> {
                         "reason": "пол стоит стоп-заявкой на бирже (последняя цена, на всю позицию)"}));
                 }
                 Err(e) => {
-                    let first = p.stop_err.as_deref() != Some(e.as_str()) && e != crate::live::STOP_UNSUPPORTED;
+                    // Текст отказа без чисел: в нём цена биржи, и сравнение
+                    // целиком писало событие (и пуш) каждой новой ценой
+                    // (SHOP 12.10 — два «Not executed» за минуту).
+                    let class: String = e.chars().filter(|c| !c.is_ascii_digit()).collect();
+                    let first = p.stop_err.as_deref() != Some(class.as_str()) && e != crate::live::STOP_UNSUPPORTED;
                     if let Some(q) = self.st.positions.get_mut(&sym) {
                         q.stop_px = None;
-                        q.stop_err = Some(e.clone());
+                        q.stop_err = Some(class);
+                        q.stop_retry_ms = now_ms + STOP_CHECK_MS;
                     }
                     if first {
-                        self.event(now_ms, "reject", json!({"sym": sym, "side": p.side, "pos_at": p.decided_at,
-                            "reason": format!("стоп пола на бирже не встал: {e} — пол закрывает сторож")}));
+                        // Bybit не держит стоп дальше 10 % от цены («10_pcnt of
+                        // base»): пол лонга у лестницы на первом рунге лежит
+                        // около 10 % цены — его держит сторож, а стоп встанет,
+                        // когда цена подойдёт.
+                        let why = if e.contains("10_pcnt") {
+                            format!("пол {} дальше предела биржи (стоп не дальше 10 % от цены) — пол держит исполнитель, стоп встанет, когда цена подойдёт", fmt_step(t, p.tick))
+                        } else {
+                            format!("стоп пола на бирже не встал: {e} — пол держит исполнитель")
+                        };
+                        self.event(now_ms, "stop_fail", json!({"sym": sym, "side": p.side, "pos_at": p.decided_at,
+                            "stop_px": t, "reason": why}));
                     }
                 }
             }
@@ -909,6 +927,7 @@ impl<E: Exchange> Ladder<E> {
             stop_px: None,
             stop_err: None,
             floor_seen_ms: None,
+            stop_retry_ms: 0,
             exit_trigger: None,
             exit_tries: 0,
             exit_cap: None,

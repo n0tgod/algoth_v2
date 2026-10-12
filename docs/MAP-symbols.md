@@ -8428,7 +8428,7 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L298 `mod tests`
   - L302 `calendar_matches_known_dates`
 
-## bot/src/ladder.rs · 1580 строк
+## bot/src/ladder.rs · 1599 строк
 
 Исполнитель книг Ladder (спека 15 §10a, этапы L2–L3).
 
@@ -8436,66 +8436,66 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L63 `struct Intent`
 - L100 `struct Rest`
 - L113 `struct LPos`
-- L163 `impl LPos`
-  - L164 `LPos::long`
-  - L167 `LPos::avg`
-  - L174 `LPos::n`
-  - L186 `LPos::floor_px` — Пол на текущей глубине — на той же ДОЛЕ от средней, что у бумаги. Намерение несёт пол абсолютной ценой от цен…
-  - L191 `LPos::liq_px`
-  - L196 `LPos::rebase`
-  - L203 `LPos::take_px` — Цель от ТЕКУЩЕЙ средней: `avg × (1 ± доля)`, округление внутрь.
-- L223 `struct LState`
-- L241 `struct LadderCfg`
-- L246 `impl LadderCfg`
-  - L247 `LadderCfg::intents`
-  - L250 `LadderCfg::events`
-  - L253 `LadderCfg::state`
-  - L256 `LadderCfg::status`
-  - L259 `LadderCfg::kill`
-  - L262 `LadderCfg::no_entries`
-  - L265 `LadderCfg::resume`
-  - L271 `LadderCfg::stop` — Мягкая остановка: процесс выходит МЕЖДУ тактами, состояние сохранено (деплой и перевод подписки в сухой режим…
-  - L274 `LadderCfg::pid`
-- L281 `claim_pid` — Второй исполнитель на ту же подписку делил бы одни позиции и удваивал заявки: живой pid в файле с процессом `…
-- L298 `struct LTick`
-- L306 `struct Ladder`
-- L323 `mode`
-- L331 `read_jsonl`
-- L340 `impl Ladder`
-  - L341 `Ladder::open`
-  - L370 `Ladder::event`
-  - L391 `Ladder::pos_fields`
-  - L403 `Ladder::save`
-  - L412 `Ladder::status_json`
-  - L464 `Ladder::write_status`
-  - L477 `Ladder::terminal` — Окончательный ли статус заявки площадки.
-  - L484 `Ladder::settled` — Статус заявки — до окончательного, не дольше `SETTLE_READS` чтений через `SETTLE_SLEEP_MS`. Последнее прочита…
-  - L496 `Ladder::instrument`
-  - L508 `Ladder::place`
-  - L548 `Ladder::tick`
-  - L598 `Ladder::pos_idx` — Индекс позиции для запросов позиции: хедж — 1/2 по стороне.
-  - L607 `Ladder::stop_target` — Уровень стопа: пол, округлённый наружу (не раньше правила).
-  - L615 `Ladder::ensure_stops`
-  - L675 `Ladder::new_intents`
-  - L687 `Ladder::reject`
-  - L698 `Ladder::enter`
-  - L946 `Ladder::place_rungs`
-  - L993 `Ladder::place_take` — Цель reduceOnly на всё открытое количество от текущей средней.
-  - L1031 `Ladder::ensure_takes`
-  - L1048 `Ladder::delta` — Учитывает приращение исполнения лежащей заявки по её статусу. Возвращает (приращение кол-ва, цена приращения,…
-  - L1063 `Ladder::apply_rung_fill`
-  - L1088 `Ladder::apply_exit_fill` — Частичный или полный выход: деньги и количество.
-  - L1104 `Ladder::finish` — Позиция закрыта: событие исхода, реализованное, снятие рунгов.
-  - L1151 `Ladder::discover_fills` — Исполнения лежащих заявок, ушедших из списка открытых.
-  - L1171 `Ladder::poll_sym` — Опрос заявок одного имени: `open` — список открытых (опрашиваются только ушедшие из него); None — опрашиваютс…
-  - L1232 `Ladder::replace_take` — После рунга цель переезжает: старая снимается (с учётом того, что успела исполниться), новая ставится от ново…
-  - L1251 `Ladder::reconcile`
-  - L1366 `Ladder::check_exits`
-  - L1418 `Ladder::exit_intent`
-  - L1440 `Ladder::close` — Закрытие: снять рунги и цель (учтя успевшее исполниться), затем reduceOnly-IOC с потолком 100 б.п. Недоисполн…
-- L1522 `wall_ms`
-- L1544 `venue_max_lev` — Предел плеча площадки из отказа 110013 («... gt maxLeverage [2000] by risk limit» — сотые доли): `None`, если…
-- L1554 `run_loop` — Цикл демона: такт раз в `interval_sec`.
+- L167 `impl LPos`
+  - L168 `LPos::long`
+  - L171 `LPos::avg`
+  - L178 `LPos::n`
+  - L190 `LPos::floor_px` — Пол на текущей глубине — на той же ДОЛЕ от средней, что у бумаги. Намерение несёт пол абсолютной ценой от цен…
+  - L195 `LPos::liq_px`
+  - L200 `LPos::rebase`
+  - L207 `LPos::take_px` — Цель от ТЕКУЩЕЙ средней: `avg × (1 ± доля)`, округление внутрь.
+- L227 `struct LState`
+- L245 `struct LadderCfg`
+- L250 `impl LadderCfg`
+  - L251 `LadderCfg::intents`
+  - L254 `LadderCfg::events`
+  - L257 `LadderCfg::state`
+  - L260 `LadderCfg::status`
+  - L263 `LadderCfg::kill`
+  - L266 `LadderCfg::no_entries`
+  - L269 `LadderCfg::resume`
+  - L275 `LadderCfg::stop` — Мягкая остановка: процесс выходит МЕЖДУ тактами, состояние сохранено (деплой и перевод подписки в сухой режим…
+  - L278 `LadderCfg::pid`
+- L285 `claim_pid` — Второй исполнитель на ту же подписку делил бы одни позиции и удваивал заявки: живой pid в файле с процессом `…
+- L302 `struct LTick`
+- L310 `struct Ladder`
+- L327 `mode`
+- L335 `read_jsonl`
+- L344 `impl Ladder`
+  - L345 `Ladder::open`
+  - L374 `Ladder::event`
+  - L395 `Ladder::pos_fields`
+  - L407 `Ladder::save`
+  - L416 `Ladder::status_json`
+  - L468 `Ladder::write_status`
+  - L481 `Ladder::terminal` — Окончательный ли статус заявки площадки.
+  - L488 `Ladder::settled` — Статус заявки — до окончательного, не дольше `SETTLE_READS` чтений через `SETTLE_SLEEP_MS`. Последнее прочита…
+  - L500 `Ladder::instrument`
+  - L512 `Ladder::place`
+  - L552 `Ladder::tick`
+  - L602 `Ladder::pos_idx` — Индекс позиции для запросов позиции: хедж — 1/2 по стороне.
+  - L611 `Ladder::stop_target` — Уровень стопа: пол, округлённый наружу (не раньше правила).
+  - L619 `Ladder::ensure_stops`
+  - L693 `Ladder::new_intents`
+  - L705 `Ladder::reject`
+  - L716 `Ladder::enter`
+  - L965 `Ladder::place_rungs`
+  - L1012 `Ladder::place_take` — Цель reduceOnly на всё открытое количество от текущей средней.
+  - L1050 `Ladder::ensure_takes`
+  - L1067 `Ladder::delta` — Учитывает приращение исполнения лежащей заявки по её статусу. Возвращает (приращение кол-ва, цена приращения,…
+  - L1082 `Ladder::apply_rung_fill`
+  - L1107 `Ladder::apply_exit_fill` — Частичный или полный выход: деньги и количество.
+  - L1123 `Ladder::finish` — Позиция закрыта: событие исхода, реализованное, снятие рунгов.
+  - L1170 `Ladder::discover_fills` — Исполнения лежащих заявок, ушедших из списка открытых.
+  - L1190 `Ladder::poll_sym` — Опрос заявок одного имени: `open` — список открытых (опрашиваются только ушедшие из него); None — опрашиваютс…
+  - L1251 `Ladder::replace_take` — После рунга цель переезжает: старая снимается (с учётом того, что успела исполниться), новая ставится от ново…
+  - L1270 `Ladder::reconcile`
+  - L1385 `Ladder::check_exits`
+  - L1437 `Ladder::exit_intent`
+  - L1459 `Ladder::close` — Закрытие: снять рунги и цель (учтя успевшее исполниться), затем reduceOnly-IOC с потолком 100 б.п. Недоисполн…
+- L1541 `wall_ms`
+- L1563 `venue_max_lev` — Предел плеча площадки из отказа 110013 («... gt maxLeverage [2000] by risk limit» — сотые доли): `None`, если…
+- L1573 `run_loop` — Цикл демона: такт раз в `interval_sec`.
 
 ## bot/src/lib.rs · 12 строк
 
@@ -8926,7 +8926,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L62 `check(db, s, log=print, update_equity=False)`
 - L118 `main(argv=None)`
 
-## tools/app_api/push.py · 214 строк
+## tools/app_api/push.py · 219 строк
 
 Пуши APNs для событий живого исполнителя (спека 15 §7.5).
 
@@ -8935,20 +8935,20 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L30 `JWT_TTL = 50 * 60`
 - L31 `CURL_TIMEOUT = 15`
 - L35 `KIND_WORDS = {'entry': 'Entry', 'rung': 'Averaging',…` — Слова событий — английские: язык экрана приложения английский (решение владельца 2026-10-09), и пуш читается…
-- L44 `PUSHED_KINDS = set(KIND_WORDS)` — Что пушится: ВСЁ, что записал исполнитель (решение владельца). Список здесь, чтобы будущий фильтр по видам бы…
-- L47 `config_path(out)`
-- L51 `load_config(out)`
-- L63 `save_config(out, team_id, key_id, p8, topic=None)` — Проверяет ключ подписью (битый `.p8` отвергается словами), пишет 600.
-- L84 `public_config(out)`
-- L92 `jwt_for(team_id, key_id, p8, now=None)`
-- L102 `_words(t)` — Слова пуша из записи сделки (словарь строки `trades`).
-- L134 `payload_for(trade, book=None)` — APNs-полезная нагрузка по записи сделки; `book` — подпись книги.
-- L147 `class Sender` — Отправка с кешем JWT; `runner` подменяется в проверках.
-  - L150 `Sender.__init__(self, out, runner=None)`
-  - L155 `Sender.token(self, cfg)`
-  - L164 `Sender._curl(url, headers, body)`
-  - L183 `Sender.send(self, device_token, env, payload, cfg=None)` — → {"status": код APNs, "reason": причина Apple или слова, "dead": токен мёртв}.
-- L211 `_strip(o)`
+- L49 `PUSHED_KINDS = set(KIND_WORDS) - {'stop_set', 'stop_re…` — Что пушится: всё, что записал исполнитель (решение владельца), кроме служебной постановки стопа — она идёт с…
+- L52 `config_path(out)`
+- L56 `load_config(out)`
+- L68 `save_config(out, team_id, key_id, p8, topic=None)` — Проверяет ключ подписью (битый `.p8` отвергается словами), пишет 600.
+- L89 `public_config(out)`
+- L97 `jwt_for(team_id, key_id, p8, now=None)`
+- L107 `_words(t)` — Слова пуша из записи сделки (словарь строки `trades`).
+- L139 `payload_for(trade, book=None)` — APNs-полезная нагрузка по записи сделки; `book` — подпись книги.
+- L152 `class Sender` — Отправка с кешем JWT; `runner` подменяется в проверках.
+  - L155 `Sender.__init__(self, out, runner=None)`
+  - L160 `Sender.token(self, cfg)`
+  - L169 `Sender._curl(url, headers, body)`
+  - L188 `Sender.send(self, device_token, env, payload, cfg=None)` — → {"status": код APNs, "reason": причина Apple или слова, "dead": токен мёртв}.
+- L216 `_strip(o)`
 
 ## tools/app_api/restart.py · 32 строк
 

@@ -854,9 +854,45 @@ fn пол_стоит_стопом_на_бирже_а_исполнитель_ст
     let mut lx = ladder(&d, &m, false);
     lx.tick(T0 + 120_000);
     lx.tick(T0 + 122_000);
-    let rejects = events(&d).iter().filter(|e| e["ev"] == "reject").count();
-    assert_eq!(rejects, 1, "отказ стопа — одной записью");
+    let fails = events(&d).iter().filter(|e| e["ev"] == "stop_fail").count();
+    assert_eq!(fails, 1, "отказ стопа — одной записью");
+    assert_eq!(events(&d).iter().filter(|e| e["ev"] == "reject").count(), 0, "вход состоялся — не «не исполнено»");
+    // отказ с другой ценой в тексте — тот же класс, новой записи нет;
+    // повтор постановки — не чаще раза в 30 с
+    let calls = m.0.borrow().set_stop_calls;
+    m.0.borrow_mut().stop_error = Some("retCode 10001 StopLoss(0):1794000000 < 10_pcnt of base:17945000000".into());
+    lx.tick(T0 + 123_000);
+    assert_eq!(m.0.borrow().set_stop_calls, calls, "до срока повтора стоп не ставится");
     let fl = lx.st.positions["SSSUSDT"].floor_px().unwrap();
     m.set_px("SSSUSDT", fl + 0.1, fl + 0.2);
     assert_eq!(lx.tick(T0 + 124_000).closed, 1, "без стопа биржи сторож закрывает сразу");
+}
+
+#[test]
+fn стоп_дальше_предела_биржи_одна_запись_и_повтор_раз_в_30_с() {
+    // SHOP 12.10: пол лонга около 10 % цены, Bybit отвергает стоп дальше
+    // 10 % от цены; отказ с новой ценой в тексте писался заново (и пушился
+    // «Not executed»). Теперь — одна запись «stop_fail», повтор раз в 30 с.
+    let d = dir("stop-10pct");
+    let m = Mock::new();
+    m.0.borrow_mut().stops_on = true;
+    m.0.borrow_mut().stop_error = Some("retCode 10001 StopLoss(0):1794000000 < 10_pcnt of base:17941000000".into());
+    m.set_px("SSSUSDT", 99.99, 100.01);
+    write_intents(&d, &[short_intent(1)]);
+    let mut lx = ladder(&d, &m, false);
+    lx.tick(T0 + 120_000);
+    let ev: Vec<Value> = events(&d).into_iter().filter(|e| e["ev"] == "stop_fail").collect();
+    assert_eq!(ev.len(), 1);
+    assert!(ev[0]["reason"].as_str().unwrap().contains("дальше предела биржи"), "{}", ev[0]);
+    m.0.borrow_mut().stop_error = Some("retCode 10001 StopLoss(0):1794000000 < 10_pcnt of base:17952000000".into());
+    let c0 = m.0.borrow().set_stop_calls;
+    lx.tick(T0 + 140_000);
+    assert_eq!(m.0.borrow().set_stop_calls, c0, "раньше 30 с не повторяет");
+    lx.tick(T0 + 151_000);
+    assert_eq!(m.0.borrow().set_stop_calls, c0 + 1, "через 30 с повторил");
+    assert_eq!(events(&d).iter().filter(|e| e["ev"] == "stop_fail").count(), 1, "тот же отказ с другой ценой — без новой записи");
+    // цена подошла — биржа приняла стоп
+    m.0.borrow_mut().stop_error = None;
+    lx.tick(T0 + 182_000);
+    assert!(lx.st.positions["SSSUSDT"].stop_px.is_some());
 }

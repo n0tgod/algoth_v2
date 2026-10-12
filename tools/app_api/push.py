@@ -38,10 +38,15 @@ KIND_WORDS = {
     "market": "Closed by market guard", "cmd_close": "Closed by command",
     "liq": "Liquidated",
     "reject": "Not executed", "halt": "Executor halted", "resume": "Executor resumed",
-    "mismatch": "Reconcile mismatch", "test": "Test event"}
-# Что пушится: ВСЁ, что записал исполнитель (решение владельца). Список
-# здесь, чтобы будущий фильтр по видам был правкой одной строки.
-PUSHED_KINDS = set(KIND_WORDS)
+    "mismatch": "Reconcile mismatch", "test": "Test event",
+    # пол стоп-заявкой на бирже (11.10): поставлен / переставлен — служебное,
+    # без пуша; не встал — пуш словами «пол держит исполнитель», а не «не
+    # исполнено» (вход-то состоялся; 12.10 SHOP/AMZU)
+    "stop_set": "Floor stop on exchange", "stop_reset": "Floor stop re-placed",
+    "stop_fail": "Floor kept by executor"}
+# Что пушится: всё, что записал исполнитель (решение владельца), кроме
+# служебной постановки стопа — она идёт с каждым входом и доливом.
+PUSHED_KINDS = set(KIND_WORDS) - {"stop_set", "stop_reset"}
 
 
 def config_path(out):
