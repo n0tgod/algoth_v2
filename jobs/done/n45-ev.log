@@ -1,0 +1,21 @@
+== задание n45-ev ==
+строка: run tools/app_api/events_of.py --sym SHOPUSDT
+начало: 2026-10-12T20:15:52Z
+запускаю: .venv/bin/python tools/app_api/events_of.py --sym SHOPUSDT
+== sub_3f11698eb30279fa
+-- ladder.log: строк с SHOPUSDT 0
+== sub_b0b417879b985874
+10-12 20:13:20 {"avg": 179.46, "book": "optimal", "depth": "1/3", "ev": "entry", "fee_usd": 0.00493515, "floor_px": 17.946, "lev": 3.0944093654179596, "liq_px": 0.0, "margin_usd": 25.0, "mode": "live", "pos_at": 1791835891.2, "px": 179.46, "px_ref": 179.345, "qty": 0.1, "seq": 2, "side": "long", "slip_bp": 6.4122222532003725, "stop_px": null, "sym": "SHOPUSDT", "take_px": 185.57, "term_ts": 1792095091.2, "ts": 1791836000.709, "written_at": 1791836000.709}
+10-12 20:13:20 {"avg": 179.46, "book": "optimal", "depth": "1/3", "ev": "take_set", "floor_px": 17.946, "lev": 3.0944093654179596, "liq_px": 0.0, "margin_usd": 25.0, "mode": "live", "pos_at": 1791835891.2, "px": 185.57, "qty": 0.1, "seq": 3, "side": "long", "stop_px": null, "sym": "SHOPUSDT", "term_ts": 1792095091.2, "ts": 1791836000.709, "written_at": 1791836000.709}
+10-12 20:13:20 {"ev": "reject", "mode": "live", "pos_at": 1791835891.2, "reason": "стоп пола на бирже не встал: /v5/position/trading-stop: retCode 10001 StopLoss(0):1794000000 < 10_pcnt of base:17941000000 — пол закрывает сторож", "seq": 7, "side": "long", "sym": "SHOPUSDT", "ts": 1791836000.709, "written_at": 1791836000.709}
+10-12 20:14:01 {"ev": "reject", "mode": "live", "pos_at": 1791835891.2, "reason": "стоп пола на бирже не встал: /v5/position/trading-stop: retCode 10001 StopLoss(0):1794000000 < 10_pcnt of base:17945000000 — пол закрывает сторож", "seq": 8, "side": "long", "sym": "SHOPUSDT", "ts": 1791836041.451, "written_at": 1791836041.451}
+10-12 20:14:53 {"depth": "1/3", "ev": "stop_set", "mode": "live", "pos_at": 1791835891.2, "reason": "пол стоит стоп-заявкой на бирже (последняя цена, на всю позицию)", "seq": 9, "side": "long", "stop_px": 17.94, "sym": "SHOPUSDT", "ts": 1791836093.643, "written_at": 1791836093.643}
+-- ladder.log: строк с SHOPUSDT 0
+конец: 2026-10-12T20:15:52Z, код 0
+публикуется в ветку main:
+ jobs/done/n45-ev.done               |  1 +
+ jobs/done/n45-ev.log                | 14 ++++++++++++++
+ jobs/done/n46-status.log            | 13 +++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 32 insertions(+), 1 deletion(-)
