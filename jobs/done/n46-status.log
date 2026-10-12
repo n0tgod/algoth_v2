@@ -48,3 +48,11 @@ sub_b0b417879b985874: статусу 0 с, режим live, позиций 2 (о
     SHOPUSDT long глубина 1/3: средняя 179.46, цель 185.57, пол 17.946, стоп биржи 17.94, рунгов лежит 2, закрытие None
   чужое на счёте: нет
 конец: 2026-10-12T20:15:53Z
+публикуется в ветку main:
+ jobs/done/n45-ev.done               |  1 +
+ jobs/done/n45-ev.log                | 21 ++++++++++++++++
+ jobs/done/n46-status.log            | 50 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 76 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at a04fbaaf5cf34c141cc0bc841db02fe20e1998cc but expected d49b34cd1b2dd158c6dce67949298500886e643f
