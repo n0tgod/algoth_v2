@@ -166,6 +166,11 @@ def view(row):
         pushed = json.loads(t.pop("pushed_json") or "null")
     except ValueError:
         pass
+    # Отказ постановки стопа пола до 12.10 писался видом «reject» («Not
+    # executed»), хотя вход состоялся. Запись журнала не переписывается —
+    # показ называет её тем, чем она была (`stop_fail`); исходный вид рядом.
+    if t["kind"] == "reject" and str(t.get("reason") or "").startswith("стоп пола на бирже не встал"):
+        t["kind_raw"], t["kind"] = "reject", "stop_fail"
     t["words"] = PUSH.KIND_WORDS.get(t["kind"], t["kind"])
     t["pushed"] = pushed
     t["extra"] = {k: v for k, v in data.items() if k not in t}

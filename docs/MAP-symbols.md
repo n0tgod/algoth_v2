@@ -9077,7 +9077,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L19 `OK = re.compile('^[A-Za-z0-9._-]{1,120}$')`
 - L22 `main(argv)`
 
-## tools/app_api/tradelog.py · 172 строк
+## tools/app_api/tradelog.py · 177 строк
 
 Журнал событий живого исполнителя → записи `trades` → пуши (спека 15 §7.6).
 
