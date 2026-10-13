@@ -50,3 +50,11 @@ sub_b0b417879b985874: статусу 2 с, режим live, позиций 3 (о
     SHOPUSDT long глубина 2/3: средняя 177.845, цель 183.9, пол 75.5488814981299, стоп биржи 75.54, рунгов лежит 1, закрытие None
   чужое на счёте: нет
 конец: 2026-10-13T20:50:03Z
+публикуется в ветку main:
+ jobs/done/n51-restart-book.log |  8 +++++++
+ jobs/done/n53-status.log       | 52 ++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 60 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   969a0df1..df130fa6  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
