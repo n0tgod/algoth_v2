@@ -151,3 +151,18 @@ pair_aggr: охрана рынком ≥ 2 % закрыла 1378 из 4650 по�
 - Общий счёт — ХЕДЖ-режим: шорт по имени, которое держит длинная сторона, разрешён. В одностороннем режиме биржи он срезал бы длинную позицию, и число совпадений выше есть цена режима.
 - Веса модели видели эти часы: пересчёт истории читается как оценка СВЕРХУ. Судит форвард.
 
+публикуется в ветку main:
+ jobs/done/n53-status.done            |   1 +
+ jobs/done/n53-status.log             |   8 ++
+ jobs/done/n54-pair.done              |   1 +
+ jobs/done/n54-pair.log               | 153 +++++++++++++++++++++++++++++++++++
+ jobs/poke.log                        |   3 +
+ research/dca_paper/out/DCA-pair.json |   2 +-
+ research/dca_paper/out/DCA-pair.md   |  88 ++++++++++----------
+ research/s8_loop/out/day_brake.json  |   2 +-
+ 8 files changed, 212 insertions(+), 46 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   a4e48ca5..bfd7f112  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-13T20:56:55Z, код 0
