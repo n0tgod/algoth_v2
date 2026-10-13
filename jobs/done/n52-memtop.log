@@ -398,3 +398,17 @@
    2329848        1      4  302:23  sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups
        922        1      3 1879:03  /usr/lib/systemd/systemd-logind
 конец: 2026-10-13T20:47:27Z, код 0
+публикуется в ветку main:
+ jobs/done/n51-restart-book.done                    |   1 +
+ jobs/done/n51-restart-book.log                     |   6 +
+ jobs/done/n52-memtop.done                          |   1 +
+ jobs/done/n52-memtop.log                           | 400 +++++++++++++++++++++
+ jobs/poke.log                                      |   4 +
+ research/dca_paper/out/fixed_pair-2026-10-12.jsonl |  12 +
+ research/dca_paper/out/pair-2026-10-12.jsonl       |  12 +
+ research/s8_loop/out/day_brake.json                |   2 +-
+ 8 files changed, 437 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   c77cb6bf..874a0db7  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
