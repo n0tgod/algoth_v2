@@ -4856,13 +4856,13 @@ X1: исполнитель против подставной биржи.
 - L32 `check()`
 - L33 `run()`
 
-## tools/test_watchdog_pair.sh · 49 строк
+## tools/test_watchdog_pair.sh · 59 строк
 
 Проверка правила сторожа: общий счёт считается ПОСЛЕ книг-источников.
 
 - L18 `art()`
 - L20 `check()`
-- L45 `pair_due()`
+- L55 `pair_due()`
 
 ## tools/test_watchdog_ship.sh · 49 строк
 

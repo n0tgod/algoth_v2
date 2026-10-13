@@ -10,7 +10,7 @@ set -u
 cd "$(dirname "$0")/.."
 tmp=$(mktemp -d /tmp/wdpair-XXXXXX)
 trap 'rm -rf "$tmp"' EXIT
-sed -n '/^computed_ts() {/,/^}/p; /^pair_due() {/,/^}/p' tools/watchdog_book.sh > "$tmp/fn.sh"
+sed -n '/^computed_ts() {/,/^}/p; /^pair_due() {/,/^}/p; /^stopped_recently() {/,/^}/p' tools/watchdog_book.sh > "$tmp/fn.sh"
 grep -q "pair_due" "$tmp/fn.sh" || { echo "ПАДЕНИЕ: функции сторожа не вырезались"; exit 1; }
 # shellcheck disable=SC1090
 . "$tmp/fn.sh"
@@ -38,6 +38,16 @@ check "источника нет — ждать, а не считать по п�
 
 art "$S" "2026-09-23 12:26"; printf 'не json\n' > "$P"
 check "битая метка общего читается нулём — должен" '[ "$(computed_ts "$P")" -eq 0 ] && pair_due "$P" "$S" "$L"'
+
+# Самоостанов по памяти (13.10): моложе часа — ждать, старше — можно
+LG=$tmp/pair.log
+printf 'строка\n  СТОП: память 1298 МБ больше предела 1200 МБ — прогон останавливается сам\n' > "$LG"
+NOW=$(stat -c %Y "$LG")
+check "самоостанов моложе часа — не перезапускать" 'stopped_recently "$LG" "$((NOW + 600))"'
+check "самоостанов старше часа — можно снова" '! stopped_recently "$LG" "$((NOW + 4000))"'
+printf 'общий счёт посчитан\n' >> "$LG"; printf 'x\n' >> "$LG"; printf 'y\n' >> "$LG"
+check "после удачного прогона самоостанова нет" '! stopped_recently "$LG" "$((NOW + 600))"'
+check "лога нет — самоостанова нет" '! stopped_recently "$tmp/нет.log"'
 
 # Контроль сверх правила: подмена «оба новее» на «хотя бы один новее»
 # обязана уронить проверку «длинные старее — ждать».

@@ -2441,28 +2441,28 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L1347 `read_journal(path=JOURNAL, stats=None, keep=None, cache=None)` — Строки журнала как есть — из ВСЕХ его кусков, БЕЗ повторов.
 - L1417 `split_rows(rows, hours=AHEAD_H)` — Наблюдение и пересчёт — ДВА списка, и складывать их нельзя.
 
-## research/dca_paper/run_pair.py · 563 строк
+## research/dca_paper/run_pair.py · 567 строк
 
 Общий счёт: длинная книга и короткая на ОДНОМ депозите.
 
 - L47 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L48 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L63 `MEM_LIMIT_MB = 1200` — Предел памяти прогона. На VPS 7.7 ГБ без свопа, и тяжёлый прогон рядом с часовым циклом убивает НЕ СЕБЯ (OOM…
-- L66 `long_recs(cache=None, log=print)` — Позиции длинных книг из кэша реплея `run_paper`, по книгам.
-- L95 `short_recs(cache=None, log=print)` — Позиции коротких книг `h24` из их кэша, по книгам семейства.
-- L124 `pack(longs, shorts, keys=None)` — Решения общей книги: обе стороны в одном списке, с меткой источника.
-- L140 `gate_shorts(shorts, pk, ctx, log=print)` — Короткие решения под гейтом по ставке funding — правило книги.
-- L188 `collisions(rows, ruler)` — Имена, которые общий счёт держит РАЗОМ длинной и короткой.
-- L205 `_side_series(rows, ruler, side)`
-- L209 `link(rows, ruler)` — Связь дневных денег сторон ВНУТРИ общего счёта.
-- L225 `separate(rows_by_book, dep)` — Те же книги на РАЗДЕЛЬНЫХ счетах — для сравнения с общим.
-- L240 `one_sided(book, lk, sk)` — Какой стороны в общем счёте НЕТ. Пусто — обе на месте.
-- L254 `run(log=print, now=None, journal=None, long_cache=None, short_c…`
-- L352 `_p(x, d=2)`
-- L356 `_u(x)`
-- L360 `report(s)`
-- L534 `publish(name)`
-- L539 `main(argv=None)`
+- L67 `MEM_LIMIT_MB = 1800` — Предел памяти прогона. На VPS 7.7 ГБ без свопа, и тяжёлый прогон рядом с часовым циклом убивает НЕ СЕБЯ (OOM…
+- L70 `long_recs(cache=None, log=print)` — Позиции длинных книг из кэша реплея `run_paper`, по книгам.
+- L99 `short_recs(cache=None, log=print)` — Позиции коротких книг `h24` из их кэша, по книгам семейства.
+- L128 `pack(longs, shorts, keys=None)` — Решения общей книги: обе стороны в одном списке, с меткой источника.
+- L144 `gate_shorts(shorts, pk, ctx, log=print)` — Короткие решения под гейтом по ставке funding — правило книги.
+- L192 `collisions(rows, ruler)` — Имена, которые общий счёт держит РАЗОМ длинной и короткой.
+- L209 `_side_series(rows, ruler, side)`
+- L213 `link(rows, ruler)` — Связь дневных денег сторон ВНУТРИ общего счёта.
+- L229 `separate(rows_by_book, dep)` — Те же книги на РАЗДЕЛЬНЫХ счетах — для сравнения с общим.
+- L244 `one_sided(book, lk, sk)` — Какой стороны в общем счёте НЕТ. Пусто — обе на месте.
+- L258 `run(log=print, now=None, journal=None, long_cache=None, short_c…`
+- L356 `_p(x, d=2)`
+- L360 `_u(x)`
+- L364 `report(s)`
+- L538 `publish(name)`
+- L543 `main(argv=None)`
 
 ## research/dca_paper/run_paper.py · 1728 строк
 
@@ -9419,13 +9419,14 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 583 строк
+## tools/watchdog_book.sh · 596 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 
 - L34 `now()`
 - L38 `computed_ts()` — Момент счёта артефакта книги (`computed_at`), секундами; 0 — файла нет или метка не читается. Триггер книг —…
 - L51 `pair_due()` — Общий счёт считается ПОСЛЕ книг, из которых он читает: его кэши пишут прогоны коротких и длинных книг, и свой…
-- L65 `mem_avail_mb()`
-- L75 `train_rss_mb()`
-- L85 `books_mem_ok()`
+- L60 `stopped_recently()` — Самоостанов прогона по памяти — не повод перезапускать его следующим тактом (13.10: «СТОП: память» каждые 5 м…
+- L76 `mem_avail_mb()`
+- L86 `train_rss_mb()`
+- L96 `books_mem_ok()`
