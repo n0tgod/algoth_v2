@@ -1100,7 +1100,7 @@ A3 — кандидаты в пары на момент окна.
 - L279 `_parse(f, parse=json.loads)` — Разобрать построчно. Возвращает `(записи, дочитано ли до конца)`.
 - L298 `_salvage(path, log, parse=json.loads)` — Разобрать сжатый файл по членам, пропуская испорченные.
 
-## research/b1_book/web.py · 12344 строк
+## research/b1_book/web.py · 12375 строк
 
 Страница наблюдения: стакан, лента, глубина и журнал живьём.
 
@@ -1131,7 +1131,8 @@ A3 — кандидаты в пары на момент окна.
 - L10833 `STRATPAGE = '<!doctype html><meta charset="utf-8">\…`
 - L11260 `ASKSPAGE = '<!doctype html><meta charset="utf-8">\…`
 - L11428 `AGENTSPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L11958 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
+- L11958 `slim_dca(d, focus)` — Свод `/dca` для экрана одной книги: у книг, кроме `focus`, нет списка сделок (`trades`; `trades_omitted: true…
+- L11983 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
 
 ## research/d1_seconds/detect.py · 367 строк
 

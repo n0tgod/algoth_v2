@@ -8188,6 +8188,25 @@ def test_dca_cut_position_carries_its_reason():
         DR.ARTIFACT, DR.JOURNAL = ap0, jp0
 
 
+def test_dca_focus_slims_other_books_and_keeps_the_cache():
+    """`/dca?focus=` (13.10): у книг кроме выбранной нет списка сделок,
+    число сделок и итоги остаются; копии книг в `short`/`pair` сняты;
+    свод в кеше не меняется."""
+    import web as W
+    d = {"books": {"a:100": {"all": {"n": 3}, "trades": [1, 2, 3], "trades_total": 3, "trades_shown": 3},
+                   "b:100": {"all": {"n": 2}, "trades": [4, 5], "trades_total": 2, "trades_shown": 2}},
+         "short": {"stale": False, "books": {"x": 1}}, "pair": {"stale": True, "books": {"y": 2}}}
+    before = json.dumps(d, sort_keys=True)
+    s = W.slim_dca(d, "a:100")
+    check("свод фокуса: у выбранной книги сделки целиком", s["books"]["a:100"]["trades"] == [1, 2, 3])
+    b = s["books"]["b:100"]
+    check("свод фокуса: у прочих нет сделок, число и итог есть",
+          "trades" not in b and b["trades_omitted"] is True and b["trades_total"] == 2 and b["all"]["n"] == 2, str(b))
+    check("свод фокуса: копии книг в short/pair сняты, признак свежести остался",
+          "books" not in s["short"] and s["pair"]["stale"] is True, str(s["pair"]))
+    check("свод фокуса: свод в кеше не изменён", json.dumps(d, sort_keys=True) == before)
+
+
 def test_dca_trades_speak_the_language_of_the_chart():
     """Позиции DCA-книги едут графику В ЕГО ФОРМЕ, и ТВХ приходит готовой.
 
@@ -9166,6 +9185,7 @@ def main():
     test_dca_serves_ruler_and_deposit_as_one_book()
     test_dca_open_pnl_is_marked_live_not_hourly()
     test_dca_cut_position_carries_its_reason()
+    test_dca_focus_slims_other_books_and_keeps_the_cache()
     test_dca_trades_speak_the_language_of_the_chart()
     test_dca_chart_reads_the_journal_of_its_own_family()
     test_dca_list_counts_rules_of_the_family_not_of_the_project()

@@ -11955,6 +11955,31 @@ render();
 </script>
 """
 
+def slim_dca(d, focus):
+    """Свод `/dca` для экрана одной книги: у книг, кроме `focus`, нет
+    списка сделок (`trades`; `trades_omitted: true`, число `trades_total`
+    остаётся), у разделов `short`/`pair` — их копий книг. Итоги, дневные
+    ряды и открытые позиции всех книг остаются: их читают рейтинг и плитки.
+    Исходный свод (он в кеше) не меняется."""
+    if not isinstance(d, dict):
+        return d
+    out = dict(d)
+    books = {}
+    for k, b in (d.get("books") or {}).items():
+        if k != focus and isinstance(b, dict) and "trades" in b:
+            b = dict(b)
+            b.pop("trades", None)
+            b["trades_shown"] = 0
+            b["trades_omitted"] = True
+        books[k] = b
+    out["books"] = books
+    for sec in ("short", "pair"):
+        if isinstance(d.get(sec), dict) and "books" in d[sec]:
+            out[sec] = {k: v for k, v in d[sec].items() if k != "books"}
+    out["focus"] = focus
+    return out
+
+
 def serve(collector, port, token, log):
     """Поднять сервер наблюдения в отдельном потоке."""
 
@@ -12216,13 +12241,19 @@ def serve(collector, port, token, log):
                 # целиком. Снять предел у всех разом нельзя: закрытых
                 # позиций тысячи на книгу, а книг девять, и ответ вырос
                 # бы на порядок ради строк, которых никто не смотрит.
-                return self._ok(json.dumps(
-                    collector.dca_paper(q.get("dep", [None])[0],
+                d = collector.dca_paper(q.get("dep", [None])[0],
                                         q.get("ruler", [None])[0],
                                         q.get("full", [None])[0],
-                                        q.get("sizing", [None])[0]),
-                    ensure_ascii=False).encode("utf-8"),
-                    "application/json; charset=utf-8")
+                                        q.get("sizing", [None])[0])
+                # `focus` — ключ книги, которую смотрит приложение: её список
+                # сделок отдаётся, у остальных — нет (13.10: свод весил
+                # 14.5 МБ, из них 10.2 — хвосты сделок всех 72 книг, а экран
+                # показывает одну). Свод из кеша не трогается — копия.
+                focus = q.get("focus", [None])[0]
+                if focus:
+                    d = slim_dca(d, focus)
+                return self._ok(json.dumps(d, ensure_ascii=False).encode("utf-8"),
+                                "application/json; charset=utf-8")
             if u.path == "/dca_marks":
                 # Частый опрос: только переоценка открытых, по живой
                 # середине. Полный свод весит на порядок больше и
