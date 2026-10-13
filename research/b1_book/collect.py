@@ -4139,7 +4139,7 @@ class Collector:
                 # молчаливая сумма по части читалась бы как сумма по всем.
                 "mark_usd": (round(total, 2) if priced else None)}
 
-    def dca_paper(self, dep=None, ruler=None, full=None, sizing=None):
+    def dca_paper(self, dep=None, ruler=None, full=None, sizing=None, wait=True):
         """Бумажные DCA-книги: свод из артефакта, сделки из журнала.
 
         Разделение источников то же, что у месячной книги, и по той же
@@ -4179,6 +4179,16 @@ class Collector:
         cat, cached = getattr(self, "_dca_cache", (0.0, {}))
         if cat == sig and key in cached:
             return self._dca_freshen(cached[key], DR, now)
+        # Устаревший, но готовый ответ — сразу, свежий собирается в фоне
+        # (13.10, владелец: «всё долго висит при первом открытии»). Кеш
+        # сбрасывался каждым часовым прогоном книг, и первый запрос после
+        # него ждал полной пересборки — под нагрузкой дольше 30 с таймаута
+        # приложения. Ответ несёт `rebuilding: true`; пересборка одна на
+        # ключ. Не ждать (`wait=False`) просит только запрос из сети.
+        last = getattr(self, "_dca_last", {})
+        if not wait and key in last:
+            self._dca_rebuild_bg(dep, ruler, full, sizing, key)
+            return self._dca_freshen(dict(last[key], rebuilding=True), DR, now)
         if cat != sig:
             cached = {}
         cat = sig
@@ -4405,7 +4415,34 @@ class Collector:
             cached.pop(next(iter(cached)))
         cached[key] = out
         self._dca_cache = (cat, cached)
+        # последний готовый ответ по ключу — для отдачи во время пересборки;
+        # ключей не больше двух (каждый — десятки МБ)
+        last = dict(getattr(self, "_dca_last", {}))
+        last.pop(key, None)
+        while len(last) >= 2:
+            last.pop(next(iter(last)))
+        last[key] = out
+        self._dca_last = last
         return out
+
+    def _dca_rebuild_bg(self, dep, ruler, full, sizing, key):
+        """Пересборка свода в фоне, одна на ключ."""
+        lock = self.__dict__.setdefault("_dca_bg_lock", threading.Lock())
+        with lock:
+            busy = self.__dict__.setdefault("_dca_bg_keys", set())
+            if key in busy:
+                return
+            busy.add(key)
+
+        def run():
+            try:
+                self.dca_paper(dep, ruler, full, sizing, wait=True)
+            except Exception as e:                           # noqa: BLE001
+                self.log(f"свод DCA: фоновая пересборка не прошла: {e}")
+            finally:
+                with lock:
+                    busy.discard(key)
+        threading.Thread(target=run, name="dca-rebuild", daemon=True).start()
 
     def _dca_family(self, DR, now, art_attr, journal_attr, family, what):
         """Свод СЕМЕЙСТВА книг из его артефакта — одним кодом на все.

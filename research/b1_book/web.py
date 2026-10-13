@@ -12244,7 +12244,8 @@ def serve(collector, port, token, log):
                 d = collector.dca_paper(q.get("dep", [None])[0],
                                         q.get("ruler", [None])[0],
                                         q.get("full", [None])[0],
-                                        q.get("sizing", [None])[0])
+                                        q.get("sizing", [None])[0],
+                                        wait=False)
                 # `focus` — ключ книги, которую смотрит приложение: её список
                 # сделок отдаётся, у остальных — нет (13.10: свод весил
                 # 14.5 МБ, из них 10.2 — хвосты сделок всех 72 книг, а экран
@@ -12370,6 +12371,15 @@ def serve(collector, port, token, log):
                 f"или разом: tools/restart_book.sh\n") from None
         raise
     threading.Thread(target=srv.serve_forever, daemon=True).start()
+
+    # Прогрев свода DCA сразу после старта (13.10): иначе первый запрос
+    # приложения после перезапуска ждал полной сборки (десятки секунд).
+    def _warm():
+        try:
+            collector.dca_paper()
+        except Exception as e:                               # noqa: BLE001
+            log(f"прогрев свода DCA не прошёл: {e}")
+    threading.Thread(target=_warm, name="dca-warm", daemon=True).start()
     log(f"страница наблюдения: http://<адрес сервера>:{port}/"
         + (f"?k={token}" if token else ""))
     return srv

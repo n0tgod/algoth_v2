@@ -8188,6 +8188,39 @@ def test_dca_cut_position_carries_its_reason():
         DR.ARTIFACT, DR.JOURNAL = ap0, jp0
 
 
+def test_dca_serves_last_answer_while_rebuilding():
+    """Свод при сменившихся файлах (13.10): запрос из сети получает прежний
+    готовый ответ сразу с `rebuilding: true`, свежий собирается в фоне
+    одной сборкой; ожидающий вызов (`wait`) собирает сам."""
+    import collect as C
+    import threading as TH
+    c = C.Collector(["TEST"], [], tempfile.mkdtemp(), lambda m: None)
+    calls = []
+    real = C.Collector.dca_paper
+    gate = TH.Event()
+
+    def fake_sig(DR):
+        return len(calls)
+    c._dca_sig = fake_sig
+    first = real(c)                      # холодный: собирает сам
+    calls.append(1)                      # «файлы сменились»
+    builds = []
+    orig_bg = c._dca_rebuild_bg
+
+    def bg(*a):
+        builds.append(a)
+    c._dca_rebuild_bg = bg
+    t0 = time.time()
+    got = real(c, wait=False)
+    check("свод: при сменившихся файлах прежний ответ сразу и с пометкой",
+          got.get("rebuilding") is True and time.time() - t0 < 1.0, str(list(got)[:8]))
+    check("свод: пересборка запущена в фоне", len(builds) == 1, str(builds))
+    c._dca_rebuild_bg = orig_bg
+    fresh = real(c)                      # wait=True — собирает сам
+    check("свод: ожидающий вызов собирает свежий", not fresh.get("rebuilding"), str(list(fresh)[:8]))
+    check("свод: прежний ответ в кеше пометкой не испорчен", not first.get("rebuilding"))
+
+
 def test_dca_focus_slims_other_books_and_keeps_the_cache():
     """`/dca?focus=` (13.10): у книг кроме выбранной нет списка сделок,
     число сделок и итоги остаются; копии книг в `short`/`pair` сняты;
@@ -9185,6 +9218,7 @@ def main():
     test_dca_serves_ruler_and_deposit_as_one_book()
     test_dca_open_pnl_is_marked_live_not_hourly()
     test_dca_cut_position_carries_its_reason()
+    test_dca_serves_last_answer_while_rebuilding()
     test_dca_focus_slims_other_books_and_keeps_the_cache()
     test_dca_trades_speak_the_language_of_the_chart()
     test_dca_chart_reads_the_journal_of_its_own_family()
