@@ -2057,3 +2057,6 @@ Terminated
 
 == сигнал 1792018136 ==
 [2026-10-14T22:48:58Z] задание n73-acme-prod запущено: tools/app_api/acme_cert.py
+
+== сигнал 1792018184 ==
+[2026-10-14T22:49:46Z] задание n74-api-restart запущено: tools/app_api/restart.py

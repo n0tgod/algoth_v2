@@ -12,3 +12,13 @@
 22:49:08 выпущен: CN=algoth.trade, до 2027-01-12, имена ['algoth.trade', 'www.algoth.trade']
 22:49:08 записан cert.pem (полная цепочка); API перезапускается отдельным заданием
 конец: 2026-10-14T22:49:08Z, код 0
+публикуется в ветку main:
+ jobs/done/n72-acme-staging.log | 10 ++++++++++
+ jobs/done/n73-acme-prod.done   |  1 +
+ jobs/done/n73-acme-prod.log    | 14 ++++++++++++++
+ jobs/poke.log                  |  3 +++
+ 4 files changed, 28 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   72f62082..b9d004b6  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
