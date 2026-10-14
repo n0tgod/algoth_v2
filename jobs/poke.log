@@ -2035,3 +2035,6 @@ Terminated
 
 == сигнал 1792015424 ==
 [2026-10-14T22:03:46Z] задание n65-api-restart запущено: tools/app_api/restart.py
+
+== сигнал 1792015465 ==
+[2026-10-14T22:04:27Z] задание n66-probe запущено: tools/app_api/pub_probe.py
