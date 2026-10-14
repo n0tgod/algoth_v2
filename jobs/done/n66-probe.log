@@ -11,3 +11,14 @@ status: 400 — нет такого свода
 legal: версия 2026-10-14:758db38d44c72a0b, документов 3, terms 5461 знаков, risk 2568 знаков, privacy 2474 знаков
 итог: всё сходится
 конец: 2026-10-14T22:04:27Z, код 0
+публикуется в ветку main:
+ jobs/done/n65-api-restart.log | 10 ++++++++
+ jobs/done/n66-probe.done      |  1 +
+ jobs/done/n66-probe.log       | 13 ++++++++++
+ jobs/done/n67-status.log      | 56 +++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                 |  3 +++
+ 5 files changed, 83 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   2a446771..a250058c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
