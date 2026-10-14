@@ -289,6 +289,28 @@ if [ -f "$API_OUT/master.pub" ] && [ -f "$API_OUT/tls/cert.pem" ] && [ ! -f "$AP
     fi
 fi
 
+# --- сертификат API: продление Let's Encrypt (спека 16 L2, 14.10) --------
+# Сертификат на 90 суток выпущен на ключ API (пин приложения не меняется).
+# Раз в сутки в 04 UTC: продление, если осталось < 30 суток; новый
+# сертификат записан — API перезапускается. Осталось < 14 суток — строка
+# тревоги каждый такт: молчаливое истечение уронит и сайт, и приложение.
+ACME_LOG=$API_OUT/acme.log
+if [ -f "$API_OUT/tls/cert.pem" ] && [ -f "$API_OUT/acme/account-prod.pem" ]; then
+    acme_day=$(date -u +%Y-%m-%d)
+    if [ "$(date -u +%H)" = "04" ] && [ "$(cat "$API_OUT/acme/last_try" 2>/dev/null)" != "$acme_day" ] \
+       && ! pgrep -f "app_api/acme_cert.py" >/dev/null; then
+        echo "$acme_day" > "$API_OUT/acme/last_try"
+        echo "[$(now)] сертификат API: проверка продления"
+        setsid nohup bash -c "
+            .venv/bin/python tools/app_api/acme_cert.py --if-days 30 >> $ACME_LOG 2>&1 \
+            && tail -n 3 $ACME_LOG | grep -q 'записан cert.pem' \
+            && .venv/bin/python tools/app_api/restart.py >> $ACME_LOG 2>&1" &
+    fi
+    if ! openssl x509 -in "$API_OUT/tls/cert.pem" -noout -checkend $((14 * 86400)) >/dev/null 2>&1; then
+        echo "[$(now)] ТРЕВОГА: сертификат API истекает меньше чем через 14 суток — смотри $ACME_LOG"
+    fi
+fi
+
 # --- живые исполнители Ladder (спека 15 §7a.3, §10a) ---------------------
 # Подписке, которую владелец перевёл в живые сделки кнопкой в
 # приложении, — ровно один процесс `bot ladder`; вышла из live — мягкая
