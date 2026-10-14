@@ -204,6 +204,53 @@ class App:
             return 403, {"error": "operator only"}
         return 200, {"max_accounts": self.max_accounts, "accounts": self.db.accounts_count()}
 
+    # ------------------------------------------------------------ сайт
+    def site(self):
+        d = site_settings(self.out)
+        d["server_ip"] = self.server_ip
+        d["host"] = SITE_HOST
+        return 200, d
+
+    def set_site(self, acc, body):
+        if acc["role"] != "operator":
+            return 403, {"error": "operator only"}
+        cur = site_settings(self.out)
+        for k in SITE_KEYS:
+            if k not in body:
+                continue
+            v = str(body.get(k) or "").strip()
+            if k == "apple_client_id" and not SITE_ID.match(v):
+                return 400, {"error": "apple_client_id: letters, digits, dots, dashes only"}
+            if k.endswith("_url") and v and not v.startswith("https://"):
+                return 400, {"error": f"{k} must start with https://"}
+            if len(v) > 300:
+                return 400, {"error": f"{k} is too long"}
+            cur[k] = v
+        with open(os.path.join(self.out, "site.json"), "w", encoding="utf-8") as f:
+            json.dump(cur, f, ensure_ascii=False, indent=1)
+        self.db.event(acc["id"], "operator", "site settings saved", {k: cur[k] for k in SITE_KEYS})
+        return self.site()
+
+    def overview(self, acc):
+        """Оператору: аккаунты с числом ключей и подписок, согласие; ёмкость
+        по ячейкам (спека 15 §7a.5 — измеритель ёмкости до второго аккаунта)."""
+        if acc["role"] != "operator":
+            return 403, {"error": "operator only"}
+        accs = []
+        cells = {}
+        for a in self.db.c.execute("SELECT * FROM accounts ORDER BY created").fetchall():
+            subs = self.db.subscriptions_of(a["id"])
+            last = self.db.last_consent(a["id"])
+            accs.append({"account_id": a["id"], "role": a["role"], "email": a["email"], "created": a["created"],
+                         "status": a["status"], "keys": len(self.db.keys_of(a["id"])), "subs": len(subs),
+                         "live": sum(1 for x in subs if x["mode"] == "live"),
+                         "consent": last["version"] if last else None})
+            for x in subs:
+                c = cells.setdefault((x["book"], float(x["deposit"])), {"book": x["book"], "deposit": float(x["deposit"]), "live": 0, "dry": 0})
+                c["live" if x["mode"] == "live" else "dry"] += 1
+        return 200, {"accounts": accs, "cells": sorted(cells.values(), key=lambda c: (c["book"], c["deposit"])),
+                     "max_accounts": self.max_accounts}
+
     def consent_state(self, acc):
         cur = LEGAL.current()
         mine = self.db.consent(acc["id"], cur)
@@ -1118,6 +1165,43 @@ PUB_ROUTES = {"dca": ("full", "focus", "dep", "ruler", "sizing"),
               "candles": ("sym", "hours", "end")}
 PUB_VALUE = re.compile(r"^[A-Za-z0-9._:\-]{1,64}$")
 
+# Сайт (спека 16 L4): главная, документы, кабинет — файлы `site/`, те же
+# ответы API, что у приложения. Настройки сайта (`out/site.json`) задаёт
+# оператор из кабинета: Services ID входа через Apple, ссылки на
+# приложения, имя компании. Адрес машины — для белого списка ключа биржи.
+SITE_DIR = os.path.join(HERE, "site")
+SITE_HOST = "algoth.trade"
+SITE_PAGES = {"/": ("index.html", "text/html; charset=utf-8"),
+              "/index.html": ("index.html", "text/html; charset=utf-8"),
+              "/account": ("account.html", "text/html; charset=utf-8"),
+              "/legal": ("legal.html", "text/html; charset=utf-8"),
+              "/site.css": ("site.css", "text/css; charset=utf-8"),
+              "/site.js": ("site.js", "application/javascript; charset=utf-8")}
+SITE_KEYS = ("apple_client_id", "company", "ios_url", "mac_url", "testflight_url")
+SITE_ID = re.compile(r"^[A-Za-z0-9._-]{0,120}$")
+
+
+def site_settings(out):
+    try:
+        with open(os.path.join(out, "site.json"), encoding="utf-8") as f:
+            d = json.load(f)
+    except (OSError, ValueError):
+        d = {}
+    return {k: str(d.get(k) or "") for k in SITE_KEYS}
+
+
+def site_page(path):
+    """(тело, тип) страницы сайта или None; файлы читаются с диска каждый
+    раз — их пять, они маленькие, а правка видна без перезапуска."""
+    hit = SITE_PAGES.get(path)
+    if not hit:
+        return None
+    try:
+        with open(os.path.join(SITE_DIR, hit[0]), "rb") as f:
+            return f.read(), hit[1]
+    except OSError:
+        return None
+
 
 def pub_query(name, q):
     """Параметры публичного запроса: (dict, None) или (None, слова отказа)."""
@@ -1228,12 +1312,34 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return None, tok
         return self.app.db.account(s["account_id"]), tok
 
+    def _site(self, u, method):
+        """Страницы сайта: www → без www, пять файлов, остальное 404."""
+        host = (self.headers.get("Host") or "").split(":")[0].lower()
+        if host == "www." + SITE_HOST:
+            self.send_response(301)
+            self.send_header("Location", f"https://{SITE_HOST}{self.path}")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        page = site_page(u.path) if method == "GET" else None
+        if page is None:
+            return self._send(404, {"error": "not found"})
+        body, ctype = page
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.end_headers()
+        self.wfile.write(body)
+
     def _route(self, method):
         u = urllib.parse.urlparse(self.path)
         q = urllib.parse.parse_qs(u.query)
         parts = [p for p in u.path.split("/") if p]
         if len(parts) < 3 or parts[0] != "api" or parts[1] != "v1":
-            return self._send(404, {"error": "not found"})
+            return self._site(u, method)
         who = self.client_address[0]
         kind = "write" if method in ("POST", "DELETE") else "read"
         if not self.app.rate.allow(who, kind):
@@ -1254,6 +1360,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self._pub(rest[1], q)
         if rest == ["legal"] and method == "GET":
             return self._send(200, LEGAL.bundle())
+        if rest == ["site"] and method == "GET":
+            return self._send(*self.app.site())
         acc, tok = self._acc()
         if acc is None:
             return self._send(401, {"error": "sign-in required"})
@@ -1297,6 +1405,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
                                                device=body.get("device")))
         if rest == ["operator", "limits"] and method == "GET":
             return self._send(*self.app.limits(acc))
+        if rest == ["operator", "site"] and method == "POST":
+            return self._send(*self.app.set_site(acc, body))
+        if rest == ["operator", "overview"] and method == "GET":
+            return self._send(*self.app.overview(acc))
         if rest == ["operator", "limits"] and method == "POST":
             return self._send(*self.app.set_limits(acc, body.get("max_accounts")))
         if rest == ["operator", "live"] and method == "POST":

@@ -39,6 +39,15 @@ def audiences(path=AUDIENCES_FILE):
             out += [ln.strip() for ln in f if ln.strip() and not ln.startswith("#")]
     except OSError:
         pass
+    # вход с сайта (спека 16 L4): токен несёт аудиторией Services ID, его
+    # задаёт оператор в настройках сайта — одна запись, не второй список
+    try:
+        with open(os.path.join(os.path.dirname(path), "site.json"), encoding="utf-8") as f:
+            cid = str(json.load(f).get("apple_client_id") or "").strip()
+        if cid and cid not in out:
+            out.append(cid)
+    except (OSError, ValueError):
+        pass
     return out
 
 

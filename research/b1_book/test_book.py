@@ -9208,6 +9208,15 @@ def test_acme_challenge_served_without_page_key_and_nothing_else():
             assert get("/.well-known/acme-challenge/..%2F..%2Fetc")[0] == 404          # не тот алфавит
             assert get("/.well-known/acme-challenge/short")[0] == 404
             assert get("/state")[0] == 403                                             # ключ охраняет остальное
+            # браузер по домену без ключа — на сайт; с чужим хостом — отказ как был
+            c = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+            c.request("GET", "/", headers={"Host": "www.algoth.trade"})
+            r = c.getresponse(); r.read()
+            assert r.status == 301 and r.getheader("Location") == "https://algoth.trade/", (r.status, r.getheader("Location"))
+            c.close()
+            c = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+            c.request("GET", "/", headers={"Host": "116.203.146.99"})
+            r = c.getresponse(); r.read(); assert r.status == 403; c.close()
         finally:
             W.ACME_DIR = old_dir
     print("ok  проверка Let's Encrypt: файл вызова без ключа, остальное под ключом")

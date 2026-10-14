@@ -11981,6 +11981,7 @@ def slim_dca(d, focus):
     return out
 
 
+SITE_HOST = "algoth.trade"
 ACME_PREFIX = "/.well-known/acme-challenge/"
 ACME_NAME = re.compile(r"^[A-Za-z0-9_-]{16,128}$")
 ACME_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
@@ -12014,6 +12015,12 @@ def serve(collector, port, token, log):
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
+
+        def _redirect(self, url):
+            self.send_response(301)
+            self.send_header("Location", url)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
 
         def _acme(self, name):
             if not ACME_NAME.match(name):
@@ -12054,6 +12061,11 @@ def serve(collector, port, token, log):
             # охраняет.
             if u.path.startswith(ACME_PREFIX):
                 return self._acme(u.path[len(ACME_PREFIX):])
+            # Человек в браузере по http://algoth.trade без ключа — на сайт
+            # (443); страницы наблюдения по ключу — как прежде. Без ключа
+            # и не на домене — отказ, как было.
+            if "k" not in q and (self.headers.get("Host") or "").split(":")[0].lower().endswith(SITE_HOST):
+                return self._redirect("https://" + SITE_HOST + "/")
             # Сравнение за постоянное время: страница стоит открытым
             # портом, и обычное `!=` отвечает тем быстрее, чем раньше
             # разошлись строки, то есть подсказывает ключ по знаку.

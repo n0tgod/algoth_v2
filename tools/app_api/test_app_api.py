@@ -377,6 +377,62 @@ def test_executor_words_are_shown_in_english_journal_untouched():
     print(f"ok  слова исполнителя по-английски на показе: {len(shown)} форм из ladder.rs, журнал не тронут")
 
 
+def test_site_pages_settings_overview_and_apple_web_audience():
+    """L4 спеки 16: сайт отдаётся с API (главная, кабинет, документы,
+    стиль, скрипт), www → без www, чужой путь — 404; настройки сайта
+    пишет только оператор и только годные значения; Services ID входа
+    через Apple становится допустимой аудиторией токена; обзор оператора
+    считает ключи, подписки, согласие и ёмкость по ячейкам."""
+    import apple as AP
+    with tempfile.TemporaryDirectory() as tmp:
+        app, _ = _app(tmp, apple_verify=lambda t: {"sub": "apple-" + t, "email": t + "@x"}, out=tmp)
+        srv = SV.make_server(app, host="127.0.0.1", port=0, tls_dir=None)
+        port = srv.server_address[1]
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            for path, ctype, word in (("/", "text/html", "Strategies written by AI"), ("/account", "text/html", "Sign in with Apple"),
+                                      ("/legal", "text/html", "Site.legal"), ("/site.css", "text/css", "--accent"),
+                                      ("/site.js", "application/javascript", "operator/overview")):
+                c = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+                c.request("GET", path)
+                r = c.getresponse(); body = r.read().decode()
+                assert r.status == 200 and r.getheader("Content-Type").startswith(ctype) and word in body, (path, r.status)
+                c.close()
+            c = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+            c.request("GET", "/account", headers={"Host": "www.algoth.trade"})
+            r = c.getresponse(); r.read()
+            assert r.status == 301 and r.getheader("Location") == "https://algoth.trade/account"
+            c.close()
+            assert _http(port, "GET", "/nope")[0] == 404 and _http(port, "GET", "/site.js/../server.py")[0] == 404
+            # настройки: без входа — только чтение; клиент — отказ; оператор — годные значения
+            st, r = _http(port, "GET", "/api/v1/site")
+            assert st == 200 and r["server_ip"] == app.server_ip and r["apple_client_id"] == ""
+            st, r = _http(port, "POST", "/api/v1/auth/operator", {"token": "OPTOKEN", "device": "web"})
+            op = r["session"]
+            app.set_limits(app.db.account(r["account_id"]), 3)
+            st, r = _http(port, "POST", "/api/v1/auth/apple", {"identity_token": "u1"})
+            user = r["session"]
+            assert _http(port, "POST", "/api/v1/operator/site", {"company": "X"}, token=user)[0] == 403
+            assert _http(port, "POST", "/api/v1/operator/site", {"ios_url": "http://x"}, token=op)[0] == 400
+            assert _http(port, "POST", "/api/v1/operator/site", {"apple_client_id": "bad id"}, token=op)[0] == 400
+            st, r = _http(port, "POST", "/api/v1/operator/site",
+                          {"apple_client_id": "trade.algoth.web", "company": "MDS", "ios_url": "https://apps.apple.com/x"}, token=op)
+            assert st == 200 and r["apple_client_id"] == "trade.algoth.web" and r["company"] == "MDS"
+            assert _http(port, "GET", "/api/v1/site")[1]["ios_url"] == "https://apps.apple.com/x"
+            assert "trade.algoth.web" in AP.audiences(os.path.join(tmp, "apple_audiences.txt"))
+            assert "trade.algoth.web" not in AP.audiences(os.path.join(tmp, "nowhere", "apple_audiences.txt"))
+            # обзор: оператор + клиент, согласие клиента видно
+            _http(port, "POST", "/api/v1/consent", {"version": __import__("legal").current()}, token=user)
+            assert _http(port, "GET", "/api/v1/operator/overview", token=user)[0] == 403
+            st, ov = _http(port, "GET", "/api/v1/operator/overview", token=op)
+            assert st == 200 and len(ov["accounts"]) == 2 and ov["max_accounts"] == 3
+            u = next(a for a in ov["accounts"] if a["role"] == "user")
+            assert u["consent"] and u["keys"] == 0 and u["subs"] == 0 and ov["cells"] == []
+        finally:
+            srv.shutdown()
+    print("ok  сайт с API: страницы, www→apex, настройки оператора, аудитория Apple с сайта, обзор")
+
+
 def test_public_summary_without_page_key_whitelist_and_collector_failure():
     """L1 спеки 16: свод для приложения без сессии и без ключа страниц —
     четыре ответа сборщика, только названные параметры, латиница; ключ

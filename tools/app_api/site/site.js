@@ -1,0 +1,254 @@
+// Кабинет Algoth (спека 16 L4). Все числа и слова — ответы API; страница
+// ничего не считает, только печатает и шлёт команды. Токен сессии —
+// в localStorage (срок держит сервер, 30 суток).
+const Site = (() => {
+  const API = "/api/v1/";
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const tok = () => localStorage.getItem("algoth.session") || "";
+  const money = (v) => v == null ? "—" : (v >= 0 ? "+" : "−") + "$" + Math.abs(v).toFixed(2);
+  const amt = (v) => v == null ? "—" : "$" + Number(v).toLocaleString("en-US", {maximumFractionDigits: 2});
+  const when = (t) => t ? new Date(t * 1000).toLocaleString() : "—";
+
+  async function api(method, path, body) {
+    const h = {"Content-Type": "application/json"};
+    if (tok()) h.Authorization = "Bearer " + tok();
+    const r = await fetch(API + path, {method, headers: h, body: body ? JSON.stringify(body) : (method === "GET" ? undefined : "{}")});
+    let j = {};
+    try { j = await r.json(); } catch (e) { j = {error: "the server did not answer with JSON"}; }
+    if (!r.ok) { const e = new Error(j.error || ("the server answered " + r.status)); e.status = r.status; e.body = j; throw e; }
+    return j;
+  }
+  function msg(text, ok) { const m = $("msg"); if (!m) return; m.innerHTML = text ? `<div class="msg ${ok ? "ok" : ""}">${esc(text)}</div>` : ""; }
+  function show(id, on) { const e = $(id); if (e) e.classList.toggle("hide", !on); }
+
+  // --- markdown документов: заголовки, абзацы, списки, таблицы ---------
+  function md(text) {
+    const out = []; let list = false, table = false;
+    const inl = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>');
+    for (const raw of text.split("\n")) {
+      const t = raw.trim();
+      if (!t) { if (list) { out.push("</ul>"); list = false; } if (table) { out.push("</table>"); table = false; } continue; }
+      if (t.startsWith("|")) {
+        if (t.includes("---")) continue;
+        if (!table) { out.push("<table>"); table = true; }
+        out.push("<tr>" + t.split("|").slice(1, -1).map((c) => "<td>" + inl(c.trim()) + "</td>").join("") + "</tr>"); continue;
+      }
+      if (t.startsWith("- ")) { if (!list) { out.push("<ul>"); list = true; } out.push("<li>" + inl(t.slice(2)) + "</li>"); continue; }
+      if (t.startsWith("# ")) out.push("<h1>" + inl(t.slice(2)) + "</h1>");
+      else if (t.startsWith("## ")) out.push("<h2>" + inl(t.slice(3)) + "</h2>");
+      else out.push("<p>" + inl(t) + "</p>");
+    }
+    if (list) out.push("</ul>"); if (table) out.push("</table>");
+    return out.join("\n");
+  }
+
+  // --- главная -----------------------------------------------------------
+  async function home() {
+    $("year").textContent = new Date().getFullYear();
+    try {
+      const s = await api("GET", "site");
+      if (s.company) $("company").textContent = s.company;
+      const set = (id, url, sub) => { const a = $(id); if (url) { a.href = url; a.classList.remove("soon"); $(id + "-sub").textContent = sub; } };
+      set("ios", s.ios_url, "App Store"); set("mac", s.mac_url, "Mac App Store");
+      if (s.testflight_url) $("testflight").innerHTML = `Early access: <a href="${esc(s.testflight_url)}">join the TestFlight beta</a>.`;
+      if (tok()) $("nav-account").textContent = "Account";
+    } catch (e) { /* главная живёт и без настроек */ }
+  }
+
+  // --- документы ---------------------------------------------------------
+  async function legal() {
+    try {
+      const l = await api("GET", "legal");
+      $("version").textContent = "Version " + l.version;
+      $("docs").innerHTML = l.docs.map((d) => md(d.text)).join("<hr>");
+    } catch (e) { $("docs").innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
+  }
+
+  // --- кабинет -----------------------------------------------------------
+  let me = null, site = {}, cells = [];
+
+  async function account() {
+    try { site = await api("GET", "site"); } catch (e) { site = {}; }
+    $("server-ip").textContent = site.server_ip || "";
+    $("signout").onclick = async (ev) => { ev.preventDefault(); try { await api("POST", "auth/logout"); } catch (e) {} localStorage.removeItem("algoth.session"); location.reload(); };
+    $("op-btn").onclick = async () => {
+      try { const r = await api("POST", "auth/operator", {token: $("op-token").value.trim(), device: "web"}); localStorage.setItem("algoth.session", r.session); location.reload(); }
+      catch (e) { msg(e.message); }
+    };
+    $("apple-btn").onclick = appleSignIn;
+    if (!site.apple_client_id) $("apple-note").textContent = "Sign in with Apple is being set up on the server (Services ID). Meanwhile sign in from the app.";
+    if (!tok()) { show("login", true); return; }
+    try { me = await api("GET", "me"); }
+    catch (e) { if (e.status === 401) { localStorage.removeItem("algoth.session"); show("login", true); return; } msg(e.message); return; }
+    show("signout", true);
+    if (me.consent && me.consent.ok === false && me.role !== "operator") { await consent(); return; }
+    await render();
+  }
+
+  async function appleSignIn() {
+    if (!site.apple_client_id) { msg("Sign in with Apple is not configured on the server yet."); return; }
+    if (!window.AppleID) {
+      await new Promise((ok, bad) => { const s = document.createElement("script"); s.src = "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"; s.onload = ok; s.onerror = () => bad(new Error("Apple sign-in script did not load")); document.head.appendChild(s); }).catch((e) => msg(e.message));
+      if (!window.AppleID) return;
+    }
+    try {
+      AppleID.auth.init({clientId: site.apple_client_id, scope: "email", redirectURI: location.origin + "/account", usePopup: true});
+      const r = await AppleID.auth.signIn();
+      const s = await api("POST", "auth/apple", {identity_token: r.authorization.id_token, device: "web"});
+      localStorage.setItem("algoth.session", s.session); location.reload();
+    } catch (e) { msg(e.message || (e.error ? "Apple: " + e.error : "sign-in cancelled")); }
+  }
+
+  async function consent() {
+    show("consent", true);
+    const l = await api("GET", "legal");
+    $("consent-version").textContent = l.version;
+    $("consent-docs").innerHTML = l.docs.map((d) => md(d.text)).join("<hr>");
+    $("agree").onchange = () => { $("accept").disabled = !$("agree").checked; };
+    $("accept").onclick = async () => {
+      try { await api("POST", "consent", {version: l.version, device: "web"}); location.reload(); } catch (e) { msg(e.message); }
+    };
+  }
+
+  async function render() {
+    show("home", true);
+    const [keys, subs, st] = await Promise.all([api("GET", "keys"), api("GET", "subscriptions"), api("GET", "state")]);
+    try { cells = (await api("GET", "strategies")).cells; } catch (e) { cells = []; }
+    $("me").innerHTML = `<div class="kv"><b>role</b><span>${esc(me.role)}</span></div><div class="kv"><b>e-mail</b><span>${esc(me.email || "—")}</span></div>
+      <div class="kv"><b>live trading on the server</b><span class="${st.live_enabled ? "good" : ""}">${st.live_enabled ? "enabled by the operator" : "disabled"}</span></div>
+      ${me.consent && me.consent.accepted ? `<div class="kv"><b>documents accepted</b><span>version ${esc(me.consent.accepted)} on ${when(me.consent.accepted_at)}</span></div>` : ""}`;
+    renderKeys(keys.keys || []); renderSubs(subs.subscriptions || [], st); renderPositions(); renderEvents(st);
+    if (me.role === "operator") renderOperator(st);
+    $("add-key").onclick = async () => {
+      msg("Checking the key with the exchange…", true);
+      try { await api("POST", "keys", {venue: "bybit", key: $("key").value.trim(), secret: $("secret").value.trim()}); msg("Key added.", true); $("key").value = ""; $("secret").value = ""; await render(); }
+      catch (e) { msg(e.message); }
+    };
+    fillSubForm(keys.keys || []);
+  }
+
+  function renderKeys(keys) {
+    $("keys").innerHTML = keys.length ? keys.map((k) => `<div class="card"><div class="row"><span class="mono">${esc(k.venue)} · ${esc(k.prefix)}…</span>
+      <span class="pill ${k.trade_ok ? "ok" : ""}">${k.trade_ok ? "trading" : "no trading"}</span><span class="pill ${k.ip_ok ? "ok" : ""}">${k.ip_restricted ? (k.ip_ok ? "IP ✓" : "wrong IP") : "no IP restriction"}</span>
+      ${k.equity_usd != null ? `<span class="note">equity when added ${amt(k.equity_usd)}</span>` : ""}</div>
+      ${(k.warnings || []).map((w) => `<div class="note bad">${esc(w)}</div>`).join("")}
+      <div class="row"><button class="danger" data-revoke="${esc(k.key_id)}">Revoke key</button></div></div>`).join("")
+      : `<p class="note">No keys yet.</p>`;
+    for (const b of document.querySelectorAll("[data-revoke]")) b.onclick = async () => {
+      if (!confirm("Revoke this key? Its subscriptions will be closed.")) return;
+      try { await api("DELETE", "keys/" + b.dataset.revoke); await render(); } catch (e) { msg(e.message); }
+    };
+  }
+
+  function subState(st, id) { return ((st.subscriptions || []).find((s) => s.subscription_id === id)) || {}; }
+
+  function renderSubs(subs, st) {
+    const bookName = (c) => (c.title_en || c.book) + " · " + (c.side || "");
+    $("subs").innerHTML = subs.length ? subs.map((s) => {
+      const x = subState(st, s.subscription_id); const ex = x.executor || {}; const es = ex.status || {};
+      const live = s.mode === "live"; const want = `${s.book}:${Math.round(s.deposit)}`;
+      const cell = cells.find((c) => c.book === s.book && Math.abs(c.deposit - s.deposit) < 1e-9) || {book: s.book, side: s.side};
+      return `<div class="card"><div class="row"><b>${esc(bookName(cell))}</b><span class="pill ${live ? "live" : ""}">${live ? "LIVE" : "dry run"}</span><span class="pill">${esc(s.sizing || "compound")}</span></div>
+        <div class="kv"><b>deposit</b><span>${amt(s.deposit)}</span></div>
+        ${x.cash_usd != null ? `<div class="kv"><b>subscription cash</b><span>${amt(x.cash_usd)}</span></div>` : ""}
+        ${x.equity_usd != null ? `<div class="kv"><b>account equity</b><span class="${x.equity_ok ? "good" : "bad"}">${amt(x.equity_usd)}</span></div>` : ""}
+        ${live && es.at_ms ? `<div class="kv"><b>executor</b><span class="${ex.age_s < 60 ? "good" : "bad"}">${ex.age_s < 60 ? "running" : "silent " + Math.round(ex.age_s / 60) + " min"}</span></div>
+          <div class="kv"><b>realized live</b><span>${money(es.realized_usd)}</span></div><div class="kv"><b>entries / closed</b><span>${es.entries_n || 0} / ${es.closed_n || 0}</span></div>` : ""}
+        ${live && ex.why_none ? `<div class="note">${esc(ex.why_none)}</div>` : ""}
+        ${es.paused ? `<div class="note bad">entries paused: ${esc(es.paused)}</div>` : ""}${es.last_error ? `<div class="note bad">${esc(es.last_error)}</div>` : ""}
+        ${ex.kill ? `<div class="note bad">KILL — the executor does nothing</div>` : ""}${ex.no_entries ? `<div class="note">new entries stopped; open positions are managed</div>` : ""}
+        ${(x.warnings || []).map((w) => `<div class="note bad">${esc(w)}</div>`).join("")}
+        <div class="row">
+          ${live ? (ex.no_entries ? `<button data-act="arm" data-id="${esc(s.subscription_id)}" data-want="${esc(want)}">Resume entries</button>` : `<button data-act="disarm" data-id="${esc(s.subscription_id)}">Stop trading</button>`)
+                 + `<button data-act="dry" data-id="${esc(s.subscription_id)}">Back to dry run</button>`
+                 + (me.role === "operator" ? `<button class="danger" data-act="kill" data-id="${esc(s.subscription_id)}" data-on="${ex.kill ? 0 : 1}">${ex.kill ? "Lift KILL" : "KILL"}</button>` : "")
+                 : `<button data-act="check" data-id="${esc(s.subscription_id)}">Check account</button><button class="primary" data-act="golive" data-id="${esc(s.subscription_id)}" data-want="${esc(want)}">Go live…</button>`}
+          <button class="danger" data-act="close-sub" data-id="${esc(s.subscription_id)}">Close subscription</button></div>
+        <pre class="note mono hide" id="check-${esc(s.subscription_id)}"></pre></div>`;
+    }).join("") : `<p class="note">No subscriptions yet.</p>`;
+    for (const b of document.querySelectorAll("[data-act]")) b.onclick = () => action(b.dataset);
+  }
+
+  async function action(d) {
+    const id = d.id;
+    try {
+      if (d.act === "check") { const r = await api("POST", `subscriptions/${id}/check`); const p = $("check-" + id); p.textContent = r.text; p.classList.remove("hide"); return; }
+      if (d.act === "golive") {
+        const w = prompt(`The executor will place REAL orders on Bybit with this key. No money stops. Type ${d.want} to confirm.`);
+        if (w == null) return; await api("POST", `subscriptions/${id}/arm`, {confirm: w}); msg("Live. The executor starts within 5 minutes.", true);
+      } else if (d.act === "arm") { await api("POST", `subscriptions/${id}/arm`, {confirm: d.want}); }
+      else if (d.act === "disarm") { await api("POST", `subscriptions/${id}/disarm`); }
+      else if (d.act === "dry") { if (!confirm("Back to dry run? Only possible without open positions.")) return; await api("POST", `subscriptions/${id}/dry`); }
+      else if (d.act === "kill") { if (!confirm(d.on === "1" ? "KILL: the executor stops doing anything — no orders, no cancels." : "Lift KILL?")) return; await api("POST", `subscriptions/${id}/kill`, {on: d.on === "1"}); }
+      else if (d.act === "close-sub") { if (!confirm("Close this subscription?")) return; const r = await api("DELETE", "subscriptions/" + id); if (r.note) msg(r.note, true); }
+      else if (d.act === "close-pos") { if (!confirm(`Close ${d.sym} now?`)) return; const r = await api("POST", `subscriptions/${id}/close`, {sym: d.sym, pos_at: Number(d.at)}); if (r.note) msg(r.note, true); }
+      await render();
+    } catch (e) { msg(e.message); }
+  }
+
+  async function renderPositions() {
+    let p; try { p = await api("GET", "positions"); } catch (e) { $("positions").innerHTML = `<p class="note bad">${esc(e.message)}</p>`; return; }
+    const rows = (p.positions || []).filter((r) => r.state === "open");
+    const pnl = p.pnl || {};
+    $("positions").innerHTML = (pnl.open_usd != null ? `<div class="kv"><b>open P&amp;L</b><span class="${pnl.open_usd >= 0 ? "good" : "bad"}">${money(pnl.open_usd)}</span></div><div class="kv"><b>closed</b><span>${money(pnl.realized_usd)}</span></div>` : "")
+      + (rows.length ? rows.map((r) => `<div class="card"><div class="row"><b class="mono">${esc(r.sym)}</b><span class="pill">${esc(r.side)}</span>${r.depth ? `<span class="note">rung ${esc(r.depth)}</span>` : ""}<span class="${(r.mark_usd || 0) >= 0 ? "good" : "bad"}">${money(r.mark_usd)}</span></div>
+          <div class="note">avg ${esc(r.avg ?? "—")} · take ${esc(r.take_px ?? "—")} · floor ${esc(r.floor_px ?? "—")} · margin ${amt(r.margin)}</div>
+          ${r.closing ? `<div class="note">closing: ${esc(r.closing)}</div>` : `<div class="row"><button class="danger" data-act="close-pos" data-id="${esc(r.subscription_id)}" data-sym="${esc(r.sym)}" data-at="${esc(r.pos_at)}">Close</button></div>`}</div>`).join("")
+        : `<p class="note">No open live positions.</p>`);
+    for (const b of document.querySelectorAll("[data-act=close-pos]")) b.onclick = () => action(b.dataset);
+  }
+
+  function renderEvents(st) {
+    const ev = (st.events_tail || []).slice(-12).reverse();
+    $("events").innerHTML = ev.length ? ev.map((e) => `<div>${esc(when(e.ts))} · ${esc(e.text)}</div>`).join("") : `<span class="note">no events</span>`;
+  }
+
+  function fillSubForm(keys) {
+    const sel = $("sub-key"); sel.innerHTML = keys.map((k) => `<option value="${esc(k.key_id)}">${esc(k.prefix)}…</option>`).join("");
+    const deps = [...new Set(cells.map((c) => c.deposit))].sort((a, b) => a - b);
+    $("sub-dep").innerHTML = deps.map((d) => `<option value="${d}">${amt(d)}</option>`).join("");
+    const upd = () => {
+      const side = $("sub-side").value, mode = $("sub-mode").value;
+      const book = side === "both" ? "pair_" + mode : side === "short" ? mode + "_h" : mode;
+      const c = cells.find((x) => x.book === book && Math.abs(x.deposit - Number($("sub-dep").value)) < 1e-9 && (x.sizing || "compound") === $("sub-sizing").value);
+      $("sub-cell").textContent = c ? `${c.title_en || c.book} · ${c.side} · deposit ${amt(c.deposit)}` + (c.ticket_usd ? ` · per position ${amt(c.ticket_usd)}` : "") + (c.n != null ? ` · paper trades ${c.n}` : "") : "The server has no such strategy cell.";
+      $("add-sub").disabled = !c || !keys.length; $("add-sub").dataset.book = book;
+    };
+    for (const id of ["sub-side", "sub-mode", "sub-dep", "sub-sizing"]) $(id).onchange = upd;
+    upd();
+    $("add-sub").onclick = async () => {
+      try { await api("POST", "subscriptions", {key_id: sel.value, book: $("add-sub").dataset.book, deposit: Number($("sub-dep").value), sizing: $("sub-sizing").value}); msg("Subscribed as a dry run.", true); await render(); }
+      catch (e) { msg(e.message); }
+    };
+  }
+
+  async function renderOperator(st) {
+    show("operator", true);
+    let lim = {}, ov = {}; try { lim = await api("GET", "operator/limits"); ov = await api("GET", "operator/overview"); } catch (e) { msg(e.message); }
+    $("op").innerHTML = `<div class="kv"><b>live trading switch</b><span class="${st.live_enabled ? "good" : ""}">${st.live_enabled ? "enabled" : "disabled"}</span></div>
+      <div class="row"><button id="op-live">${st.live_enabled ? "Disable live trading switch" : "Enable live trading switch"}</button></div>
+      <div class="kv"><b>accounts</b><span>${lim.accounts ?? "—"} of ${lim.max_accounts ?? "—"} allowed</span></div>
+      <div class="row"><input id="op-max" type="number" min="1" value="${lim.max_accounts ?? 1}" style="max-width:120px"><button id="op-max-btn">Set account limit</button></div>
+      <h3 style="margin-top:14px">Site settings</h3>
+      <label>Apple Services ID (web sign-in client id)</label><input id="s-apple" value="${esc(site.apple_client_id || "")}" placeholder="trade.algoth.web">
+      <label>Company name (footer)</label><input id="s-company" value="${esc(site.company || "")}">
+      <label>App Store link (iPhone &amp; iPad)</label><input id="s-ios" value="${esc(site.ios_url || "")}" placeholder="https://apps.apple.com/…">
+      <label>Mac App Store link</label><input id="s-mac" value="${esc(site.mac_url || "")}">
+      <label>TestFlight link (early access)</label><input id="s-tf" value="${esc(site.testflight_url || "")}" placeholder="https://testflight.apple.com/join/…">
+      <div class="row"><button class="primary" id="s-save">Save site settings</button></div>
+      <h3 style="margin-top:14px">Accounts and subscriptions</h3>
+      ${(ov.accounts || []).map((a) => `<div class="card"><div class="row"><span class="mono">${esc(a.account_id)}</span><span class="pill">${esc(a.role)}</span><span class="note">${esc(a.email || "")}</span><span class="note">created ${when(a.created)}</span>
+        <span class="note">keys ${a.keys} · subs ${a.subs} · live ${a.live}</span>${a.consent ? `<span class="pill ok">consent ${esc(a.consent)}</span>` : `<span class="pill">no consent</span>`}</div></div>`).join("")}
+      <h3 style="margin-top:14px">Capacity by cell</h3>
+      ${(ov.cells || []).length ? `<table class="doc">${(ov.cells || []).map((c) => `<tr><td class="mono">${esc(c.book)}</td><td>${amt(c.deposit)}</td><td>${c.live} live</td><td>${c.dry} dry</td></tr>`).join("")}</table>` : `<p class="note">no subscriptions</p>`}`;
+    $("op-live").onclick = async () => { try { await api("POST", "operator/live", {on: !st.live_enabled}); await render(); } catch (e) { msg(e.message); } };
+    $("op-max-btn").onclick = async () => { try { await api("POST", "operator/limits", {max_accounts: Number($("op-max").value)}); await render(); } catch (e) { msg(e.message); } };
+    $("s-save").onclick = async () => {
+      try { await api("POST", "operator/site", {apple_client_id: $("s-apple").value.trim(), company: $("s-company").value.trim(), ios_url: $("s-ios").value.trim(), mac_url: $("s-mac").value.trim(), testflight_url: $("s-tf").value.trim()}); msg("Saved.", true); site = await api("GET", "site"); }
+      catch (e) { msg(e.message); }
+    };
+  }
+
+  return {home, legal, account};
+})();
