@@ -25,6 +25,8 @@ import sys
 import subprocess
 import threading
 import time
+import re
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -87,7 +89,7 @@ class RateLimiter:
 class App:
     """Логика API без HTTP: её гоняют проверки напрямую."""
 
-    def __init__(self, dbpath, pub, operator_token=None, venue=bybit, dca_fetch=None,
+    def __init__(self, dbpath, pub, operator_token=None, venue=bybit, dca_fetch=None, pub_fetch=None,
                  apple_verify=None, server_ip=SERVER_IP, max_accounts=MAX_ACCOUNTS,
                  out=None, exec_root=None, sender=None):
         self.db = DBM.DB(dbpath)
@@ -95,6 +97,7 @@ class App:
         self.operator_token = operator_token
         self.venue = venue
         self.dca_fetch = dca_fetch or fetch_dca
+        self.pub_fetch = pub_fetch or fetch_pub
         self.apple_verify = apple_verify
         self.server_ip = server_ip
         self.max_accounts = max_accounts
@@ -1025,6 +1028,53 @@ class App:
 
 # ------------------------------------------------------------ HTTP
 
+# Свод для приложения без ключа страниц (спека 16 §8b, L1). Ключ страниц
+# был вшит в сборку и открывал ВСЕ страницы сборщика (статус, память,
+# графики); публичному бинарю его давать нельзя. Здесь — только четыре
+# ответа, которые читает приложение, только названные параметры, только
+# латиница; ключ страниц добавляет сервер, наружу он не выходит. Ответ
+# сборщика отдаётся как есть, байтами (свод в фокусе ≈ 2.6 МБ — разбирать
+# и собирать его заново незачем), сжатие — если клиент его принимает.
+PUB_ROUTES = {"dca": ("full", "focus", "dep", "ruler", "sizing"),
+              "dca_marks": ("dep", "ruler", "sizing"),
+              "dca_trades": ("sym", "book"),
+              "candles": ("sym", "hours", "end")}
+PUB_VALUE = re.compile(r"^[A-Za-z0-9._:\-]{1,64}$")
+
+
+def pub_query(name, q):
+    """Параметры публичного запроса: (dict, None) или (None, слова отказа)."""
+    allowed = PUB_ROUTES.get(name)
+    if allowed is None:
+        return None, "нет такого свода"
+    out = {}
+    for k, vs in q.items():
+        if k not in allowed:
+            return None, f"параметр {k!r} не принимается"
+        v = vs[0] if vs else ""
+        if not PUB_VALUE.match(v):
+            return None, f"параметр {k!r}: только латиница, цифры и ._:-"
+        out[k] = v
+    return out, None
+
+
+def fetch_pub(name, params, gzip_ok=False):
+    """Ответ сборщика байтами: (код, тело, Content-Encoding или None)."""
+    try:
+        with open(PAGE_TOKEN, encoding="utf-8") as f:
+            tok = f.read().strip()
+    except OSError:
+        tok = ""
+    req = urllib.request.Request(COLLECTOR + "/" + name + "?" + urllib.parse.urlencode(dict(params, k=tok)))
+    if gzip_ok:
+        req.add_header("Accept-Encoding", "gzip")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return 200, r.read(), r.headers.get("Content-Encoding")
+    except urllib.error.HTTPError as e:
+        return e.code, b"", None
+
+
 def fetch_dca(full=None):
     try:
         with open(PAGE_TOKEN, encoding="utf-8") as f:
@@ -1057,6 +1107,31 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(body)
+
+    def _send_raw(self, body, encoding=None):
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        if encoding:
+            self.send_header("Content-Encoding", encoding)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _pub(self, name, q):
+        params, why = pub_query(name, q)
+        if why:
+            return self._send(400, {"error": why})
+        gz = "gzip" in (self.headers.get("Accept-Encoding") or "")
+        try:
+            code, body, enc = self.app.pub_fetch(name, params, gzip_ok=gz)
+        except (OSError, ValueError) as e:
+            return self._send(502, {"error": f"сборщик не отвечает: {e}"})
+        if code == 403:
+            return self._send(502, {"error": "сборщик отверг ключ страниц сервера (out/token.txt)"})
+        if code != 200:
+            return self._send(502, {"error": f"сборщик ответил {code}"})
+        return self._send_raw(body, enc if gz else None)
 
     def _body(self):
         n = int(self.headers.get("Content-Length") or 0)
@@ -1098,6 +1173,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self._send(*self.app.auth_apple(body.get("identity_token"), body.get("device"), current=cur))
         if rest == ["health"] and method == "GET":
             return self._send(200, {"ok": True, "schema": SCHEMA})
+        if len(rest) == 2 and rest[0] == "pub" and method == "GET":
+            return self._pub(rest[1], q)
         acc, tok = self._acc()
         if acc is None:
             return self._send(401, {"error": "нужен вход"})

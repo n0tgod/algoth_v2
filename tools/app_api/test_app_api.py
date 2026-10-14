@@ -285,6 +285,59 @@ def _tls_get(port, timeout=5.0):
     return r.status
 
 
+def test_public_summary_without_page_key_whitelist_and_collector_failure():
+    """L1 спеки 16: свод для приложения без сессии и без ключа страниц —
+    четыре ответа сборщика, только названные параметры, латиница; ключ
+    страниц наружу не выходит; отказ сборщика — словами, не пустотой."""
+    import gzip as GZ
+    calls = []
+
+    def fake(name, params, gzip_ok=False):
+        calls.append((name, dict(params), gzip_ok))
+        if params.get("ruler") == "down":
+            raise OSError("connection refused")
+        if params.get("ruler") == "deny":
+            return 403, b"", None
+        body = json.dumps({"route": name, "params": params}).encode()
+        return (200, GZ.compress(body), "gzip") if gzip_ok else (200, body, None)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        app, _ = _app(tmp, pub_fetch=fake)
+        srv = SV.make_server(app, host="127.0.0.1", port=0, tls_dir=None)
+        port = srv.server_address[1]
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            st, r = _http(port, "GET", "/api/v1/pub/dca?focus=pair_optimal:100:fixed")
+            assert st == 200 and r == {"route": "dca", "params": {"focus": "pair_optimal:100:fixed"}}, (st, r)
+            assert "k" not in calls[-1][1]                       # ключ добавляет только сервер
+            st, r = _http(port, "GET", "/api/v1/pub/candles?sym=BTCUSDT&hours=24&end=1791999332.5")
+            assert st == 200 and r["params"] == {"sym": "BTCUSDT", "hours": "24", "end": "1791999332.5"}
+            # чужой маршрут, чужой параметр, не-латиница — отказ словами, сборщик не зовётся
+            n = len(calls)
+            for path, word in (("/api/v1/pub/mem", "нет такого свода"),
+                               ("/api/v1/pub/status", "нет такого свода"),
+                               ("/api/v1/pub/dca?k=steal", "'k' не принимается"),
+                               ("/api/v1/pub/dca_trades?sym=BTC%20USDT", "только латиница")):
+                st, r = _http(port, "GET", path)
+                assert st == 400 and word in r["error"], (path, st, r)
+            assert len(calls) == n
+            st, r = _http(port, "GET", "/api/v1/pub/dca?ruler=down")
+            assert st == 502 and "не отвечает" in r["error"], r
+            st, r = _http(port, "GET", "/api/v1/pub/dca?ruler=deny")
+            assert st == 502 and "ключ страниц" in r["error"], r
+            # сжатие проходит насквозь, если клиент его принимает
+            c = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+            c.request("GET", "/api/v1/pub/dca_marks?ruler=optimal&dep=100", headers={"Accept-Encoding": "gzip"})
+            rr = c.getresponse()
+            raw = rr.read()
+            assert rr.getheader("Content-Encoding") == "gzip" and calls[-1][2] is True
+            assert json.loads(GZ.decompress(raw))["route"] == "dca_marks"
+            c.close()
+        finally:
+            srv.shutdown()
+    print("ok  свод без ключа: 4 маршрута, белый список, ключ страниц не выходит, отказ сборщика словами, gzip насквозь")
+
+
 def test_silent_connection_does_not_block_tls_api():
     """Соединение, открытое и замолчавшее, не держит API (11.10, ночь).
 
