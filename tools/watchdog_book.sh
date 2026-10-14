@@ -102,6 +102,16 @@ train_rss_mb() {
 # такта: идёт любой прогон книг или в этом такте один уже запущен
 # (`BOOKS_LAUNCHED` — `pgrep` только что запущенного может не увидеть).
 BOOKS_LAUNCHED=""
+# Каденция книг (владелец 14.10, спека 17 путь 1): длинные — каждые 5 мин
+# (тёплый прогон 47 с), короткие — каждые 15 (145 с), общий счёт — после
+# источников (30 с). Так исполнения внутри часа видны в приложении не
+# через час, а через минуты. Публикация в git — раз в час (минута < 5):
+# артефакты по 1.5 МБ, двенадцать коммитов в час раздули бы историю.
+BOOKS_EVERY_S=${BOOKS_EVERY_S:-300}
+SHORT_EVERY_S=${SHORT_EVERY_S:-900}
+publish_flag() {
+    if [ "$(date -u +%M | sed 's/^0//')" -lt 5 ]; then echo ""; else echo "--no-publish"; fi
+}
 books_running() {
     pgrep -f "dca_paper/run_(paper|short|pair)[.]py" >/dev/null 2>&1
 }
@@ -471,10 +481,10 @@ if ! pgrep -f "dca_paper/run_paper.py" >/dev/null; then
     fi
     dca_hh=$(date -u +%H)
     if [ "$dca_hh" != "02" ] && [ "$dca_hh" != "06" ] \
-       && [ "$dca_age" -gt 3600 ] && books_mem_ok; then
-        echo "[$(now)] DCA-книги: последний счёт ${dca_age} с назад — прогон"
+       && [ "$dca_age" -gt "$BOOKS_EVERY_S" ] && books_mem_ok; then
+        echo "[$(now)] DCA-книги: последний счёт ${dca_age} с назад — прогон $(publish_flag)"
         setsid nohup bash -c "
-            nice -n 10 .venv/bin/python research/dca_paper/run_paper.py \
+            nice -n 10 .venv/bin/python research/dca_paper/run_paper.py $(publish_flag) \
                 >> $DCAP_LOG 2>&1" &
         BOOKS_LAUNCHED="длинные книги"
     fi
@@ -502,10 +512,10 @@ if ! pgrep -f "dca_paper/run_short.py" >/dev/null; then
     fi
     dcs_hh=$(date -u +%H)
     if [ "$dcs_hh" != "02" ] && [ "$dcs_hh" != "06" ] \
-       && [ "$dcs_age" -gt 3600 ] && books_mem_ok; then
-        echo "[$(now)] короткие книги h24: последний счёт ${dcs_age} с назад — прогон"
+       && [ "$dcs_age" -gt "$SHORT_EVERY_S" ] && books_mem_ok; then
+        echo "[$(now)] короткие книги h24: последний счёт ${dcs_age} с назад — прогон $(publish_flag)"
         setsid nohup bash -c "
-            nice -n 10 .venv/bin/python research/dca_paper/run_short.py \
+            nice -n 10 .venv/bin/python research/dca_paper/run_short.py $(publish_flag) \
                 >> $DCAS_LOG 2>&1" &
         BOOKS_LAUNCHED="короткие книги"
     fi
@@ -532,9 +542,9 @@ if ! pgrep -f "dca_paper/run_pair.py" >/dev/null \
     if stopped_recently "$DCAP_LOG"; then
         echo "[$(now)] общий счёт: прошлый прогон остановился сам по памяти — повтор не раньше часа (смотри $DCAP_LOG)"
     elif pair_due "$DCAP" "$PAIR_SRC_SHORT" "$PAIR_SRC_LONG" && books_mem_ok; then
-        echo "[$(now)] общий счёт: книги-источники свежее — прогон"
+        echo "[$(now)] общий счёт: книги-источники свежее — прогон $(publish_flag)"
         setsid nohup bash -c "
-            nice -n 10 .venv/bin/python research/dca_paper/run_pair.py \
+            nice -n 10 .venv/bin/python research/dca_paper/run_pair.py $(publish_flag) \
                 >> $DCAP_LOG 2>&1" &
         BOOKS_LAUNCHED="общий счёт"
     else

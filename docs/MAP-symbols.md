@@ -9531,7 +9531,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 641 строк
+## tools/watchdog_book.sh · 651 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 
@@ -9541,5 +9541,6 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L60 `stopped_recently()` — Самоостанов прогона по памяти — не повод перезапускать его следующим тактом (13.10: «СТОП: память» каждые 5 м…
 - L76 `mem_avail_mb()`
 - L86 `train_rss_mb()`
-- L105 `books_running()`
-- L108 `books_mem_ok()`
+- L112 `publish_flag()`
+- L115 `books_running()`
+- L118 `books_mem_ok()`
