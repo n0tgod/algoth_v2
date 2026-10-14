@@ -1,0 +1,12 @@
+== задание n64-pub-probe ==
+строка: run tools/app_api/pub_probe.py
+начало: 2026-10-14T21:43:15Z
+запускаю: .venv/bin/python tools/app_api/pub_probe.py 
+dca focus=optimal:100: 200, 279584 байт по сети, книг 72, сделок у книги в фокусе 95, рулеток 9
+dca_marks: 200, 307 байт, known=True, строк 3
+candles BTCUSDT 2 ч: 200, 3612 байт, sym=BTCUSDT, баров 0
+mem: 400 — нет такого свода
+dca?k=x: 400 — параметр 'k' не принимается
+status: 400 — нет такого свода
+итог: всё сходится
+конец: 2026-10-14T21:43:16Z, код 0
