@@ -8713,7 +8713,7 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 API приложения Algoth (спека 15 §7, §7a): аккаунты, ключи биржи, подписки на ячейки стратегий, состояние и со…
 
 
-## tools/app_api/acme_cert.py · 255 строк
+## tools/app_api/acme_cert.py · 262 строк
 
 Сертификат Let's Encrypt для API на 443 (спека 16 L2).
 
@@ -8737,9 +8737,10 @@ API приложения Algoth (спека 15 §7, §7a): аккаунты, к�
   - L105 `Acme.post(self, url, payload, tries=3)` — POST JWS; payload None — POST-as-GET. Возвращает (код, заголовки, тело).
   - L136 `Acme.account(self)`
   - L141 `Acme.poll(self, url, done=('valid',), bad=('invalid',), what='', wai…`
-- L154 `self_check(token, body)` — Свой файл вызова виден снаружи — до того, как звать центр.
-- L168 `days_left(path)`
-- L178 `main(argv=None)`
+- L154 `COLLECTOR = 'http://127.0.0.1:8765'`
+- L157 `self_check(token, body)` — Свой файл вызова отдаёт сборщик — до того, как звать центр.
+- L175 `days_left(path)`
+- L185 `main(argv=None)`
 
 ## tools/app_api/add_audience.py · 39 строк
 

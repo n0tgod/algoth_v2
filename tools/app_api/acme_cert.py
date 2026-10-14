@@ -151,18 +151,25 @@ class Acme:
         raise SystemExit(f"{what}: не дождались за {wait} с")
 
 
+COLLECTOR = "http://127.0.0.1:8765"
+
+
 def self_check(token, body):
-    """Свой файл вызова виден снаружи — до того, как звать центр."""
-    for d in DOMAINS:
-        url = f"http://{d}/.well-known/acme-challenge/{token}"
-        try:
-            with urllib.request.urlopen(url, timeout=15) as r:
-                got = r.read().decode()
-        except Exception as e:                                  # noqa: BLE001
-            raise SystemExit(f"проверка до центра: {url} не отвечает ({e}) — сборщик без маршрута ACME?")
-        if got != body:
-            raise SystemExit(f"проверка до центра: {url} отдал не то ({got[:60]!r})")
-    log("файл вызова виден по http на обоих именах")
+    """Свой файл вызова отдаёт сборщик — до того, как звать центр.
+
+    Спрашиваем сборщик напрямую (8765): порт 80 ведёт к нему правилом
+    iptables PREROUTING, а оно действует только на входящие ИЗВНЕ —
+    запрос сервера к собственному адресу на 80 получает отказ
+    (14.10, первая проба). Центр приходит извне, ему правило работает."""
+    url = f"{COLLECTOR}/.well-known/acme-challenge/{token}"
+    try:
+        with urllib.request.urlopen(url, timeout=15) as r:
+            got = r.read().decode()
+    except Exception as e:                                      # noqa: BLE001
+        raise SystemExit(f"проверка до центра: {url} не отвечает ({e}) — сборщик без маршрута ACME?")
+    if got != body:
+        raise SystemExit(f"проверка до центра: {url} отдал не то ({got[:60]!r})")
+    log("файл вызова сборщик отдаёт")
 
 
 def days_left(path):
