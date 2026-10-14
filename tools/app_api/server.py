@@ -34,6 +34,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 import db as DBM                                              # noqa: E402
+import legal as LEGAL                                         # noqa: E402
 import sealed
 import push as PUSH
 import tradelog as TRADES                                             # noqa: E402  (имя не `trades`: так зовётся модуль кассы S8)
@@ -55,7 +56,10 @@ INTENTS_TICK_S = 60
 SERVER_IP = "116.203.146.99"
 COLLECTOR = "http://127.0.0.1:8765"
 PAGE_TOKEN = os.path.join(ROOT, "research", "b1_book", "out", "token.txt")
-MAX_ACCOUNTS = 1                 # §7a.6: до юридической проверки — один аккаунт
+MAX_ACCOUNTS = 1                 # умолчание без файла пределов: один аккаунт (оператор)
+# Предел аккаунтов меняет оператор без перезапуска (спека 16 L3, 14.10):
+# `out/limits.json` {"max_accounts": N}. Открыть регистрацию — решение
+# владельца; число держит ёмкость машины (исполнитель на подписку).
 EQUITY_TTL = 60.0
 # Чтение — 600 в минуту: вкладка Trades спрашивает позиции раз в 2 с
 # (владелец 10.10: «пнл как можно чаще»), плюс состояние и журнал.
@@ -100,7 +104,7 @@ class App:
         self.pub_fetch = pub_fetch or fetch_pub
         self.apple_verify = apple_verify
         self.server_ip = server_ip
-        self.max_accounts = max_accounts
+        self._max_accounts = max_accounts
         self.rate = RateLimiter()
         self._dca = {"at": 0.0, "data": None}
         self.out = out or os.path.dirname(dbpath) or "."
@@ -148,8 +152,8 @@ class App:
             self.db.event(acc["id"], "account", "Apple ID привязан к аккаунту")
         if acc is None:
             if self.db.accounts_count() >= self.max_accounts:
-                return 403, {"error": f"регистрация закрыта: аккаунтов не больше {self.max_accounts} "
-                                      "до решения владельца (спека 15 §7a.6)"}
+                log(f"регистрация отвергнута: аккаунтов {self.db.accounts_count()} при пределе {self.max_accounts}")
+                return 403, {"error": "Registration is closed for now: all places are taken. Please try again later."}
             role = "operator" if self.db.accounts_count() == 0 else "user"
             aid = self.db.create_account(role, who["sub"], who.get("email"))
             self.db.event(aid, "account", f"аккаунт создан ({role})")
@@ -166,10 +170,75 @@ class App:
 
     def me(self, acc):
         return 200, {"account_id": acc["id"], "role": acc["role"], "email": acc["email"],
-                     "apple_linked": bool(acc["apple_sub"]), "schema": SCHEMA}
+                     "apple_linked": bool(acc["apple_sub"]), "schema": SCHEMA,
+                     "consent": self.consent_state(acc)}
+
+    # ------------------------------------------------------------ пределы и согласие
+    @property
+    def max_accounts(self):
+        """Предел аккаунтов: файл оператора, иначе число из конструктора."""
+        try:
+            with open(os.path.join(self.out or "", "limits.json"), encoding="utf-8") as f:
+                return int(json.load(f).get("max_accounts"))
+        except (OSError, ValueError, TypeError):
+            return self._max_accounts
+
+    def set_limits(self, acc, max_accounts):
+        if acc["role"] != "operator":
+            return 403, {"error": "только оператор"}
+        try:
+            n = int(max_accounts)
+        except (TypeError, ValueError):
+            return 400, {"error": "max_accounts — целое число"}
+        if n < 1:
+            return 400, {"error": "max_accounts ≥ 1: оператор — первый аккаунт"}
+        if not self.out:
+            return 503, {"error": "у сервера нет каталога out"}
+        with open(os.path.join(self.out, "limits.json"), "w", encoding="utf-8") as f:
+            json.dump({"max_accounts": n, "at": time.time(), "by": acc["id"]}, f)
+        self.db.event(acc["id"], "operator", f"предел аккаунтов: {n}")
+        return 200, {"max_accounts": n, "accounts": self.db.accounts_count()}
+
+    def limits(self, acc):
+        if acc["role"] != "operator":
+            return 403, {"error": "только оператор"}
+        return 200, {"max_accounts": self.max_accounts, "accounts": self.db.accounts_count()}
+
+    def consent_state(self, acc):
+        cur = LEGAL.current()
+        mine = self.db.consent(acc["id"], cur)
+        last = self.db.last_consent(acc["id"])
+        return {"current": cur, "ok": mine is not None,
+                "accepted": last["version"] if last else None,
+                "accepted_at": last["at"] if last else None}
+
+    def accept(self, acc, version, ip=None, device=None):
+        bad = LEGAL.check()
+        if bad:
+            # тексты разошлись с версией — согласие не с тем, что показано
+            return 503, {"error": "documents are being updated, try again later"}
+        cur = LEGAL.current()
+        if version != cur:
+            return 409, {"error": f"the documents changed: accept version {cur}", "current": cur}
+        self.db.add_consent(acc["id"], cur, ip=ip, device=device)
+        self.db.event(acc["id"], "consent", f"принял документы версии {cur}", {"ip": ip, "device": device})
+        return 200, {"consent": self.consent_state(acc)}
+
+    def need_consent(self, acc):
+        """Отказ словами, если клиент не принял ТЕКУЩИЕ документы. Оператор —
+        владелец сервиса, а не клиент: гейт к нему не относится."""
+        if acc["role"] == "operator":
+            return None
+        if self.db.consent(acc["id"], LEGAL.current()) is not None:
+            return None
+        return 403, {"error": "Accept the Terms of Use and the Risk Disclosure first "
+                              f"(version {LEGAL.current()}).", "consent_required": True}
 
     # ------------------------------------------------------------ ключи
     def add_key(self, acc, venue, key, secret):
+        gate = self.need_consent(acc)
+        if gate:
+            return gate
         if venue != "bybit":
             return 400, {"error": "площадка не поддерживается: только bybit"}
         key = (key or "").strip()
@@ -311,6 +380,9 @@ class App:
 
     # ------------------------------------------------------------ подписки
     def add_subscription(self, acc, key_id, book, deposit, sizing=None):
+        gate = self.need_consent(acc)
+        if gate:
+            return gate
         k = self.db.key(key_id, acc["id"])
         if k is None or k["status"] != "ok":
             return 404, {"error": "ключа нет или он отозван"}
@@ -424,6 +496,9 @@ class App:
             return None
 
     def arm(self, acc, sid, confirm):
+        gate = self.need_consent(acc)
+        if gate:
+            return gate
         """Перевод подписки в живые сделки — кнопкой владельца (§7a.4).
         Подтверждение — словом `книга:депозит`: случайное нажатие его не
         наберёт. Проверки машиной; любая не прошла — отказ словами."""
@@ -1175,6 +1250,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self._send(200, {"ok": True, "schema": SCHEMA})
         if len(rest) == 2 and rest[0] == "pub" and method == "GET":
             return self._pub(rest[1], q)
+        if rest == ["legal"] and method == "GET":
+            return self._send(200, LEGAL.bundle())
         acc, tok = self._acc()
         if acc is None:
             return self._send(401, {"error": "нужен вход"})
@@ -1213,6 +1290,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return self._send(*self.app.close_position(acc, sid, body.get("sym"), body.get("pos_at")))
             if act == "cmd":
                 return self._send(501, {"error": STAGE_NOT_BUILT})
+        if rest == ["consent"] and method == "POST":
+            return self._send(*self.app.accept(acc, body.get("version"), ip=self.client_address[0],
+                                               device=body.get("device")))
+        if rest == ["operator", "limits"] and method == "GET":
+            return self._send(*self.app.limits(acc))
+        if rest == ["operator", "limits"] and method == "POST":
+            return self._send(*self.app.set_limits(acc, body.get("max_accounts")))
         if rest == ["operator", "live"] and method == "POST":
             return self._send(*self.app.set_live_enabled(acc, bool(body.get("on"))))
         if rest == ["cmd"]:

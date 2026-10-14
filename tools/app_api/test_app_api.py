@@ -10,6 +10,7 @@ import http.client
 import json
 import os
 import sys
+import shutil
 import tempfile
 import threading
 import time
@@ -113,7 +114,7 @@ def test_operator_login_account_cap_and_apple_link():
         acc = app.db.account(r["account_id"])
         # второй аккаунт через Apple — закрыто (MAX_ACCOUNTS = 1)
         st, r2 = app.auth_apple("someone", current=None)
-        assert st == 403 and "регистрация закрыта" in r2["error"]
+        assert st == 403 and "Registration is closed" in r2["error"]
         # оператор привязывает свой Apple ID к своему аккаунту — тот же аккаунт
         st, r3 = app.auth_apple("owner", current=acc)
         assert st == 200 and r3["account_id"] == acc["id"] and app.db.accounts_count() == 1
@@ -283,6 +284,57 @@ def _tls_get(port, timeout=5.0):
     r.read()
     c.close()
     return r.status
+
+
+def test_registration_limit_consent_gate_and_legal_version():
+    """L3/L6 спеки 16: предел аккаунтов — файлом оператора без перезапуска;
+    клиент без согласия с ТЕКУЩИМИ документами не добавит ключ, не
+    подпишется и не включит live; согласие пишет версию, время и адрес;
+    оператор от гейта свободен; версия обязана сходиться с текстами."""
+    import legal as LG
+    assert LG.check() is None, LG.check()
+    b = LG.bundle()
+    assert [d["id"] for d in b["docs"]] == ["terms", "risk", "privacy"] and b["version"] == LG.current()
+    assert all(len(d["text"]) > 500 for d in b["docs"])
+    with tempfile.TemporaryDirectory() as tmp:
+        app, _pem = _app(tmp, apple_verify=lambda t: {"sub": "apple-" + t, "email": t + "@x"}, out=tmp)
+        st, r = app.auth_operator("OPTOKEN", "iphone")
+        op = app.db.account(r["account_id"])
+        # предел 1 — регистрация закрыта; оператор поднимает до 3 без перезапуска
+        assert app.auth_apple("u1")[0] == 403
+        assert app.set_limits(op, 3) == (200, {"max_accounts": 3, "accounts": 1})
+        st, r1 = app.auth_apple("u1")
+        assert st == 200 and r1["role"] == "user"
+        u1 = app.db.account(r1["account_id"])
+        assert app.auth_apple("u2")[0] == 200 and app.auth_apple("u3")[0] == 403
+        assert app.set_limits(u1, 100)[0] == 403 and app.set_limits(op, 0)[0] == 400
+        # клиент без согласия: ключ, подписка, live — отказ словами
+        for st_, r_ in (app.add_key(u1, "bybit", "ABCD1234KEY", SECRET),
+                        app.add_subscription(u1, "key_x", "optimal", 100),
+                        app.arm(u1, "sub_x", "optimal:100")):
+            assert st_ == 403 and r_.get("consent_required") and "Risk Disclosure" in r_["error"], (st_, r_)
+        assert app.me(u1)[1]["consent"] == {"current": LG.current(), "ok": False, "accepted": None, "accepted_at": None}
+        # согласие на прежнюю версию — 409 с текущей
+        st, r = app.accept(u1, "2020-01-01:deadbeef")
+        assert st == 409 and r["current"] == LG.current()
+        st, r = app.accept(u1, LG.current(), ip="1.2.3.4", device="iphone")
+        assert st == 200 and r["consent"]["ok"] is True
+        row = app.db.consent(u1["id"], LG.current())
+        assert row["ip"] == "1.2.3.4" and row["device"] == "iphone" and row["at"] > 0
+        # после согласия гейт пропускает (дальше — обычные проверки ключа)
+        st, r = app.add_key(u1, "bybit", "ABCD1234KEY", SECRET)
+        assert not r.get("consent_required"), r
+        # оператор — владелец сервиса: гейт к нему не относится
+        assert app.need_consent(op) is None
+    # тексты правят без смены версии — проверка обязана это поймать
+    with tempfile.TemporaryDirectory() as d:
+        for n in ("terms.md", "risk.md", "privacy.md", "VERSION"):
+            shutil.copy(os.path.join(LG.DIR, n), os.path.join(d, n))
+        assert LG.check(d) is None
+        with open(os.path.join(d, "risk.md"), "a", encoding="utf-8") as f:
+            f.write("\nquiet edit\n")
+        assert LG.check(d) and "без смены версии" in LG.check(d)
+    print("ok  регистрация по пределу оператора, гейт согласия на ключ/подписку/live, версия = отпечаток текстов")
 
 
 def test_public_summary_without_page_key_whitelist_and_collector_failure():

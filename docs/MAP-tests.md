@@ -4640,50 +4640,51 @@ X1: исполнитель против подставной биржи.
 - L291 `такт_демона_пишет_статус_и_не_молчит_об_ошибке`
 - L375 `which_python`
 
-## tools/app_api/test_app_api.py · 1351 строк
+## tools/app_api/test_app_api.py · 1403 строк
 
 Проверки API приложения (спека 15 Y0): конверт открывается только приватной половиной и ломается от подмены;…
 
-- L17 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L25 `SECRET = 's3cr3t-never-shown-xyz'`
-- L26 `DCA = {'rulers': [{'key': 'optimal_h', 'title…`
-- L40 `class FakeVenue`
-  - L41 `FakeVenue.__init__(self, perms=None, ips=None, read_only=0, equity=1500.0…`
-  - L50 `FakeVenue.query_api(self, key, secret)`
-  - L56 `FakeVenue.wallet_equity(self, key, secret)`
-  - L61 `FakeVenue.position_mode(self, key, secret, symbols=None)`
-- L65 `_app(tmp, venue=None, **kw)`
-- L73 `test_sealed_box_opens_only_with_private_half_and_detects_tamper…`
-- L96 `test_permission_judgement()`
-- L106 `test_operator_login_account_cap_and_apple_link()`
-- L131 `_login(app)`
-- L136 `test_key_add_rejects_money_moving_and_readonly_warns_on_ip_and_…`
-- L172 `test_subscriptions_cells_hedge_warning_and_state()`
-- L227 `_http(port, method, path, body=None, token=None)`
-- L239 `test_http_routing_auth_and_stage_gates()`
-- L275 `_tls_get(port, timeout=5.0)`
-- L288 `test_public_summary_without_page_key_whitelist_and_collector_fa…` — L1 спеки 16: свод для приложения без сессии и без ключа страниц — четыре ответа сборщика, только названные па…
-- L341 `test_silent_connection_does_not_block_tls_api()` — Соединение, открытое и замолчавшее, не держит API (11.10, ночь).
-- L383 `test_init_is_idempotent_and_prints_pin()`
-- L393 `test_apple_verify_names_the_audience_and_accepts_listed_ones()`
-- L416 `_ec_pem()`
-- L427 `test_push_key_is_checked_by_signing_and_words_come_from_the_rec…` — Ключ APNs принимается только если им можно подписать; слова пуша — из записи сделки, деньги печатаются, а не…
-- L481 `test_devices_trades_ingest_and_push_chain()` — Журнал исполнителя → запись → пуш на устройства; повтор чтения не дублирует; мёртвый токен выключается; пробн…
-- L584 `_pos(sym, at, fills, side='long', closed=None, lev=4.0, margin=…`
-- L601 `test_follower_turns_cell_positions_into_executor_events_once()` — Сухой исполнитель: позиции ячейки подписки → события §7.6 — первый рунг вход, следующие доливы с переездом це…
-- L645 `test_follower_tick_feeds_trades_and_pushes_for_the_subscribed_c…` — Такт сервера: следователь → журнал подписки → записи `trades` с mode dry → пуш на устройство; чужие ячейки не…
-- L693 `_flat_bars(t0, n=1440, px=100.0, jitter=0.0)`
-- L701 `_bars_fn(bars)`
-- L707 `_sheet_line(hour, written_at, rows, arm='nn')`
-- L711 `_pick_line(hour, shorts, arm='nn')`
-- L715 `test_intents_plan_entry_like_paper_and_size_from_subscription_c…` — Намерение входа считается теми же функциями, что бумага: вход, плечо, рунги, цель, пол и ликвидация совпадают…
-- L831 `test_intents_sources_are_read_as_tail_once_and_tick_feeds_state…` — Такт сервера: источники читаются хвостом от смещения (первое чтение — хвост, неполная строка остаётся), ноги…
-- L952 `test_intents_for_live_sub_use_executor_cash_names_levels_and_gu…` — Живая подписка: уровни на КАЖДОЙ глубине — `levels_of` по плановым ценам рунгов; касса — депозит + реализован…
-- L1030 `test_arm_needs_word_switch_fresh_equity_and_one_live_per_key()` — Перевод в живые сделки — только кнопкой владельца с подтверждением словом `книга:депозит`; рубильник оператор…
-- L1110 `test_manual_close_appends_exit_intent_for_the_executor()` — Кнопка Close (владелец 11.10): намерение выхода с причиной «manual» дописывается в журнал намерений подписки…
-- L1162 `test_live_positions_are_built_from_executor_journal_in_paper_ro…` — Живые позиции — строками той же формы, что бумажные: вход и доливы из журнала исполнителя (`fills`, `walk` с…
-- L1272 `test_supervisor_starts_armed_subs_with_key_on_stdin_and_stops_u…` — Супервизор: подписке в live — ровно один процесс, ключ ТОЛЬКО трубой; первый подъём не читает сухие намерения…
-- L1338 `TESTS = [v for k, v in sorted(globals().items()…`
+- L18 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L26 `SECRET = 's3cr3t-never-shown-xyz'`
+- L27 `DCA = {'rulers': [{'key': 'optimal_h', 'title…`
+- L41 `class FakeVenue`
+  - L42 `FakeVenue.__init__(self, perms=None, ips=None, read_only=0, equity=1500.0…`
+  - L51 `FakeVenue.query_api(self, key, secret)`
+  - L57 `FakeVenue.wallet_equity(self, key, secret)`
+  - L62 `FakeVenue.position_mode(self, key, secret, symbols=None)`
+- L66 `_app(tmp, venue=None, **kw)`
+- L74 `test_sealed_box_opens_only_with_private_half_and_detects_tamper…`
+- L97 `test_permission_judgement()`
+- L107 `test_operator_login_account_cap_and_apple_link()`
+- L132 `_login(app)`
+- L137 `test_key_add_rejects_money_moving_and_readonly_warns_on_ip_and_…`
+- L173 `test_subscriptions_cells_hedge_warning_and_state()`
+- L228 `_http(port, method, path, body=None, token=None)`
+- L240 `test_http_routing_auth_and_stage_gates()`
+- L276 `_tls_get(port, timeout=5.0)`
+- L289 `test_registration_limit_consent_gate_and_legal_version()` — L3/L6 спеки 16: предел аккаунтов — файлом оператора без перезапуска; клиент без согласия с ТЕКУЩИМИ документа…
+- L340 `test_public_summary_without_page_key_whitelist_and_collector_fa…` — L1 спеки 16: свод для приложения без сессии и без ключа страниц — четыре ответа сборщика, только названные па…
+- L393 `test_silent_connection_does_not_block_tls_api()` — Соединение, открытое и замолчавшее, не держит API (11.10, ночь).
+- L435 `test_init_is_idempotent_and_prints_pin()`
+- L445 `test_apple_verify_names_the_audience_and_accepts_listed_ones()`
+- L468 `_ec_pem()`
+- L479 `test_push_key_is_checked_by_signing_and_words_come_from_the_rec…` — Ключ APNs принимается только если им можно подписать; слова пуша — из записи сделки, деньги печатаются, а не…
+- L533 `test_devices_trades_ingest_and_push_chain()` — Журнал исполнителя → запись → пуш на устройства; повтор чтения не дублирует; мёртвый токен выключается; пробн…
+- L636 `_pos(sym, at, fills, side='long', closed=None, lev=4.0, margin=…`
+- L653 `test_follower_turns_cell_positions_into_executor_events_once()` — Сухой исполнитель: позиции ячейки подписки → события §7.6 — первый рунг вход, следующие доливы с переездом це…
+- L697 `test_follower_tick_feeds_trades_and_pushes_for_the_subscribed_c…` — Такт сервера: следователь → журнал подписки → записи `trades` с mode dry → пуш на устройство; чужие ячейки не…
+- L745 `_flat_bars(t0, n=1440, px=100.0, jitter=0.0)`
+- L753 `_bars_fn(bars)`
+- L759 `_sheet_line(hour, written_at, rows, arm='nn')`
+- L763 `_pick_line(hour, shorts, arm='nn')`
+- L767 `test_intents_plan_entry_like_paper_and_size_from_subscription_c…` — Намерение входа считается теми же функциями, что бумага: вход, плечо, рунги, цель, пол и ликвидация совпадают…
+- L883 `test_intents_sources_are_read_as_tail_once_and_tick_feeds_state…` — Такт сервера: источники читаются хвостом от смещения (первое чтение — хвост, неполная строка остаётся), ноги…
+- L1004 `test_intents_for_live_sub_use_executor_cash_names_levels_and_gu…` — Живая подписка: уровни на КАЖДОЙ глубине — `levels_of` по плановым ценам рунгов; касса — депозит + реализован…
+- L1082 `test_arm_needs_word_switch_fresh_equity_and_one_live_per_key()` — Перевод в живые сделки — только кнопкой владельца с подтверждением словом `книга:депозит`; рубильник оператор…
+- L1162 `test_manual_close_appends_exit_intent_for_the_executor()` — Кнопка Close (владелец 11.10): намерение выхода с причиной «manual» дописывается в журнал намерений подписки…
+- L1214 `test_live_positions_are_built_from_executor_journal_in_paper_ro…` — Живые позиции — строками той же формы, что бумажные: вход и доливы из журнала исполнителя (`fills`, `walk` с…
+- L1324 `test_supervisor_starts_armed_subs_with_key_on_stdin_and_stops_u…` — Супервизор: подписке в live — ровно один процесс, ключ ТОЛЬКО трубой; первый подъём не читает сухие намерения…
+- L1390 `TESTS = [v for k, v in sorted(globals().items()…`
 
 ## tools/test_disk_alarm.py · 64 строк
 

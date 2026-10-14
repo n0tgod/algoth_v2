@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 578, строк: 250827, каталогов: 86.
+Модулей кода: 579, строк: 251034, каталогов: 86.
 
 
 ## корень — память проекта, идеи, README
@@ -38,6 +38,9 @@
 - `journal/2026-09.md` — Сентябрь 2026
 - `journal/2026-10.md` — Октябрь 2026
 - `journal/README.md` — Журнал сессий
+- `legal/privacy.md` — Privacy Policy
+- `legal/risk.md` — Risk Disclosure
+- `legal/terms.md` — Terms of Use
 - `memory/01-pairs-and-residual.md` — Гипотезы 1–2: парная торговля (A0–A4) и факторный остаток (R1–R5)
 - `memory/02-carry-cascades-tape.md` — Гипотезы 3–5 и лента: carry (F1–F3), managed carry (S1), каскады ликвидаций (L0–L3), зонды возврата, лента T1…
 - `memory/03-book-collector-and-first-books.md` — Сборщик стакана B1, гипотеза 6 (M1–M2), ядро бота E1–E2, первые книги и страницы, дефекты кассы 1–3
@@ -822,7 +825,7 @@
 - `app_api/add_audience.py` · 39 строк — Добавить допустимую аудиторию токена Apple (Bundle ID приложения) в `out/apple_audiences.txt` на сервере. Сер…
 - `app_api/apple.py` · 68 строк — Sign in with Apple: проверка identity token (JWT RS256) ключами Apple.
 - `app_api/bybit.py` · 106 строк — Запросы к Bybit V5 от имени ключа аккаунта — только то, что нужно проверкам спеки 15 §7a: права ключа, эквити…
-- `app_api/db.py` · 251 строк — Хранилище API приложения: SQLite с WAL (спека 15 §7a.1).
+- `app_api/db.py` · 269 строк — Хранилище API приложения: SQLite с WAL (спека 15 §7a.1).
 - `app_api/diag.py` · 58 строк — Диагностика API приложения на сервере, только чтение: слушает ли порт, хвост журнала запросов (адрес, метод,…
 - `app_api/events_of.py` · 52 строк — События исполнителя Ladder по одному имени — разбор сделки (11.10).
 - `app_api/follow.py` · 170 строк — Сухой исполнитель-следователь (спека 15, Y2 в сухом режиме).
@@ -830,13 +833,14 @@
 - `app_api/intents.py` · 915 строк — Намерения живого исполнителя Ladder (спека 15 §10a, этап L1).
 - `app_api/keys_local.py` · 68 строк — Открытие запечатанного ключа подписки — ТОЛЬКО на сервере, только процессами исполнителя и предполётной прове…
 - `app_api/ladder_run.py` · 223 строк — Супервизор живых исполнителей Ladder (спека 15 §7a.3, §10a).
+- `app_api/legal.py` · 53 строк — Документы для пользователей и их версия (спека 16 §8b, L3/L6).
 - `app_api/preflight.py` · 141 строк — Предполётная проверка счёта подписки перед живыми сделками (спека 15 §7a.4, §10a). Печатает ЧИСЛА и ДА/НЕТ, н…
 - `app_api/pub_probe.py` · 60 строк — Проверка публичного свода API с самого сервера (спека 16 L1).
 - `app_api/push.py` · 219 строк — Пуши APNs для событий живого исполнителя (спека 15 §7.5).
 - `app_api/restart.py` · 32 строк — Перезапуск процесса API приложения со свежим кодом (через очередь). Останавливает процесс и сразу поднимает н…
 - `app_api/sealed.py` · 87 строк — Запечатанный конверт для секретов ключей биржи (спека 15 §7a.2).
 - `app_api/selftest.py` · 98 строк — Самопроверка API на сервере: процесс жив, TLS отвечает, вход оператора работает, книги читаются. Печатает сло…
-- `app_api/server.py` · 1346 строк — HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
+- `app_api/server.py` · 1430 строк — HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - `app_api/set_topic.py` · 44 строк — Сменить тему пушей APNs (Bundle ID приложения) в `out/apns.json`.
 - `app_api/tradelog.py` · 196 строк — Журнал событий живого исполнителя → записи `trades` → пуши (спека 15 §7.6).
 - `diag_cycle.py` · 302 строк — Почему молчит цикл обучения: хвост журнала и состояние манифеста.
@@ -869,4 +873,4 @@
 - `unstick_publish.py` · 77 строк — Разморозить публикацию: вернуть разрезанный журнал к версии git.
 - `venv_add.py` · 75 строк — Установка пакетов в окружение сервера через очередь заданий.
 - `watchdog_book.sh` · 619 строк — Сторож сбора: поднимает умершее и перезапускает зависшее.
-- тесты: `app_api/test_app_api.py` (1351), `test_disk_alarm.py` (64), `test_jobs.sh` (240), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_api.sh` (47), `test_watchdog_books.sh` (69), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (59), `test_watchdog_ship.sh` (49)
+- тесты: `app_api/test_app_api.py` (1403), `test_disk_alarm.py` (64), `test_jobs.sh` (240), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_api.sh` (47), `test_watchdog_books.sh` (69), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (59), `test_watchdog_ship.sh` (49)

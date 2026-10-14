@@ -42,6 +42,9 @@ CREATE TABLE IF NOT EXISTS trades (
   mode TEXT NOT NULL, sym TEXT, side TEXT, qty REAL, px REAL, margin_usd REAL,
   lev REAL, avg REAL, depth TEXT, pnl_usd REAL, pnl_bp REAL, reason TEXT,
   data_json TEXT, pushed_json TEXT, UNIQUE(subscription_id, seq));
+CREATE TABLE IF NOT EXISTS consents (
+  account_id TEXT NOT NULL, version TEXT NOT NULL, at REAL NOT NULL,
+  ip TEXT, device TEXT, PRIMARY KEY(account_id, version));
 CREATE INDEX IF NOT EXISTS tr_acc ON trades(account_id, id);
 CREATE INDEX IF NOT EXISTS ev_acc ON events(account_id, id);
 """
@@ -101,6 +104,21 @@ class DB:
     def link_apple(self, acc_id, sub, email=None):
         self.c.execute("UPDATE accounts SET apple_sub=?, email=COALESCE(?, email) WHERE id=?",
                        (sub, email, acc_id))
+
+    # ------------------------------------------------------------ согласия
+    def add_consent(self, acc_id, version, ip=None, device=None):
+        """Согласие с документами версии `version`; повтор — без изменений
+        (первая запись — доказательство, когда согласились впервые)."""
+        self.c.execute("INSERT OR IGNORE INTO consents(account_id,version,at,ip,device) VALUES(?,?,?,?,?)",
+                       (acc_id, version, time.time(), ip, device))
+
+    def consent(self, acc_id, version):
+        return self.c.execute("SELECT * FROM consents WHERE account_id=? AND version=?",
+                              (acc_id, version)).fetchone()
+
+    def last_consent(self, acc_id):
+        return self.c.execute("SELECT * FROM consents WHERE account_id=? ORDER BY at DESC LIMIT 1",
+                              (acc_id,)).fetchone()
 
     # ------------------------------------------------------------ сессии
     def new_session(self, acc_id, device=None):
