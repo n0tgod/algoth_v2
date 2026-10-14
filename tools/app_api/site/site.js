@@ -47,9 +47,16 @@ const Site = (() => {
   const pct = (v, d = 1) => v == null ? "—" : (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(d) + " %";
   const day = (t) => t ? new Date(t * 1000).toISOString().slice(0, 10) : null;
 
-  async function featured() {
-    let r; try { r = await api("GET", "pub/top"); } catch (e) { $("f-title").textContent = "The strategy server is not responding."; return; }
+  // Депозит — переключателем (владелец 14.10): тот же ответ сервера с
+  // другим депозитом; выбор запоминается на устройстве.
+  async function featured(dep) {
+    let r; try { r = await api("GET", "pub/top" + (dep ? "?deposit=" + encodeURIComponent(dep) : "")); }
+    catch (e) { $("f-title").textContent = "The strategy server is not responding."; return; }
     const t = r.top;
+    const depLabel = "$" + Number(r.deposit).toLocaleString("en-US");
+    $("deps").innerHTML = (r.deposits || []).map((d) => `<button role="tab" aria-selected="${d === r.deposit}" data-dep="${d}">$${d >= 1000 ? (d / 1000) + "k" : d}</button>`).join("");
+    for (const b of document.querySelectorAll("#deps button")) b.onclick = () => { try { localStorage.setItem("algoth.dep", b.dataset.dep); } catch (e) {} featured(b.dataset.dep); };
+    $("rank-title").textContent = "All strategies at " + depLabel;
     $("f-rule").textContent = r.rule + (r.stale ? " The hourly run has not arrived; numbers describe the previous run." : "");
     if (!t) { $("f-title").textContent = "No strategy with trades yet."; return; }
     const side = {long: "Long", short: "Short", both: "Both sides"}[t.side] || t.side;
@@ -113,7 +120,8 @@ const Site = (() => {
 
   async function home() {
     $("year").textContent = new Date().getFullYear();
-    featured();
+    let dep = null; try { dep = localStorage.getItem("algoth.dep"); } catch (e) {}
+    featured(dep);
     try {
       const s = await api("GET", "site");
       if (s.company) $("company").textContent = s.company;

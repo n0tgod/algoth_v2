@@ -207,7 +207,7 @@ class App:
     # ------------------------------------------------------------ сайт
     TOP_DEPOSIT = 1000.0
 
-    def top(self):
+    def top(self, deposit=None):
         """Главная сайта: лучшая стратегия и рейтинг на одном депозите.
 
         Правило отбора объявлено и отдаётся словами: наибольший доход за
@@ -217,7 +217,15 @@ class App:
         сумма дневного ряда сервера на депозит: та же формула, что у итога
         (`final = Σ usd / deposit`), ничего другого страница не считает."""
         d = self.dca() or {}
+        deposits = [float(x) for x in (d.get("deposits") or [])]
         dep = self.TOP_DEPOSIT
+        if deposit is not None:
+            try:
+                dep = float(deposit)
+            except (TypeError, ValueError):
+                return 400, {"error": "deposit must be a number"}
+            if deposits and dep not in deposits:
+                return 400, {"error": "deposit must be one of " + ", ".join(f"{x:g}" for x in deposits)}
         rows = []
         for r in d.get("rulers") or []:
             key = r.get("key") if isinstance(r, dict) else r
@@ -248,7 +256,7 @@ class App:
             x.pop("_days", None)
         return 200, {"rule": f"Ranked by return over the whole record at a ${dep:,.0f} deposit, compound sizing. "
                              "A showcase of past results, not a forecast.",
-                     "deposit": dep, "top": top, "ranking": rows, "stale": bool(d.get("stale")),
+                     "deposit": dep, "deposits": deposits, "top": top, "ranking": rows, "stale": bool(d.get("stale")),
                      "window": d.get("window")}
 
     def site(self):
@@ -1403,7 +1411,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if rest == ["health"] and method == "GET":
             return self._send(200, {"ok": True, "schema": SCHEMA})
         if rest == ["pub", "top"] and method == "GET":
-            return self._send(*self.app.top())
+            return self._send(*self.app.top(q.get("deposit", [None])[0]))
         if len(rest) == 2 and rest[0] == "pub" and method == "GET":
             return self._pub(rest[1], q)
         if rest == ["legal"] and method == "GET":

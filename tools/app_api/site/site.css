@@ -44,6 +44,9 @@ footer { color:var(--dim); font-size:12px; padding:30px 0; border-top:1px solid 
 footer a { color:var(--dim) }
 .hide { display:none }
 
+.deps { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 8px }
+.deps button { padding:5px 12px; border-radius:999px; font-size:13px; color:var(--muted) }
+.deps button[aria-selected="true"] { background:var(--accent); border-color:transparent; color:#fff }
 /* Главная: лучшая стратегия (одна серия — цвет знака итога), плитки, рейтинг */
 .featured { padding:20px }
 .feat-head { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; align-items:flex-start }

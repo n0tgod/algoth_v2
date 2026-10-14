@@ -402,7 +402,10 @@ def test_top_strategy_for_the_landing_is_ranked_by_declared_rule():
         assert r["top"]["days"] == [["2026-09-01", 0.1], ["2026-09-02", 0.25]] and r["top"]["days_n"] == 2
         assert r["top"]["forward_final"] == 0.03 and r["top"]["open_n"] == 0 and "days" not in r["ranking"][0]
         assert [x["book"] for x in r["ranking"]] == ["optimal", "safe"]           # без сделок — вне рейтинга; 100 $ не смешивается
-        assert r["ranking"][1]["open_n"] == 1
+        assert r["ranking"][1]["open_n"] == 1 and r["deposits"] == [100.0, 1000.0]
+        st, r2 = app.top("100")
+        assert st == 200 and r2["deposit"] == 100.0 and [x["book"] for x in r2["ranking"]] == ["optimal"] and r2["top"]["final"] == 9.0
+        assert app.top("5000")[0] == 400 and app.top("x")[0] == 400
         srv = SV.make_server(app, host="127.0.0.1", port=0, tls_dir=None)
         port = srv.server_address[1]
         threading.Thread(target=srv.serve_forever, daemon=True).start()
