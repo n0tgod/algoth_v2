@@ -10,3 +10,14 @@ dca?k=x: 400 — параметр 'k' не принимается
 status: 400 — нет такого свода
 итог: всё сходится
 конец: 2026-10-14T21:43:16Z, код 0
+публикуется в ветку main:
+ jobs/done/n63-api-restart.log       | 10 ++++++++++
+ jobs/done/n64-pub-probe.done        |  1 +
+ jobs/done/n64-pub-probe.log         | 12 ++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 27 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   4037bb8c..6b3a03b5  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
