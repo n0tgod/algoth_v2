@@ -1,0 +1,9 @@
+== задание n71-acme-staging ==
+строка: run tools/app_api/acme_cert.py --staging
+начало: 2026-10-14T22:47:31Z
+запускаю: .venv/bin/python tools/app_api/acme_cert.py --staging
+22:47:32 сертификат сейчас: CN=algoth-api, осталось 820 сут
+22:47:32 ключ API (закреплён в приложении): wKWVCGnK2gM+mwe369X3yH7tRS5KTDlrJXdWGYal7xs=
+22:47:33 аккаунт ACME: создан
+проверка до центра: http://algoth.trade/.well-known/acme-challenge/M8FKS93bya_hXFx5W4T9bLmwXbW1hs-2qL9H0Nrl-Ls не отвечает (<urlopen error [Errno 111] Connection refused>) — сборщик без маршрута ACME?
+конец: 2026-10-14T22:47:34Z, код 1
