@@ -246,8 +246,8 @@ class App:
             top["days_n"] = len(series)
         for x in rows:
             x.pop("_days", None)
-        return 200, {"rule": f"Ranked by return over the whole record (with backtest, recomputed under today’s rules) "
-                             f"at a ${dep:,.0f} deposit, compound sizing. A showcase of past results, not a forecast.",
+        return 200, {"rule": f"Ranked by return over the whole record at a ${dep:,.0f} deposit, compound sizing. "
+                             "A showcase of past results, not a forecast.",
                      "deposit": dep, "top": top, "ranking": rows, "stale": bool(d.get("stale")),
                      "window": d.get("window")}
 

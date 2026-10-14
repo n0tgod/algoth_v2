@@ -56,19 +56,18 @@ const Site = (() => {
     $("f-title").textContent = `Ladder · ${t.title_en} · ${side}`;
     $("f-plain").textContent = t.plain || "";
     const ret = $("f-return"); ret.textContent = pct(t.final); ret.className = t.final >= 0 ? "good" : "bad";
-    const since = day(t.forward_since);
     $("f-tiles").innerHTML = [
-      ["forward record", pct(t.forward_final), since ? `since ${since} · ${t.forward_n ?? 0} trades` : "not measured"],
       ["max drawdown", pct(t.max_dd), "of the deposit"],
       ["trades", t.n ?? "—", `${t.days_n} days of record`],
       ["win rate", t.win == null ? "—" : Math.round(t.win * 100) + " %", "closed trades"],
       ["open now", t.open_n ?? "—", "positions"],
+      ["record since", t.days && t.days.length ? t.days[0][0] : "—", "paper book"],
       ["deposit", "$" + Number(t.deposit).toLocaleString("en-US"), "paper, compound"],
     ].map(([k, v, s]) => `<div class="tile"><small>${esc(k)}</small><b>${esc(v)}</b><small>${esc(s)}</small></div>`).join("");
     drawLine($("f-chart"), $("f-tip"), t.days, t.final >= 0 ? "var(--bid)" : "var(--ask)");
     const tb = document.querySelector("#rank tbody");
     tb.innerHTML = (r.ranking || []).map((x, i) => `<tr class="${i === 0 ? "top" : ""}"><td>${i + 1}</td><td>Ladder · ${esc(x.title_en)}</td><td>${esc(side === x.side ? side : ({long: "Long", short: "Short", both: "Both"}[x.side] || x.side))}</td>
-      <td class="num ${x.final >= 0 ? "good" : "bad"}">${pct(x.final)}</td><td class="num">${pct(x.forward_final)}</td><td class="num">${pct(x.max_dd)}</td><td class="num">${x.n ?? "—"}</td><td class="num">${x.win == null ? "—" : Math.round(x.win * 100) + " %"}</td></tr>`).join("");
+      <td class="num ${x.final >= 0 ? "good" : "bad"}">${pct(x.final)}</td><td class="num">${pct(x.max_dd)}</td><td class="num">${x.n ?? "—"}</td><td class="num">${x.win == null ? "—" : Math.round(x.win * 100) + " %"}</td></tr>`).join("");
   }
 
   // Линия одной серии: накопленный % депозита по дням (значения с

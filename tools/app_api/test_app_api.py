@@ -397,7 +397,7 @@ def test_top_strategy_for_the_landing_is_ranked_by_declared_rule():
     with tempfile.TemporaryDirectory() as tmp:
         app, _ = _app(tmp, dca_fetch=lambda full=None: dca)
         st, r = app.top()
-        assert st == 200 and r["deposit"] == 1000.0 and "whole record" in r["rule"]
+        assert st == 200 and r["deposit"] == 1000.0 and "whole record" in r["rule"] and "backtest" not in r["rule"]
         assert r["top"]["book"] == "optimal" and r["top"]["title_en"] == "Depth" and r["top"]["final"] == 0.25
         assert r["top"]["days"] == [["2026-09-01", 0.1], ["2026-09-02", 0.25]] and r["top"]["days_n"] == 2
         assert r["top"]["forward_final"] == 0.03 and r["top"]["open_n"] == 0 and "days" not in r["ranking"][0]
