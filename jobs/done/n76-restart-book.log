@@ -19,3 +19,11 @@ Already up to date.
 == перезапускаю циклы обучения ==
   не запущен: s8_loop/train.py --pretest
   остановлен, сторож поднимет: s8_loop/train.py$
+публикуется в ветку main:
+ jobs/done/n75-api-restart.log  | 12 ++++++++++++
+ jobs/done/n76-restart-book.log | 17 ++++++++++++++++-
+ 2 files changed, 28 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   ea093981..fba3fba3  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
