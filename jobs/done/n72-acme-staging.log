@@ -1,0 +1,14 @@
+== задание n72-acme-staging ==
+строка: run tools/app_api/acme_cert.py --staging
+начало: 2026-10-14T22:48:13Z
+запускаю: .venv/bin/python tools/app_api/acme_cert.py --staging
+22:48:13 сертификат сейчас: CN=algoth-api, осталось 820 сут
+22:48:13 ключ API (закреплён в приложении): wKWVCGnK2gM+mwe369X3yH7tRS5KTDlrJXdWGYal7xs=
+22:48:15 аккаунт ACME: есть
+22:48:16 файл вызова сборщик отдаёт
+22:48:19 algoth.trade: подтверждён
+22:48:19 файл вызова сборщик отдаёт
+22:48:23 www.algoth.trade: подтверждён
+22:48:24 выпущен: CN=algoth.trade, до 2026-12-17, имена ['algoth.trade', 'www.algoth.trade']
+22:48:24 тестовый центр: сертификат НЕ записываю (браузеры ему не верят) — проба прошла
+конец: 2026-10-14T22:48:24Z, код 0

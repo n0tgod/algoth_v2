@@ -7,3 +7,14 @@
 22:47:33 аккаунт ACME: создан
 проверка до центра: http://algoth.trade/.well-known/acme-challenge/M8FKS93bya_hXFx5W4T9bLmwXbW1hs-2qL9H0Nrl-Ls не отвечает (<urlopen error [Errno 111] Connection refused>) — сборщик без маршрута ACME?
 конец: 2026-10-14T22:47:34Z, код 1
+публикуется в ветку main:
+ jobs/done/n70-restart-book.log      | 11 +++++++++++
+ jobs/done/n71-acme-staging.done     |  1 +
+ jobs/done/n71-acme-staging.log      |  9 +++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 25 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   42c37e0f..e46dd871  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
