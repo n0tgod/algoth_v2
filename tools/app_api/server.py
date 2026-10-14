@@ -205,6 +205,52 @@ class App:
         return 200, {"max_accounts": self.max_accounts, "accounts": self.db.accounts_count()}
 
     # ------------------------------------------------------------ сайт
+    TOP_DEPOSIT = 1000.0
+
+    def top(self):
+        """Главная сайта: лучшая стратегия и рейтинг на одном депозите.
+
+        Правило отбора объявлено и отдаётся словами: наибольший доход за
+        всю запись (с бэктестом — умолчание владельца 14.10) на депозите
+        1 000 $, сложный процент. Это витрина прошлых результатов, не
+        выбор книги; рядом — запись вперёд и её дата. Кривая — накопленная
+        сумма дневного ряда сервера на депозит: та же формула, что у итога
+        (`final = Σ usd / deposit`), ничего другого страница не считает."""
+        d = self.dca() or {}
+        dep = self.TOP_DEPOSIT
+        rows = []
+        for r in d.get("rulers") or []:
+            key = r.get("key") if isinstance(r, dict) else r
+            b = (d.get("books") or {}).get(self.cell_key(key, dep)) or {}
+            st = b.get("all") or {}
+            if not key or not st or not st.get("n"):
+                continue
+            fw = b.get("forward") or {}
+            rows.append({"book": key, "title_en": r.get("title_en") or key, "side": r.get("side") or "long",
+                         "plain": r.get("plain_en_short") or "", "deposit": dep,
+                         "final": st.get("final"), "max_dd": st.get("max_dd"), "n": st.get("n"),
+                         "win": st.get("win"), "usd": st.get("usd"),
+                         "forward_final": fw.get("final"), "forward_n": fw.get("n"), "forward_since": b.get("forward_since"),
+                         "open_n": len(((b.get("open") or {}).get("positions") or [])),
+                         "_days": st.get("days_rows") or []})
+        rows.sort(key=lambda x: (x["final"] is None, -(x["final"] or 0)))
+        top = None
+        if rows:
+            t = rows[0]
+            cum, series = 0.0, []
+            for x in t["_days"]:
+                cum += float(x.get("usd") or 0.0)
+                series.append([x.get("d"), round(cum / dep, 6)])
+            top = {k: v for k, v in t.items() if k != "_days"}
+            top["days"] = series
+            top["days_n"] = len(series)
+        for x in rows:
+            x.pop("_days", None)
+        return 200, {"rule": f"Ranked by return over the whole record (with backtest, recomputed under today’s rules) "
+                             f"at a ${dep:,.0f} deposit, compound sizing. A showcase of past results, not a forecast.",
+                     "deposit": dep, "top": top, "ranking": rows, "stale": bool(d.get("stale")),
+                     "window": d.get("window")}
+
     def site(self):
         d = site_settings(self.out)
         d["server_ip"] = self.server_ip
@@ -1356,6 +1402,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self._send(*self.app.auth_apple(body.get("identity_token"), body.get("device"), current=cur))
         if rest == ["health"] and method == "GET":
             return self._send(200, {"ok": True, "schema": SCHEMA})
+        if rest == ["pub", "top"] and method == "GET":
+            return self._send(*self.app.top())
         if len(rest) == 2 and rest[0] == "pub" and method == "GET":
             return self._pub(rest[1], q)
         if rest == ["legal"] and method == "GET":

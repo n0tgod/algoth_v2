@@ -15,6 +15,18 @@
 </div>
 <p class="note" id="testflight" style="margin-top:14px"></p>
 </section>
+<section class="panel featured" id="featured" aria-live="polite">
+  <div class="feat-head"><div><h2>Top strategy right now</h2><div class="feat-title" id="f-title">loading…</div><div class="note" id="f-plain"></div></div>
+    <div class="hero-num"><span id="f-return">—</span><small>return over the whole record</small></div></div>
+  <div class="chart-wrap"><svg id="f-chart" viewBox="0 0 720 240" role="img" aria-label="Equity curve of the top strategy, percent of deposit by day"></svg><div class="tip hide" id="f-tip"></div></div>
+  <div class="tiles" id="f-tiles"></div>
+  <p class="note" id="f-rule"></p>
+  <div class="stores" style="margin-top:14px"><a class="store" href="/account">Open an account<small>sign in with Apple</small></a><a class="btn" href="#stores" style="display:inline-flex;align-items:center">Get the app</a></div>
+</section>
+<section class="panel"><h2>All strategies at $1,000</h2>
+  <div class="tw"><table class="rank" id="rank"><thead><tr><th>#</th><th>strategy</th><th>side</th><th class="num">return</th><th class="num">forward</th><th class="num">drawdown</th><th class="num">trades</th><th class="num">win</th></tr></thead><tbody></tbody></table></div>
+  <p class="note">Return is the whole record; forward counts only decisions written before their outcome was known (since the family’s last rule change). Drawdown is the worst peak-to-trough of the deposit.</p>
+</section>
 <div class="grid">
 <div class="panel"><h2>What it is</h2><p>An AI research loop writes the strategies and keeps a paper book for each: three leverage rules — Sigma, Depth, Gated — on long, short and two-sided books, on deposits from $100 to $100,000.</p></div>
 <div class="panel"><h2>How the record is kept</h2><p>Books are recomputed hourly. “With backtest” is the whole history under today’s rules; “without backtest” counts only decisions written before their outcome was known. Where nothing is measured you see a dash, not a zero.</p></div>

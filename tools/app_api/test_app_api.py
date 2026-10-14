@@ -377,6 +377,43 @@ def test_executor_words_are_shown_in_english_journal_untouched():
     print(f"ok  слова исполнителя по-английски на показе: {len(shown)} форм из ladder.rs, журнал не тронут")
 
 
+def test_top_strategy_for_the_landing_is_ranked_by_declared_rule():
+    """Главная сайта: лучшая книга на 1 000 $ по доходу за всю запись, кривая
+    — накопленная сумма дневного ряда на депозит (формула итога), правило
+    отбора — словами в ответе; книга без сделок в рейтинг не входит."""
+    dca = {"rulers": [{"key": "safe", "title_en": "Sigma", "side": "long", "plain_en_short": "p1"},
+                      {"key": "optimal", "title_en": "Depth", "side": "long", "plain_en_short": "p2"},
+                      {"key": "aggr_h", "title_en": "Gated", "side": "short"}],
+           "deposits": [100.0, 1000.0], "stale": False, "window": {"from": "2026-08-08"},
+           "books": {"safe:1000": {"all": {"n": 10, "final": 0.05, "max_dd": -0.02, "win": 0.6, "usd": 50.0,
+                                           "days_rows": [{"d": "2026-09-01", "usd": 20.0}, {"d": "2026-09-02", "usd": -5.0}, {"d": "2026-09-03", "usd": 35.0}]},
+                                   "forward": {"n": 4, "final": 0.01}, "forward_since": 1791000000.0,
+                                   "open": {"positions": [{"sym": "AUSDT"}]}},
+                     "optimal:1000": {"all": {"n": 20, "final": 0.25, "max_dd": -0.07, "win": 0.67, "usd": 250.0,
+                                              "days_rows": [{"d": "2026-09-01", "usd": 100.0}, {"d": "2026-09-02", "usd": 150.0}]},
+                                      "forward": {"n": 9, "final": 0.03}, "forward_since": 1791000000.0, "open": {"positions": []}},
+                     "aggr_h:1000": {"all": {"n": 0, "final": None, "days_rows": []}},
+                     "optimal:100": {"all": {"n": 99, "final": 9.0, "days_rows": []}}}}
+    with tempfile.TemporaryDirectory() as tmp:
+        app, _ = _app(tmp, dca_fetch=lambda full=None: dca)
+        st, r = app.top()
+        assert st == 200 and r["deposit"] == 1000.0 and "whole record" in r["rule"]
+        assert r["top"]["book"] == "optimal" and r["top"]["title_en"] == "Depth" and r["top"]["final"] == 0.25
+        assert r["top"]["days"] == [["2026-09-01", 0.1], ["2026-09-02", 0.25]] and r["top"]["days_n"] == 2
+        assert r["top"]["forward_final"] == 0.03 and r["top"]["open_n"] == 0 and "days" not in r["ranking"][0]
+        assert [x["book"] for x in r["ranking"]] == ["optimal", "safe"]           # без сделок — вне рейтинга; 100 $ не смешивается
+        assert r["ranking"][1]["open_n"] == 1
+        srv = SV.make_server(app, host="127.0.0.1", port=0, tls_dir=None)
+        port = srv.server_address[1]
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            st, j = _http(port, "GET", "/api/v1/pub/top")
+            assert st == 200 and j["top"]["book"] == "optimal"
+        finally:
+            srv.shutdown()
+    print("ok  главная: лучшая книга по объявленному правилу, кривая формулой итога, рейтинг без пустых книг")
+
+
 def test_site_pages_settings_overview_and_apple_web_audience():
     """L4 спеки 16: сайт отдаётся с API (главная, кабинет, документы,
     стиль, скрипт), www → без www, чужой путь — 404; настройки сайта

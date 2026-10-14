@@ -44,8 +44,77 @@ const Site = (() => {
   }
 
   // --- главная -----------------------------------------------------------
+  const pct = (v, d = 1) => v == null ? "—" : (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(d) + " %";
+  const day = (t) => t ? new Date(t * 1000).toISOString().slice(0, 10) : null;
+
+  async function featured() {
+    let r; try { r = await api("GET", "pub/top"); } catch (e) { $("f-title").textContent = "The strategy server is not responding."; return; }
+    const t = r.top;
+    $("f-rule").textContent = r.rule + (r.stale ? " The hourly run has not arrived; numbers describe the previous run." : "");
+    if (!t) { $("f-title").textContent = "No strategy with trades yet."; return; }
+    const side = {long: "Long", short: "Short", both: "Both sides"}[t.side] || t.side;
+    $("f-title").textContent = `Ladder · ${t.title_en} · ${side}`;
+    $("f-plain").textContent = t.plain || "";
+    const ret = $("f-return"); ret.textContent = pct(t.final); ret.className = t.final >= 0 ? "good" : "bad";
+    const since = day(t.forward_since);
+    $("f-tiles").innerHTML = [
+      ["forward record", pct(t.forward_final), since ? `since ${since} · ${t.forward_n ?? 0} trades` : "not measured"],
+      ["max drawdown", pct(t.max_dd), "of the deposit"],
+      ["trades", t.n ?? "—", `${t.days_n} days of record`],
+      ["win rate", t.win == null ? "—" : Math.round(t.win * 100) + " %", "closed trades"],
+      ["open now", t.open_n ?? "—", "positions"],
+      ["deposit", "$" + Number(t.deposit).toLocaleString("en-US"), "paper, compound"],
+    ].map(([k, v, s]) => `<div class="tile"><small>${esc(k)}</small><b>${esc(v)}</b><small>${esc(s)}</small></div>`).join("");
+    drawLine($("f-chart"), $("f-tip"), t.days, t.final >= 0 ? "var(--bid)" : "var(--ask)");
+    const tb = document.querySelector("#rank tbody");
+    tb.innerHTML = (r.ranking || []).map((x, i) => `<tr class="${i === 0 ? "top" : ""}"><td>${i + 1}</td><td>Ladder · ${esc(x.title_en)}</td><td>${esc(side === x.side ? side : ({long: "Long", short: "Short", both: "Both"}[x.side] || x.side))}</td>
+      <td class="num ${x.final >= 0 ? "good" : "bad"}">${pct(x.final)}</td><td class="num">${pct(x.forward_final)}</td><td class="num">${pct(x.max_dd)}</td><td class="num">${x.n ?? "—"}</td><td class="num">${x.win == null ? "—" : Math.round(x.win * 100) + " %"}</td></tr>`).join("");
+  }
+
+  // Линия одной серии: накопленный % депозита по дням (значения с
+  // сервера). Сетка по трём уровням, подписи первого и последнего дня,
+  // перекрестие с подсказкой. Цвет — знак итога, одна серия без легенды.
+  function drawLine(svg, tip, days, color) {
+    // ширина — по контейнеру, не растяжением: иначе на телефоне подписи
+    // сжимаются; при смене ширины — перерисовка
+    const W = Math.max(320, Math.round(svg.clientWidth || 720)), H = 240, L = 44, R = 10, T = 12, B = 24;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.removeAttribute("preserveAspectRatio");
+    if (!drawLine._bound) { drawLine._bound = true; let tm; window.addEventListener("resize", () => { clearTimeout(tm); tm = setTimeout(() => drawLine(svg, tip, days, color), 150); }); }
+    const ns = "http://www.w3.org/2000/svg";
+    const el = (n, a) => { const e = document.createElementNS(ns, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+    svg.innerHTML = "";
+    if (!days || days.length < 2) { svg.appendChild(Object.assign(el("text", {x: W / 2, y: H / 2, class: "axis-text", "text-anchor": "middle"}), {textContent: "not enough days to draw"})); return; }
+    const ys = days.map((d) => d[1]); const lo = Math.min(0, ...ys), hi = Math.max(0, ...ys); const span = (hi - lo) || 1;
+    const x = (i) => L + (i / (days.length - 1)) * (W - L - R), y = (v) => T + (1 - (v - lo) / span) * (H - T - B);
+    for (const v of [lo, lo + span / 2, hi]) {
+      svg.appendChild(el("line", {x1: L, x2: W - R, y1: y(v), y2: y(v), class: "grid-line"}));
+      svg.appendChild(Object.assign(el("text", {x: L - 6, y: y(v) + 4, class: "axis-text", "text-anchor": "end"}), {textContent: pct(v, 0)}));
+    }
+    if (lo < 0 && hi > 0) svg.appendChild(el("line", {x1: L, x2: W - R, y1: y(0), y2: y(0), class: "grid-line", style: "stroke:var(--muted)"}));
+    const pts = days.map((d, i) => `${x(i).toFixed(1)},${y(d[1]).toFixed(1)}`);
+    svg.appendChild(el("path", {d: `M${pts[0]} L${pts.slice(1).join(" ")} L${x(days.length - 1).toFixed(1)},${y(lo)} L${x(0)},${y(lo)} Z`, class: "area", fill: color}));
+    svg.appendChild(el("path", {d: "M" + pts.join(" L"), class: "line", stroke: color}));
+    for (const [i, anchor] of [[0, "start"], [days.length - 1, "end"]])
+      svg.appendChild(Object.assign(el("text", {x: x(i), y: H - 6, class: "axis-text", "text-anchor": anchor}), {textContent: days[i][0]}));
+    const cross = el("line", {y1: T, y2: H - B, class: "cross", visibility: "hidden"}), dot = el("circle", {r: 4.5, fill: color, class: "dot", visibility: "hidden"});
+    svg.appendChild(cross); svg.appendChild(dot);
+    const hit = el("rect", {x: L, y: 0, width: W - L - R, height: H, fill: "transparent"});
+    svg.appendChild(hit);
+    const move = (ev) => {
+      const box = svg.getBoundingClientRect(); const px = (ev.clientX - box.left) / box.width * W;
+      const i = Math.max(0, Math.min(days.length - 1, Math.round((px - L) / (W - L - R) * (days.length - 1))));
+      cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("visibility", "visible");
+      dot.setAttribute("cx", x(i)); dot.setAttribute("cy", y(days[i][1])); dot.setAttribute("visibility", "visible");
+      tip.textContent = `${days[i][0]}  ${pct(days[i][1], 2)}`; tip.classList.remove("hide");
+      tip.style.left = (x(i) / W * box.width) + "px"; tip.style.top = (y(days[i][1]) / H * box.height) + "px";
+    };
+    hit.addEventListener("mousemove", move); hit.addEventListener("touchmove", (e) => { move(e.touches[0]); }, {passive: true});
+    hit.addEventListener("mouseleave", () => { cross.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); tip.classList.add("hide"); });
+  }
+
   async function home() {
     $("year").textContent = new Date().getFullYear();
+    featured();
     try {
       const s = await api("GET", "site");
       if (s.company) $("company").textContent = s.company;
