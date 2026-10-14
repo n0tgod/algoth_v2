@@ -52,6 +52,12 @@ def main():
         st, _n, d = get(path)
         print(f"{path}: {st} — {d.get('error')}")
         bad += st != want
+    req = urllib.request.Request(BASE.replace("/pub/", "/legal"))
+    with urllib.request.urlopen(req, timeout=30, context=CTX) as r:
+        lg = json.loads(r.read())
+    print(f"legal: версия {lg.get('version')}, документов {len(lg.get('docs') or [])}, "
+          + ", ".join(f"{x['id']} {len(x['text'])} знаков" for x in lg.get("docs") or []))
+    bad += len(lg.get("docs") or []) != 3
     print("итог: " + ("всё сходится" if not bad else f"РАСХОЖДЕНИЙ {bad}"))
     return 1 if bad else 0
 

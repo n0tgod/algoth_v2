@@ -8948,7 +8948,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L62 `check(db, s, log=print, update_equity=False)`
 - L118 `main(argv=None)`
 
-## tools/app_api/pub_probe.py · 60 строк
+## tools/app_api/pub_probe.py · 66 строк
 
 Проверка публичного свода API с самого сервера (спека 16 L1).
 
