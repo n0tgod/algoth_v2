@@ -28,6 +28,7 @@
 import gzip
 import json
 import os
+import re
 import sys
 import secrets
 import threading
@@ -11980,6 +11981,12 @@ def slim_dca(d, focus):
     return out
 
 
+ACME_PREFIX = "/.well-known/acme-challenge/"
+ACME_NAME = re.compile(r"^[A-Za-z0-9_-]{16,128}$")
+ACME_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                        "tools", "app_api", "out", "acme", "http")
+
+
 def serve(collector, port, token, log):
     """Поднять сервер наблюдения в отдельном потоке."""
 
@@ -12008,6 +12015,20 @@ def serve(collector, port, token, log):
             self.end_headers()
             self.wfile.write(body)
 
+        def _acme(self, name):
+            if not ACME_NAME.match(name):
+                return self._empty(404)
+            try:
+                with open(os.path.join(ACME_DIR, name), "rb") as f:
+                    body = f.read(4096)
+            except OSError:
+                return self._empty(404)
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
         def _empty(self, code, body=b""):
             """Ответ без содержимого обязан нести длину.
 
@@ -12026,6 +12047,13 @@ def serve(collector, port, token, log):
         def do_GET(self):                                 # noqa: N802
             u = urlparse(self.path)
             q = parse_qs(u.query)
+            # Ответ на проверку Let's Encrypt (спека 16 L2): порт 80 ведёт
+            # сюда, и центр сертификации спрашивает файл БЕЗ ключа страниц.
+            # Отдаётся только файл из каталога вызова `tools/app_api/out/acme`
+            # с именем из безопасного алфавита; остального ключ по-прежнему
+            # охраняет.
+            if u.path.startswith(ACME_PREFIX):
+                return self._acme(u.path[len(ACME_PREFIX):])
             # Сравнение за постоянное время: страница стоит открытым
             # портом, и обычное `!=` отвечает тем быстрее, чем раньше
             # разошлись строки, то есть подсказывает ключ по знаку.

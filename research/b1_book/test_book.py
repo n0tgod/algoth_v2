@@ -9172,8 +9172,50 @@ def test_brake_reads_only_the_books_it_counts():
         C.HERE, C.Collector.BOOKS, C.Collector.ECHO_BOOKS = here_was, books_was, echo_was
 
 
+def test_acme_challenge_served_without_page_key_and_nothing_else():
+    """L2 спеки 16: проверочный файл Let's Encrypt отдаётся на порту 80 без
+    ключа страниц — только из каталога вызова и только безопасное имя;
+    остальные страницы ключ по-прежнему охраняет."""
+    import http.client
+    import socket
+    import tempfile
+    import web as W
+    with tempfile.TemporaryDirectory() as d:
+        old_dir = W.ACME_DIR
+        W.ACME_DIR = d
+        try:
+            name = "tok_" + "A" * 40
+            with open(os.path.join(d, name), "w") as f:
+                f.write(name + ".thumb")
+            with socket.socket() as so:
+                so.bind(("127.0.0.1", 0))
+                port = so.getsockname()[1]
+
+            class Stub:
+                def __getattr__(self, _k):
+                    return lambda *a, **k: {}
+            W.serve(Stub(), port, "SECRETKEY", log=lambda *a: None)
+
+            def get(path):
+                c = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+                c.request("GET", path)
+                r = c.getresponse()
+                body = r.read()
+                c.close()
+                return r.status, body
+            assert get("/.well-known/acme-challenge/" + name) == (200, (name + ".thumb").encode())
+            assert get("/.well-known/acme-challenge/nope_" + "B" * 30)[0] == 404      # нет файла
+            assert get("/.well-known/acme-challenge/..%2F..%2Fetc")[0] == 404          # не тот алфавит
+            assert get("/.well-known/acme-challenge/short")[0] == 404
+            assert get("/state")[0] == 403                                             # ключ охраняет остальное
+        finally:
+            W.ACME_DIR = old_dir
+    print("ok  проверка Let's Encrypt: файл вызова без ключа, остальное под ключом")
+
+
 def main():
     print("книга")
+    test_acme_challenge_served_without_page_key_and_nothing_else()
     test_snapshot_then_delta()
     test_switcher_says_how_the_book_is_ordered()
     test_scanner_prefers_the_biggest_move_for_its_own_coin()

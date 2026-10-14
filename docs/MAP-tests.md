@@ -289,7 +289,7 @@
 - L700 `paperStub()`
 - L835 `bookDaysStub()`
 
-## research/b1_book/test_book.py · 9331 строк
+## research/b1_book/test_book.py · 9373 строк
 
 Тесты стакана. Закрывают место, где ошибка портит все данные молча.
 
@@ -438,7 +438,8 @@
 - L8997 `test_pinned_journal_files_survive_the_cache_budget()` — Файлы периодического сторожа закреплены в кеше журналов и в бюджет не входят (починка 10.10: сторож выходов к…
 - L9057 `test_model_signature_sees_only_the_files_the_build_reads()` — Подпись кеша `/model` — по файлам, из которых сборка берёт числа (починка 10.10): файл каталога книги, меняющ…
 - L9107 `test_brake_reads_only_the_books_it_counts()` — Тормоз читает и подписывает журналы только ТОРГУЕМЫХ книг без эхо (починка 10.10): эхо-книги в сумму не входя…
-- L9175 `main()`
+- L9175 `test_acme_challenge_served_without_page_key_and_nothing_else()` — L2 спеки 16: проверочный файл Let's Encrypt отдаётся на порту 80 без ключа страниц — только из каталога вызов…
+- L9216 `main()`
 
 ## research/b1_book/test_measure_pack.py · 133 строк
 
