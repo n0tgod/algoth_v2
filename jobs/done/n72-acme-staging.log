@@ -12,3 +12,13 @@
 22:48:24 выпущен: CN=algoth.trade, до 2026-12-17, имена ['algoth.trade', 'www.algoth.trade']
 22:48:24 тестовый центр: сертификат НЕ записываю (браузеры ему не верят) — проба прошла
 конец: 2026-10-14T22:48:24Z, код 0
+публикуется в ветку main:
+ jobs/done/n71-acme-staging.log  | 11 +++++++++++
+ jobs/done/n72-acme-staging.done |  1 +
+ jobs/done/n72-acme-staging.log  | 14 ++++++++++++++
+ jobs/poke.log                   |  3 +++
+ 4 files changed, 29 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   cf82dbe6..ece5b8f1  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

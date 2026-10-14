@@ -1,0 +1,14 @@
+== задание n73-acme-prod ==
+строка: run tools/app_api/acme_cert.py
+начало: 2026-10-14T22:48:58Z
+запускаю: .venv/bin/python tools/app_api/acme_cert.py 
+22:48:58 сертификат сейчас: CN=algoth-api, осталось 820 сут
+22:48:58 ключ API (закреплён в приложении): wKWVCGnK2gM+mwe369X3yH7tRS5KTDlrJXdWGYal7xs=
+22:48:59 аккаунт ACME: создан
+22:49:00 файл вызова сборщик отдаёт
+22:49:03 algoth.trade: подтверждён
+22:49:04 файл вызова сборщик отдаёт
+22:49:07 www.algoth.trade: подтверждён
+22:49:08 выпущен: CN=algoth.trade, до 2027-01-12, имена ['algoth.trade', 'www.algoth.trade']
+22:49:08 записан cert.pem (полная цепочка); API перезапускается отдельным заданием
+конец: 2026-10-14T22:49:08Z, код 0
