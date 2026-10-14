@@ -241,7 +241,13 @@ RULERS = {
                  "Замер D5: ликвидаций 0.000 % против 0.058 %, худшая "
                  "позиция −29.8 % против −100 %, укус 21.7 против 46.7 — "
                  "ценой примерно четверти обычного дня (медиана дня "
-                 "+0.200 % против +0.270 %)."},
+                 "+0.200 % против +0.270 %).",
+        # английский текст для приложения — одно ядро с русским (спека 16)
+        "plain_en": "Leverage from the name’s own volatility: a reserve of six "
+                    "daily σ to liquidation, so a volatile name gets less "
+                    "leverage. In the replay this meant no liquidations and "
+                    "a milder worst position, at the price of roughly a "
+                    "quarter of a typical day’s result."},
     "optimal": {
         "rule": "depth", "param": SURVIVE_MULT, "title": "оптимальная",
         "plain": "плечо от глубины лестницы: запас 2 · d_max до "
@@ -249,7 +255,12 @@ RULERS = {
                  "+1.26 % в замере D5), но хвост тяжелее и щедрее всего "
                  "линейка ровно к волатильным именам — D3 намерил у неё "
                  "антиселективность: медианное плечо хвоста 7.34× против "
-                 "3.02× по книге."},
+                 "3.02× по книге.",
+        "plain_en": "Leverage from the depth of the ladder: a reserve of twice "
+                    "the maximum historical drawdown to liquidation. The "
+                    "median position is better than the safe mode’s, but the "
+                    "tail is heavier: the rule hands the most leverage to the "
+                    "most volatile names."},
     "aggr": {
         "rule": "depth", "param": SURVIVE_MULT,
         "min_lev": AGGR_MIN_LEV,
@@ -265,6 +276,16 @@ RULERS = {
                  "намерил, что плечо и есть источник хвоста (медианное "
                  "плечо хвоста 7.34× против 3.02× по книге), то есть "
                  "режим намеренно садится в хвостовую зону.",
+        "plain_en": "The same ladder depth as the optimal mode plus an ENTRY "
+                    "GATE: only decisions whose fence leverage is at least "
+                    f"{AGGR_MIN_LEV:g}× are taken. The threshold was not "
+                    "chosen freely — it is the leverage below which the "
+                    "exchange’s minimum order rejects the ticket, seen in a "
+                    "cell that did well before the rule was declared; so "
+                    "its recomputed history reads as “where the threshold "
+                    "came from”, and only the forward record judges it. "
+                    "Leverage is the source of the tail, and this mode sits "
+                    "in the tail zone on purpose.",
     },
 }
 
@@ -306,6 +327,10 @@ for _k in ("safe", "optimal", "aggr"):
     # ради чего короткие книги заведены.
     _v["plain"] = (_SHORT_NOTE + " Линейка плеча та же, что у книги "
                    f"«{RULERS[_k]['title']}».")
+    _v["plain_en"] = ("A mirror of the long book of the same mode: the same "
+                      "gates, ladder and fence with the sign flipped — adds "
+                      "up, target down, liquidation above. The short tail is "
+                      "not a mirror image: a short’s loss is unbounded above.")
     RULERS[_k + "_s"] = _v
 
 # --- короткие книги на сигнале `h24` (решение владельца 2026-09-07) -----
@@ -349,6 +374,12 @@ for _k in ("safe", "optimal", "aggr"):
     _v["title"] = RULERS[_k]["title"] + " (шорт h24)"
     _v["plain"] = (_H24_NOTE + " Линейка плеча та же, что у книги "
                    f"«{RULERS[_k]['title']}».")
+    _v["plain_en"] = ("A short book on the 24-hour signal: one entry, no "
+                      "adds, a limit target at twice the promised move, a "
+                      "24-hour term. The same leverage rule as the long book "
+                      "of this mode. Enters only names the model marks as "
+                      "extreme on the short side. A short’s loss is unbounded "
+                      "above, so the tail is not a mirror of the long book.")
     RULERS[_k + "_h"] = _v
 
 # Полный исторический порядок книг ситуационного листа. Он НЕ
@@ -431,7 +462,15 @@ for _pk, (_lk, _sk) in PAIR_PARTS.items():
     RULERS[_pk] = {"rule": RULERS[_lk]["rule"], "param": RULERS[_lk]["param"],
                    "side": "both", "family": "pair",
                    "title": "общая (" + RULERS[_lk]["title"] + ")",
-                   "plain": _PAIR_NOTE}
+                   "plain": _PAIR_NOTE,
+                   "plain_en": ("The long and the short book of this mode on ONE "
+                                "deposit: margin taken by one side is unavailable "
+                                "to the other, so some trades do not happen and the "
+                                "result is not the sum of the two books. Each side "
+                                "sizes positions by its own rule and keeps its own "
+                                "“one position per name”. Hedge mode: a short on a "
+                                "name the long side holds is allowed and counted "
+                                "as its own row.")}
 # Пик общего счёта — сумма объявленных пиков сторон: одновременно могут
 # стоять и длинные, и короткие. Билет отсюда НЕ считается (у сторон он
 # свой), но «мест» и умолчания читателей выводятся из него, и оставить
@@ -566,6 +605,11 @@ for _pk in list(PAIR_PARTS) + list(H24_ORDER):
         + f"{_fl:g} (правило 2026-09-10): позиция режется, когда против "
         f"неё съедено около {100 * (1 - _fl):.0f} % маржи, не дожидаясь "
         "ликвидации.")
+    RULERS[_pk]["plain_en"] += (
+        "" if _fl is None else
+        (" Capitulation floor of the short side " if _pk in PAIR_PARTS else " Capitulation floor ")
+        + f"{_fl:g}: the position is cut when about {100 * (1 - _fl):.0f} % of "
+        "its margin has been eaten, without waiting for liquidation.")
     RULERS[_pk]["plain"] += (
         (" Короткая сторона" if _pk in PAIR_PARTS else " Книга")
         + " не входит в имена моложе "
@@ -573,6 +617,11 @@ for _pk in list(PAIR_PARTS) + list(H24_ORDER):
         + ("входит своим билетом целиком." if _sh >= 1.0
            else f"берёт {_sh:g} своего билета (правило "
                 f"{SHARE_SINCE.get(_pk, SHARE_SINCE_DEFAULT)})."))
+    RULERS[_pk]["plain_en"] += (
+        (" The short side" if _pk in PAIR_PARTS else " The book")
+        + f" skips names younger than {min_age_days(_pk):g} days and "
+        + ("enters with its full ticket." if _sh >= 1.0
+           else f"takes {_sh:g} of its own ticket."))
     # Охрана рынком говорится там же, где остальные правила стороны:
     # читатель вкладки обязан знать, почему позиция закрылась «рынком».
     _wg = wave_guard_of(_pk)
@@ -582,6 +631,12 @@ for _pk in list(PAIR_PARTS) + list(H24_ORDER):
         + " закрывается по закрытию часа, когда средний ход крупных имён "
         f"рынка с момента входа ≥ {_wg:g} % — охрана рынком (правило "
         "2026-09-13): хвост короткой книги есть сквиз в час общего роста.")
+    RULERS[_pk]["plain_en"] += (
+        "" if _wg is None else
+        (" A short position" if _pk in PAIR_PARTS else " A position")
+        + " is closed at the end of the hour when the average move of the "
+        f"market’s large names since entry is ≥ {_wg:g} % — the market guard: "
+        "the short book’s tail is a squeeze in an hour of general rise.")
 # Версия правил СЕМЕЙСТВА. Общая версия `RULES` тут не годится: её смена
 # обнулила бы запись длинных и коротких книг, которые к решению
 # отношения не имеют.

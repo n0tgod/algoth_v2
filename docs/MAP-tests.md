@@ -1199,7 +1199,7 @@
 - L66 `test_an_extra_point_of_ours_breaks_the_match()`
 - L77 `test_venue_silence_is_a_reason_not_a_match()`
 
-## research/dca_paper/test_guard.py · 202 строк
+## research/dca_paper/test_guard.py · 208 строк
 
 Проверки охраны рынком — правила выхода коротких книг (спека 14 §13).
 
@@ -1212,9 +1212,9 @@
 - L45 `_rec(marks, state='closed', sym='AAAUSDT', exit='срок', lev=20.…`
 - L52 `test_guard_closes_strictly_before_the_exit_and_only_in_lived_ho…`
 - L83 `test_rule_is_declared_for_short_books_with_versions_and_page_te…`
-- L107 `test_guard_shorts_reads_the_summaries_end_to_end()`
-- L139 `test_cache_signature_does_not_carry_the_guard_on_purpose()`
-- L148 `test_guard_exit_price_comes_from_the_fills_not_from_the_whole_m…` — Цена выхода охраны — из заполненных ступеней, а не «вся маржа на плече».
+- L113 `test_guard_shorts_reads_the_summaries_end_to_end()`
+- L145 `test_cache_signature_does_not_carry_the_guard_on_purpose()`
+- L154 `test_guard_exit_price_comes_from_the_fills_not_from_the_whole_m…` — Цена выхода охраны — из заполненных ступеней, а не «вся маржа на плече».
 
 ## research/dca_paper/test_guard_fill.py · 75 строк
 

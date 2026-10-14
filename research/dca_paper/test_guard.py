@@ -99,6 +99,12 @@ def test_rule_is_declared_for_short_books_with_versions_and_page_text():
         plain = R.RULERS[k]["plain"]
         assert "охрана рынком" in plain and "≥ 2 %" in plain, (k, plain[-200:])
     assert "охрана рынком" not in R.RULERS["safe"]["plain"]
+    # английский текст для приложения (спека 16): у КАЖДОЙ линейки, одним
+    # ядром с русским — охрана и пол названы там же, где по-русски
+    for k, v in R.RULERS.items():
+        assert v.get("plain_en"), ("нет plain_en", k)
+        assert ("market guard" in v["plain_en"]) == ("охрана рынком" in v["plain"]), k
+        assert ("Capitulation floor" in v["plain_en"]) == ("Пол капитуляции" in v["plain"]), k
     print("ok  правило объявлено: порог 2 % у трёх коротких книг и короткой стороны "
           "общего счёта, версии h24 4 / pair 8, запись вперёд с 2026-10-10, прежние строки не в счёт, "
           "текст на вкладке")
