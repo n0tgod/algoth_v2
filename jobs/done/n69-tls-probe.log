@@ -1,0 +1,31 @@
+== задание n69-tls-probe ==
+строка: run tools/app_api/tls_probe.py
+начало: 2026-10-14T22:35:33Z
+запускаю: .venv/bin/python tools/app_api/tls_probe.py 
+== слушают 80 и 443 ==
+LISTEN 0      5            0.0.0.0:443       0.0.0.0:*    users:(("python",pid=1878610,fd=6))
+== перенаправления порта 80 (iptables nat) ==
+-A PREROUTING -p tcp -m tcp --dport 80 -j REDIRECT --to-ports 8765
+== nginx / caddy / apache ==
+inactive
+inactive
+inactive
+== инструменты ==
+certbot: нет
+acme.sh: нет
+openssl: /usr/bin/openssl
+lego: нет
+== модули Python ==
+cryptography: 50.0.2
+josepy: нет (ModuleNotFoundError)
+acme: нет (ModuleNotFoundError)
+jwt: 2.15.1
+== домен с сервера ==
+algoth.trade ['116.203.146.99']
+www.algoth.trade ['116.203.146.99']
+== сертификат API сейчас ==
+subject=CN = algoth-api
+issuer=CN = algoth-api
+notBefore=Oct  8 17:01:56 2026 GMT
+notAfter=Jan 11 17:01:56 2029 GMT
+конец: 2026-10-14T22:35:33Z, код 0
