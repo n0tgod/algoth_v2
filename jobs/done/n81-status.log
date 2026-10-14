@@ -1,0 +1,51 @@
+== задание n81-status ==
+строка: status
+начало: 2026-10-14T23:48:33Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   75G   70G  52% /
+/dev/sdb        147G   79G   61G  57% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 669148 4414848 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.
+1259830  185303 /root/algoth_v2/bot/target/release/bot ladder --dir /root/algoth_v2/bot/out/dca/sub_b0b417879b985874 --base https://api.bybit.com --keys-stdin -
+1898347    2245 .venv/bin/python research/b1_book/collect.py --http 8765
+1898563    2012 .venv/bin/python research/s8_loop/train.py
+--- убийства ядра по памяти за сутки ---
+2 (подробно: run tools/memtop.py)
+--- обучение S8 ---
+обучение S8: веса от 2026-10-14 01:14 UTC, 22.6 ч назад (каденция 24, тревога с 36 ч); последний цикл 23:20 UTC: весам 22.1 ч при каденции 24
+--- идущие прогоны ---
+нет
+--- статус сбора ---
+{"t": 1792021712.1, "uptime_sec": 2242.0, "rss_mb": 1647, "mem_guard": {"drops": 0, "dies": 0, "max_rss_mb": 1654}, "messages": 9237825, "trades": 664691, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 1532395, "snapshot_errors": 0, "last_snap_age_sec": 1.8, "snap_pass_sec": 1.34, "writes": {"trades": 664679, "book": 1532395, "raw": 48542, "liq": 154, "metrics": 5586}, "write_age_sec": {"trades": 0.6, "book": 1.8, "raw": 0.1, "liq": 43.9, "metrics": 97.3}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.246, "ask": 0.2461, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.000371, "ask": 0.0003712, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1023, "ask": 0.1024, "r
+--- живой исполнитель ---
+{
+  "at_ms": 1792021709344,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 268.11562509,
+    "equity": 265.78592509
+  }
+}
+--- исполнитель Ladder ---
+
+sub_3f11698eb30279fa: статусу 291213 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+sub_b0b417879b985874: статусу 1 с, режим live, позиций 3 (отметка у 3), пауза None, без входов False, ошибка None, стоп пола на бирже у 3 из 3, цель лимиткой у 3 из 3
+    AMZUUSDT long глубина 1/1: средняя 36.66, цель 38.0, пол 3.666000000000001, стоп биржи 3.66, рунгов лежит 0, закрытие None
+    METAUSDT long глубина 2/2: средняя 756.155, цель 782.37, пол 75.6155, стоп биржи 75.61, рунгов лежит 0, закрытие None
+    SHOPUSDT long глубина 3/3: средняя 175.18548387096774, цель 181.15, пол 109.08046826327282, стоп биржи 109.08, рунгов лежит 0, закрытие None
+  чужое на счёте: нет
+конец: 2026-10-14T23:48:34Z
