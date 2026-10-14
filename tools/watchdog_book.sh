@@ -93,8 +93,28 @@ train_rss_mb() {
     kb=$(ps -o rss= -p "$(echo "$pids" | tr ' ' ',')" 2>/dev/null | sort -n | tail -1 | tr -d ' ')
     echo "$(( ${kb:-0} / 1024 ))"
 }
+# Третий гейт — ОДИН прогон книг за раз (14.10): в 03:10 UTC память
+# только что перевалила за порог, и в одном такте стартовали длинные и
+# короткие книги — каждая видела 2500 МБ свободными, вдвоём они их
+# съели; ядро убило прогон длинных (1.85 ГБ) и цикл S8 (2.36 ГБ, книги
+# часа; обучение кончилось за два часа до того). Гейт по памяти мерит
+# «сейчас», а не «после старта соседа», поэтому второй прогон ждёт
+# такта: идёт любой прогон книг или в этом такте один уже запущен
+# (`BOOKS_LAUNCHED` — `pgrep` только что запущенного может не увидеть).
+BOOKS_LAUNCHED=""
+books_running() {
+    pgrep -f "dca_paper/run_(paper|short|pair)[.]py" >/dev/null 2>&1
+}
 books_mem_ok() {
     local a t
+    if [ -n "$BOOKS_LAUNCHED" ]; then
+        echo "[$(now)] прогон книг отложен: в этом такте уже запущен ${BOOKS_LAUNCHED} — по одному"
+        return 1
+    fi
+    if books_running; then
+        echo "[$(now)] прогон книг отложен: идёт другой прогон книг — по одному"
+        return 1
+    fi
     t=$(train_rss_mb)
     if [ "${t:-0}" -gt "$TRAIN_BUSY_MB" ]; then
         echo "[$(now)] прогон книг отложен: идёт обучение S8 (цикл ${t} МБ > ${TRAIN_BUSY_MB})"
@@ -434,6 +454,7 @@ if ! pgrep -f "dca_paper/run_paper.py" >/dev/null; then
         setsid nohup bash -c "
             nice -n 10 .venv/bin/python research/dca_paper/run_paper.py \
                 >> $DCAP_LOG 2>&1" &
+        BOOKS_LAUNCHED="длинные книги"
     fi
 fi
 
@@ -464,6 +485,7 @@ if ! pgrep -f "dca_paper/run_short.py" >/dev/null; then
         setsid nohup bash -c "
             nice -n 10 .venv/bin/python research/dca_paper/run_short.py \
                 >> $DCAS_LOG 2>&1" &
+        BOOKS_LAUNCHED="короткие книги"
     fi
 fi
 
@@ -492,6 +514,7 @@ if ! pgrep -f "dca_paper/run_pair.py" >/dev/null \
         setsid nohup bash -c "
             nice -n 10 .venv/bin/python research/dca_paper/run_pair.py \
                 >> $DCAP_LOG 2>&1" &
+        BOOKS_LAUNCHED="общий счёт"
     else
         # Ожидание длиннее двух часов — уже не порядок, а тишина
         # источника: сказать вслух, а не молчать в стороже.
