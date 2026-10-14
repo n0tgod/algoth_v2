@@ -29,3 +29,13 @@ issuer=CN = algoth-api
 notBefore=Oct  8 17:01:56 2026 GMT
 notAfter=Jan 11 17:01:56 2029 GMT
 конец: 2026-10-14T22:35:33Z, код 0
+публикуется в ветку main:
+ jobs/done/n69-tls-probe.done        |  1 +
+ jobs/done/n69-tls-probe.log         | 31 +++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 4 files changed, 36 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   92c6ac29..32cbb883  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
