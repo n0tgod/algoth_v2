@@ -398,3 +398,14 @@
    2329858        1      4  303:09  /usr/lib/systemd/systemd-networkd
        922        1      3 1879:48  /usr/lib/systemd/systemd-logind
 конец: 2026-10-13T21:32:50Z, код 0
+публикуется в ветку main:
+ jobs/done/n56-status.done |   1 +
+ jobs/done/n56-status.log  |  11 ++
+ jobs/done/n57-memtop.done |   1 +
+ jobs/done/n57-memtop.log  | 400 ++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log             |   4 +
+ 5 files changed, 417 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   bfc835aa..f58156be  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
