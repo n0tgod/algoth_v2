@@ -19,11 +19,22 @@ reject, halt, resume, mismatch. Журнал write-ahead: строка не
 import glob
 import json
 import os
+import sys
 import time
 
 import push as PUSH
 
 TEST_PREFIX = "_test_"
+RESEARCH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "research")
+
+
+def rules():
+    """Правила книг — лениво, одним ядром с бумагой (`rules.title_en`)."""
+    p = os.path.join(RESEARCH, "dca_paper")
+    if p not in sys.path:
+        sys.path.insert(0, p)
+    import rules as R                                        # noqa: E402
+    return R
 
 
 def journal_dir(root, sub_id):
@@ -90,7 +101,15 @@ def book_label(db, sub_id):
     r = db.c.execute("SELECT book, deposit FROM subscriptions WHERE id=?", (sub_id,)).fetchone()
     if r is None:
         return "test" if sub_id.startswith(TEST_PREFIX) else None
-    return f"{r['book']} · {float(r['deposit']):g} $"
+    # подпись пуша — имя режима и сторона по-английски, как на экране (14.10)
+    return f"{book_words(r['book'])} · {float(r['deposit']):g} $"
+
+
+def book_words(key):
+    """«Sigma · long» из ключа книги — та же карта, что у правил (`rules.title_en`)."""
+    k = str(key)
+    side = "both" if k.startswith("pair_") else "short" if k.endswith("_h") else "long"
+    return f"{rules().title_en(k)} · {side}"
 
 
 def push_trade(db, sender, tid, log=print):

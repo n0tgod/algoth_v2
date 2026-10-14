@@ -259,6 +259,8 @@ class App:
                               "sizing": sizing,
                               "sizing_title": (d.get("sizing_title") or {}).get(sizing, sizing),
                               "title": (r.get("title") if isinstance(r, dict) else None) or key,
+                              # имя режима для людей (14.10): из свода, одним ядром с правилами
+                              "title_en": (r.get("title_en") if isinstance(r, dict) else None) or key,
                               # касса БУМАГИ — справка: подписка стартует с депозита (§2)
                               "paper_cash_usd": self.paper_cash(b, float(dep)),
                               "ticket_usd": self.ticket_of(b, float(dep)),

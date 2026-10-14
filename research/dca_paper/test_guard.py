@@ -103,8 +103,13 @@ def test_rule_is_declared_for_short_books_with_versions_and_page_text():
     # ядром с русским — охрана и пол названы там же, где по-русски
     for k, v in R.RULERS.items():
         assert v.get("plain_en"), ("нет plain_en", k)
+        # имя режима по-английски (14.10) — у КАЖДОЙ книги, то же, что у
+        # длинной того же режима; через `title_en(key)` — то же слово
+        assert v.get("title_en") == R.MODE_EN[R.mode_of(k)] == R.title_en(k), (k, v.get("title_en"))
+        assert v.get("plain_en_short") == R.MODE_EN_PLAIN[R.mode_of(k)], k
         assert ("market guard" in v["plain_en"]) == ("охрана рынком" in v["plain"]), k
         assert ("Capitulation floor" in v["plain_en"]) == ("Пол капитуляции" in v["plain"]), k
+    assert R.title_en("pair_aggr") == "Gated" and R.title_en("safe_h") == "Sigma" and R.title_en("x") == "x"
     print("ok  правило объявлено: порог 2 % у трёх коротких книг и короткой стороны "
           "общего счёта, версии h24 4 / pair 8, запись вперёд с 2026-10-10, прежние строки не в счёт, "
           "текст на вкладке")

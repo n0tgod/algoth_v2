@@ -417,6 +417,10 @@ def test_push_key_is_checked_by_signing_and_words_come_from_the_record():
                                "pnl_usd": 3.21, "pnl_bp": 128.4})
         assert r3["aps"]["alert"]["body"] == "@ 2 · +3.21 $ · +128 bp", r3
         assert "subtitle" not in r3["aps"]["alert"]            # нет книги — нет поля, не пустая строка
+        # подпись книги в пуше — имя режима по-английски, как на экране (14.10)
+        import tradelog as TL
+        assert TL.book_words("optimal") == "Depth · long" and TL.book_words("safe_h") == "Sigma · short"
+        assert TL.book_words("pair_aggr") == "Gated · both"
         assert set(PUSH.PUSHED_KINDS) >= {"entry", "rung", "take", "floor", "term", "market", "cmd_close",
                                            "reject", "halt", "mismatch"}
 

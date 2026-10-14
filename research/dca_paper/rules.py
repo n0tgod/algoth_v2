@@ -233,6 +233,34 @@ SIGMA_MULT = 6.0
 # только запись ВПЕРЁД, а колонка пересчёта у него читается как «откуда
 # взялся порог», а не как результат.
 AGGR_MIN_LEV = MIN_NOTIONAL / RUNG_SHARE / 5.0        # = 4.0
+# Имена режимов для людей (решение владельца 2026-10-14): «безопасная /
+# оптимальная / агрессивная» обещают результат, которого книга не
+# гарантирует, и спорят с решением «плечо — не настройка агрессивности».
+# Имя называет ИСТОЧНИК плеча: Sigma — от волатильности имени, Depth — от
+# глубины лестницы, Gated — глубина плюс гейт входа по плечу. Ключи кода,
+# пути и русские заголовки страницы не переименовываются (как DCA → Ladder).
+MODE_EN = {"safe": "Sigma", "optimal": "Depth", "aggr": "Gated"}
+MODE_EN_PLAIN = {"safe": "leverage from the name’s volatility, 6σ reserve",
+                 "optimal": "leverage from ladder depth, 2× reserve",
+                 "aggr": "depth leverage, enters only at 4× and above"}
+
+
+def mode_of(key):
+    """Режим по ключу книги: без приставки общего счёта и хвоста короткой."""
+    k = str(key)
+    if k.startswith("pair_"):
+        k = k[5:]
+    for suf in ("_h", "_s"):
+        if k.endswith(suf):
+            k = k[:-len(suf)]
+    return k
+
+
+def title_en(key):
+    """Английское имя режима книги; неизвестный ключ — как есть."""
+    return MODE_EN.get(mode_of(key), str(key))
+
+
 RULERS = {
     "safe": {
         "rule": "sigma", "param": SIGMA_MULT, "title": "безопасная",
@@ -247,7 +275,8 @@ RULERS = {
                     "daily σ to liquidation, so a volatile name gets less "
                     "leverage. In the replay this meant no liquidations and "
                     "a milder worst position, at the price of roughly a "
-                    "quarter of a typical day’s result."},
+                    "quarter of a typical day’s result.",
+        "title_en": MODE_EN["safe"], "plain_en_short": MODE_EN_PLAIN["safe"]},
     "optimal": {
         "rule": "depth", "param": SURVIVE_MULT, "title": "оптимальная",
         "plain": "плечо от глубины лестницы: запас 2 · d_max до "
@@ -260,7 +289,8 @@ RULERS = {
                     "the maximum historical drawdown to liquidation. The "
                     "median position is better than the safe mode’s, but the "
                     "tail is heavier: the rule hands the most leverage to the "
-                    "most volatile names."},
+                    "most volatile names.",
+        "title_en": MODE_EN["optimal"], "plain_en_short": MODE_EN_PLAIN["optimal"]},
     "aggr": {
         "rule": "depth", "param": SURVIVE_MULT,
         "min_lev": AGGR_MIN_LEV,
@@ -286,6 +316,7 @@ RULERS = {
                     "came from”, and only the forward record judges it. "
                     "Leverage is the source of the tail, and this mode sits "
                     "in the tail zone on purpose.",
+        "title_en": MODE_EN["aggr"], "plain_en_short": MODE_EN_PLAIN["aggr"],
     },
 }
 
@@ -462,6 +493,8 @@ for _pk, (_lk, _sk) in PAIR_PARTS.items():
     RULERS[_pk] = {"rule": RULERS[_lk]["rule"], "param": RULERS[_lk]["param"],
                    "side": "both", "family": "pair",
                    "title": "общая (" + RULERS[_lk]["title"] + ")",
+                   "title_en": RULERS[_lk]["title_en"],
+                   "plain_en_short": RULERS[_lk]["plain_en_short"],
                    "plain": _PAIR_NOTE,
                    "plain_en": ("The long and the short book of this mode on ONE "
                                 "deposit: margin taken by one side is unavailable "
