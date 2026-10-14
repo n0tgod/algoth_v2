@@ -64,7 +64,7 @@ EQUITY_TTL = 60.0
 # Чтение — 600 в минуту: вкладка Trades спрашивает позиции раз в 2 с
 # (владелец 10.10: «пнл как можно чаще»), плюс состояние и журнал.
 RATE = {"read": (600, 60.0), "write": (10, 60.0)}    # (запросов, окно с)
-STAGE_NOT_BUILT = "этап не построен: команды и перевод в live — Y3–Y4 спеки 15"
+STAGE_NOT_BUILT = "not built yet"
 PAIR_PREFIX = "pair_"
 
 
@@ -120,20 +120,20 @@ class App:
     # ------------------------------------------------------------ вход
     def auth_operator(self, token, device=None):
         if not self.operator_token or not token or token != self.operator_token:
-            return 403, {"error": "токен оператора не подошёл"}
+            return 403, {"error": "operator token rejected"}
         op = self.db.operator()
         if op is None:
             aid = self.db.create_account("operator")
-            self.db.event(aid, "account", "аккаунт оператора создан")
+            self.db.event(aid, "account", "operator account created")
         else:
             aid = op["id"]
         tok = self.db.new_session(aid, device)
-        self.db.event(aid, "auth", "вход оператора", {"device": device})
+        self.db.event(aid, "auth", "operator sign-in", {"device": device})
         return 200, {"session": tok, "account_id": aid, "role": "operator"}
 
     def auth_apple(self, identity_token, device=None, current=None):
         if self.apple_verify is None:
-            return 503, {"error": "вход через Apple не настроен на сервере"}
+            return 503, {"error": "Sign in with Apple is not configured on the server"}
         try:
             who = self.apple_verify(identity_token or "")
         except ValueError as e:
@@ -143,25 +143,25 @@ class App:
             return 401, {"error": str(e)}
         except Exception as e:                                 # noqa: BLE001
             log("вход через Apple: сбой проверки:", type(e).__name__, str(e)[:200])
-            return 503, {"error": f"проверка токена Apple не удалась: {type(e).__name__}"}
+            return 503, {"error": f"Apple sign-in check failed: {type(e).__name__}"}
         acc = self.db.account_by_apple(who["sub"])
         if acc is None and current is not None and not current["apple_sub"]:
             # оператор привязывает свой Apple ID к уже существующему аккаунту
             self.db.link_apple(current["id"], who["sub"], who.get("email"))
             acc = self.db.account(current["id"])
-            self.db.event(acc["id"], "account", "Apple ID привязан к аккаунту")
+            self.db.event(acc["id"], "account", "Apple ID linked to the account")
         if acc is None:
             if self.db.accounts_count() >= self.max_accounts:
                 log(f"регистрация отвергнута: аккаунтов {self.db.accounts_count()} при пределе {self.max_accounts}")
                 return 403, {"error": "Registration is closed for now: all places are taken. Please try again later."}
             role = "operator" if self.db.accounts_count() == 0 else "user"
             aid = self.db.create_account(role, who["sub"], who.get("email"))
-            self.db.event(aid, "account", f"аккаунт создан ({role})")
+            self.db.event(aid, "account", f"account created ({role})")
             acc = self.db.account(aid)
         if acc["status"] != "active":
-            return 403, {"error": "аккаунт заморожен"}
+            return 403, {"error": "this account is suspended"}
         tok = self.db.new_session(acc["id"], device)
-        self.db.event(acc["id"], "auth", "вход через Apple", {"device": device})
+        self.db.event(acc["id"], "auth", "signed in with Apple", {"device": device})
         return 200, {"session": tok, "account_id": acc["id"], "role": acc["role"]}
 
     def logout(self, token):
@@ -185,23 +185,23 @@ class App:
 
     def set_limits(self, acc, max_accounts):
         if acc["role"] != "operator":
-            return 403, {"error": "только оператор"}
+            return 403, {"error": "operator only"}
         try:
             n = int(max_accounts)
         except (TypeError, ValueError):
-            return 400, {"error": "max_accounts — целое число"}
+            return 400, {"error": "max_accounts must be an integer"}
         if n < 1:
-            return 400, {"error": "max_accounts ≥ 1: оператор — первый аккаунт"}
+            return 400, {"error": "max_accounts must be at least 1 (the operator is the first account)"}
         if not self.out:
-            return 503, {"error": "у сервера нет каталога out"}
+            return 503, {"error": "the server has no out directory"}
         with open(os.path.join(self.out, "limits.json"), "w", encoding="utf-8") as f:
             json.dump({"max_accounts": n, "at": time.time(), "by": acc["id"]}, f)
-        self.db.event(acc["id"], "operator", f"предел аккаунтов: {n}")
+        self.db.event(acc["id"], "operator", f"account limit: {n}")
         return 200, {"max_accounts": n, "accounts": self.db.accounts_count()}
 
     def limits(self, acc):
         if acc["role"] != "operator":
-            return 403, {"error": "только оператор"}
+            return 403, {"error": "operator only"}
         return 200, {"max_accounts": self.max_accounts, "accounts": self.db.accounts_count()}
 
     def consent_state(self, acc):
@@ -221,7 +221,7 @@ class App:
         if version != cur:
             return 409, {"error": f"the documents changed: accept version {cur}", "current": cur}
         self.db.add_consent(acc["id"], cur, ip=ip, device=device)
-        self.db.event(acc["id"], "consent", f"принял документы версии {cur}", {"ip": ip, "device": device})
+        self.db.event(acc["id"], "consent", f"accepted documents version {cur}", {"ip": ip, "device": device})
         return 200, {"consent": self.consent_state(acc)}
 
     def need_consent(self, acc):
@@ -240,45 +240,45 @@ class App:
         if gate:
             return gate
         if venue != "bybit":
-            return 400, {"error": "площадка не поддерживается: только bybit"}
+            return 400, {"error": "exchange not supported: Bybit only"}
         key = (key or "").strip()
         secret = (secret or "").strip()
         if len(key) < 8 or len(secret) < 8:
-            return 400, {"error": "ключ и секрет обязательны"}
+            return 400, {"error": "API key and secret are required"}
         try:
             info = self.venue.query_api(key, secret)
         except bybit.VenueError as e:
-            return 400, {"error": f"ключ не прошёл проверку у биржи: {e}"}
+            return 400, {"error": f"the exchange rejected the key: {e}"}
         j = bybit.judge_permissions(info, self.server_ip)
         if j["money_moving"]:
-            return 400, {"error": "ключ умеет выводить или переводить деньги "
-                                  f"({', '.join(j['money_moving'])}): отзовите его и создайте без права вывода",
+            return 400, {"error": "this key can withdraw or transfer funds "
+                                  f"({', '.join(j['money_moving'])}): revoke it and create one without withdrawal rights",
                          "perms": j}
         if not j["trade_ok"]:
-            return 400, {"error": "у ключа нет права торговать контрактами (ContractTrade: Order, Position)"
-                                  + (" — он только на чтение" if j["read_only"] else ""), "perms": j}
+            return 400, {"error": "the key has no contract trading permission (ContractTrade: Order, Position)"
+                                  + (" — it is read-only" if j["read_only"] else ""), "perms": j}
         warnings = []
         if not j["ip_restricted"]:
-            warnings.append("у ключа нет IP-ограничения: добавьте адрес сервера "
-                            f"{self.server_ip} в настройках ключа на бирже")
+            warnings.append("the key has no IP restriction: add the server address "
+                            f"{self.server_ip} in the key settings at the exchange")
         elif not j["ip_ok"]:
-            warnings.append(f"IP-ограничение ключа не содержит адрес сервера {self.server_ip}: "
-                            "запросы исполнителя будут отвергнуты")
+            warnings.append(f"the key’s IP restriction does not include the server address {self.server_ip}: "
+                            "the executor’s requests will be rejected")
         equity = None
         try:
             equity = self.venue.wallet_equity(key, secret)
         except bybit.VenueError as e:
-            warnings.append(f"эквити не прочитано: {e}")
+            warnings.append(f"account equity not read: {e}")
         modes = {}
         try:
             modes = self.venue.position_mode(key, secret)
         except bybit.VenueError as e:
-            warnings.append(f"режим позиций не прочитан: {e}")
+            warnings.append(f"position mode not read: {e}")
         cipher = sealed.seal(self.pub, json.dumps({"venue": venue, "key": key, "secret": secret}).encode("utf-8"))
         del secret
         perms = dict(j, warnings=warnings, position_modes=modes)
         kid = self.db.add_key(acc["id"], venue, key[:4], cipher, perms, j["ip_ok"], equity)
-        self.db.event(acc["id"], "key", f"ключ {key[:4]}… добавлен", {"key_id": kid, "warnings": warnings})
+        self.db.event(acc["id"], "key", f"key {key[:4]}… added", {"key_id": kid, "warnings": warnings})
         return 200, self._key_view(self.db.key(kid))
 
     def _key_view(self, r):
@@ -294,13 +294,13 @@ class App:
     def delete_key(self, acc, kid):
         r = self.db.key(kid, acc["id"])
         if r is None or r["status"] == "revoked":
-            return 404, {"error": "ключа нет"}
+            return 404, {"error": "no such key"}
         if self.db.subs_on_key(kid, live_only=True):
-            return 409, {"error": "ключ держит живую подписку: сперва остановите её"}
+            return 409, {"error": "this key has a live subscription: stop it first"}
         for s in self.db.subs_on_key(kid):
             self.db.close_subscription(s["id"])
         self.db.revoke_key(kid)
-        self.db.event(acc["id"], "key", f"ключ {r['key_prefix']}… отозван, подписки на нём закрыты")
+        self.db.event(acc["id"], "key", f"key {r['key_prefix']}… revoked, its subscriptions closed")
         return 200, {"ok": True}
 
     # ------------------------------------------------------------ книги и ячейки
@@ -385,25 +385,25 @@ class App:
             return gate
         k = self.db.key(key_id, acc["id"])
         if k is None or k["status"] != "ok":
-            return 404, {"error": "ключа нет или он отозван"}
+            return 404, {"error": "no such key, or it was revoked"}
         try:
             deposit = float(deposit)
         except (TypeError, ValueError):
-            return 400, {"error": "депозит — число из ряда ячеек"}
+            return 400, {"error": "deposit must be one of the listed amounts"}
         st, cells = self.strategies()
         sizing = sizing or DEFAULT_SIZING
         if sizing not in cells["sizings"]:
-            return 400, {"error": f"формат размера {sizing!r} книгам неизвестен: "
+            return 400, {"error": f"unknown sizing {sizing!r}; known: "
                                   + ", ".join(cells["sizings"])}
         cell = next((c for c in cells["cells"] if c["book"] == book
                      and abs(c["deposit"] - deposit) < 1e-9 and c["sizing"] == sizing), None)
         if cell is None:
-            return 400, {"error": f"ячейки {book} на {deposit:g} $ нет среди книг сервера"}
+            return 400, {"error": f"no strategy {book} with deposit {deposit:g} $ on the server"}
         for s in self.db.subs_on_key(key_id):
             # одна книга на ключ в ЛЮБОМ формате: две подписки одной книги
             # торговали бы одни имена на одном счёте и ломали сверку
             if s["book"] == book:
-                return 409, {"error": "на этом ключе уже есть подписка на эту книгу"}
+                return 409, {"error": "this key already has a subscription to this strategy"}
         state = {"side": cell["side"], "sizing": sizing, "warnings": []}
         if cell["side"] == "both":
             try:
@@ -412,13 +412,13 @@ class App:
                 state["hedge_mode"] = "off" if off else ("on" if modes else "n/a")
                 state["hedge_off_syms"] = off[:50]
                 if off:
-                    state["warnings"].append(f"режим хеджирования выключен у {len(off)} имён — "
-                                             "двусторонняя книга живьём работать не сможет")
+                    state["warnings"].append(f"hedge mode is off for {len(off)} symbols — "
+                                             "a two-sided strategy cannot trade live")
             except bybit.VenueError as e:
                 state["hedge_mode"] = "n/a"
-                state["warnings"].append(f"режим хеджирования не прочитан: {e}")
+                state["warnings"].append(f"hedge mode not read: {e}")
         sid = self.db.add_subscription(acc["id"], key_id, book, deposit, state)
-        self.db.event(acc["id"], "subscription", f"подписка {book} на {deposit:g} $, {sizing} (сухой режим)",
+        self.db.event(acc["id"], "subscription", f"subscribed: {book}, deposit {deposit:g} $, {sizing} (dry run)",
                       {"subscription_id": sid, "warnings": state["warnings"]})
         return 200, self._sub_view(self.db.subscription(sid, acc["id"]))
 
@@ -443,7 +443,7 @@ class App:
     def delete_subscription(self, acc, sid):
         s = self.db.subscription(sid, acc["id"])
         if s is None:
-            return 404, {"error": "подписки нет"}
+            return 404, {"error": "no such subscription"}
         if s["mode"] == "live":
             # Живую подписку закрыть можно, когда у исполнителя нет
             # открытых позиций (владелец 11.10 закрыл всё руками и нажал
@@ -453,18 +453,18 @@ class App:
             # (`ladder_run.ensure`: подписка не активна — мягкая остановка).
             ex = self.exec_status(sid)
             if ex is None:
-                return 409, {"error": "исполнитель не прислал статус — не видно, закрыты ли позиции; повтори через минуту"}
+                return 409, {"error": "the executor has not reported its status — cannot see whether positions are closed; try again in a minute"}
             open_ = [p.get("sym") for p in ex.get("positions") or []]
             if open_:
-                return 409, {"error": f"у исполнителя открыто позиций {len(open_)} ({', '.join(open_)}): закрой их кнопкой Close и повтори"}
+                return 409, {"error": f"{len(open_)} position(s) still open ({', '.join(open_)}): close them with Close and try again"}
             d = self.sub_dir(sid)
             os.makedirs(d, exist_ok=True)
             with open(os.path.join(d, "NO_ENTRIES"), "w") as f:
                 f.write(str(time.time()))
             self.db.c.execute("UPDATE subscriptions SET mode='dry' WHERE id=?", (sid,))
         self.db.close_subscription(sid)
-        self.db.event(acc["id"], "subscription", f"подписка {s['book']} закрыта")
-        return 200, {"ok": True, "note": "подписка закрыта; исполнитель остановится в течение 5 минут"}
+        self.db.event(acc["id"], "subscription", f"subscription {s['book']} closed")
+        return 200, {"ok": True, "note": "subscription closed; the executor stops within 5 minutes"}
 
     # ------------------------------------------------------------ живой режим
     def live_enabled(self):
@@ -475,14 +475,14 @@ class App:
         не переводится. Выключение НЕ останавливает работающих — для
         этого у подписки `disarm` и `kill`."""
         if acc["role"] != "operator":
-            return 403, {"error": "рубильник — только оператору"}
+            return 403, {"error": "operator only"}
         path = os.path.join(self.out, "LIVE_ENABLED")
         if on:
             with open(path, "w") as f:
                 f.write(str(time.time()))
         elif os.path.exists(path):
             os.remove(path)
-        self.db.event(acc["id"], "live", "рубильник живой торговли " + ("ВКЛЮЧЁН" if on else "выключен"))
+        self.db.event(acc["id"], "live", "live trading switch " + ("ON" if on else "off"))
         return 200, {"live_enabled": self.live_enabled()}
 
     def sub_dir(self, sid):
@@ -504,29 +504,29 @@ class App:
         наберёт. Проверки машиной; любая не прошла — отказ словами."""
         s = self.db.subscription(sid, acc["id"])
         if s is None:
-            return 404, {"error": "подписки нет"}
+            return 404, {"error": "no such subscription"}
         want = f"{s['book']}:{int(float(s['deposit']))}"
         if (confirm or "").strip() != want:
-            return 400, {"error": f"подтверждение не совпало: нужно «{want}»"}
+            return 400, {"error": f"confirmation does not match: type “{want}”"}
         why = []
         if not self.live_enabled():
-            why.append("рубильник живой торговли выключен (оператор)")
+            why.append("live trading is switched off on the server")
         k = self.db.key(s["key_id"])
         if k is None or k["status"] != "ok":
-            why.append("ключ подписки отозван")
+            why.append("the subscription’s key was revoked")
         others = [o for o in self.db.subs_on_key(s["key_id"], live_only=True) if o["id"] != sid]
         if others:
-            why.append(f"на этом ключе уже есть живая подписка {others[0]['book']} — две делили бы одни позиции")
+            why.append(f"this key already has a live subscription ({others[0]['book']}) — two would share the same positions")
         st = json.loads(s["state_json"] or "{}")
         cash = self.sub_cash(s, st)
         if k is not None:
             age = (time.time() - k["equity_at"]) if k["equity_at"] else None
             if k["equity_usd"] is None or age is None or age > 24 * 3600:
-                why.append("эквити счёта не измерено за сутки — нажмите «Check account»")
+                why.append("account equity not measured in the last 24 h — press “Check account”")
             elif k["equity_usd"] < cash:
-                why.append(f"на счёте {k['equity_usd']:,.2f} $, касса подписки {cash:,.2f} $")
+                why.append(f"the account holds {k['equity_usd']:,.2f} $, the subscription needs {cash:,.2f} $")
         if why:
-            self.db.event(acc["id"], "live", f"перевод {s['book']} в live отвергнут: " + "; ".join(why))
+            self.db.event(acc["id"], "live", f"going live with {s['book']} refused: " + "; ".join(why))
             return 409, {"error": "; ".join(why), "reasons": why}
         d = self.sub_dir(sid)
         os.makedirs(d, exist_ok=True)
@@ -538,37 +538,37 @@ class App:
         was = s["mode"]
         self.db.c.execute("UPDATE subscriptions SET mode='live', armed_at=?, armed_by=? WHERE id=?",
                           (time.time(), acc["id"], sid))
-        self.db.event(acc["id"], "live", (f"подписка {s['book']} {float(s['deposit']):g} $ переведена в ЖИВЫЕ сделки"
-                                          if was != "live" else f"подписка {s['book']}: входы снова включены"),
+        self.db.event(acc["id"], "live", (f"subscription {s['book']} {float(s['deposit']):g} $ is now LIVE"
+                                          if was != "live" else f"subscription {s['book']}: entries resumed"),
                       {"subscription_id": sid})
         return 200, {"ok": True, "mode": "live",
-                     "note": "исполнитель поднимет сторож в течение 5 минут; первые входы — со следующих выборов"}
+                     "note": "the executor starts within 5 minutes; first entries come with the next picks"}
 
     def disarm(self, acc, sid):
         """Входы выключены, открытые позиции исполнитель ведёт дальше
         (цель, пол, срок, охрана рынком). Режим остаётся live."""
         s = self.db.subscription(sid, acc["id"])
         if s is None:
-            return 404, {"error": "подписки нет"}
+            return 404, {"error": "no such subscription"}
         if s["mode"] != "live":
-            return 409, {"error": "подписка не в живом режиме"}
+            return 409, {"error": "the subscription is not live"}
         d = self.sub_dir(sid)
         os.makedirs(d, exist_ok=True)
         with open(os.path.join(d, "NO_ENTRIES"), "w") as f:
             f.write(str(time.time()))
-        self.db.event(acc["id"], "live", f"подписка {s['book']}: новые входы выключены, позиции ведутся")
+        self.db.event(acc["id"], "live", f"subscription {s['book']}: new entries stopped, open positions are managed")
         return 200, {"ok": True, "entries": False}
 
     def to_dry(self, acc, sid):
         """Обратно в сухой режим — только без открытых позиций."""
         s = self.db.subscription(sid, acc["id"])
         if s is None:
-            return 404, {"error": "подписки нет"}
+            return 404, {"error": "no such subscription"}
         ex = self.exec_status(sid) or {}
         if ex.get("positions"):
-            return 409, {"error": f"у исполнителя открыто позиций {len(ex['positions'])}: сперва «Stop entries» и дождаться закрытия"}
+            return 409, {"error": f"{len(ex['positions'])} position(s) still open: stop entries first and wait until they close"}
         self.db.c.execute("UPDATE subscriptions SET mode='dry' WHERE id=?", (sid,))
-        self.db.event(acc["id"], "live", f"подписка {s['book']} переведена в сухой режим")
+        self.db.event(acc["id"], "live", f"subscription {s['book']} back to dry run")
         return 200, {"ok": True, "mode": "dry"}
 
     def close_position(self, acc, sid, sym, pos_at):
@@ -582,40 +582,40 @@ class App:
         исполнитель отвергает выход чужой позиции того же имени."""
         s = self.db.subscription(sid, acc["id"])
         if s is None:
-            return 404, {"error": "подписки нет"}
+            return 404, {"error": "no such subscription"}
         if s["mode"] != "live":
-            return 409, {"error": "подписка не в живом режиме — закрывать нечего"}
+            return 409, {"error": "the subscription is not live — nothing to close"}
         sym = str(sym or "").upper()
         try:
             pos_at = float(pos_at)
         except (TypeError, ValueError):
-            return 400, {"error": "нужны sym и pos_at позиции"}
+            return 400, {"error": "sym and pos_at of the position are required"}
         ex = self.exec_status(sid)
         if ex is None:
-            return 409, {"error": "исполнитель не прислал статус — закрыть через него нельзя"}
+            return 409, {"error": "the executor has not reported its status — cannot close through it now"}
         q = next((x for x in ex.get("positions") or []
                   if x.get("sym") == sym and abs(float(x.get("pos_at") or 0) - pos_at) < 1.0), None)
         if q is None:
-            return 404, {"error": f"у исполнителя нет открытой позиции {sym} этого решения"}
+            return 404, {"error": f"no open position {sym} from this decision"}
         if q.get("closing"):
             return 200, {"ok": True, "already": True, "closing": q.get("closing"),
-                         "note": "позиция уже закрывается"}
+                         "note": "the position is already closing"}
         row = {"kind": "exit", "sub": sid, "sym": sym, "book": q.get("book"), "side": q.get("side"),
                "decided_at": pos_at, "reason": "manual", "by": acc["id"], "computed_at": time.time()}
         with self.intents_lock:
             seqs = INTENTS._append(INTENTS.intents_path(self.exec_root, sid), [row], seqs=True)
-        self.db.event(acc["id"], "live", f"ручное закрытие {sym} ({s['book']})",
+        self.db.event(acc["id"], "live", f"manual close {sym} ({s['book']})",
                       {"subscription_id": sid, "sym": sym, "seq": seqs[0] if seqs else None})
         return 200, {"ok": True, "seq": seqs[0] if seqs else None,
-                     "note": "исполнитель закроет позицию на ближайшем такте (около 2 с) заявкой reduceOnly с потолком 1 %"}
+                     "note": "the executor closes the position within about 2 s with a reduce-only order (price limit 1 %)"}
 
     def kill(self, acc, sid, on):
         """KILL подписки: исполнитель не делает НИЧЕГО (ни заявок, ни отмен)."""
         if acc["role"] != "operator":
-            return 403, {"error": "KILL — только оператору"}
+            return 403, {"error": "operator only"}
         s = self.db.subscription(sid, acc["id"])
         if s is None:
-            return 404, {"error": "подписки нет"}
+            return 404, {"error": "no such subscription"}
         d = self.sub_dir(sid)
         os.makedirs(d, exist_ok=True)
         path = os.path.join(d, "KILL")
@@ -624,7 +624,7 @@ class App:
                 f.write(str(time.time()))
         elif os.path.exists(path):
             os.remove(path)
-        self.db.event(acc["id"], "live", f"подписка {s['book']}: KILL " + ("ВКЛЮЧЁН" if on else "снят"))
+        self.db.event(acc["id"], "live", f"subscription {s['book']}: KILL " + ("ON" if on else "lifted"))
         return 200, {"kill": bool(on)}
 
     def check_account(self, acc, sid, runner=None):
@@ -633,15 +633,15 @@ class App:
         числа и да/нет, без ключа. Эквити записывается в базу."""
         s = self.db.subscription(sid, acc["id"])
         if s is None:
-            return 404, {"error": "подписки нет"}
+            return 404, {"error": "no such subscription"}
         cmd = [sys.executable, os.path.join(HERE, "preflight.py"), "--db", self.db.path,
                "--sub", sid, "--update-equity"]
         try:
             r = (runner or (lambda c: subprocess.run(c, capture_output=True, text=True, timeout=60)))(cmd)
             text = (r.stdout or "") + (("\n" + r.stderr[-800:]) if r.stderr else "")
         except Exception as e:                                  # noqa: BLE001
-            return 502, {"error": f"проверка не выполнилась: {type(e).__name__}"}
-        self.db.event(acc["id"], "live", f"проверка счёта {s['book']}", {"subscription_id": sid})
+            return 502, {"error": f"the check did not run: {type(e).__name__}"}
+        self.db.event(acc["id"], "live", f"account check {s['book']}", {"subscription_id": sid})
         return 200, {"text": text.strip(), "ok": "итог: годен" in text}
 
     # ------------------------------------------------------------ состояние
@@ -662,9 +662,9 @@ class App:
             if equity is not None and cash is not None:
                 equity_ok = equity >= cash
                 if not equity_ok:
-                    warnings.append(f"на счёте {equity:,.0f} $, подписка требует {cash:,.0f} $ — входов не будет")
+                    warnings.append(f"the account holds {equity:,.0f} $, the subscription needs {cash:,.0f} $ — no entries until it does")
             else:
-                warnings.append("эквити счёта не прочитано")
+                warnings.append("account equity not read")
             # открытые позиции ячейки — из свода книг, с уровнями строки (Y1);
             # `followed` — открыта после подписки, то есть её ведёт исполнитель
             since = float((st.get("follow") or {}).get("since") or s["created"])
@@ -696,14 +696,16 @@ class App:
             d_sub = self.sub_dir(s["id"])
             executor = None
             if s["mode"] == "live":
-                executor = {"status": ({k: ex.get(k) for k in ("at_ms", "mode", "kill", "no_entries", "paused",
-                                                              "realized_usd", "realized_today_usd", "entries_n",
-                                                              "closed_n", "rejects_n", "last_error",
-                                                              "margin_open_usd", "hedge")} if ex else None),
+                # слова исполнителя (пауза, последняя ошибка) — по-английски показа
+                executor = {"status": ({k: (TRADES.reason_en(ex.get(k)) if k in ("paused", "last_error") else ex.get(k))
+                                        for k in ("at_ms", "mode", "kill", "no_entries", "paused",
+                                                  "realized_usd", "realized_today_usd", "entries_n",
+                                                  "closed_n", "rejects_n", "last_error",
+                                                  "margin_open_usd", "hedge")} if ex else None),
                             "age_s": (time.time() - float(ex["at_ms"]) / 1000.0) if ex and ex.get("at_ms") else None,
                             "kill": os.path.exists(os.path.join(d_sub, "KILL")),
                             "no_entries": os.path.exists(os.path.join(d_sub, "NO_ENTRIES")),
-                            "why_none": (None if ex else "исполнитель ещё не поднят: сторож запускает его в течение 5 минут")}
+                            "why_none": (None if ex else "the executor has not started yet: it starts within 5 minutes")}
             subs.append({"subscription_id": s["id"], "book": s["book"], "deposit": s["deposit"],
                          "executor": executor, "armed_at": s["armed_at"],
                          "mode": s["mode"], "side": st.get("side"), "sizing": sizing,
@@ -734,14 +736,14 @@ class App:
         try:
             d = self.dca_fetch(full=full) if full else self.dca()
         except Exception as e:                                  # noqa: BLE001
-            return 502, {"error": f"сервер книг не ответил: {e}"}
+            return 502, {"error": f"the strategy server did not answer: {e}"}
         return 200, d or {}
 
     # ------------------------------------------------------------ устройства и пуши (§7.5)
     def add_device(self, acc, token, env="prod", build=None):
         tok = str(token or "").strip().lower()
         if not tok or not all(c in "0123456789abcdef" for c in tok) or len(tok) < 32:
-            return 400, {"error": "токен устройства — hex-строка APNs"}
+            return 400, {"error": "device token must be an APNs hex string"}
         env = env if env in PUSH.HOSTS else "prod"
         self.db.upsert_device(tok, acc["id"], env, (str(build) if build is not None else None))
         return 200, {"ok": True, "devices": len(self.db.devices_of(acc["id"]))}
@@ -758,22 +760,22 @@ class App:
 
     def push_config(self, acc, team_id, key_id, p8, topic=None):
         if acc["role"] != "operator":
-            return 403, {"error": "ключ APNs задаёт только оператор"}
+            return 403, {"error": "operator only"}
         try:
             r = PUSH.save_config(self.out, team_id, key_id, p8, topic)
         except ValueError as e:
             return 400, {"error": str(e)}
         self.sender._jwt = (0.0, None, None)
-        self.db.event(acc["id"], "push", f"ключ APNs задан: {r['key_id']}, тема {r['topic']}")
+        self.db.event(acc["id"], "push", f"APNs key set: {r['key_id']}, topic {r['topic']}")
         return 200, {"ok": True, **r}
 
     def push_test(self, acc):
         """Пробный пуш на устройства аккаунта — без записи сделки."""
         devs = self.db.devices_of(acc["id"])
         if not devs:
-            return 409, {"error": "у аккаунта нет зарегистрированных устройств: откройте приложение и разрешите уведомления"}
+            return 409, {"error": "no registered devices on this account: open the app and allow notifications"}
         if PUSH.load_config(self.out) is None:
-            return 409, {"error": "ключ APNs не задан (оператор: Account → Push notifications)"}
+            return 409, {"error": "push notifications are not configured on the server yet"}
         payload = PUSH.payload_for({"kind": "test", "mode": "test", "reason": "push channel check",
                                     "subscription_id": "test", "id": None}, book="Algoth")
         res = []
@@ -793,7 +795,7 @@ class App:
         try:
             since, limit = int(since or 0), max(1, min(int(limit or 200), 500))
         except (TypeError, ValueError):
-            return 400, {"error": "since и limit — числа"}
+            return 400, {"error": "since and limit must be numbers"}
         mode = (mode or "live").strip()
         modes = None if mode == "all" else [m for m in mode.split(",") if m]
         rows = [TRADES.view(r) for r in self.db.trades_of(acc["id"], since=since, limit=limit, modes=modes)]
@@ -803,17 +805,17 @@ class App:
             by_mode[r["mode"]] = r["n"]
         live = any(s["mode"] == "live" for s in self.db.subscriptions_of(acc["id"]))
         hidden = sum(n for m, n in by_mode.items() if modes is not None and m not in modes)
-        note = ("живые сделки исполнителя на бирже" if live else
-                "живого исполнителя нет: подписка в сухом режиме")
+        note = ("live trades of the executor on the exchange" if live else
+                "no live executor: the subscription is a dry run")
         if hidden:
-            note += f"; сухих и пробных записей скрыто {hidden}"
+            note += f"; {hidden} dry-run and test records hidden"
         return 200, {"trades": rows, "by_mode": by_mode, "mode": mode, "hidden": hidden,
                      "executor_running": "live" if live else "dry", "note": note}
 
     # Слова исхода — те же, что у строк бумажной книги: карточка позиции
     # одна на бумагу и живое, и два словаря однажды разошлись бы.
-    EXIT_WORDS = {"take": "тейк", "floor": "пол", "term": "срок", "market": "рынок",
-                  "cmd_close": "команда", "liq": "ликвидация", "mismatch": "вне исполнителя"}
+    EXIT_WORDS = {"take": "target", "floor": "floor", "term": "term", "market": "market guard",
+                  "cmd_close": "manual", "liq": "liquidation", "mismatch": "outside the executor"}
 
     def live_positions(self, acc):
         """Живые позиции — в ФОРМЕ строки бумажной книги (`sym, side, at, lev,
@@ -890,8 +892,8 @@ class App:
             q = next((x for x in ex.get("positions") or []
                       if x.get("sym") == p["sym"] and abs(float(x.get("pos_at") or 0) - p["pos_at"]) < 1.0), None)
             if q is None:
-                p["mark_why"] = ("исполнитель не прислал статус" if not ex else
-                                 "исполнитель этой позиции не держит — исход ждёт записи журнала")
+                p["mark_why"] = ("the executor has not reported its status" if not ex else
+                                 "the executor no longer holds this position — the outcome waits for its log record")
                 continue
             # закрытие идёт (ручное, срок, пол, недоисполненный выход) —
             # приложение показывает его вместо кнопки
@@ -941,11 +943,11 @@ class App:
                 # считала» — отказ, выданный за ожидание.
                 ran = (book.get("open") or {}).get("at")
                 if ran is None:
-                    p["paper_why"] = "время прогона бумаги неизвестно — сравнить не с чем"
+                    p["paper_why"] = "paper run time unknown — nothing to compare with"
                 elif float(p["pos_at"]) > float(ran):
-                    p["paper_why"] = "бумага ещё не считала этот час"
+                    p["paper_why"] = "the paper book has not computed this hour yet"
                 else:
-                    p["paper_why"] = "бумага это решение не взяла (касса или одна позиция на имя)"
+                    p["paper_why"] = "the paper book did not take this decision (cash or one position per symbol)"
                 continue
             closed = q.get("exit_ts") is not None and q.get("exit") is not None
             pm = float(q.get("margin") or 0) or None
@@ -1046,7 +1048,7 @@ class App:
     def trade_test(self, acc, text=None):
         """Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой."""
         if acc["role"] != "operator":
-            return 403, {"error": "пробное событие — только оператор"}
+            return 403, {"error": "operator only"}
         sid, ev = TRADES.test_event(self.exec_root, acc["id"], text)
         n = TRADES.tick(self.db, self.exec_root, self.sender, log=log)
         row = self.db.c.execute("SELECT * FROM trades WHERE subscription_id=? AND seq=?",
@@ -1121,14 +1123,14 @@ def pub_query(name, q):
     """Параметры публичного запроса: (dict, None) или (None, слова отказа)."""
     allowed = PUB_ROUTES.get(name)
     if allowed is None:
-        return None, "нет такого свода"
+        return None, "no such data"
     out = {}
     for k, vs in q.items():
         if k not in allowed:
-            return None, f"параметр {k!r} не принимается"
+            return None, f"parameter {k!r} is not accepted"
         v = vs[0] if vs else ""
         if not PUB_VALUE.match(v):
-            return None, f"параметр {k!r}: только латиница, цифры и ._:-"
+            return None, f"parameter {k!r}: letters, digits and ._:- only"
         out[k] = v
     return out, None
 
@@ -1201,11 +1203,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         try:
             code, body, enc = self.app.pub_fetch(name, params, gzip_ok=gz)
         except (OSError, ValueError) as e:
-            return self._send(502, {"error": f"сборщик не отвечает: {e}"})
+            return self._send(502, {"error": f"the data server is not responding: {e}"})
         if code == 403:
-            return self._send(502, {"error": "сборщик отверг ключ страниц сервера (out/token.txt)"})
+            return self._send(502, {"error": "the data server rejected the server’s page key (out/token.txt)"})
         if code != 200:
-            return self._send(502, {"error": f"сборщик ответил {code}"})
+            return self._send(502, {"error": f"the data server answered {code}"})
         return self._send_raw(body, enc if gz else None)
 
     def _body(self):
@@ -1231,15 +1233,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
         q = urllib.parse.parse_qs(u.query)
         parts = [p for p in u.path.split("/") if p]
         if len(parts) < 3 or parts[0] != "api" or parts[1] != "v1":
-            return self._send(404, {"error": "нет такого адреса"})
+            return self._send(404, {"error": "not found"})
         who = self.client_address[0]
         kind = "write" if method in ("POST", "DELETE") else "read"
         if not self.app.rate.allow(who, kind):
-            return self._send(429, {"error": "слишком часто"})
+            return self._send(429, {"error": "too many requests, slow down"})
         rest = parts[2:]
         body = self._body() if method in ("POST", "DELETE") else {}
         if body is None:
-            return self._send(400, {"error": "тело не JSON или слишком большое"})
+            return self._send(400, {"error": "request body is not JSON or is too large"})
         # --- без сессии
         if rest == ["auth", "operator"] and method == "POST":
             return self._send(*self.app.auth_operator(body.get("token"), body.get("device")))
@@ -1254,7 +1256,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self._send(200, LEGAL.bundle())
         acc, tok = self._acc()
         if acc is None:
-            return self._send(401, {"error": "нужен вход"})
+            return self._send(401, {"error": "sign-in required"})
         if rest == ["auth", "logout"] and method == "POST":
             return self._send(*self.app.logout(tok))
         if rest == ["me"] and method == "GET":
@@ -1329,7 +1331,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self._send(*self.app.live_positions(acc))
         if rest == ["trades", "test"] and method == "POST":
             return self._send(*self.app.trade_test(acc, body.get("text")))
-        return self._send(404, {"error": "нет такого адреса"})
+        return self._send(404, {"error": "not found"})
 
     def do_GET(self):                                   # noqa: N802
         self._route("GET")

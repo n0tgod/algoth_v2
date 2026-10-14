@@ -139,14 +139,14 @@ def test_key_add_rejects_money_moving_and_readonly_warns_on_ip_and_hides_secret(
         app, pem = _app(tmp, venue=FakeVenue(perms={"ContractTrade": ["Order", "Position"], "Wallet": ["Withdraw"]}))
         acc = _login(app)
         st, r = app.add_key(acc, "bybit", "ABCD1234KEY", SECRET)
-        assert st == 400 and "выводить" in r["error"] and not app.db.keys_of(acc["id"])
+        assert st == 400 and "withdraw" in r["error"] and not app.db.keys_of(acc["id"])
         app.venue = FakeVenue(read_only=1)
         st, r = app.add_key(acc, "bybit", "ABCD1234KEY", SECRET)
-        assert st == 400 and "только на чтение" in r["error"]
+        assert st == 400 and "read-only" in r["error"]
         app.venue = FakeVenue(ips=[], equity=250.0, modes={"ETHUSDT": "oneway"})
         st, r = app.add_key(acc, "bybit", "ABCD1234KEY", SECRET)
         assert st == 200 and r["prefix"] == "ABCD" and r["trade_ok"] and not r["ip_restricted"]
-        assert any("нет IP-ограничения" in w for w in r["warnings"]) and r["equity_usd"] == 250.0
+        assert any("no IP restriction" in w for w in r["warnings"]) and r["equity_usd"] == 250.0
         assert SECRET not in json.dumps(r)
         # в базе — только конверт; открыть его может лишь приватная половина
         row = app.db.key(r["key_id"])
@@ -159,11 +159,11 @@ def test_key_add_rejects_money_moving_and_readonly_warns_on_ip_and_hides_secret(
         # ключ с IP не нашим — предупреждение другое
         app.venue = FakeVenue(ips=["9.9.9.9"])
         st, r2 = app.add_key(acc, "bybit", "EFGH5678KEY", SECRET)
-        assert st == 200 and any("не содержит адрес сервера" in w for w in r2["warnings"]) and r2["ip_ok"] is False
+        assert st == 200 and any("does not include the server address" in w for w in r2["warnings"]) and r2["ip_ok"] is False
         # биржа не ответила — отказ словами
         app.venue = FakeVenue(fail="query")
         st, r3 = app.add_key(acc, "bybit", "ZZZZ9999KEY", SECRET)
-        assert st == 400 and "не прошёл проверку" in r3["error"]
+        assert st == 400 and "rejected the key" in r3["error"]
         # отзыв: конверт стирается
         st, d = app.delete_key(acc, r["key_id"])
         assert st == 200 and app.db.key(r["key_id"])["cipher"] is None
@@ -185,11 +185,11 @@ def test_subscriptions_cells_hedge_warning_and_state():
         st, k = app.add_key(acc, "bybit", "ABCD1234KEY", SECRET)
         kid = k["key_id"]
         st, r = app.add_subscription(acc, kid, "optimal_h", 7777)
-        assert st == 400 and "нет среди книг" in r["error"]
+        assert st == 400 and "no strategy" in r["error"]
         st, r = app.add_subscription(acc, "key_nope", "optimal_h", 1000)
         assert st == 404
         st, r = app.add_subscription(acc, kid, "optimal_h", 1000, sizing="martingale")
-        assert st == 400 and "формат размера" in r["error"]
+        assert st == 400 and "unknown sizing" in r["error"]
         st, s1 = app.add_subscription(acc, kid, "optimal_h", 1000)
         assert st == 200 and s1["mode"] == "dry" and s1["side"] == "short" and s1["hedge_mode"] == "n/a"
         assert s1["sizing"] == "compound"             # умолчание — как у бумаги
@@ -198,7 +198,7 @@ def test_subscriptions_cells_hedge_warning_and_state():
         st, s2 = app.add_subscription(acc, kid, "pair_optimal", 1000, sizing="fixed")
         assert st == 200 and s2["side"] == "both" and s2["hedge_mode"] == "off"
         assert s2["sizing"] == "fixed"
-        assert any("хеджирования выключен" in w for w in s2["warnings"])
+        assert any("hedge mode is off" in w for w in s2["warnings"])
         st, stt = app.state(acc)
         subs = {x["book"]: x for x in stt["subscriptions"]}
         a = subs["optimal_h"]
@@ -214,7 +214,7 @@ def test_subscriptions_cells_hedge_warning_and_state():
         st, stt = app.state(acc)
         a2 = {x["book"]: x for x in stt["subscriptions"]}["optimal_h"]
         assert a2["cash_usd"] == 1150.0 and a2["equity_ok"] is False
-        assert abs(a2["shortfall_usd"] - 50.0) < 1e-9 and any("подписка требует" in w for w in a2["warnings"])
+        assert abs(a2["shortfall_usd"] - 50.0) < 1e-9 and any("the subscription needs" in w for w in a2["warnings"])
         assert b["hedge_mode"] == "off" and a["min_order_share"] is None
         assert stt["live_enabled"] is False and len(stt["events_tail"]) >= 3
         st, ev = app.events(acc, 0)
@@ -258,7 +258,7 @@ def test_http_routing_auth_and_stage_gates():
             assert st == 200
             # перевод в live без подтверждения словом — отказ, не 501
             code, body = _http(port, "POST", f"/api/v1/subscriptions/{s['subscription_id']}/arm", {}, token=tok)
-            assert code == 400 and "подтверждение" in body["error"], (code, body)
+            assert code == 400 and "confirmation does not match" in body["error"], (code, body)
             assert _http(port, "POST", f"/api/v1/subscriptions/{s['subscription_id']}/cmd", {}, token=tok)[0] == 501
             assert _http(port, "POST", "/api/v1/cmd", {"cmd": "kill"}, token=tok)[0] == 501
             assert _http(port, "GET", "/api/v1/books", token=tok)[1]["deposits"] == [100.0, 1000.0, 10000.0]
@@ -337,6 +337,46 @@ def test_registration_limit_consent_gate_and_legal_version():
     print("ok  регистрация по пределу оператора, гейт согласия на ключ/подписку/live, версия = отпечаток текстов")
 
 
+def test_executor_words_are_shown_in_english_journal_untouched():
+    """L5: исполнитель пишет по-русски, показ (журнал сделок, пуш, состояние)
+    — по-английски; переменная часть (ошибка биржи, числа) сохраняется;
+    незнакомая форма — как есть; исходные слова рядом (`reason_raw`).
+    Формы берутся из самого исполнителя: каждая строка «reason»/reject
+    `bot/src/ladder.rs` обязана иметь перевод."""
+    import tradelog as TL
+    cases = {
+        "стоп пола на бирже не встал: retCode 10001 bad — пол держит исполнитель":
+            "exchange stop for the floor was not placed: retCode 10001 bad — the executor watches the floor",
+        "рунг 2 не поставлен: retCode 110007":  "rung 2 not placed: retCode 110007",
+        "плечо 12× не выставилось: 110013; предел площадки 10× тоже: 110013":
+            "leverage 12× was not set: 110013; the exchange maximum 10× neither: 110013",
+        "IOC не исполнилась в потолке 100 б.п. от середины: bid 1.2, ask 1.3, лимит 1.31, статус Cancelled":
+            "entry not filled within 100 bp of mid: bid 1.2, ask 1.3, limit 1.31, status Cancelled",
+        "входы выключены (NO_ENTRIES)": "new entries are stopped",
+        "сверка AUSDT: у исполнителя 10, у биржи 0": "reconciliation AUSDT: executor holds 10, the exchange 0",
+        "unknown words": "unknown words",
+    }
+    for ru, en in cases.items():
+        assert TL.reason_en(ru) == en, (ru, TL.reason_en(ru))
+    assert TL.reason_en(None) is None and TL.reason_en("") == ""
+    # каждая русская форма исполнителя переводится (иначе новая форма в
+    # ladder.rs молча уйдёт пользователю по-русски)
+    import re as RE
+    lines = open(os.path.join(HERE, "..", "..", "bot", "src", "ladder.rs"), encoding="utf-8").read().splitlines()
+    ctx = RE.compile(r"reject\(|\"reason\"|paused = Some|last_error = Some|let why = |let r = ")
+    shown = []
+    for i, ln in enumerate(lines):
+        if ln.strip().startswith("//"):
+            continue
+        for f in RE.findall(r'"([^"]*[а-яА-Я][^"]*)"', ln):
+            if ctx.search("\n".join(lines[max(0, i - 4):i + 1])):
+                shown.append(f)
+    probe = lambda f: RE.sub(r"\{[^}]*\}", "1", f)                      # подстановки → пример
+    missed = [f for f in shown if TL.reason_en(probe(f)) == probe(f)]
+    assert not missed, missed
+    print(f"ok  слова исполнителя по-английски на показе: {len(shown)} форм из ladder.rs, журнал не тронут")
+
+
 def test_public_summary_without_page_key_whitelist_and_collector_failure():
     """L1 спеки 16: свод для приложения без сессии и без ключа страниц —
     четыре ответа сборщика, только названные параметры, латиница; ключ
@@ -366,17 +406,17 @@ def test_public_summary_without_page_key_whitelist_and_collector_failure():
             assert st == 200 and r["params"] == {"sym": "BTCUSDT", "hours": "24", "end": "1791999332.5"}
             # чужой маршрут, чужой параметр, не-латиница — отказ словами, сборщик не зовётся
             n = len(calls)
-            for path, word in (("/api/v1/pub/mem", "нет такого свода"),
-                               ("/api/v1/pub/status", "нет такого свода"),
-                               ("/api/v1/pub/dca?k=steal", "'k' не принимается"),
-                               ("/api/v1/pub/dca_trades?sym=BTC%20USDT", "только латиница")):
+            for path, word in (("/api/v1/pub/mem", "no such data"),
+                               ("/api/v1/pub/status", "no such data"),
+                               ("/api/v1/pub/dca?k=steal", "'k' is not accepted"),
+                               ("/api/v1/pub/dca_trades?sym=BTC%20USDT", "letters, digits")):
                 st, r = _http(port, "GET", path)
                 assert st == 400 and word in r["error"], (path, st, r)
             assert len(calls) == n
             st, r = _http(port, "GET", "/api/v1/pub/dca?ruler=down")
-            assert st == 502 and "не отвечает" in r["error"], r
+            assert st == 502 and "not responding" in r["error"], r
             st, r = _http(port, "GET", "/api/v1/pub/dca?ruler=deny")
-            assert st == 502 and "ключ страниц" in r["error"], r
+            assert st == 502 and "page key" in r["error"], r
             # сжатие проходит насквозь, если клиент его принимает
             c = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
             c.request("GET", "/api/v1/pub/dca_marks?ruler=optimal&dep=100", headers={"Accept-Encoding": "gzip"})
@@ -557,7 +597,7 @@ def test_devices_trades_ingest_and_push_chain():
         assert d["devices"][0]["build"] == "116" and d["push"] == {"configured": False}
         # пуш без ключа — отказ словами
         st, r = app.push_test(acc)
-        assert st == 409 and "APNs" in r["error"]
+        assert st == 409 and "not configured" in r["error"]
         # ключ задаёт только оператор
         priv, _pub = _ec_pem()
         uid = app.db.create_account("user")
@@ -595,7 +635,7 @@ def test_devices_trades_ingest_and_push_chain():
         assert app.push_tick() == 0 and len(calls) - n0 == 3          # повтор чтения — ничего
         # по умолчанию — только живые: сухие скрыты и сосчитаны
         st, tr0 = app.list_trades(acc)
-        assert st == 200 and tr0["trades"] == [] and tr0["hidden"] == 3 and "скрыто 3" in tr0["note"], tr0
+        assert st == 200 and tr0["trades"] == [] and tr0["hidden"] == 3 and "3 dry-run and test records hidden" in tr0["note"], tr0
         st, tr = app.list_trades(acc, mode="all")
         assert st == 200 and [t["seq"] for t in tr["trades"]] == [3, 2, 1] and tr["by_mode"] == {"dry": 3}
         t3 = tr["trades"][0]
@@ -618,7 +658,7 @@ def test_devices_trades_ingest_and_push_chain():
         assert d["devices"][0]["status"] == "dead" and d["devices"][0]["last_error"] == "Unregistered"
         answer.update(code=200, text="")
         st, r = app.push_test(acc)
-        assert st == 409 and "нет зарегистрированных устройств" in r["error"]
+        assert st == 409 and "no registered devices" in r["error"]
         # пробное событие: только оператор; идёт через журнал, помечено test
         st, r = app.trade_test(user)
         assert st == 403
@@ -1096,7 +1136,7 @@ def test_arm_needs_word_switch_fresh_equity_and_one_live_per_key():
         code, r = app.arm(acc, sid, "optimal_h:100")
         assert code == 400 and "optimal_h:1000" in r["error"], r
         code, r = app.arm(acc, sid, "optimal_h:1000")
-        assert code == 409 and "рубильник" in r["error"], r
+        assert code == 409 and "switched off" in r["error"], r
         assert app.set_live_enabled(acc, True)[1]["live_enabled"] is True
         # эквити от добавления ключа (1500) свежее суток и не ниже кассы 1000
         code, r = app.arm(acc, sid, "optimal_h:1000")
@@ -1106,13 +1146,13 @@ def test_arm_needs_word_switch_fresh_equity_and_one_live_per_key():
         # вторая подписка на тот же ключ — отказ
         st, sub2 = app.add_subscription(acc, k["key_id"], "pair_optimal", 1000)
         code, r = app.arm(acc, sub2["subscription_id"], "pair_optimal:1000")
-        assert code == 409 and "уже есть живая подписка" in r["error"], r
+        assert code == 409 and "already has a live subscription" in r["error"], r
         # эквити протухло или ниже кассы — отказ
         app.db.c.execute("UPDATE subscriptions SET mode='dry' WHERE id=?", (sid,))
         app.db.c.execute("UPDATE exchange_keys SET equity_at=? WHERE id=?", (time.time() - 2 * 86400, k["key_id"]))
-        assert "не измерено за сутки" in app.arm(acc, sid, "optimal_h:1000")[1]["error"]
+        assert "not measured in the last 24 h" in app.arm(acc, sid, "optimal_h:1000")[1]["error"]
         app.db.set_equity(k["key_id"], 900.0)
-        assert "касса подписки 1,000.00" in app.arm(acc, sid, "optimal_h:1000")[1]["error"]
+        assert "the subscription needs 1,000.00" in app.arm(acc, sid, "optimal_h:1000")[1]["error"]
         app.db.set_equity(k["key_id"], 1500.0)
         assert app.arm(acc, sid, "optimal_h:1000")[0] == 200
         # входы выключены файлом, повторный arm их включает
@@ -1123,7 +1163,7 @@ def test_arm_needs_word_switch_fresh_equity_and_one_live_per_key():
         assert app.kill(acc, sid, False)[0] == 200 and not os.path.exists(os.path.join(root, sid, "KILL"))
         # состояние: исполнитель ещё не поднят — сказано словами
         stt = app.state(acc)[1]["subscriptions"][0]
-        assert stt["mode"] == "live" and stt["executor"]["why_none"].startswith("исполнитель ещё не поднят"), stt["executor"]
+        assert stt["mode"] == "live" and stt["executor"]["why_none"].startswith("the executor has not started yet"), stt["executor"]
         assert stt["positions"] == [], "у живой подписки без исполнителя позиций бумаги нет"
         # живая запись исполнителя — на вкладке по умолчанию, пробная — нет
         os.makedirs(os.path.join(root, sid), exist_ok=True)
@@ -1144,7 +1184,7 @@ def test_arm_needs_word_switch_fresh_equity_and_one_live_per_key():
         assert stt["executor"]["status"]["realized_usd"] == -3.5 and stt["executor"]["age_s"] < 60
         # обратно в сухой — только без позиций
         code, r = app.to_dry(acc, sid)
-        assert code == 409 and "открыто позиций 1" in r["error"], r
+        assert code == 409 and "1 position(s) still open" in r["error"], r
         os.remove(os.path.join(root, sid, "ladder_status.json"))
         assert app.to_dry(acc, sid)[0] == 200
         # следователь живую подписку не ведёт
@@ -1182,7 +1222,7 @@ def test_manual_close_appends_exit_intent_for_the_executor():
         with open(os.path.join(d, "ladder_status.json"), "w") as f:
             json.dump({"positions": [{"sym": "AUSDT", "side": "short", "book": "optimal_h", "pos_at": T}]}, f)
         code, r = app.close_position(acc, sid, "AUSDT", T - 3600)
-        assert code == 404 and "нет открытой" in r["error"], (code, r)
+        assert code == 404 and "no open position" in r["error"], (code, r)
         code, r = app.close_position(acc, sid, "ausdt", T)
         assert code == 200 and r["seq"] == 8, (code, r)
         rows = [json.loads(x) for x in open(os.path.join(d, "intents.jsonl"))]
@@ -1270,7 +1310,7 @@ def test_live_positions_are_built_from_executor_journal_in_paper_row_shape():
         assert abs(a["fills"][0][2] - 0.5 * 100.0 / 200.0) < 1e-12, "доля рунга — от нотионала маржа × плечо"
         assert abs(a["mark_usd"] - (1.5 - 0.06)) < 1e-12 and abs(a["mark_frac"] - 1.44 / 25.0) < 1e-12
         assert a["levels"]["floor_px"] == 85.0 and a["at"] == T + 101 and a["pos_at"] == T
-        assert s_["state"] == "closed" and s_["exit"] == "тейк" and s_["usd"] == 0.59 and abs(s_["pnl_frac"] - 0.59 / 6.25) < 1e-12
+        assert s_["state"] == "closed" and s_["exit"] == "target" and s_["usd"] == 0.59 and abs(s_["pnl_frac"] - 0.59 / 6.25) < 1e-12
         assert all(p["sym"] != "DRYUSDT" for p in r["positions"]), "сухая запись — не позиция"
         vs = s_["vs_paper"]
         # шорт: бумага продала по 2.02, живой по 2.00 — дешевле, хуже на 0.99 %;
@@ -1299,23 +1339,23 @@ def test_live_positions_are_built_from_executor_journal_in_paper_row_shape():
         # нет статуса исполнителя — отметки нет, причина словами
         os.remove(os.path.join(d, "ladder_status.json"))
         a = app.live_positions(acc)[1]["positions"][0]
-        assert "mark_usd" not in a and a["mark_why"] == "исполнитель не прислал статус"
+        assert "mark_usd" not in a and a["mark_why"] == "the executor has not reported its status"
         # бумага не считала час — причина словами
         dca["books"]["optimal_h:1000"]["trades"] = []
         dca["books"]["optimal_h:1000"]["open"] = {"positions": [{"sym": "ZUSDT", "at": T - 3600}], "at": T - 60}
         app._dca = {"at": 0.0, "data": None}
         a = app.live_positions(acc)[1]["positions"][0]
-        assert a["paper_why"] == "бумага ещё не считала этот час" and "vs_paper" not in a, a.get("paper_why")
+        assert a["paper_why"] == "the paper book has not computed this hour yet" and "vs_paper" not in a, a.get("paper_why")
         # бумага ПОСЧИТАЛА час (прогон позже решения) и не взяла — это отказ,
         # а не ожидание, хотя её последний вход старше решения (10.10, 20:00)
         dca["books"]["optimal_h:1000"]["open"]["at"] = T + 3540
         app._dca = {"at": 0.0, "data": None}
         a = app.live_positions(acc)[1]["positions"][0]
-        assert a["paper_why"].startswith("бумага это решение не взяла"), a.get("paper_why")
+        assert a["paper_why"].startswith("the paper book did not take this decision"), a.get("paper_why")
         dca["books"]["optimal_h:1000"]["open"].pop("at")
         app._dca = {"at": 0.0, "data": None}
         a = app.live_positions(acc)[1]["positions"][0]
-        assert a["paper_why"].startswith("время прогона бумаги неизвестно"), a.get("paper_why")
+        assert a["paper_why"].startswith("paper run time unknown"), a.get("paper_why")
         pn = app.live_positions(acc)[1]["pnl"]
         assert pn["open_unmarked"] == 1 and pn["open_usd"] == 0.0 and pn["total_usd"] == 0.59, "без отметки — названо числом"
     print("ok  живые позиции: форма строки книги, доливы с целью, исход словом бумаги, отметка исполнителя нетто")

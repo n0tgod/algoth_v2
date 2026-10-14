@@ -19,6 +19,7 @@ reject, halt, resume, mismatch. Журнал write-ahead: строка не
 import glob
 import json
 import os
+import re
 import sys
 import time
 
@@ -35,6 +36,81 @@ def rules():
         sys.path.insert(0, p)
     import rules as R                                        # noqa: E402
     return R
+
+
+# Слова исполнителя — по-английски на ПОКАЗЕ (спека 16 L5): журнал не
+# переписывается (правило проекта), исполнитель пишет по-русски; показ
+# переводит известные формы, переменная часть (ошибка биржи, числа)
+# остаётся как есть. Незнакомая форма — как есть, и это видно (русский
+# текст), а не тихая подмена. Порядок важен: частные формы раньше общих.
+REASON_EN = [(re.compile(a), b) for a, b in (
+    (r"^стоп пола на бирже не встал: (.*) — пол держит исполнитель$",
+     r"exchange stop for the floor was not placed: \1 — the executor watches the floor"),
+    (r"^пол (\S+) дальше предела биржи \(стоп не дальше 10 % от цены\) — пол держит исполнитель, стоп встанет, когда цена подойдёт$",
+     r"floor \1 is beyond the exchange limit (stop within 10 % of price) — the executor watches it; the stop is placed when the price comes closer"),
+    (r"^пол стоит стоп-заявкой на бирже \(последняя цена, на всю позицию\)$",
+     "floor placed as an exchange stop order (last price, whole position)"),
+    (r"^на бирже стоп (.*) вместо (.*) — ставлю заново$", r"exchange stop is \1 instead of \2 — placing it again"),
+    (r"^пауза снята файлом RESUME \(была: (.*)\)$", r"pause lifted (was: \1)"),
+    (r"^сухой режим: заявка сформирована, на биржу не отправлена$", "dry run: order prepared, not sent to the exchange"),
+    (r"^исполнено частично: (\S+) из (\S+)$", r"partially filled: \1 of \2"),
+    (r"^рунг (\d+) мельче минимума биржи — не ставится$", r"rung \1 is below the exchange minimum — not placed"),
+    (r"^рунг (\d+) не поставлен: (.*)$", r"rung \1 not placed: \2"),
+    (r"^выход \((\S+)\) отвергнут: (.*) — повтор следующим тактом$", r"exit (\1) rejected: \2 — retrying"),
+    (r"^намерение без имени, стороны, плеча, маржи или рунгов$", "decision without symbol, side, leverage, margin or rungs"),
+    (r"^намерение с пустыми рунгами или нулевой маржой$", "decision with empty rungs or zero margin"),
+    (r"^намерение устарело: (\S+) мин после расчёта — цена ушла$", r"decision expired: \1 min after it was computed — the price moved"),
+    (r"^входы выключены \(NO_ENTRIES\)$", "new entries are stopped"),
+    (r"^входы на паузе: (.*)$", r"entries paused: \1"),
+    (r"^имя уже в позиции этого исполнителя$", "this symbol is already in a position of this subscription"),
+    (r"^справочник не читается: (.*)$", r"instrument info unavailable: \1"),
+    (r"^цены не читаются: (.*)$", r"prices unavailable: \1"),
+    (r"^середины нет$", "no mid price"),
+    (r"^база мельче минимума биржи: (.*) при мин\. лоте (\S+) и мин\. нотионале (\S+) \$$",
+     r"base entry below the exchange minimum: \1, min lot \2, min notional \3 $"),
+    (r"^на счёте уже есть чужая позиция по этому имени$", "the account already has another position in this symbol"),
+    (r"^позиции счёта не читаются: (.*)$", r"account positions unavailable: \1"),
+    (r"^плечо (\S+)× не выставилось: (.*); предел площадки (\S+)× тоже: (.*)$",
+     r"leverage \1× was not set: \2; the exchange maximum \3× neither: \4"),
+    (r"^плечо (\S+)× не выставилось: (.*)$", r"leverage \1× was not set: \2"),
+    (r"^заявка входа отвергнута: (.*)$", r"entry order rejected: \1"),
+    (r"^статус входа не читается: (.*)$", r"entry status unavailable: \1"),
+    (r"^статус входа не окончателен \((\S+), исполнено (\S+)\) — имя под присмотром сверки$",
+     r"entry status not final (\1, filled \2) — the symbol is watched by reconciliation"),
+    (r"^IOC не исполнилась в потолке (\S+) б\.п\. от середины: bid (\S+), ask (\S+), лимит (\S+), статус (\S+)$",
+     r"entry not filled within \1 bp of mid: bid \2, ask \3, limit \4, status \5"),
+    (r"^на счёте позиция (\S+) \((\S+)\) после входа неясного исхода — исполнитель её не ведёт; входы на паузе до RESUME$",
+     r"the account holds \1 (\2) after an entry with unclear outcome — the executor does not manage it; entries paused"),
+    (r"^цель (\S+) не встала: (.*)$", r"target for \1 was not placed: \2"),
+    (r"^рунг (\S+): (.*)$", r"rung \1: \2"),
+    (r"^цель (\S+): (.*)$", r"target \1: \2"),
+    (r"^котировки не читаются: (.*)$", r"quotes unavailable: \1"),
+    (r"^выход (\S+): цены не читаются, повтор: (.*)$", r"exit \1: prices unavailable, retrying: \2"),
+    (r"^выход (\S+) \((\S+)\): IOC не исполнилась в потолке, повтор$", r"exit \1 (\2): not filled within the price limit, retrying"),
+    (r"^выход (\S+): статус не читается: (.*)$", r"exit \1: status unavailable: \2"),
+    (r"^сверка: позиции не читаются: (.*)$", r"reconciliation: positions unavailable: \1"),
+    (r"^сверка (\S+): у исполнителя (\S+), у биржи (\S+)$", r"reconciliation \1: executor holds \2, the exchange \3"),
+    (r"^пол сработал стоп-заявкой на бирже; деньги и цена — closed-pnl биржи$",
+     "floor hit by the exchange stop order; money and price from the exchange’s closed P&L"),
+    (r"^позиция закрыта при стоящем стопе пола; денег биржа не отдала — записан ноль с этой оговоркой$",
+     "position closed while the floor stop was in place; the exchange returned no P&L — recorded as zero"),
+    (r"^позиция закрыта вне исполнителя \(биржей или вручную\); деньги — closed-pnl биржи$",
+     "position closed outside the executor (by the exchange or manually); money from the exchange’s closed P&L"),
+    (r"^позиция закрыта вне исполнителя; денег биржа не отдала — записан ноль с этой оговоркой$",
+     "position closed outside the executor; the exchange returned no P&L — recorded as zero"),
+    (r"^открытые заявки не читаются: (.*)$", r"open orders unavailable: \1"),
+)]
+
+
+def reason_en(text):
+    """Слова исполнителя по-английски для показа; незнакомое — как есть."""
+    if not text:
+        return text
+    t = str(text)
+    for rx, rep in REASON_EN:
+        if rx.match(t):
+            return rx.sub(rep, t, count=1)
+    return t
 
 
 def journal_dir(root, sub_id):
@@ -124,6 +200,7 @@ def push_trade(db, sender, tid, log=print):
     if not devs:
         db.trade_pushed(tid, {"devices": 0})
         return {"devices": 0}
+    t["reason"] = reason_en(t.get("reason"))              # пуш — словами показа
     payload = PUSH.payload_for(t, book=book_label(db, t["subscription_id"]))
     res = []
     for d in devs:
@@ -190,6 +267,10 @@ def view(row):
     # показ называет её тем, чем она была (`stop_fail`); исходный вид рядом.
     if t["kind"] == "reject" and str(t.get("reason") or "").startswith("стоп пола на бирже не встал"):
         t["kind_raw"], t["kind"] = "reject", "stop_fail"
+    if t.get("reason"):
+        en = reason_en(t["reason"])
+        if en != t["reason"]:
+            t["reason_raw"], t["reason"] = t["reason"], en
     t["words"] = PUSH.KIND_WORDS.get(t["kind"], t["kind"])
     t["pushed"] = pushed
     t["extra"] = {k: v for k, v in data.items() if k not in t}

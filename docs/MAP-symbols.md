@@ -9012,7 +9012,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L17 `call(base, path, body=None, token=None, ctx=None)`
 - L26 `main()`
 
-## tools/app_api/server.py · 1430 строк
+## tools/app_api/server.py · 1432 строк
 
 HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 
@@ -9030,7 +9030,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L59 `MAX_ACCOUNTS = 1`
 - L63 `EQUITY_TTL = 60.0` — Предел аккаунтов меняет оператор без перезапуска (спека 16 L3, 14.10): `out/limits.json` {"max_accounts": N}.…
 - L66 `RATE = {'read': (600, 60.0), 'write': (10, 60.…` — Чтение — 600 в минуту: вкладка Trades спрашивает позиции раз в 2 с (владелец 10.10: «пнл как можно чаще»), пл…
-- L67 `STAGE_NOT_BUILT = 'этап не построен: команды и перевод в …`
+- L67 `STAGE_NOT_BUILT = 'not built yet'`
 - L68 `PAIR_PREFIX = 'pair_'`
 - L71 `log(*a)`
 - L75 `class RateLimiter`
@@ -9074,42 +9074,42 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
   - L612 `App.kill(self, acc, sid, on)` — KILL подписки: исполнитель не делает НИЧЕГО (ни заявок, ни отмен).
   - L630 `App.check_account(self, acc, sid, runner=None)` — Предполётная проверка счёта по кнопке владельца: ключ открывает отдельный процесс (`preflight.py`), сюда прих…
   - L648 `App.state(self, acc)` — ------------------------------------------------------------ состояние
-  - L730 `App.events(self, acc, since)`
-  - L733 `App.books(self, full=None)`
-  - L741 `App.add_device(self, acc, token, env='prod', build=None)` — ------------------------------------------------------------ устройства и пуши (§7.5)
-  - L749 `App.list_devices(self, acc)`
-  - L755 `App.delete_device(self, acc, token)`
-  - L759 `App.push_config(self, acc, team_id, key_id, p8, topic=None)`
-  - L770 `App.push_test(self, acc)` — Пробный пуш на устройства аккаунта — без записи сделки.
-  - L788 `App.list_trades(self, acc, since=0, limit=200, mode='live')` — Записи журнала исполнителя. По умолчанию — только ЖИВЫЕ (решение владельца 10.10: «на вкладке Trades — реальн…
-  - L818 `App.live_positions(self, acc)` — Живые позиции — в ФОРМЕ строки бумажной книги (`sym, side, at, lev, margin, entry_px, avg, fills, walk, exit,…
-  - L916 `App.attach_paper(self, rows, subs)` — Та же сделка в бумажной книге — СЫРОЙ сигнал (журнал книги без издержек): строка ячейки подписки с тем же име…
-  - L993 `App.live_pnl(rows, subs)` — Общий результат живых сделок (владелец 10.10: «на странице trades общий пнл по всем сделкам»): реализованное…
-  - L1046 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
-  - L1056 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
-  - L1071 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
-  - L1088 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
-- L1113 `PUB_ROUTES = {'dca': ('full', 'focus', 'dep', 'ruler…` — Свод для приложения без ключа страниц (спека 16 §8b, L1). Ключ страниц был вшит в сборку и открывал ВСЕ стран…
-- L1117 `PUB_VALUE = re.compile('^[A-Za-z0-9._:\\-]{1,64}$')`
-- L1120 `pub_query(name, q)` — Параметры публичного запроса: (dict, None) или (None, слова отказа).
-- L1136 `fetch_pub(name, params, gzip_ok=False)` — Ответ сборщика байтами: (код, тело, Content-Encoding или None).
-- L1153 `fetch_dca(full=None)`
-- L1166 `class Handler`
-  - L1173 `Handler.log_message(self, fmt, *a)`
-  - L1177 `Handler._send(self, code, obj)`
-  - L1186 `Handler._send_raw(self, body, encoding=None)`
-  - L1196 `Handler._pub(self, name, q)`
-  - L1211 `Handler._body(self)`
-  - L1221 `Handler._acc(self)`
-  - L1229 `Handler._route(self, method)`
-  - L1334 `Handler.do_GET(self)`
-  - L1337 `Handler.do_POST(self)`
-  - L1340 `Handler.do_DELETE(self)`
-- L1344 `class Server` — TLS-рукопожатие — в ПОТОКЕ соединения и с пределом времени.
-  - L1361 `Server.finish_request(self, request, client_address)`
-- L1375 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
-- L1386 `read_operator_token(path)`
-- L1394 `main(argv=None)`
+  - L732 `App.events(self, acc, since)`
+  - L735 `App.books(self, full=None)`
+  - L743 `App.add_device(self, acc, token, env='prod', build=None)` — ------------------------------------------------------------ устройства и пуши (§7.5)
+  - L751 `App.list_devices(self, acc)`
+  - L757 `App.delete_device(self, acc, token)`
+  - L761 `App.push_config(self, acc, team_id, key_id, p8, topic=None)`
+  - L772 `App.push_test(self, acc)` — Пробный пуш на устройства аккаунта — без записи сделки.
+  - L790 `App.list_trades(self, acc, since=0, limit=200, mode='live')` — Записи журнала исполнителя. По умолчанию — только ЖИВЫЕ (решение владельца 10.10: «на вкладке Trades — реальн…
+  - L820 `App.live_positions(self, acc)` — Живые позиции — в ФОРМЕ строки бумажной книги (`sym, side, at, lev, margin, entry_px, avg, fills, walk, exit,…
+  - L918 `App.attach_paper(self, rows, subs)` — Та же сделка в бумажной книге — СЫРОЙ сигнал (журнал книги без издержек): строка ячейки подписки с тем же име…
+  - L995 `App.live_pnl(rows, subs)` — Общий результат живых сделок (владелец 10.10: «на странице trades общий пнл по всем сделкам»): реализованное…
+  - L1048 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
+  - L1058 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
+  - L1073 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
+  - L1090 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
+- L1115 `PUB_ROUTES = {'dca': ('full', 'focus', 'dep', 'ruler…` — Свод для приложения без ключа страниц (спека 16 §8b, L1). Ключ страниц был вшит в сборку и открывал ВСЕ стран…
+- L1119 `PUB_VALUE = re.compile('^[A-Za-z0-9._:\\-]{1,64}$')`
+- L1122 `pub_query(name, q)` — Параметры публичного запроса: (dict, None) или (None, слова отказа).
+- L1138 `fetch_pub(name, params, gzip_ok=False)` — Ответ сборщика байтами: (код, тело, Content-Encoding или None).
+- L1155 `fetch_dca(full=None)`
+- L1168 `class Handler`
+  - L1175 `Handler.log_message(self, fmt, *a)`
+  - L1179 `Handler._send(self, code, obj)`
+  - L1188 `Handler._send_raw(self, body, encoding=None)`
+  - L1198 `Handler._pub(self, name, q)`
+  - L1213 `Handler._body(self)`
+  - L1223 `Handler._acc(self)`
+  - L1231 `Handler._route(self, method)`
+  - L1336 `Handler.do_GET(self)`
+  - L1339 `Handler.do_POST(self)`
+  - L1342 `Handler.do_DELETE(self)`
+- L1346 `class Server` — TLS-рукопожатие — в ПОТОКЕ соединения и с пределом времени.
+  - L1363 `Server.finish_request(self, request, client_address)`
+- L1377 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
+- L1388 `read_operator_token(path)`
+- L1396 `main(argv=None)`
 
 ## tools/app_api/set_topic.py · 44 строк
 
@@ -9120,23 +9120,25 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L19 `OK = re.compile('^[A-Za-z0-9._-]{1,120}$')`
 - L22 `main(argv)`
 
-## tools/app_api/tradelog.py · 196 строк
+## tools/app_api/tradelog.py · 277 строк
 
 Журнал событий живого исполнителя → записи `trades` → пуши (спека 15 §7.6).
 
-- L27 `TEST_PREFIX = '_test_'`
-- L28 `RESEARCH = os.path.join(os.path.dirname(os.path.di…`
-- L31 `rules()` — Правила книг — лениво, одним ядром с бумагой (`rules.title_en`).
-- L40 `journal_dir(root, sub_id)`
-- L44 `journal_files(root, sub_id)`
-- L53 `read_new(root, sub_id, after_seq)` — Строки журнала подписки с `seq` больше данного, по порядку; битые — счётом, не молча.
-- L79 `ingest(db, root, log=print)` — Все активные подписки плюс пробные каталоги → новые записи `trades`. Возвращает список id новых записей (их и…
-- L100 `book_label(db, sub_id)`
-- L108 `book_words(key)` — «Sigma · long» из ключа книги — та же карта, что у правил (`rules.title_en`).
-- L115 `push_trade(db, sender, tid, log=print)` — Пуш одной записи на все живые устройства аккаунта; итог — в запись (`pushed_json`): по каждому устройству ста…
-- L140 `tick(db, root, sender, log=print)` — Один такт: приём новых строк и пуш каждой. Возвращает число новых.
-- L152 `test_event(root, acc_id, text=None)` — Пробная строка в пробный журнал аккаунта: вид `test`, `mode: test`.
-- L175 `view(row)` — Запись `trades` для приложения.
+- L28 `TEST_PREFIX = '_test_'`
+- L29 `RESEARCH = os.path.join(os.path.dirname(os.path.di…`
+- L32 `rules()` — Правила книг — лениво, одним ядром с бумагой (`rules.title_en`).
+- L46 `REASON_EN = [(re.compile(a), b) for a, b in (('^сто…` — Слова исполнителя — по-английски на ПОКАЗЕ (спека 16 L5): журнал не переписывается (правило проекта), исполни…
+- L105 `reason_en(text)` — Слова исполнителя по-английски для показа; незнакомое — как есть.
+- L116 `journal_dir(root, sub_id)`
+- L120 `journal_files(root, sub_id)`
+- L129 `read_new(root, sub_id, after_seq)` — Строки журнала подписки с `seq` больше данного, по порядку; битые — счётом, не молча.
+- L155 `ingest(db, root, log=print)` — Все активные подписки плюс пробные каталоги → новые записи `trades`. Возвращает список id новых записей (их и…
+- L176 `book_label(db, sub_id)`
+- L184 `book_words(key)` — «Sigma · long» из ключа книги — та же карта, что у правил (`rules.title_en`).
+- L191 `push_trade(db, sender, tid, log=print)` — Пуш одной записи на все живые устройства аккаунта; итог — в запись (`pushed_json`): по каждому устройству ста…
+- L217 `tick(db, root, sender, log=print)` — Один такт: приём новых строк и пуш каждой. Возвращает число новых.
+- L229 `test_event(root, acc_id, text=None)` — Пробная строка в пробный журнал аккаунта: вид `test`, `mode: test`.
+- L252 `view(row)` — Запись `trades` для приложения.
 
 ## tools/diag_cycle.py · 302 строк
 
