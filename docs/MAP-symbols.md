@@ -2159,6 +2159,25 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L66 `exits(recs)`
 - L74 `main()`
 
+## research/dca_paper/noncrypto_pair.py · 212 строк
+
+Замер: что сделало отсечение не-крипто с ОБЩИМ счётом (Both) и с длинными книгами — по полному набору не-крип…
+
+- L33 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L34 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L44 `OUT_MD = os.path.join(R.OUT, 'NONCRYPTO-pair.md')`
+- L45 `OUT_JSON = os.path.join(R.OUT, 'NONCRYPTO-pair.jso…`
+- L46 `METRICS = ('final', 'max_dd', 'taken')`
+- L49 `key(r)`
+- L53 `long_all(cache)` — Длинные решения по книгам — БЕЗ отсечения (`run_pair.long_recs` режет).
+- L65 `shorts_ready(shorts, ctx, launch, keys, now)` — Короткая сторона под правилами входа — один раз на все варианты.
+- L78 `pair_cash(longs, sready, keys, keep, now)`
+- L90 `long_cash(longs, keep, now)`
+- L100 `pctl(x, xs)`
+- L107 `med(xs)`
+- L112 `fmt(v)`
+- L116 `main()`
+
 ## research/dca_paper/noncrypto_window.py · 154 строк
 
 Замер: не-крипто в Ladder — входить только в торговое окно биржи (предложение владельца 2026-10-15: «если не…
