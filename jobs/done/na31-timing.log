@@ -48,3 +48,24 @@
   Слева общий счёт: депозит один на обе стороны. Справа те же книги, как их показывают собственные вкладки: у каждой свой депозит, то есть капитала вдвое больше. Поэтому сравниваются ДЕНЬГИ и просадка, 
   - Живого исполнения здесь нет: исходы позиций взяты из кэшей реплея обеих книг, посчитанных по барам записи. Очередь в стакане и задержка входа не моделируются.
 конец: 2026-10-15T12:22:14Z, код 0
+публикуется в ветку main:
+ jobs/done/na30-status.done                         |    1 +
+ jobs/done/na30-status.log                          |    9 +
+ jobs/done/na31-timing.done                         |    1 +
+ jobs/done/na31-timing.log                          |   50 +
+ jobs/done/na32-wd.done                             |    1 +
+ jobs/done/na32-wd.log                              |   47 +
+ jobs/poke.log                                      |    5 +
+ research/dca_paper/out/DCA-pair.json               |    2 +-
+ research/dca_paper/out/DCA-pair.md                 |   60 +-
+ research/dca_paper/out/DCA-paper.json              | 4990 ++++++++++----------
+ research/dca_paper/out/DCA-paper.md                |   20 +-
+ research/dca_paper/out/DCA-short.json              |    2 +-
+ research/dca_paper/out/DCA-short.md                |   30 +-
+ research/dca_paper/out/fixed_pair-2026-10-15.jsonl |    7 +
+ .../dca_paper/out/fixed_short-2026-10-15.jsonl     |    8 +
+ research/dca_paper/out/pair-2026-10-15.jsonl       |    7 +
+ research/dca_paper/out/short-2026-10-15.jsonl      |    8 +
+ research/s8_loop/out/day_brake.json                |    2 +-
+ 18 files changed, 2697 insertions(+), 2553 deletions(-)
+fatal: cannot lock ref 'HEAD': is at 579899042e4dabb984ef6c7d2fd9d51dc0846ed9 but expected e134bb3911a722554451960d1cb51ae7d8b439d4

@@ -1,0 +1,12 @@
+== задание na33-sizes ==
+строка: run tools/cache_sizes.py
+начало: 2026-10-15T12:23:51Z
+запускаю: .venv/bin/python tools/cache_sizes.py 
+research/dca_ladder/out/legs_cache.pkl: 271.1 МБ, файлов 1
+research/dca_paper/out/journal_cache: 50.0 МБ, файлов 405
+research/dca_paper/out/bars_cache: 6.4 МБ, файлов 63
+research/dca_paper/out/costs_context.pkl: 45.9 МБ, файлов 1
+research/dca_paper/out/replay_cache.pkl: нет
+research/dca_paper/out: 366.8 МБ, файлов 976
+research/s8_loop/out/model_sit/sheets.jsonl: 513.0 МБ, файлов 1
+конец: 2026-10-15T12:23:51Z, код 0
