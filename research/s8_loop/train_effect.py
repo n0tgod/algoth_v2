@@ -193,21 +193,35 @@ def main(argv=None):
             for sq, pnl, ex, lev in items:
                 acc[sq].append((pnl, ex, lev, h))
         seqs = sorted(acc)
-        L += ["## 1. Позиции Ladder (Depth) по номеру обучения", "",
-              "| обучение | первый час | часов | позиций | средний исход | медиана | прибыльных | пол+ликв | плечо |",
-              "|---|---|--:|--:|--:|--:|--:|--:|--:|"]
         table = []
         for sq in seqs:
             v = acc[sq]
             pn = np.array([x[0] for x in v])
-            hours = len({x[3] for x in v})
-            fl = sum(1 for x in v if x[1] in ("пол", "ликвидация")) / len(v)
-            row = {"seq": sq, "first": first.get(sq), "hours": hours, "n": len(v),
+            table.append({"seq": sq, "first": first.get(sq), "n": len(v),
+                          "mean": float(pn.mean()), "hours": len({x[3] for x in v})})
+        # Таблица — по НЕДЕЛЯМ часа листа: в августе обучение шло каждый
+        # час, и строка на обучение дала бы тысячи строк; тренд при этом
+        # считается по номерам обучений, как объявлено.
+        weeks = collections.defaultdict(list)
+        for h, items in by_hour.items():
+            wk = time.strftime("%Y-%m-%d", time.gmtime(h - (h - 4 * 86400) % (7 * 86400)))
+            weeks[wk].extend(items)
+        L += ["## 1. Позиции Ladder (Depth) по неделям листа", "",
+              f"Обучений с позициями: {len(seqs)} (№{seqs[0]}…№{seqs[-1]}; в августе обучение шло "
+              "каждый час, с сентября — раз в сутки). Строка — неделя часа листа.", "",
+              "| неделя с | обучений | позиций | средний исход | медиана | прибыльных | пол+ликв | плечо |",
+              "|---|--:|--:|--:|--:|--:|--:|--:|"]
+        wtable = []
+        for wk in sorted(weeks):
+            v = weeks[wk]
+            pn = np.array([x[1] for x in v])
+            fl = sum(1 for x in v if x[2] in ("пол", "ликвидация")) / len(v)
+            row = {"week": wk, "trainings": len({x[0] for x in v}), "n": len(v),
                    "mean": float(pn.mean()), "median": float(np.median(pn)),
                    "win": float((pn > 0).mean()), "floor": fl,
-                   "lev": float(np.median([x[2] for x in v]))}
-            table.append(row)
-            L.append(f"| {sq} | {row['first']} | {hours} | {len(v)} | {_p(row['mean'])} | "
+                   "lev": float(np.median([x[3] for x in v]))}
+            wtable.append(row)
+            L.append(f"| {wk} | {row['trainings']} | {len(v)} | {_p(row['mean'])} | "
                      f"{_p(row['median'])} | {row['win'] * 100:.0f} % | {fl * 100:.1f} % | "
                      f"{row['lev']:.2f}× |")
         groups = {h: [x[1] for x in items] for h, items in by_hour.items()}
@@ -223,7 +237,7 @@ def main(argv=None):
               (f"Половины обучений: первая {len(a1)} позиций {_p(float(a1.mean()))} ± {_p(se(a1))}, "
                f"вторая {len(a2)} позиций {_p(float(a2.mean()))} ± {_p(se(a2))}."
                if len(a1) and len(a2) else ""), ""]
-        res["positions"] = {"table": table, "rho": rho, "p": p,
+        res["positions"] = {"weeks": wtable, "trainings": len(seqs), "rho": rho, "p": p,
                             "halves": ([float(a1.mean()), float(a2.mean()),
                                         float(se(a1)), float(se(a2)), int(len(a1)), int(len(a2))]
                                        if len(a1) and len(a2) else None)}
@@ -233,16 +247,26 @@ def main(argv=None):
     # --- 2. живой IC
     ics = ic_by_seq(log)
     if ics:
-        L += ["## 2. Живой вневыборочный IC прежних весов (цель fwd_4h)", "",
-              "| когда | рука | обучено до | IC (медиана) | сечений |", "|---|---|---|--:|--:|"]
-        by_arm = collections.defaultdict(list)
-        for r in sorted(ics, key=lambda r: (r.get("at") or "")):
-            L.append(f"| {r.get('at')} | {r.get('arm')} | {r.get('trained_upto')} | "
-                     f"{r['median_ic']:+.4f} | {r.get('sections')} |")
-            by_arm[r.get("arm")].append(float(r["median_ic"]))
-        L.append("")
         res["ic"] = {}
-        for arm, vals in by_arm.items():
+        # (а) оценка прежних весов в момент обучения: десятки сечений
+        # после `trained_upto`; на одно обучение берётся последняя
+        # (у неё сечений больше всего)
+        by_tr = {}
+        for r in ics:
+            if r.get("trained_upto") and (r.get("sections") or 0) >= 10:
+                by_tr[(r.get("arm"), r["trained_upto"])] = r
+        L += ["## 2а. Вневыборочный IC прежних весов на момент обучения (цель fwd_4h, ≥ 10 сечений)", "",
+              "| обучено до | gbm | сечений | nn | сечений |", "|---|--:|--:|--:|--:|"]
+        ups = sorted({k[1] for k in by_tr})
+        for up in ups:
+            g, n_ = by_tr.get(("gbm", up)), by_tr.get(("nn", up))
+            L.append(f"| {up} | {g['median_ic']:+.4f} | {g.get('sections')} | " if g else f"| {up} | — | — | ")
+            L[-1] += (f"{n_['median_ic']:+.4f} | {n_.get('sections')} |" if n_ else "— | — |")
+        L.append("")
+        for arm in ("gbm", "nn"):
+            vals = [by_tr[(arm, up)]["median_ic"] for up in ups if (arm, up) in by_tr]
+            if len(vals) < 3:
+                continue
             rho = spearman(list(range(len(vals))), vals)
             null = []
             for _ in range(N_PERM):
@@ -253,11 +277,29 @@ def main(argv=None):
                     null.append(abs(r2))
             p = (sum(1 for x in null if x >= abs(rho)) / len(null)) if (rho is not None and null) else None
             half = len(vals) // 2
-            L.append(f"- {arm}: {len(vals)} замеров, первая половина IC {np.mean(vals[:half]):+.4f}, "
+            L.append(f"- {arm}: {len(vals)} обучений, первая половина IC {np.mean(vals[:half]):+.4f}, "
                      f"вторая {np.mean(vals[half:]):+.4f}; тренд ρ = "
                      + (f"{rho:+.2f}, доля нулей не слабее {p:.2f}" if rho is not None else "—"))
-            res["ic"][arm] = {"n": len(vals), "first_half": float(np.mean(vals[:half])) if half else None,
+            res["ic"][arm] = {"n": len(vals), "first_half": float(np.mean(vals[:half])),
                               "second_half": float(np.mean(vals[half:])), "rho": rho, "p": p}
+        # (б) часовой живой IC (одно сечение на замер) — медианы по неделям
+        wk_ic = collections.defaultdict(list)
+        for r in ics:
+            if (r.get("sections") or 0) == 1 and r.get("at"):
+                try:
+                    t = time.mktime(time.strptime(r["at"][:10], "%Y-%m-%d"))
+                except ValueError:
+                    continue
+                wk = time.strftime("%Y-%m-%d", time.gmtime(t - (t - 4 * 86400) % (7 * 86400)))
+                wk_ic[(wk, r.get("arm"))].append(float(r["median_ic"]))
+        if wk_ic:
+            L += ["", "## 2б. Часовой живой IC (одно сечение на замер) — медиана по неделям", "",
+                  "| неделя с | gbm | замеров | nn | замеров |", "|---|--:|--:|--:|--:|"]
+            for wk in sorted({k[0] for k in wk_ic}):
+                g, n_ = wk_ic.get((wk, "gbm"), []), wk_ic.get((wk, "nn"), [])
+                L.append(f"| {wk} | {(np.median(g) if g else float('nan')):+.4f} | {len(g)} | "
+                         f"{(np.median(n_) if n_ else float('nan')):+.4f} | {len(n_)} |")
+            res["ic_weekly"] = {f"{k[0]}/{k[1]}": [float(np.median(v)), len(v)] for k, v in wk_ic.items()}
         L.append("")
     else:
         L += ["## 2. Живой IC: истории нет — раздела нет", ""]

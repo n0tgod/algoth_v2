@@ -4130,6 +4130,14 @@
 - L23 `man(now, age_h)`
 - L28 `main()`
 
+## research/s8_loop/test_train_effect.py · 59 строк
+
+Замер «качество по номеру обучения»: разбор листа и агрегаты IC.
+
+- L16 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L21 `test_hour_to_seq_reads_head_only()`
+- L40 `test_trend_and_null()`
+
 ## research/s8_loop/test_train_wait.py · 64 строк
 
 Ожидание памяти под обучение (`train.wait_train_mem`, 15.10): памяти хватает сразу — идти, флаг поднят; не хв…
