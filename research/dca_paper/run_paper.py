@@ -1583,6 +1583,24 @@ def publish(name):
         subprocess.run(["bash", sh, name], check=False)
 
 
+class Phases:
+    """Секунды по фазам прогона — печатаются строкой и кладутся в артефакт
+    (`timing`): куда уходят 47–100 с тёплого прогона, решается замером, а
+    не догадкой (спека 17 §0, быстрая дорожка открытых позиций)."""
+
+    def __init__(self):
+        self.t = time.time()
+        self.out = {}
+
+    def mark(self, name):
+        now = time.time()
+        self.out[name] = round(self.out.get(name, 0.0) + now - self.t, 2)
+        self.t = now
+
+    def line(self):
+        return "фазы: " + ", ".join(f"{k} {v:g} с" for k, v in self.out.items())
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=None)
@@ -1594,6 +1612,7 @@ def main():
     a = ap.parse_args()
     os.makedirs(R.OUT, exist_ok=True)
     t0 = time.time()
+    ph = Phases()
     extra, live = {}, None
     if a.restat:
         # Пересборка ничего не считает, но и не вправе ТЕРЯТЬ числа
@@ -1644,6 +1663,7 @@ def main():
                        else read_cache()))
         if why:
             print(f"кэш реплея не используется: {why}")
+        ph.mark("кэш")
         # Обе стороны разом: бары читаются по символу, и второй проход
         # ради коротких книг стоил бы столько же, сколько первый.
         # Стороны берутся из ЖИВЫХ книг семейства: сняв короткие зеркала,
@@ -1653,6 +1673,7 @@ def main():
         legs = D6.gated_legs(limit=a.limit,
                              side=(None if len(sides) > 1 else
                                    next(iter(sides), "long")))
+        ph.mark("решения")
         need = needs_replay(cache, legs, pairs)
         print(f"решений под гейтом {len(legs)}, в кэше "
               f"{len(cache) // max(1, len(pairs))}, считаю заново {len(need)}")
@@ -1666,6 +1687,7 @@ def main():
         src = TL.TailBars(log=print)
         got = D6.collect_recs(rulers=pairs, legs=legs, src=src,
                               only=[(g["sym"], g["at"]) for g in need])
+        ph.mark("реплей")
         tail = dict(src.stats(),
                     **TL.apply(got["recs"], src.last_tape,
                                src.last_book))
@@ -1683,14 +1705,18 @@ def main():
         # его никогда (дефект 2026-09-22 у коротких записей). Ядро одно
         # на обе книги — `attach_fav`.
         attach_fav(cache.values(), legs, log=print)
+        ph.mark("хвост и fav")
         write_cache(cache)
+        ph.mark("запись кэша")
         by_pair = {tuple(pr): [] for pr in pairs}
         for (pr, _sym, _at), r in cache.items():
             if pr in by_pair:
                 by_pair[pr].append(r)
         rows, cells, one, live = build_rows(
             {k: by_pair[tuple(RULERS[k])] for k in keys})
+        ph.mark("касса")
         append_journal(rows)
+        ph.mark("журнал")
         extra = {"positions": sum(len(v) for v in by_pair.values())
                  // max(1, len(pairs)),
                  "replayed": got["positions"], "skipped": got["skipped"],
@@ -1711,15 +1737,20 @@ def main():
     s = summarize(live=live, keys=R.order_of("sit"))
     s.update(extra)
     attach_open_dd(s)
+    ph.mark("свод")
     s["secs"] = round(time.time() - t0, 1)
+    s["timing"] = dict(ph.out)
     s["rules"] = rules_snapshot()
     with open(R.ARTIFACT, "w", encoding="utf-8") as f:
         json.dump(s, f, ensure_ascii=False, indent=1)
+    ph.mark("артефакт")
     txt = report(s)
     with open(os.path.join(R.OUT, "DCA-paper.md"), "w",
               encoding="utf-8") as f:
         f.write(txt)
     print(txt)
+    ph.mark("отчёт")
+    print(ph.line())
     if not a.no_publish:
         publish("DCA: бумажные книги, три режима × три депозита")
 

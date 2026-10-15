@@ -2472,7 +2472,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L538 `publish(name)`
 - L543 `main(argv=None)`
 
-## research/dca_paper/run_paper.py · 1728 строк
+## research/dca_paper/run_paper.py · 1759 строк
 
 Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
 
@@ -2511,7 +2511,11 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L1187 `report(s)`
 - L1546 `rules_snapshot(keys=None)` — Правила прогона в свод: страница описывает ИМИ то, что видит.
 - L1580 `publish(name)`
-- L1586 `main()`
+- L1586 `class Phases` — Секунды по фазам прогона — печатаются строкой и кладутся в артефакт (`timing`): куда уходят 47–100 с тёплого…
+  - L1591 `Phases.__init__(self)`
+  - L1595 `Phases.mark(self, name)`
+  - L1600 `Phases.line(self)`
+- L1604 `main()`
 
 ## research/dca_paper/run_short.py · 457 строк
 
