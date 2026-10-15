@@ -1,0 +1,10 @@
+== задание na79-books ==
+строка: run tools/loggrep.py books
+начало: 2026-10-15T18:16:48Z
+запускаю: .venv/bin/python tools/loggrep.py books
+usage: loggrep.py [-h] --file {collect,daily,pair,ship,short,train,watchdog}
+                  [--pattern PATTERN]
+                  [--preset {books,cycle,mem,oom,raise,rss,train}]
+                  [--days DAYS] [--last LAST]
+loggrep.py: error: the following arguments are required: --file
+конец: 2026-10-15T18:16:48Z, код 2
