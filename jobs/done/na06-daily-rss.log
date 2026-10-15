@@ -1,0 +1,7 @@
+== задание na06-daily-rss ==
+строка: run tools/loggrep.py --file=daily --preset=rss --last=24
+начало: 2026-10-15T06:39:28Z
+запускаю: .venv/bin/python tools/loggrep.py --file=daily --preset=rss --last=24
+== research/dca_paper/out/daily.log по образцу /память: [\d.]+ МБ|фазы:|прогон [\d.]+ с|остановлен по памяти|Killed/ за 10 сут ==
+  совпадений 0
+конец: 2026-10-15T06:39:29Z, код 0

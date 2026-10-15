@@ -1,0 +1,49 @@
+== задание na08-cycle ==
+строка: run tools/loggrep.py --file=train --preset=cycle --last=8
+начало: 2026-10-15T06:39:28Z
+запускаю: .venv/bin/python tools/loggrep.py --file=train --preset=cycle --last=8
+== research/s8_loop/out/train.log по образцу /матрица:|обучение пропущено по каденции|обучение отложено по памяти|переобучаю:|цикл закончен/ за 10 сут ==
+  совпадений 430
+  2026-10-06: 47
+  2026-10-07: 43
+  2026-10-08: 50
+  2026-10-09: 50
+  2026-10-10: 33
+  2026-10-11: 48
+  2026-10-12: 48
+  2026-10-13: 46
+  2026-10-14: 50
+  2026-10-15: 15
+  [10-15 03:09:39] обучение отложено по памяти: память: доступно 1189 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час; цикл 460 с (сведение часа 141 с, матрица 191 с, книги 118 с, оценка 0 с)
+  [10-15 04:07:35] матрица: 807 символов × 1836 часов, сечений с ≥30 именами: 1647, признаков 50
+  [10-15 04:09:38] обучение отложено по памяти: память: доступно 2860 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час; цикл 458 с (сведение часа 158 с, матрица 177 с, книги 117 с, оценка 0 с)
+  [10-15 05:07:24] матрица: 807 символов × 1837 часов, сечений с ≥30 именами: 1648, признаков 50
+  [10-15 05:09:27] обучение отложено по памяти: память: доступно 2892 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час; цикл 448 с (сведение часа 162 с, матрица 162 с, книги 117 с, оценка 0 с)
+  [10-15 06:08:00] матрица: 807 символов × 1838 часов, сечений с ≥30 именами: 1649, признаков 50
+  [10-15 06:09:56] обучение отложено по памяти: память: доступно 2790 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час; цикл 477 с (сведение часа 175 с, матрица 185 с, книги 108 с, оценка 0 с)
+  [10-15 06:32:41] матрица: 807 символов × 1838 часов, сечений с ≥30 именами: 1649, признаков 50
+конец: 2026-10-15T06:39:29Z, код 0
+git add отказал: fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+git add сказал: fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+публикуется в ветку main:
+ jobs/done/na05-memtop.log     | 11 +++++++++++
+ jobs/done/na06-daily-rss.done |  1 +
+ jobs/done/na06-daily-rss.log  |  4 ++++
+ jobs/done/na07-short-rss.done |  1 +
+ jobs/done/na07-short-rss.log  |  7 +++++++
+ jobs/done/na08-cycle.done     |  1 +
+ jobs/done/na08-cycle.log      | 25 +++++++++++++++++++++++++
+ jobs/poke.log                 |  5 +++++
+ 8 files changed, 55 insertions(+)

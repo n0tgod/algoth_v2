@@ -66,3 +66,14 @@
    2019762  2019474      4   00:00  ps -eo pid,ppid,rss,etimes,args --no-headers
    2329848        1      4  336:13  sshd: /usr/sbin/sshd -D [listener] 1 of 10-100 startups
 конец: 2026-10-15T06:37:31Z, код 0
+публикуется в ветку main:
+ jobs/done/na04-status.done |  1 +
+ jobs/done/na04-status.log  |  9 ++++++
+ jobs/done/na05-memtop.done |  1 +
+ jobs/done/na05-memtop.log  | 68 ++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log              |  2 ++
+ 5 files changed, 81 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   652bde87..485a4875  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
