@@ -705,8 +705,9 @@ def _legs_sig():
             return (x.st_mtime_ns, x.st_size)
         except OSError:
             return None
-    return {"sheets": st(D2.SHEETS), "code": [st(p) for p in _LEGS_CODE + _nc_files()],
-            "gate": (float(D2.MIN_EDGE_BP), float(D2.MIN_RR))}
+    return {"sheets": st(D2.SHEETS), "code": [st(p) for p in _LEGS_CODE],
+            "gate": (float(D2.MIN_EDGE_BP), float(D2.MIN_RR)),
+            "nc": _nc_sig()}
 
 
 def gated_legs(limit=None, log=print, side="long", cache=LEGS_CACHE):
@@ -763,26 +764,47 @@ def gated_legs(limit=None, log=print, side="long", cache=LEGS_CACHE):
 # (`research/dca_paper/noncrypto_cut.py`, `noncrypto_window.py`): на
 # депозитах от $1k итог меняется в пределах ±4 п.п.; 80 % сигналов по
 # акциям приходят при закрытой бирже. Список — общий фильтр проекта
-# (`research/common/universe_filter`), тот же, что у часового цикла.
+# (`research/common/universe_filter`), тот же, что у часового цикла;
+# с 15.10 он читает разметку площадки (`symbolType`), а не только список.
 _NC_REF = None
+_NC_AT = 0.0
+_NC_TTL = 3600.0
 
 
 def tradable(sym):
-    """Имя, которым Ladder вправе торговать: не перп на не-криптоактив."""
-    global _NC_REF
-    if _NC_REF is None:
+    """Имя, которым Ladder вправе торговать: не перп на не-криптоактив.
+
+    Набор перечитывается раз в час: API аккаунтов живёт сутками, а
+    справочник догоняется суточно — иначе свежий листинг акции прошёл
+    бы гейт намерений до перезапуска.
+    """
+    global _NC_REF, _NC_AT
+    now = time.time()
+    if _NC_REF is None or now - _NC_AT > _NC_TTL:
         sys.path.insert(0, os.path.join(ROOT, "research"))
         from common import universe_filter as UF
-        _NC_REF = (UF, UF.non_crypto_set())
+        _NC_REF, _NC_AT = (UF, UF.non_crypto_set()), now
     UF, ref = _NC_REF
     return not UF.is_non_crypto(str(sym), ref)
 
 
-def _nc_files():
-    """Файлы, от которых зависит `tradable`: справочник и сам фильтр."""
+def _nc_sig():
+    """Подпись набора не-крипто — по СОДЕРЖИМОМУ, не по файлам.
+
+    Справочник догоняется суточно и меняет файл каждый день; подпись по
+    файлу пересобирала бы кэш ног ежедневно без смены правила. Набор
+    тот же — кэш тот же; новое имя в наборе — пересборка.
+    """
+    tradable("BTCUSDT")                        # загрузить набор
+    UF, ref = _NC_REF
+    h = hashlib.sha1("\n".join(sorted(ref)).encode()).hexdigest()[:16]
     p = os.path.join(ROOT, "research", "common", "universe_filter.py")
-    u = os.path.join(ROOT, "research", "a1_universe", "out", "universe.json")
-    return (p, u)
+    try:
+        x = os.stat(p)
+        code = (x.st_mtime_ns, x.st_size)
+    except OSError:
+        code = None
+    return [len(ref), h, code]
 
 
 def leg_gated(g, side="long"):

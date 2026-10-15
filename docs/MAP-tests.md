@@ -671,6 +671,16 @@
 - L20 `sheet_line(hour, sym, fwd, px=1.0)`
 - L26 `main()`
 
+## research/dca_ladder/test_noncrypto_gate.py · 91 строк
+
+Гейт Ladder отсекает не-крипто — по разметке площадки, не только списком.
+
+- L20 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L21 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L28 `_instr(path, typed=True)`
+- L40 `test_exchange_marking_cuts_what_the_list_misses()`
+- L66 `test_leg_gate_uses_the_same_set()`
+
 ## research/dca_ladder/test_run_d10.py · 668 строк
 
 Проверки замера D10 — короткие DCA-книги: плечо, доливы, цель, гейт.

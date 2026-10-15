@@ -133,6 +133,11 @@ def _collect_instruments_status(status, cache_tag=""):
                 "min_notional_value": lf.get("minNotionalValue"),
                 "funding_interval_min": it.get("fundingInterval"),
                 "settle_coin": it.get("settleCoin"),
+                # Класс базового актива по разметке площадки: '' или
+                # 'innovation' — крипта; stock/ETF/commodity/forex — нет
+                # (`common/universe_filter.exchange_non_crypto`).
+                "symbol_type": it.get("symbolType"),
+                "market_region": it.get("marketRegion"),
             }
         cursor = res.get("nextPageCursor") or ""
         page += 1

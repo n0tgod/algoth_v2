@@ -79,16 +79,19 @@
 - L43 `venv_python(root=None)`
 - L51 `need(*modules)` — Убедиться, что модули доступны; иначе перезапуститься из .venv.
 
-## research/common/universe_filter.py · 88 строк
+## research/common/universe_filter.py · 119 строк
 
 Не-крипто перпы: единое определение для сборщика и модели.
 
-- L26 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L27 `UNIVERSE_JSON = os.path.join(os.path.dirname(HERE), 'a1…`
-- L33 `NON_CRYPTO_NEW = {'AMCUSDT', 'AMGNUSDT', 'BACUSDT', 'BII…` — Листинги после снимка универсума: токенизированные акции, фонды и pre-IPO компании (волна TradFi-перпов лета…
-- L59 `reference_non_crypto(universe_path=UNIVERSE_JSON)` — Не-крипто символы Bybit по справочнику универсума (снимок A1).
-- L70 `non_crypto_set(universe_path=UNIVERSE_JSON)` — Полный список известных не-крипто символов.
-- L75 `is_non_crypto(sym, ref=None)` — Является ли символ перпом не на криптоактив.
+- L29 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L30 `UNIVERSE_JSON = os.path.join(os.path.dirname(HERE), 'a1…`
+- L36 `NON_CRYPTO_NEW = {'AMCUSDT', 'AMGNUSDT', 'BACUSDT', 'BII…` — Листинги после снимка универсума: токенизированные акции, фонды и pre-IPO компании (волна TradFi-перпов лета…
+- L62 `reference_non_crypto(universe_path=UNIVERSE_JSON)` — Не-крипто символы Bybit по справочнику универсума (снимок A1).
+- L73 `INSTRUMENTS_JSON = os.path.join(os.path.dirname(HERE), 'a1…`
+- L80 `EXCHANGE_NON_CRYPTO_TYPES = frozenset({'stock', 'ETF', 'commodity',…` — Разметка площадки (`symbolType` справочника Bybit), измерено 15.10: '' — 501, innovation — 128 (крипта), stoc…
+- L83 `exchange_non_crypto(instruments_path=INSTRUMENTS_JSON)` — Не-крипто по разметке площадки (поле `symbol_type` справочника).
+- L99 `non_crypto_set(universe_path=UNIVERSE_JSON, instruments_path=IN…` — Полный список известных не-крипто символов.
+- L106 `is_non_crypto(sym, ref=None)` — Является ли символ перпом не на криптоактив.
 
 ## research/common/venue.py · 154 строк
 
@@ -184,7 +187,7 @@ A1 — загрузка свечей Binance по универсуму на мо
 - L270 `plan(manifest, interval)` — Какие символо-месяцы нужны: от начала истории Binance до смерти на Bybit.
 - L290 `main()`
 
-## research/a1_universe/bybit_api.py · 406 строк
+## research/a1_universe/bybit_api.py · 411 строк
 
 A1 — сбор того, что доступно только через API v5 Bybit.
 
@@ -201,14 +204,14 @@ A1 — сбор того, что доступно только через API v5
 - L75 `api_get(path, params, cache_key)`
 - L86 `collect_instruments(cache_tag='')` — Полный справочник линейных контрактов, включая неторгуемые сейчас.
 - L107 `_collect_instruments_status(status, cache_tag='')`
-- L146 `_ms(d)`
-- L150 `collect_funding_symbol(symbol, start_day, end_day)` — Вся история funding по символу. Эндпоинт отдаёт назад во времени.
-- L185 `write_funding(symbol, rows)`
-- L195 `summarize(symbol, rows)`
-- L236 `check_credentials()` — Ключ и секрет на месте и различны. Зовётся до сбора, а не после.
-- L262 `collect_fees()` — Ставки комиссий по ключу API. Раздел 5.1: из живого API, не по памяти.
-- L291 `preflight()` — Проверить доступ до начала сбора и объяснить отказ по-человечески.
-- L311 `main()`
+- L151 `_ms(d)`
+- L155 `collect_funding_symbol(symbol, start_day, end_day)` — Вся история funding по символу. Эндпоинт отдаёт назад во времени.
+- L190 `write_funding(symbol, rows)`
+- L200 `summarize(symbol, rows)`
+- L241 `check_credentials()` — Ключ и секрет на месте и различны. Зовётся до сбора, а не после.
+- L267 `collect_fees()` — Ставки комиссий по ключу API. Раздел 5.1: из живого API, не по памяти.
+- L296 `preflight()` — Проверить доступ до начала сбора и объяснить отказ по-человечески.
+- L316 `main()`
 
 ## research/a1_universe/bybit_options.py · 356 строк
 
@@ -1536,7 +1539,7 @@ D5 (спека 14) — ЛИНЕЙКА забора: глубины лестни�
 - L663 `publish(name)`
 - L670 `main()`
 
-## research/dca_ladder/run_d6.py · 1333 строк
+## research/dca_ladder/run_d6.py · 1355 строк
 
 D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных мест или много мелких.
 
@@ -1570,23 +1573,25 @@ D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных 
 - L692 `LEGS_CACHE = os.path.join(OUT, 'legs_cache.pkl')`
 - L693 `_LEGS_CODE = (os.path.abspath(TNT.__file__), os.path…`
 - L697 `_legs_sig()` — Подпись ног: журнал листов (mtime, размер) и код, который их читает и считает геометрию. Любое изменение — пе…
-- L712 `gated_legs(limit=None, log=print, side='long', cache=LEGS_CACHE)` — Гейтованные ноги журнала листов — БЕЗ реплея по барам.
-- L767 `_NC_REF = None` — Не-крипто Ladder не торгует (решение владельца 2026-10-15): у книги срок 72 ч, а базовый актив акции стоит вн…
-- L770 `tradable(sym)` — Имя, которым Ladder вправе торговать: не перп на не-криптоактив.
-- L781 `_nc_files()` — Файлы, от которых зависит `tradable`: справочник и сам фильтр.
-- L788 `leg_gated(g, side='long')` — Проходит ли нога листа гейты книги: сторона, край, отношение, имя.
-- L802 `collect_recs(limit=None, src=None, log=print, rulers=None, hold…` — Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
-- L908 `run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_de…`
-- L961 `anchor_deposit(s)` — Опора по депозиту — встроенная проверка меры, считается В ОДНОМ прогоне на ОДНИХ исходах.
-- L1001 `_anchor_block(a)`
-- L1040 `_full_block(s)` — Депозит, при котором берётся каждый сигнал, и что тогда выходит.
-- L1135 `_shares_of(s)` — Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать тот прогон, который породил файл (урок R1…
-- L1142 `_pct(x, d=2)`
-- L1146 `report(s)`
-- L1246 `_restat_window(s, log=print)` — Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
-- L1266 `_window_line(w)`
-- L1281 `publish(name)`
-- L1288 `main()`
+- L713 `gated_legs(limit=None, log=print, side='long', cache=LEGS_CACHE)` — Гейтованные ноги журнала листов — БЕЗ реплея по барам.
+- L769 `_NC_REF = None` — Не-крипто Ladder не торгует (решение владельца 2026-10-15): у книги срок 72 ч, а базовый актив акции стоит вн…
+- L770 `_NC_AT = 0.0`
+- L771 `_NC_TTL = 3600.0`
+- L774 `tradable(sym)` — Имя, которым Ladder вправе торговать: не перп на не-криптоактив.
+- L791 `_nc_sig()` — Подпись набора не-крипто — по СОДЕРЖИМОМУ, не по файлам.
+- L810 `leg_gated(g, side='long')` — Проходит ли нога листа гейты книги: сторона, край, отношение, имя.
+- L824 `collect_recs(limit=None, src=None, log=print, rulers=None, hold…` — Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
+- L930 `run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_de…`
+- L983 `anchor_deposit(s)` — Опора по депозиту — встроенная проверка меры, считается В ОДНОМ прогоне на ОДНИХ исходах.
+- L1023 `_anchor_block(a)`
+- L1062 `_full_block(s)` — Депозит, при котором берётся каждый сигнал, и что тогда выходит.
+- L1157 `_shares_of(s)` — Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать тот прогон, который породил файл (урок R1…
+- L1164 `_pct(x, d=2)`
+- L1168 `report(s)`
+- L1268 `_restat_window(s, log=print)` — Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
+- L1288 `_window_line(w)`
+- L1303 `publish(name)`
+- L1310 `main()`
 
 ## research/dca_ladder/run_d7.py · 387 строк
 

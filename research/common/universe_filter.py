@@ -5,7 +5,7 @@
 биржи, у перпа круглосуточный, и спред несёт календарную компоненту,
 которая выглядит сигналом, не будучи им.
 
-Источника три, и все три нужны:
+Источника четыре, и все нужны:
 
 1. Справочник универсума (`asset_class` в `universe.json`) — снимок A1.
 2. Курируемый список листингов ПОСЛЕ снимка: справочник их не знает по
@@ -14,6 +14,9 @@
 3. Правило суффикса `*STOCKUSDT` — площадка сама помечает так часть
    токенизированных акций, и будущие листинги с этой пометкой не должны
    ждать правки списка.
+4. Разметка площадки `symbolType` (stock/ETF/commodity/forex) в
+   справочнике `instruments.json` — с 15.10 главный источник: список
+   отстал от волны листингов на ~60 имён.
 
 Фильтр живёт одним модулем намеренно: сборщик решает, что записывать,
 модель — что торговать, и два расходящихся определения «не-крипто»
@@ -67,9 +70,37 @@ def reference_non_crypto(universe_path=UNIVERSE_JSON):
             if v.get("asset_class") != "crypto" and v.get("bybit_symbol")}
 
 
-def non_crypto_set(universe_path=UNIVERSE_JSON):
+INSTRUMENTS_JSON = os.path.join(os.path.dirname(HERE), "a1_universe",
+                                "out", "instruments.json")
+# Разметка площадки (`symbolType` справочника Bybit), измерено 15.10:
+# '' — 501, innovation — 128 (крипта), stock — 213, ETF — 57,
+# commodity — 4, forex — 3. Курируемый список отстал на ~60 имён волны
+# после 13.08 (AMZU, NAVER, DDOG, MCD, EURUSD …) — правило теперь
+# читается с биржи, список остаётся для снятых имён без разметки.
+EXCHANGE_NON_CRYPTO_TYPES = frozenset({"stock", "ETF", "commodity", "forex"})
+
+
+def exchange_non_crypto(instruments_path=INSTRUMENTS_JSON):
+    """Не-крипто по разметке площадки (поле `symbol_type` справочника).
+
+    Справочник догоняется суточно (`a1_universe/instruments_refresh.py`);
+    у записей до 15.10 поля нет — они ловятся списком и снимком A1.
+    """
+    try:
+        with open(instruments_path, encoding="utf-8") as f:
+            d = json.load(f)
+    except (OSError, ValueError):
+        return set()
+    return {k for k, v in (d or {}).items()
+            if isinstance(v, dict)
+            and v.get("symbol_type") in EXCHANGE_NON_CRYPTO_TYPES}
+
+
+def non_crypto_set(universe_path=UNIVERSE_JSON,
+                   instruments_path=INSTRUMENTS_JSON):
     """Полный список известных не-крипто символов."""
-    return reference_non_crypto(universe_path) | set(NON_CRYPTO_NEW)
+    return (reference_non_crypto(universe_path) | set(NON_CRYPTO_NEW)
+            | exchange_non_crypto(instruments_path))
 
 
 def is_non_crypto(sym, ref=None):
