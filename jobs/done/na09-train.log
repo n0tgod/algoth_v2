@@ -18,3 +18,15 @@
   [10-13 22:00:25] память 2029 МБ, пик 4466 (канарейка)
   [10-14 01:14:19] запаздывание входа: проснулся через 3002 с после закрытия часа, цикл 15858 с (сведение часа 16 с, матрица 148 с, книги 286 с, оценка 0 с, канарейка 3770 с, обучение 11634 с)
 конец: 2026-10-15T06:42:27Z, код 0
+публикуется в ветку main:
+ jobs/done/na06-daily-rss.log        | 11 +++++++++++
+ jobs/done/na08-cycle.log            |  4 ++++
+ jobs/done/na09-train.done           |  1 +
+ jobs/done/na09-train.log            | 20 ++++++++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 40 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   5c581357..f84e1cab  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
