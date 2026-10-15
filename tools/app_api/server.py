@@ -257,7 +257,7 @@ class App:
         return 200, {"rule": f"Ranked by return over the whole record at a ${dep:,.0f} deposit, compound sizing. "
                              "A showcase of past results, not a forecast.",
                      "deposit": dep, "deposits": deposits, "top": top, "ranking": rows, "stale": bool(d.get("stale")),
-                     "window": d.get("window")}
+                     "window": d.get("window"), "computed_at": d.get("computed_at")}
 
     def site(self):
         d = site_settings(self.out)

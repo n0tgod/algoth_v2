@@ -9195,7 +9195,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L19 `OK = re.compile('^[A-Za-z0-9._-]{1,120}$')`
 - L22 `main(argv)`
 
-## tools/app_api/site/site.js · 330 строк
+## tools/app_api/site/site.js · 340 строк
 
 Кабинет Algoth (спека 16 L4). Все числа и слова — ответы API; страница
 

@@ -57,12 +57,22 @@ const Site = (() => {
     $("deps").innerHTML = (r.deposits || []).map((d) => `<button role="tab" aria-selected="${d === r.deposit}" data-dep="${d}">$${d >= 1000 ? (d / 1000) + "k" : d}</button>`).join("");
     for (const b of document.querySelectorAll("#deps button")) b.onclick = () => { try { localStorage.setItem("algoth.dep", b.dataset.dep); } catch (e) {} featured(b.dataset.dep); };
     $("rank-title").textContent = "All strategies at " + depLabel;
+    // плитки шапки — только числа сервера: число стратегий, окно записи,
+    // сделки лучшей, момент пересчёта; нет числа — прочерк, не ноль
+    const stat = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+    const n = (r.ranking || []).length; stat("s-n", n ? String(n) : "—");
+    const w = r.window || {}; stat("s-days", w.span_d != null ? String(Math.round(w.span_d)) : "—");
+    if (w.from) stat("s-since", "days of paper trading since " + String(w.from).slice(0, 10));
+    stat("s-at", r.computed_at ? String(r.computed_at).slice(11, 16) : "—");
+    if (n) stat("s-badge", `paper books · ${n} strategies · recomputed every 5 minutes`);
     $("f-rule").textContent = r.rule + (r.stale ? " The hourly run has not arrived; numbers describe the previous run." : "");
     if (!t) { $("f-title").textContent = "No strategy with trades yet."; return; }
     const side = {long: "Long", short: "Short", both: "Both sides"}[t.side] || t.side;
     $("f-title").textContent = `Ladder · ${t.title_en} · ${side}`;
     $("f-plain").textContent = t.plain || "";
     const ret = $("f-return"); ret.textContent = pct(t.final); ret.className = t.final >= 0 ? "good" : "bad";
+    stat("s-trades", t.n != null ? String(t.n) : "—");
+    stat("s-win", t.win == null ? "closed trades" : `closed trades · ${Math.round(t.win * 100)} % won`);
     $("f-tiles").innerHTML = [
       ["max drawdown", pct(t.max_dd), "of the deposit"],
       ["trades", t.n ?? "—", `${t.days_n} days of record`],
