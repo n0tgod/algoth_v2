@@ -1,0 +1,42 @@
+== задание na38-wd ==
+строка: run tools/loggrep.py --file=watchdog --preset=books --last=8
+начало: 2026-10-15T12:43:13Z
+запускаю: .venv/bin/python tools/loggrep.py --file=watchdog --preset=books --last=8
+== research/b1_book/out/watchdog.log по образцу /DCA-книги|короткие книги h24|общий счёт|прогон книг отложен|ПЕРЕЗАПУСК/ за 10 сут ==
+  совпадений 1505
+  2026-10-06: 65
+  2026-10-07: 64
+  2026-10-08: 65
+  2026-10-09: 70
+  2026-10-10: 303
+  2026-10-11: 63
+  2026-10-12: 172
+  2026-10-13: 335
+  2026-10-14: 118
+  2026-10-15: 250
+  [2026-10-15T12:10:02Z] прогон книг отложен: в этом такте уже запущен короткие книги — по одному
+  [2026-10-15T12:15:01Z] прогон книг отложен: идёт обучение S8 (цикл 2151 МБ > 2000)
+  [2026-10-15T12:20:01Z] DCA-книги: последний счёт 901 с назад — прогон --no-publish
+  [2026-10-15T12:25:01Z] DCA-книги: последний счёт 301 с назад — прогон --no-publish
+  [2026-10-15T12:30:01Z] короткие книги h24: последний счёт 1141 с назад — прогон --no-publish
+  [2026-10-15T12:30:01Z] прогон книг отложен: в этом такте уже запущен короткие книги — по одному
+  [2026-10-15T12:35:02Z] DCA-книги: последний счёт 602 с назад — прогон --no-publish
+  [2026-10-15T12:40:02Z] DCA-книги: последний счёт 302 с назад — прогон --no-publish
+конец: 2026-10-15T12:43:13Z, код 0
+git add отказал: fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+git add сказал: fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+нечего публиковать: в индекс не попало ни одного файла.
+что git видит в артефактах (?? не отслеживается, !! погашен
+.gitignore, пусто — файла нет вовсе):

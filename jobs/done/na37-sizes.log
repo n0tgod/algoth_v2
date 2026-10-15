@@ -1,0 +1,30 @@
+== задание na37-sizes ==
+строка: run tools/cache_sizes.py
+начало: 2026-10-15T12:43:13Z
+запускаю: .venv/bin/python tools/cache_sizes.py 
+research/dca_ladder/out/legs_cache.pkl: 1.3 МБ, файлов 1
+research/dca_paper/out/journal_cache: 50.0 МБ, файлов 405
+research/dca_paper/out/bars_cache: 7.3 МБ, файлов 65
+research/dca_paper/out/costs_context.pkl: 45.9 МБ, файлов 1
+research/dca_paper/out/replay_cache.pkl: нет
+research/dca_paper/out: 368.0 МБ, файлов 978
+research/s8_loop/out/model_sit/sheets.jsonl: 513.0 МБ, файлов 1
+конец: 2026-10-15T12:43:13Z, код 0
+публикуется в ветку main:
+ jobs/done/na35-status.done            |    1 +
+ jobs/done/na35-status.log             |   14 +
+ jobs/done/na36-timing.done            |    1 +
+ jobs/done/na36-timing.log             |    4 +
+ jobs/done/na37-sizes.done             |    1 +
+ jobs/done/na37-sizes.log              |   12 +
+ jobs/done/na38-wd.done                |    1 +
+ jobs/done/na38-wd.log                 |   42 +
+ jobs/poke.log                         |    6 +
+ research/dca_paper/out/DCA-pair.json  |    2 +-
+ research/dca_paper/out/DCA-pair.md    |   12 +-
+ research/dca_paper/out/DCA-paper.json | 5124 ++++++++++++++++-----------------
+ research/dca_paper/out/DCA-paper.md   |   20 +-
+ research/dca_paper/out/DCA-short.json |    2 +-
+ research/dca_paper/out/DCA-short.md   |   14 +-
+ research/s8_loop/out/day_brake.json   |    2 +-
+ 16 files changed, 2670 insertions(+), 2588 deletions(-)
