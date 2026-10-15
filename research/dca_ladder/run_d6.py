@@ -689,7 +689,8 @@ def _legs_sig():
             return (x.st_mtime_ns, x.st_size)
         except OSError:
             return None
-    return {"sheets": st(D2.SHEETS), "code": [st(p) for p in _LEGS_CODE]}
+    return {"sheets": st(D2.SHEETS), "code": [st(p) for p in _LEGS_CODE],
+            "gate": (float(D2.MIN_EDGE_BP), float(D2.MIN_RR))}
 
 
 def gated_legs(limit=None, log=print, side="long", cache=LEGS_CACHE):
@@ -704,9 +705,13 @@ def gated_legs(limit=None, log=print, side="long", cache=LEGS_CACHE):
     знать, какие решения ВООБЩЕ есть, прежде чем решать, какие из них
     считать заново. Чтение журнала листов дёшево относительно баров, но
     на 5-минутной каденции (15.10) оно стоило 22 с из 56 — больше всего:
-    лист меняется раз в час, поэтому ВСЕ ноги кладутся в кэш на диске с
-    подписью листа и кода (`_legs_sig`); гейт и сторона применяются
-    после — кэш один на все книги. `cache=None` — без кэша.
+    лист меняется раз в час, поэтому ноги кладутся в кэш на диске с
+    подписью листа, кода и порогов гейта (`_legs_sig`). В кэше — ноги ПОД
+    ГЕЙТОМ края и отношения без проверки стороны (`leg_gated(g, None)`):
+    первая версия клала все ноги листа — 271 МБ, 4 с чтения и 1.8 ГБ
+    памяти при ~9 тысячах нужных. Сторона — после кэша, он один на все
+    книги; проверка стороны от края и отношения не зависит, поэтому
+    результат тот же, что у гейта по всем ногам. `cache=None` — без кэша.
     """
     import pickle
     sig = _legs_sig()
@@ -717,11 +722,12 @@ def gated_legs(limit=None, log=print, side="long", cache=LEGS_CACHE):
                 d = pickle.load(f)
             if d.get("sig") == sig:
                 legs = d["legs"]
-                log(f"ноги листа из кэша: {len(legs)} ({os.path.basename(cache)})")
+                log(f"ноги листа из кэша: {len(legs)} под гейтом края и RR ({os.path.basename(cache)})")
         except (OSError, ValueError, EOFError, pickle.UnpicklingError, AttributeError):
             legs = None
     if legs is None:
-        legs = TNT.legs_from_sheets([D2.SHEETS], log=log)
+        legs = [g for g in TNT.legs_from_sheets([D2.SHEETS], log=log)
+                if leg_gated(g, None)]
         if cache and sig["sheets"] is not None:
             try:
                 os.makedirs(os.path.dirname(cache), exist_ok=True)

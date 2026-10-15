@@ -2049,15 +2049,17 @@ def _run_watchdog_cases(block, art_name="DCA-paper.json", fresh_age=600):
     # Гейт по ЦИКЛУ (14:56 10.10): цикл тяжелее порога — учится, книги
     # ждут при любой свободной памяти; лёгкий цикл — идут; контроль —
     # порог 9000 снимает защиту. pgrep отдаёт pid, ps — RSS в КБ.
+    # Порог 5000 с 15.10 (16 ГБ): часовой цикл 2.2 ГБ без обучения книги
+    # не держит, разнос 5.3 ГБ — держит.
     stub("pgrep", '#!/bin/sh\ncase "$*" in *train.py*) [ -n "$TRAIN_PID" ] && echo "$TRAIN_PID" && exit 0; exit 1;; esac\nexit ${PGREP_RC:-1}\n')
     stub("ps", '#!/bin/sh\necho "${TRAIN_RSS_KB:-0}"\n')
-    env.update(TRAIN_PID="4242", TRAIN_RSS_KB=str(3300 * 1024))
-    assert run("12", 7200) is False, "цикл 3300 МБ — обучение, книги ждут при 5000 МБ свободных"
-    env["TRAIN_RSS_KB"] = str(900 * 1024)
-    assert run("12", 7200) is True, "цикл 900 МБ — не учится, книги идут"
-    env["TRAIN_RSS_KB"] = str(3300 * 1024)
+    env.update(TRAIN_PID="4242", TRAIN_RSS_KB=str(5300 * 1024))
+    assert run("12", 7200) is False, "цикл 5300 МБ — разнос, книги ждут при 7000 МБ свободных"
+    env["TRAIN_RSS_KB"] = str(2200 * 1024)
+    assert run("12", 7200) is True, "цикл 2200 МБ — часовой без обучения, книги идут (16 ГБ)"
+    env["TRAIN_RSS_KB"] = str(5300 * 1024)
     env["TRAIN_BUSY_MB"] = "9000"
-    assert run("12", 7200) is True, "контроль: порог 9000 обязан пропустить прогон при цикле 3300"
+    assert run("12", 7200) is True, "контроль: порог 9000 обязан пропустить прогон при цикле 5300"
     env.pop("TRAIN_BUSY_MB"); env.pop("TRAIN_PID"); env.pop("TRAIN_RSS_KB")
     stub("pgrep", "#!/bin/sh\nexit ${PGREP_RC:-1}\n")
     print("ok  сторож: книга идёт каждый час, вопрос — когда СЧИТАЛИ, "

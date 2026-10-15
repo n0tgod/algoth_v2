@@ -56,9 +56,17 @@ def main():
         assert not any("из кэша" in m for m in logs) and len(c) > n, (len(c), n, logs)
         # без кэша — как раньше
         assert len(D6.gated_legs(side=None, log=lambda m: None, cache=None)) == len(c)
+        # в кэше — только ноги под гейтом края и RR: нога ниже края в кэш не попадает
+        with open(sheets, "a", encoding="utf-8") as f:
+            f.write(sheet_line("2026-10-14-11", "WEAKUSDT", 5.0) + "\n")
+        import pickle
+        D6.gated_legs(side=None, log=lambda m: None, cache=cache)
+        with open(cache, "rb") as f:
+            cached = pickle.load(f)["legs"]
+        assert all(D6.leg_gated(g, None) for g in cached) and not any(g["sym"] == "WEAKUSDT" for g in cached)
         # контроль: подпись, не видящая лист, отдала бы старые ноги на новом листе
         real = D6._legs_sig
-        D6._legs_sig = lambda: {"sheets": (1, 1), "code": []}
+        D6._legs_sig = lambda: {"sheets": (1, 1), "code": [], "gate": (0.0, 0.0)}
         try:
             D6.gated_legs(side=None, log=lambda m: None, cache=cache)       # записал под фальшивой подписью
             with open(sheets, "a", encoding="utf-8") as f:

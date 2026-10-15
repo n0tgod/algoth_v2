@@ -1536,7 +1536,7 @@ D5 (спека 14) — ЛИНЕЙКА забора: глубины лестни�
 - L663 `publish(name)`
 - L670 `main()`
 
-## research/dca_ladder/run_d6.py · 1282 строк
+## research/dca_ladder/run_d6.py · 1288 строк
 
 D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных мест или много мелких.
 
@@ -1570,20 +1570,20 @@ D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных 
 - L676 `LEGS_CACHE = os.path.join(OUT, 'legs_cache.pkl')`
 - L677 `_LEGS_CODE = (os.path.abspath(TNT.__file__), os.path…`
 - L681 `_legs_sig()` — Подпись ног: журнал листов (mtime, размер) и код, который их читает и считает геометрию. Любое изменение — пе…
-- L695 `gated_legs(limit=None, log=print, side='long', cache=LEGS_CACHE)` — Гейтованные ноги журнала листов — БЕЗ реплея по барам.
-- L738 `leg_gated(g, side='long')` — Проходит ли нога листа гейты книги: сторона, край, отношение.
-- L751 `collect_recs(limit=None, src=None, log=print, rulers=None, hold…` — Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
-- L857 `run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_de…`
-- L910 `anchor_deposit(s)` — Опора по депозиту — встроенная проверка меры, считается В ОДНОМ прогоне на ОДНИХ исходах.
-- L950 `_anchor_block(a)`
-- L989 `_full_block(s)` — Депозит, при котором берётся каждый сигнал, и что тогда выходит.
-- L1084 `_shares_of(s)` — Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать тот прогон, который породил файл (урок R1…
-- L1091 `_pct(x, d=2)`
-- L1095 `report(s)`
-- L1195 `_restat_window(s, log=print)` — Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
-- L1215 `_window_line(w)`
-- L1230 `publish(name)`
-- L1237 `main()`
+- L696 `gated_legs(limit=None, log=print, side='long', cache=LEGS_CACHE)` — Гейтованные ноги журнала листов — БЕЗ реплея по барам.
+- L744 `leg_gated(g, side='long')` — Проходит ли нога листа гейты книги: сторона, край, отношение.
+- L757 `collect_recs(limit=None, src=None, log=print, rulers=None, hold…` — Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
+- L863 `run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_de…`
+- L916 `anchor_deposit(s)` — Опора по депозиту — встроенная проверка меры, считается В ОДНОМ прогоне на ОДНИХ исходах.
+- L956 `_anchor_block(a)`
+- L995 `_full_block(s)` — Депозит, при котором берётся каждый сигнал, и что тогда выходит.
+- L1090 `_shares_of(s)` — Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать тот прогон, который породил файл (урок R1…
+- L1097 `_pct(x, d=2)`
+- L1101 `report(s)`
+- L1201 `_restat_window(s, log=print)` — Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
+- L1221 `_window_line(w)`
+- L1236 `publish(name)`
+- L1243 `main()`
 
 ## research/dca_ladder/run_d7.py · 387 строк
 
