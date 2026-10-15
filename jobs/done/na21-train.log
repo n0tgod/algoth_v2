@@ -18,3 +18,19 @@
   [10-15 08:00:33] канарейка по 5 зёрнам: среднее -0.0053, разброс 0.0185 (одиночный замер на такой выборке вердикта не несёт); зёрна -0.0082, -0.0117, -0.0032, -0.0104, +0.0069
   [10-15 08:00:33] память 2060 МБ, пик 4555 (канарейка)
 конец: 2026-10-15T11:03:04Z, код 0
+публикуется в ветку main:
+ jobs/done/na16-timing.log           | 13 ++++++++++++
+ jobs/done/na17-train.log            |  1 +
+ jobs/done/na21-train.done           |  1 +
+ jobs/done/na21-train.log            | 20 ++++++++++++++++++
+ jobs/done/na22-status.log           | 42 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 7 files changed, 81 insertions(+), 1 deletion(-)
+fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.

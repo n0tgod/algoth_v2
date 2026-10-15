@@ -40,3 +40,39 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 --- исполнитель Ladder ---
+
+sub_3f11698eb30279fa: статусу 331683 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+sub_b0b417879b985874: статусу 2 с, режим live, позиций 3 (отметка у 3), пауза None, без входов False, ошибка None, стоп пола на бирже у 3 из 3, цель лимиткой у 3 из 3
+    AMZUUSDT long глубина 1/1: средняя 36.66, цель 38.0, пол 3.666000000000001, стоп биржи 3.66, рунгов лежит 0, закрытие None
+    METAUSDT long глубина 2/2: средняя 756.155, цель 782.37, пол 75.6155, стоп биржи 75.61, рунгов лежит 0, закрытие None
+    SHOPUSDT long глубина 3/3: средняя 175.18548387096774, цель 181.15, пол 109.08046826327282, стоп биржи 109.08, рунгов лежит 0, закрытие None
+  чужое на счёте: нет
+конец: 2026-10-15T11:03:04Z
+git add отказал: fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+git add сказал: fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+публикуется в ветку main:
+ jobs/done/na16-timing.log           | 13 ++++++++++++
+ jobs/done/na17-train.log            |  1 +
+ jobs/done/na21-train.done           |  1 +
+ jobs/done/na21-train.log            | 20 ++++++++++++++++++
+ jobs/done/na22-status.log           | 42 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 7 files changed, 81 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   97e8d0df..7d581a53  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
