@@ -10,3 +10,14 @@ research/dca_paper/out/replay_cache.pkl: нет
 research/dca_paper/out: 366.8 МБ, файлов 976
 research/s8_loop/out/model_sit/sheets.jsonl: 513.0 МБ, файлов 1
 конец: 2026-10-15T12:23:51Z, код 0
+публикуется в ветку main:
+ jobs/done/na31-timing.log | 21 +++++++++++++++++++++
+ jobs/done/na32-wd.log     |  4 ++++
+ jobs/done/na33-sizes.done |  1 +
+ jobs/done/na33-sizes.log  | 12 ++++++++++++
+ jobs/poke.log             |  3 +++
+ 5 files changed, 41 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   5416c8e7..00fb0a71  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
