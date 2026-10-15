@@ -663,6 +663,14 @@
 - L1477 `CONTROLS = [('доливы шорта по правилу лонга', _con…`
 - L1507 `main()`
 
+## research/dca_ladder/test_legs_cache.py · 80 строк
+
+Кэш ног листа (`run_d6.gated_legs`, 15.10): второй вызов читает кэш, не лист; изменённый лист — пересчёт; гей…
+
+- L14 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L20 `sheet_line(hour, sym, fwd, px=1.0)`
+- L26 `main()`
+
 ## research/dca_ladder/test_run_d10.py · 668 строк
 
 Проверки замера D10 — короткие DCA-книги: плечо, доливы, цель, гейт.

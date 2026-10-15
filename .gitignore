@@ -19,3 +19,7 @@ research/b1_book/out/ship.log
 
 # состояние API приложения: база аккаунтов, конверты ключей, TLS и токены — никогда в git
 tools/app_api/out/
+
+# кэш ног листа (run_d6.gated_legs, 15.10): пересчитывается по подписи, в git не идёт
+research/dca_ladder/out/legs_cache.pkl
+research/dca_ladder/out/legs_cache.pkl.tmp

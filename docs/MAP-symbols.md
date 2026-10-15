@@ -1536,7 +1536,7 @@ D5 (спека 14) — ЛИНЕЙКА забора: глубины лестни�
 - L663 `publish(name)`
 - L670 `main()`
 
-## research/dca_ladder/run_d6.py · 1237 строк
+## research/dca_ladder/run_d6.py · 1282 строк
 
 D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных мест или много мелких.
 
@@ -1567,20 +1567,23 @@ D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных 
 - L562 `one_per_name(recs)` — Строгое биржевое правило: второй выбор по открытому имени пропущен.
 - L582 `full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE, lo…` — Депозит, при котором НИ ОДИН сигнал не отвергнут.
 - L656 `coverage_curve(recs, peak, deps, ticket=None, min_notional=MIN_…` — Сколько сигналов берётся при депозите меньше полного охвата.
-- L676 `gated_legs(limit=None, log=print, side='long')` — Гейтованные ноги журнала листов — БЕЗ реплея по барам.
-- L693 `leg_gated(g, side='long')` — Проходит ли нога листа гейты книги: сторона, край, отношение.
-- L706 `collect_recs(limit=None, src=None, log=print, rulers=None, hold…` — Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
-- L812 `run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_de…`
-- L865 `anchor_deposit(s)` — Опора по депозиту — встроенная проверка меры, считается В ОДНОМ прогоне на ОДНИХ исходах.
-- L905 `_anchor_block(a)`
-- L944 `_full_block(s)` — Депозит, при котором берётся каждый сигнал, и что тогда выходит.
-- L1039 `_shares_of(s)` — Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать тот прогон, который породил файл (урок R1…
-- L1046 `_pct(x, d=2)`
-- L1050 `report(s)`
-- L1150 `_restat_window(s, log=print)` — Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
-- L1170 `_window_line(w)`
-- L1185 `publish(name)`
-- L1192 `main()`
+- L676 `LEGS_CACHE = os.path.join(OUT, 'legs_cache.pkl')`
+- L677 `_LEGS_CODE = (os.path.abspath(TNT.__file__), os.path…`
+- L681 `_legs_sig()` — Подпись ног: журнал листов (mtime, размер) и код, который их читает и считает геометрию. Любое изменение — пе…
+- L695 `gated_legs(limit=None, log=print, side='long', cache=LEGS_CACHE)` — Гейтованные ноги журнала листов — БЕЗ реплея по барам.
+- L738 `leg_gated(g, side='long')` — Проходит ли нога листа гейты книги: сторона, край, отношение.
+- L751 `collect_recs(limit=None, src=None, log=print, rulers=None, hold…` — Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
+- L857 `run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_de…`
+- L910 `anchor_deposit(s)` — Опора по депозиту — встроенная проверка меры, считается В ОДНОМ прогоне на ОДНИХ исходах.
+- L950 `_anchor_block(a)`
+- L989 `_full_block(s)` — Депозит, при котором берётся каждый сигнал, и что тогда выходит.
+- L1084 `_shares_of(s)` — Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать тот прогон, который породил файл (урок R1…
+- L1091 `_pct(x, d=2)`
+- L1095 `report(s)`
+- L1195 `_restat_window(s, log=print)` — Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
+- L1215 `_window_line(w)`
+- L1230 `publish(name)`
+- L1237 `main()`
 
 ## research/dca_ladder/run_d7.py · 387 строк
 

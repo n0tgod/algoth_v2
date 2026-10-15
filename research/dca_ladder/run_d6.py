@@ -673,7 +673,26 @@ def coverage_curve(recs, peak, deps, ticket=None,
     return out
 
 
-def gated_legs(limit=None, log=print, side="long"):
+LEGS_CACHE = os.path.join(OUT, "legs_cache.pkl")
+_LEGS_CODE = (os.path.abspath(TNT.__file__), os.path.abspath(TR.__file__), os.path.abspath(__file__),
+              os.path.abspath(D2.__file__))
+
+
+def _legs_sig():
+    """Подпись ног: журнал листов (mtime, размер) и код, который их читает
+    и считает геометрию. Любое изменение — пересчёт; подпись снимается ДО
+    чтения, чтобы дописанное между ними разобралось лишний раз, а не
+    потерялось."""
+    def st(p):
+        try:
+            x = os.stat(p)
+            return (x.st_mtime_ns, x.st_size)
+        except OSError:
+            return None
+    return {"sheets": st(D2.SHEETS), "code": [st(p) for p in _LEGS_CODE]}
+
+
+def gated_legs(limit=None, log=print, side="long", cache=LEGS_CACHE):
     """Гейтованные ноги журнала листов — БЕЗ реплея по барам.
 
     `side=None` — обе стороны разом: зеркальным коротким книгам нужны
@@ -683,9 +702,35 @@ def gated_legs(limit=None, log=print, side="long"):
 
     Вынесено из `collect_recs`, потому что инкрементальному прогону надо
     знать, какие решения ВООБЩЕ есть, прежде чем решать, какие из них
-    считать заново. Чтение журнала листов дёшево, чтение баров — нет.
+    считать заново. Чтение журнала листов дёшево относительно баров, но
+    на 5-минутной каденции (15.10) оно стоило 22 с из 56 — больше всего:
+    лист меняется раз в час, поэтому ВСЕ ноги кладутся в кэш на диске с
+    подписью листа и кода (`_legs_sig`); гейт и сторона применяются
+    после — кэш один на все книги. `cache=None` — без кэша.
     """
-    legs = TNT.legs_from_sheets([D2.SHEETS], log=log)
+    import pickle
+    sig = _legs_sig()
+    legs = None
+    if cache and sig["sheets"] is not None:
+        try:
+            with open(cache, "rb") as f:
+                d = pickle.load(f)
+            if d.get("sig") == sig:
+                legs = d["legs"]
+                log(f"ноги листа из кэша: {len(legs)} ({os.path.basename(cache)})")
+        except (OSError, ValueError, EOFError, pickle.UnpicklingError, AttributeError):
+            legs = None
+    if legs is None:
+        legs = TNT.legs_from_sheets([D2.SHEETS], log=log)
+        if cache and sig["sheets"] is not None:
+            try:
+                os.makedirs(os.path.dirname(cache), exist_ok=True)
+                tmp = cache + ".tmp"
+                with open(tmp, "wb") as f:
+                    pickle.dump({"sig": sig, "legs": legs}, f, protocol=pickle.HIGHEST_PROTOCOL)
+                os.replace(tmp, cache)
+            except OSError as e:
+                log(f"кэш ног не записан: {e}")
     longs = [g for g in legs if leg_gated(g, side)]
     return longs[:limit] if limit else longs
 
