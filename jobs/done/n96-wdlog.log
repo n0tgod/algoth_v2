@@ -55,3 +55,13 @@
   [2026-10-15T05:50:01Z] DCA-книги: последний счёт 601 с назад — прогон --no-publish
   [2026-10-15T05:55:01Z] DCA-книги: последний счёт 301 с назад — прогон --no-publish
 конец: 2026-10-15T06:28:10Z, код 0
+публикуется в ветку main:
+ jobs/done/n95-restart-book.log | 13 ++++++++++
+ jobs/done/n96-wdlog.done       |  1 +
+ jobs/done/n96-wdlog.log        | 57 ++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                  |  3 +++
+ 4 files changed, 74 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   1be0100b..60189086  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
