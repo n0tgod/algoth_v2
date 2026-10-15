@@ -2178,3 +2178,5 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 [2026-10-15T11:35:30Z] задание na18-status: состояние снято
 [2026-10-15T11:35:30Z] задание na19-timing запущено: tools/book_timing.py
 [2026-10-15T11:35:30Z] задание na20-train запущено: tools/loggrep.py
+
+== сигнал 1792065660 ==
