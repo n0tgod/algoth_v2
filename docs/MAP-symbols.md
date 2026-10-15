@@ -2458,7 +2458,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L1583 `_disk_sweep(disk, path, parts, keep_sig)` — Pickle кусков ЭТОГО журнала, которых больше нет (переразрезка), или чужой подписи отбора — удаляются: иначе к…
 - L1604 `split_rows(rows, hours=AHEAD_H)` — Наблюдение и пересчёт — ДВА списка, и складывать их нельзя.
 
-## research/dca_paper/run_pair.py · 569 строк
+## research/dca_paper/run_pair.py · 579 строк
 
 Общий счёт: длинная книга и короткая на ОДНОМ депозите.
 
@@ -2475,11 +2475,11 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L229 `separate(rows_by_book, dep)` — Те же книги на РАЗДЕЛЬНЫХ счетах — для сравнения с общим.
 - L244 `one_sided(book, lk, sk)` — Какой стороны в общем счёте НЕТ. Пусто — обе на месте.
 - L258 `run(log=print, now=None, journal=None, long_cache=None, short_c…`
-- L358 `_p(x, d=2)`
-- L362 `_u(x)`
-- L366 `report(s)`
-- L540 `publish(name)`
-- L545 `main(argv=None)`
+- L368 `_p(x, d=2)`
+- L372 `_u(x)`
+- L376 `report(s)`
+- L550 `publish(name)`
+- L555 `main(argv=None)`
 
 ## research/dca_paper/run_paper.py · 1784 строк
 
@@ -2526,7 +2526,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
   - L1625 `Phases.line(self)`
 - L1629 `main()`
 
-## research/dca_paper/run_short.py · 457 строк
+## research/dca_paper/run_short.py · 470 строк
 
 Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
 
@@ -2546,11 +2546,11 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L170 `replay_cells(need, cells, src=None, log=print, ckpt_hours=None,…` — Досчёт решений на НЕСКОЛЬКО ячеек одной геометрии: отметки и заполнения, пол — по группам книг.
 - L249 `replay(need, src=None, log=print, ckpt_hours=None)` — Досчёт недостающих решений книги: одна ячейка (`CELL`), отметки и заполнения — через `replay_cells`, одной до…
 - L257 `run(limit=None, src=None, log=print, legs_=None, journal=None, …`
-- L320 `_p(x, d=2)`
-- L324 `_u(x)`
-- L328 `report(s)`
-- L423 `publish(name)`
-- L428 `main(argv=None)`
+- L333 `_p(x, d=2)`
+- L337 `_u(x)`
+- L341 `report(s)`
+- L436 `publish(name)`
+- L441 `main(argv=None)`
 
 ## research/dca_paper/short_adds.py · 560 строк
 

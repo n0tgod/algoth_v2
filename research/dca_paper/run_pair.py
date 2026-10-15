@@ -262,8 +262,10 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
     log = AB.guarded(log, limit=(MEM_LIMIT_MB if mem_limit is None
                                  else mem_limit))
     keys = list(keys or R.PAIR_ORDER)
+    ph = RP.Phases()          # секунды по фазам (15.10)
     longs, why_l = long_recs(long_cache, log=log)
     shorts, why_s = short_recs(short_cache, log=log)
+    ph.mark("кэши сторон")
     if why_l or why_s or not longs or not shorts:
         why = (why_l or why_s
                or ("позиций длинных книг нет" if not longs
@@ -298,10 +300,14 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
         kept, guards[pk] = RP.guard_shorts(kept, pk, log=log, now=now)
         packed[pk] = [r for r in packed[pk]
                       if (r.get("book") or pk) == lk] + kept
+    ph.mark("издержки, гейт, возраст, охрана")
     rows, cells, one, live = RP.build_rows(packed, now=now, keys=keys, log=log)
+    ph.mark("касса")
     RP.append_journal(rows, path=journal or R.PAIR_JOURNAL, log=log)
+    ph.mark("журнал")
     s = RP.summarize(path=journal or R.PAIR_JOURNAL, live=live, keys=keys,
                      ctx=ctx)
+    ph.mark("свод")
     # Строки текущих правил — с диска разобранными (15.10); отбор тот же
     ksig = R.current_sig()
     jrows, _bad = R.read_journal(journal or R.PAIR_JOURNAL, keep=R.is_current,
@@ -329,6 +335,7 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
                          "error": f"издержки раздельных счетов: {e}"[:200]}
     log(f"раздельные счета: издержки вычтены у {sep_costs['applied']} "
         f"строк из {sep_costs['n']}")
+    ph.mark("раздельные счета")
     for pk in keys:
         lk, sk = R.parts_of(pk)
         mine = [r for r in jrows if R.ruler_of(r) == pk]
@@ -352,6 +359,9 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
               "computed_at": time.strftime("%Y-%m-%d %H:%M", time.gmtime()),
               "rules": RP.rules_snapshot(keys=keys)})
     RP.attach_open_dd(s)
+    ph.mark("просадка открытых")
+    s["timing"] = dict(ph.out)
+    log(ph.line())
     return s
 
 

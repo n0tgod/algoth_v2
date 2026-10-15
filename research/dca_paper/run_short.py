@@ -257,19 +257,25 @@ def replay(need, src=None, log=print, ckpt_hours=None):
 def run(limit=None, src=None, log=print, legs_=None, journal=None,
         cache_path=None, now=None, launch=None):
     t0 = time.time()
+    ph = RP.Phases()          # секунды по фазам: короткий прогон 145 с (15.10)
     legs_ = legs(limit=limit, log=log) if legs_ is None else list(legs_)
+    ph.mark("решения")
     cache, _why = read_cache(cache_path, log=log)
+    ph.mark("кэш")
     need = needs_replay(cache, legs_)
     log(f"решений {len(legs_)}, в кэше {len(cache) // max(1, len(set(BOOKS.values())))}, "
         f"считаю заново {len(need)}")
     fresh, tail = replay(need, src=src, log=log)
+    ph.mark("реплей")
     cache.update(fresh)
     # Обещание модели у записей прежнего образца — ДО записи кэша: общий
     # счёт читает кэш с диска, и добор в памяти он не видел никогда
     # (2026-09-22: все короткие строки `pair` без цели). Новая запись
     # несёт его с рождения (`run_d10`); ядро добора одно — `run_paper`.
     RP.attach_fav(cache.values(), legs_, log=log)
+    ph.mark("fav")
     write_cache(cache, cache_path)
+    ph.mark("запись кэша")
     by_ruler = {}
     for (rk, _sym, _at), r in cache.items():
         by_ruler.setdefault(rk, []).append(r)
@@ -288,11 +294,15 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
         # охрана рынком — после возраста и до кассы: правило ВЫХОДА
         packed[bk], guards[bk] = RP.guard_shorts(packed[bk], bk, log=log,
                                                  now=now)
+    ph.mark("возраст и охрана")
     rows, cells, one, live = RP.build_rows(packed, now=now,
                                            keys=R.H24_ORDER, log=log)
+    ph.mark("касса")
     RP.append_journal(rows, path=journal or R.H24_JOURNAL, log=log)
+    ph.mark("журнал")
     s = RP.summarize(path=journal or R.H24_JOURNAL, live=live,
                      keys=R.H24_ORDER)
+    ph.mark("свод")
     s.update({"family": "h24", "cells": cells, "one_name": one, "ages": ages,
               "guards": guards,
               "signal": {"book": "h24", "arms": list(ARMS), "cell": CELL[0],
@@ -309,6 +319,9 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
                         "RULERS": {k: dict(R.RULERS[k]) for k in R.H24_ORDER},
                         "RULER_ORDER": list(R.H24_ORDER)}})
     RP.attach_open_dd(s)
+    ph.mark("просадка открытых")
+    s["timing"] = dict(ph.out)
+    log(ph.line())
     # Общий счёт (длинная книга и короткая на ОДНОМ депозите) считает
     # `run_pair.py` своей книгой и своим журналом. Прежний блок «общая
     # статистика» складывал два РАЗДЕЛЬНЫХ счёта и снят: владелец
