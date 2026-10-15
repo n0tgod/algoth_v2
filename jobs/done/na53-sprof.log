@@ -51,3 +51,15 @@
        70    0.132    0.002    5.700    0.081 /root/algoth_v2/research/dca_paper/tail.py:79(book_minute_bars)
     36208    0.132    0.000    0.132    0.000 {built-in method posix.stat}
 конец: 2026-10-15T13:30:47Z, код 0
+публикуется в ветку main:
+ jobs/done/na52-sprof.log              | 11 ++++++++
+ jobs/done/na53-sprof.done             |  1 +
+ jobs/done/na53-sprof.log              | 53 +++++++++++++++++++++++++++++++++++
+ jobs/poke.log                         |  3 ++
+ research/dca_paper/out/DCA-short.json |  2 +-
+ research/dca_paper/out/DCA-short.md   | 14 ++++-----
+ 6 files changed, 76 insertions(+), 8 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   160a05da..0b04f4ce  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
