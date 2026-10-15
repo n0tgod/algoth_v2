@@ -19,3 +19,14 @@
   [10-15 06:32:41] матрица: 807 символов × 1838 часов, сечений с ≥30 именами: 1649, признаков 50
   [10-15 06:45:35] обучение отложено по памяти: память: доступно 2818 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час; ждал 600 с, память не освободилась; цикл 934 с (сведение часа 14 с, матрица 146 с, 
 конец: 2026-10-15T06:45:54Z, код 0
+публикуется в ветку main:
+ jobs/done/na09-train.log            | 12 ++++++++++++
+ jobs/done/na10-cycle.done           |  1 +
+ jobs/done/na10-cycle.log            | 21 +++++++++++++++++++++
+ jobs/poke.log                       |  5 +++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 40 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   7c93f21f..c231c38c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
