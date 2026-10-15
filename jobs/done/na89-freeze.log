@@ -1,0 +1,6 @@
+== задание na89-freeze ==
+строка: run tools/freeze_weights.py
+начало: 2026-10-15T23:03:42Z
+запускаю: .venv/bin/python tools/freeze_weights.py 
+заморожено обучение №534 (до 2026-10-15-05): 28 файлов, 1.7 МБ; цикл с этого часа пишет sheets_frozen.jsonl
+конец: 2026-10-15T23:03:42Z, код 0
