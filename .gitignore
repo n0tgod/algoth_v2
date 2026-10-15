@@ -23,3 +23,5 @@ tools/app_api/out/
 # кэш ног листа (run_d6.gated_legs, 15.10): пересчитывается по подписи, в git не идёт
 research/dca_ladder/out/legs_cache.pkl
 research/dca_ladder/out/legs_cache.pkl.tmp
+# разобранные куски журналов DCA (rules.read_journal disk=…, 15.10): пересоздаются по подписи
+research/dca_paper/out/journal_cache/

@@ -1245,6 +1245,15 @@
 - L27 `test_off_branch_clears_the_guard_and_restores_it()`
 - L46 `test_report_has_both_branches_and_no_none()`
 
+## research/dca_paper/test_journal_cache.py · 120 строк
+
+Кеш разобранных кусков журнала на диске (`rules.read_journal(disk=…)`, 15.10): второй вызов берёт куски с дис…
+
+- L17 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L22 `row(sym, at, rules=R.RULES, dep=1000, ruler='optimal', book=Non…`
+- L30 `write(path, rows)`
+- L36 `main()`
+
 ## research/dca_paper/test_names.py · 227 строк
 
 Проверки замера соответствия имён режимов.

@@ -65,6 +65,20 @@ def is_current(row):
     except (TypeError, ValueError):
         return False
 
+
+def current_sig():
+    """Подпись отбора `is_current` для кеша разобранных кусков на диске:
+    версия правил, версии семейств и сам файл правил (mtime, размер) —
+    всё, от чего зависят `is_current` и `journal_key`. Любая правка
+    правил делает прежние pickle чужими."""
+    try:
+        st = os.stat(__file__)
+        code = f"{st.st_mtime_ns}.{st.st_size}"
+    except OSError:
+        code = "nocode"
+    fam = "-".join(f"{k}{v}" for k, v in sorted(FAMILY_RULES.items()))
+    return f"cur{RULES}-{fam}-{code}"
+
 # --- депозиты (решение владельца) ---------------------------------------
 # $100 добавлен 2026-10-04 (вопрос владельца про разгон маленького
 # депозита): у него билет равен ПОЛУ ($25 у безопасной и оптимальной,
@@ -1004,6 +1018,11 @@ AHEAD_H = HOLD_H + 48
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
 JOURNAL = os.path.join(OUT, "journal.jsonl")
+# Разобранные куски журналов на диске (`read_journal(disk=…)`, 15.10):
+# pickle на кусок с подписью (mtime, размер) и подписью отбора. Журнал
+# write-ahead: старые куски не меняются, и разбирать 123 тысячи строк
+# JSON каждые пять минут (4.2 с из 12.8 у свода) незачем. В git не идёт.
+JOURNAL_CACHE = os.path.join(OUT, "journal_cache")
 ARTIFACT = os.path.join(OUT, "DCA-paper.json")
 # Журнал и артефакт семейства `h24` — СВОИ. Имя не «journal-…»: ротация
 # длинной книги глобит `journal-*.jsonl`, и суточный кусок короткой попал
@@ -1432,7 +1451,8 @@ def _parse_part(part, keep=None):
     return rows, keys, bad, n
 
 
-def read_journal(path=JOURNAL, stats=None, keep=None, cache=None):
+def read_journal(path=JOURNAL, stats=None, keep=None, cache=None,
+                 disk=None, keep_sig=None):
     """Строки журнала как есть — из ВСЕХ его кусков, БЕЗ повторов.
 
     Битая строка пропускается со счётом: журнал write-ahead, и
@@ -1458,11 +1478,25 @@ def read_journal(path=JOURNAL, stats=None, keep=None, cache=None):
     2026-09-22: «жду по 5–10 секунд»). Строки из кеша ОБЩИЕ между
     вызовами — читать, не править; один словарь — один `keep`.
 
+    `disk` — каталог кеша НА ДИСКЕ для процесса, который читает раз и
+    уходит (прогон книги, 15.10): pickle на кусок, подпись та же
+    (mtime_ns, размер) плюс `keep_sig` — подпись отбора `keep`
+    (`current_sig()` для `is_current`; без `keep` — «all»). Отбор без
+    подписи с диском не сочетается: кеш отдал бы строки чужого отбора,
+    поэтому это ошибка, а не молчаливое «без кеша». Кусок, которого
+    больше нет, уносит с собой и свой pickle. Запись атомарная.
+
     `stats`: `dups`, `parts`, `parsed` (строк разобрано ЭТИМ вызовом),
-    `cached` (кусков взято из кеша).
+    `cached` (кусков взято из кеша памяти), `disk` (кусков с диска).
     """
-    rows, bad, seen, dups, parsed, hits = [], 0, set(), 0, 0, 0
+    rows, bad, seen, dups, parsed, hits, dhits = [], 0, set(), 0, 0, 0, 0
     parts = journal_parts(path)
+    if disk is not None:
+        if keep is not None and not keep_sig:
+            raise ValueError("read_journal: отбор `keep` с кешем на диске требует keep_sig")
+        keep_sig = keep_sig or "all"
+        os.makedirs(disk, exist_ok=True)
+        _disk_sweep(disk, path, parts, keep_sig)
     if cache is not None:
         # Кусок, которого больше нет (переразрезка переименовала), из
         # кеша уходит — но только СВОЕГО журнала: словарь у сборщика
@@ -1479,11 +1513,23 @@ def read_journal(path=JOURNAL, stats=None, keep=None, cache=None):
             hit = cache.get(part)
             if hit is not None and hit[0] != sig:
                 hit = None
+        if hit is None and disk is not None:
+            st = os.stat(part)
+            sig = (st.st_mtime_ns, st.st_size)
+            got = _disk_get(_disk_path(disk, part, keep_sig), sig)
+            if got is not None:
+                prow, pkeys, pbad = got
+                dhits += 1
+                hit = (sig, prow, pkeys, pbad)
+                if cache is not None:
+                    cache[part] = hit
         if hit is None:
             prow, pkeys, pbad, n = _parse_part(part, keep)
             parsed += n
             if cache is not None:
                 cache[part] = (sig, prow, pkeys, pbad)
+            if disk is not None:
+                _disk_put(_disk_path(disk, part, keep_sig), sig, prow, pkeys, pbad)
         else:
             _, prow, pkeys, pbad = hit
             hits += 1
@@ -1499,7 +1545,60 @@ def read_journal(path=JOURNAL, stats=None, keep=None, cache=None):
         stats["parts"] = len(parts)
         stats["parsed"] = parsed
         stats["cached"] = hits
+        stats["disk"] = dhits
     return rows, bad
+
+
+def _disk_path(disk, part, keep_sig):
+    return os.path.join(disk, f"{os.path.basename(part)}.{keep_sig}.pkl")
+
+
+def _disk_get(cpath, sig):
+    """Разобранный кусок с диска, если подпись та же; иначе None. Любой
+    отказ чтения есть промах: кеш пересоздаётся, журнал не страдает."""
+    import pickle
+    try:
+        with open(cpath, "rb") as f:
+            d = pickle.load(f)
+        if d.get("sig") == sig:
+            return d["rows"], d["keys"], d["bad"]
+    except (OSError, EOFError, ValueError, TypeError, AttributeError,
+            KeyError, pickle.UnpicklingError):
+        pass
+    return None
+
+
+def _disk_put(cpath, sig, rows, keys, bad):
+    import pickle
+    try:
+        tmp = cpath + ".tmp"
+        with open(tmp, "wb") as f:
+            pickle.dump({"sig": sig, "rows": rows, "keys": keys, "bad": bad}, f,
+                        protocol=pickle.HIGHEST_PROTOCOL)
+        os.replace(tmp, cpath)
+    except OSError:
+        pass
+
+
+def _disk_sweep(disk, path, parts, keep_sig):
+    """Pickle кусков ЭТОГО журнала, которых больше нет (переразрезка), или
+    чужой подписи отбора — удаляются: иначе каталог рос бы молча."""
+    base = os.path.basename(os.path.splitext(path)[0])
+    want = {os.path.basename(_disk_path(disk, p, keep_sig)) for p in parts}
+    try:
+        names = os.listdir(disk)
+    except OSError:
+        return
+    for nm in names:
+        if not nm.endswith(".pkl") or nm in want:
+            continue
+        stem = nm.split(".jsonl.")[0] if ".jsonl." in nm else None
+        if stem is None or not (stem == base or stem.startswith(base + "-")):
+            continue
+        try:
+            os.unlink(os.path.join(disk, nm))
+        except OSError:
+            pass
 
 
 def split_rows(rows, hours=AHEAD_H):

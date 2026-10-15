@@ -584,7 +584,17 @@ def append_journal(rows, path=None, log=print):
 
 def _append_one(rows, path, log=print, what=None):
     """Дописать строки ОДНОГО формата размера в ОДИН журнал."""
-    old, bad = R.read_journal(path)
+    # Дедуп — только против строк ТЕКУЩИХ правил, с диска (15.10): ключ
+    # несёт всё, от чего зависит `is_current`, и строка текущих правил
+    # совпасть с архивной не может. Строка НЕ текущих правил среди новых
+    # (такого быть не должно) возвращает полное чтение — иначе она
+    # дописывалась бы каждый прогон.
+    old, bad = R.read_journal(path, keep=R.is_current, disk=R.JOURNAL_CACHE,
+                              keep_sig=R.current_sig())
+    if not all(R.is_current(r) for r in rows):
+        log(f"запись: среди новых строк есть строки не текущих правил — "
+            f"дедуп по всему журналу {os.path.basename(path)}")
+        old, bad = R.read_journal(path)
     # Ключ дедупа несёт ЛИНЕЙКУ: одно решение живёт в обеих книгах, и без
     # неё вторая книга целиком читалась бы повтором первой и не писалась
     # бы никогда.
@@ -914,11 +924,20 @@ def summarize(path=None, live=None, keys=None, ctx=None):
     считали» полем `live_known`.
     """
     path = path or R.JOURNAL
-    rows, bad = R.read_journal(path)
+    # Читаются только строки ТЕКУЩИХ правил (15.10): ячейки ниже всё
+    # равно отбирают `is_current`, а издержки у прежних версий никуда не
+    # шли — свод по ним считал 101 тысячу закрытых строк вместо 23. Числа
+    # ячеек от этого не меняются (сверено бит в бит); меняется только
+    # общий счётчик издержек `costs` — он теперь о книге, а не об
+    # архиве. Разобранные куски берутся с диска (`R.JOURNAL_CACHE`).
+    keep, ksig = R.is_current, R.current_sig()
+    rows, bad = R.read_journal(path, keep=keep, disk=R.JOURNAL_CACHE,
+                               keep_sig=ksig)
     # Книги фиксированного билета — из СВОЕГО журнала; строки несут
     # поле `sizing`, и по нему же делятся ниже. Журнала нет — книг нет,
     # и свод говорит это числом строк, а не подставляет сложный процент.
-    frows, fbad = R.read_journal(R.fixed_twin(path))
+    frows, fbad = R.read_journal(R.fixed_twin(path), keep=keep,
+                                 disk=R.JOURNAL_CACHE, keep_sig=ksig)
     frows = [r for r in frows if R.sizing_of(r) == R.SIZING_FIXED]
     rows = rows + frows
     live = live or {}
@@ -954,13 +973,19 @@ def summarize(path=None, live=None, keys=None, ctx=None):
                         "n": len(rows), "applied": 0}
     cost_sum["n_funding"] = ctx.get("n_funding")
     out["costs"] = cost_sum
+    # Строки раскладываются по ячейкам ОДНИМ проходом: 24 фильтра по
+    # всем строкам стоили 1.9 с на тёплом прогоне. Порядок строк в
+    # ячейке — порядок журнала, как и у фильтра.
+    by_cell = {}
+    for r in rows:
+        if not R.is_current(r):
+            continue
+        by_cell.setdefault((R.ruler_of(r), int(r.get("dep", 0)),
+                            R.sizing_of(r)), []).append(r)
     for rk, dep, sizing in ((k, d, z) for k in keys for d in R.DEPOSITS
                             for z in R.SIZINGS):
             key = _cell(rk, dep, sizing)
-            mine = [r for r in rows if int(r.get("dep", 0)) == int(dep)
-                    and R.is_current(r)
-                    and R.ruler_of(r) == rk
-                    and R.sizing_of(r) == sizing]
+            mine = by_cell.get((rk, int(dep), sizing), [])
             fwd, back = R.split_rows(mine)
             op = live.get(key)
             # Общий счёт собран из ДВУХ книг, и одного билета у него не

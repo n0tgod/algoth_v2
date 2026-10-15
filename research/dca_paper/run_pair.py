@@ -302,18 +302,20 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
     RP.append_journal(rows, path=journal or R.PAIR_JOURNAL, log=log)
     s = RP.summarize(path=journal or R.PAIR_JOURNAL, live=live, keys=keys,
                      ctx=ctx)
-    jrows, _bad = R.read_journal(journal or R.PAIR_JOURNAL)
-    jrows = [r for r in jrows if R.is_current(r)]
+    # Строки текущих правил — с диска разобранными (15.10); отбор тот же
+    ksig = R.current_sig()
+    jrows, _bad = R.read_journal(journal or R.PAIR_JOURNAL, keep=R.is_current,
+                                 disk=R.JOURNAL_CACHE, keep_sig=ksig)
     # Раздельные счета — из журналов самих книг, тем же ядром: это ровно
     # то, что показывают их вкладки, и сравнение общего счёта с ними есть
     # ответ на вопрос владельца «что даёт один счёт вместо двух».
     # ИЗДЕРЖКИ ИМ ВЫЧИТАЮТСЯ ТОЖЕ: колонка нетто против колонки брутто —
     # разные единицы в одной таблице, и такая ошибка в проекте ловилась
     # пять раз.
-    lrows, _ = R.read_journal(long_journal or R.JOURNAL)
-    srows, _ = R.read_journal(short_journal or R.H24_JOURNAL)
-    lrows = [r for r in lrows if R.is_current(r)]
-    srows = [r for r in srows if R.is_current(r)]
+    lrows, _ = R.read_journal(long_journal or R.JOURNAL, keep=R.is_current,
+                              disk=R.JOURNAL_CACHE, keep_sig=ksig)
+    srows, _ = R.read_journal(short_journal or R.H24_JOURNAL, keep=R.is_current,
+                              disk=R.JOURNAL_CACHE, keep_sig=ksig)
     sep_costs = {"applied": 0, "n": len(lrows) + len(srows)}
     if CO is not None:
         try:
