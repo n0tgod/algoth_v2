@@ -135,4 +135,4 @@ header.top nav a.nav-cta { border:1px solid rgba(139,92,246,.5); border-radius:9
 
 /* знак в шапке (логотип 15.10) */
 header.top .brand { display:inline-flex; align-items:center; gap:8px }
-header.top .brand img { width:40px; height:40px; display:block; margin:-6px 0 }
+header.top .brand img { width:34px; height:34px; display:block }

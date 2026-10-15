@@ -1245,6 +1245,7 @@ SITE_PAGES = {"/": ("index.html", "text/html; charset=utf-8"),
               # знак и превью (логотип владельца 15.10): иконка вкладки, иконка
               # на экране iPhone, знак в шапке, карточка для соцсетей
               "/favicon.png": ("favicon.png", "image/png"),
+              "/logo.svg": ("logo.svg", "image/svg+xml"),
               "/apple-touch-icon.png": ("apple-touch-icon.png", "image/png"),
               "/logo-mark.png": ("logo-mark.png", "image/png"),
               "/og.png": ("og.png", "image/png")}
