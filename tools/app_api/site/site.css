@@ -68,11 +68,19 @@ table.rank tr.top td { background:rgba(99,102,241,.08) }
    (текст), JetBrains Mono (числа); свечение фона; плитки, карточки, шаги.
    Ничего из обещаний макета не перенесено: числа на странице — только с
    сервера, с прочерком вместо нуля. --- */
-body.landing { font-family:"Geist",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; position:relative; overflow-x:hidden }
+body.landing { font-family:"Geist",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; position:relative }
+/* Свечение — ФИКСИРОВАННОЕ и обрезанное окном: абсолютные пятна шире
+   экрана раздвигали страницу вправо в Safari на телефоне (владелец, 15.10),
+   overflow-x:hidden на body там не держит. */
+html.landing-root, body.landing { overflow-x:clip; max-width:100vw }
 body.landing .wrap { max-width:1040px; position:relative; z-index:1 }
-.glow { position:absolute; border-radius:999px; filter:blur(120px); pointer-events:none; z-index:0 }
-.glow-a { width:900px; height:520px; left:50%; top:-160px; transform:translateX(-50%); background:rgba(0,245,155,.10) }
-.glow-b { width:420px; height:340px; right:-120px; top:520px; background:rgba(99,102,241,.14) }
+.glow { position:fixed; border-radius:999px; filter:blur(120px); pointer-events:none; z-index:0 }
+.glow-a { width:min(900px,120vw); height:520px; left:50%; top:-160px; transform:translateX(-50%); background:rgba(0,245,155,.10) }
+.glow-b { width:min(420px,70vw); height:340px; right:0; top:520px; background:rgba(99,102,241,.14) }
+.landing .tw { overflow-x:auto; -webkit-overflow-scrolling:touch }
+.landing .badge { max-width:100%; white-space:normal; text-align:center }
+.landing .cta .btn { max-width:100% }
+.landing .chart-wrap svg { max-width:100% }
 .display { font-family:"Newsreader",Georgia,"Times New Roman",serif; font-weight:400; letter-spacing:-.02em }
 .display em { font-style:italic; color:var(--bid); text-shadow:0 0 24px rgba(0,245,155,.28) }
 .mono, .landing .num, .landing .stat b, .landing .hero-num span { font-family:"JetBrains Mono",ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums }
@@ -118,3 +126,6 @@ header.top nav a.nav-cta { border:1px solid var(--rule); border-radius:999px; pa
 @media (max-width:640px) { .hero-c { padding:40px 0 28px } .stats { grid-template-columns:1fr 1fr } header.top nav a:not(.nav-cta) { display:none } }
 .hero-c .h2 { margin-left:auto; margin-right:auto }
 .hero-c .stores { justify-content:center }
+/* Таблица рейтинга на телефоне: колонки «side» и «win» скрыты, остальное
+   помещается в 390 px без прокрутки внутри блока */
+@media (max-width:640px) { .landing table.rank th:nth-child(3), .landing table.rank td:nth-child(3), .landing table.rank th:nth-child(7), .landing table.rank td:nth-child(7) { display:none } .landing table.rank { font-size:13px } .landing table.rank th, .landing table.rank td { padding:7px 6px } }
