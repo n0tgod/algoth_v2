@@ -150,3 +150,5 @@ header.top .brand img { display:block } header.top .brand img.mark { width:34px;
 
 /* доллары под долей в таблице рейтинга (15.10: «$ и %» всегда) */
 table.rank td small.usd { display:block; font-size:11px; color:var(--muted); font-weight:400 }
+/* доллары под процентом в плитке — мелко, тем же весом (15.10) */
+.tile span.usd { display:block; font:600 13px/1.3 "JetBrains Mono",ui-monospace,Menlo,monospace; color:var(--muted); margin-top:2px }

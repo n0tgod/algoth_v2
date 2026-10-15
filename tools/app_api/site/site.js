@@ -50,11 +50,12 @@ const Site = (() => {
   // Депозит — переключателем (владелец 14.10): тот же ответ сервера с
   // другим депозитом; выбор запоминается на устройстве.
   // Деньги — всегда «$ (%)» (владелец 15.10): нет долларов — одна доля.
+  // в строку — процент первым, без скобок (владелец 15.10)
   function both(u, f, d) {
     if (u == null && f == null) return "—";
     if (u == null) return pct(f, d);
     const s = (u >= 0 ? "+" : "−") + "$" + Math.abs(u).toLocaleString("en-US", {maximumFractionDigits: 2, minimumFractionDigits: 2});
-    return f == null ? s : s + " (" + pct(f, d) + ")";
+    return f == null ? s : pct(f, d) + " · " + s;
   }
 
   async function featured(dep) {
@@ -83,13 +84,13 @@ const Site = (() => {
     stat("s-trades", t.n != null ? String(t.n) : "—");
     stat("s-win", t.win == null ? "closed trades" : `closed trades · ${Math.round(t.win * 100)} % won`);
     $("f-tiles").innerHTML = [
-      ["max drawdown", both(t.max_dd_usd, t.max_dd), "closed trades, from the account peak"],
-      ["worst open loss", t.open_dd_share == null ? "—" : both(t.open_dd, t.open_dd_share), t.open_dd_at ? "of the account then, " + new Date(t.open_dd_at * 1000).toISOString().slice(0, 10) : "of the account then"],
+      ["max drawdown", pct(t.max_dd), "closed trades, from the account peak", both(t.max_dd_usd, null)],
+      ["worst open loss", t.open_dd_share == null ? "—" : pct(t.open_dd_share), t.open_dd_at ? "of the account then, " + new Date(t.open_dd_at * 1000).toISOString().slice(0, 10) : "of the account then", t.open_dd == null ? null : both(t.open_dd, null)],
       ["trades", t.n ?? "—", `${t.days_n} days of record`],
       ["win rate", t.win == null ? "—" : Math.round(t.win * 100) + " %", "closed trades"],
       ["open now", t.open_n ?? "—", "positions"],
       ["record since", t.days && t.days.length ? t.days[0][0] : "—", "paper book"],
-    ].map(([k, v, s]) => `<div class="tile"><small>${esc(k)}</small><b>${esc(v)}</b><small>${esc(s)}</small></div>`).join("");
+    ].map(([k, v, s, u]) => `<div class="tile"><small>${esc(k)}</small><b>${esc(v)}</b>${u ? `<span class="usd">${esc(u)}</span>` : ""}<small>${esc(s)}</small></div>`).join("");
     drawLine._meta = {at: t.open_dd_at, share: t.open_dd_share, usd: t.open_dd};
     drawLine($("f-chart"), $("f-tip"), t.days, t.final >= 0 ? "var(--bid)" : "var(--ask)", t.open_dips);
     $("f-legend").innerHTML = t.open_dips ? `<span><i class="lg-line"></i>closed trades</span><span><i class="lg-dip"></i>with open positions at their worst hour of the day</span>` : "";
