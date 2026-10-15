@@ -1,0 +1,18 @@
+== задание na40-bprobe ==
+строка: run tools/bars_cache_probe.py
+начало: 2026-10-15T12:47:51Z
+запускаю: .venv/bin/python tools/bars_cache_probe.py 
+заново 3; кэш баров /root/algoth_v2/research/dca_paper/out/bars_cache: файлов 65
+HDUSDT проход 1: 0.02 с, баров 0, read_hour 29 (pickle был: False)
+HDUSDT проход 2: 0.00 с, баров 0, read_hour 29 (pickle был: False)
+  подпись 2026-08-22-11: None; файлы: []
+  pickle не читается: [Errno 2] No such file or directory: '/root/algoth_v2/research/dca_paper/out/bars_cache/HDUSDT.pkl'
+HDUSDT проход 1: 0.00 с, баров 0, read_hour 29 (pickle был: False)
+HDUSDT проход 2: 0.00 с, баров 0, read_hour 29 (pickle был: False)
+  подпись 2026-08-22-13: None; файлы: []
+  pickle не читается: [Errno 2] No such file or directory: '/root/algoth_v2/research/dca_paper/out/bars_cache/HDUSDT.pkl'
+HDUSDT проход 1: 0.00 с, баров 0, read_hour 29 (pickle был: False)
+HDUSDT проход 2: 0.00 с, баров 0, read_hour 29 (pickle был: False)
+  подпись 2026-08-22-15: None; файлы: []
+  pickle не читается: [Errno 2] No such file or directory: '/root/algoth_v2/research/dca_paper/out/bars_cache/HDUSDT.pkl'
+конец: 2026-10-15T12:47:53Z, код 0

@@ -51,3 +51,20 @@
  15379100    2.001    0.000    2.001    0.000 {method 'get' of 'dict' objects}
        68    1.933    0.028  110.089    1.619 /root/algoth_v2/research/s9_sweep/sweep.py:208(read_bars)
 конец: 2026-10-15T12:46:20Z, код 0
+публикуется в ветку main:
+ jobs/done/na36-timing.log             |   19 +
+ jobs/done/na37-sizes.log              |    4 +
+ jobs/done/na38-wd.log                 |   32 +
+ jobs/done/na39-sprof.done             |    1 +
+ jobs/done/na39-sprof.log              |   53 +
+ jobs/poke.log                         |    3 +
+ research/dca_paper/out/DCA-pair.json  |    2 +-
+ research/dca_paper/out/DCA-pair.md    |    6 +-
+ research/dca_paper/out/DCA-paper.json | 4996 ++++++++++++++++-----------------
+ research/dca_paper/out/DCA-paper.md   |   20 +-
+ research/s8_loop/out/day_brake.json   |    2 +-
+ 11 files changed, 2625 insertions(+), 2513 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   284db256..5e3f5b2b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
