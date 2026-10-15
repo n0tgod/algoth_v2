@@ -2481,7 +2481,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L550 `publish(name)`
 - L555 `main(argv=None)`
 
-## research/dca_paper/run_paper.py · 1784 строк
+## research/dca_paper/run_paper.py · 1809 строк
 
 Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
 
@@ -2520,11 +2520,13 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L1212 `report(s)`
 - L1571 `rules_snapshot(keys=None)` — Правила прогона в свод: страница описывает ИМИ то, что видит.
 - L1605 `publish(name)`
-- L1611 `class Phases` — Секунды по фазам прогона — печатаются строкой и кладутся в артефакт (`timing`): куда уходят 47–100 с тёплого…
-  - L1616 `Phases.__init__(self)`
-  - L1620 `Phases.mark(self, name)`
-  - L1625 `Phases.line(self)`
-- L1629 `main()`
+- L1615 `RUN_MEM_LIMIT_MB = 2400` — Предел памяти длинного прогона, МБ. Короткий прогон держит 1200 (`arm_book.MEM_LIMIT_MB`), общий счёт 1800; д…
+- L1618 `class Phases` — Секунды по фазам прогона — печатаются строкой и кладутся в артефакт (`timing`): куда уходят 47–100 с тёплого…
+  - L1623 `Phases.__init__(self)`
+  - L1627 `Phases.mark(self, name)`
+  - L1632 `Phases.line(self)`
+  - L1637 `Phases.peak_rss_mb()` — Пик памяти прогона (ru_maxrss), МБ: ядро 06:36 15.10 убило прогон книг с 2.86 ГБ, а сколько прогон занимает о…
+- L1647 `main()`
 
 ## research/dca_paper/run_short.py · 470 строк
 
@@ -9550,7 +9552,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 680 строк
+## tools/watchdog_book.sh · 684 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 

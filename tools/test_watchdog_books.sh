@@ -89,6 +89,16 @@ check "короткие книги в стороже раньше длинных
 n_pair=$(grep -c 'run_pair.py $(publish_flag)' tools/watchdog_book.sh)
 check "общий счёт сцеплен с длинными и короткими и есть сам по себе ($n_pair)" '[ "$n_pair" -eq 3 ]'
 
+# Самоостанов по памяти («СТОП: память» в хвосте лога) держит повтор час —
+# у ВСЕХ трёх прогонов, не только у общего счёта (15.10: длинные получили предел)
+n_stop=$(grep -c 'stopped_recently "\$DCA[PS]*_LOG"' tools/watchdog_book.sh)
+check "stopped_recently стоит у длинных, коротких и общего счёта ($n_stop)" '[ "$n_stop" -eq 3 ]'
+sed -n '/^stopped_recently()/,/^}/p' tools/watchdog_book.sh > "$tmp/stop.sh"
+printf 'строка\nСТОП: память 2500 МБ больше предела 2400 МБ\nещё\n' > "$tmp/d.log"
+check "stopped_recently видит СТОП в хвосте свежего лога" '( . "$tmp/stop.sh"; stopped_recently "$tmp/d.log" )'
+printf 'строка\nвсё хорошо\n' > "$tmp/d.log"
+check "без СТОП — не остановлен" '( . "$tmp/stop.sh"; ! stopped_recently "$tmp/d.log" )'
+
 # Сторож ставит метку после КАЖДОГО из трёх запусков
 n=$(grep -c '^        BOOKS_LAUNCHED="' tools/watchdog_book.sh)
 check "метка запуска стоит у всех трёх прогонов книг ($n)" '[ "$n" -eq 3 ]'

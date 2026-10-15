@@ -486,7 +486,9 @@ if ! pgrep -f "dca_paper/run_short.py" >/dev/null; then
         fi
     fi
     dcs_hh=$(date -u +%H)
-    if [ "$dcs_hh" != "02" ] && [ "$dcs_hh" != "06" ] \
+    if stopped_recently "$DCAS_LOG"; then
+        echo "[$(now)] короткие книги h24: прошлый прогон остановился сам по памяти — повтор не раньше часа (смотри $DCAS_LOG)"
+    elif [ "$dcs_hh" != "02" ] && [ "$dcs_hh" != "06" ] \
        && [ "$dcs_age" -gt "$SHORT_EVERY_S" ] && books_mem_ok; then
         echo "[$(now)] короткие книги h24: последний счёт ${dcs_age} с назад — прогон $(publish_flag)"
         setsid nohup bash -c "
@@ -538,7 +540,9 @@ if ! pgrep -f "dca_paper/run_paper.py" >/dev/null; then
         fi
     fi
     dca_hh=$(date -u +%H)
-    if [ "$dca_hh" != "02" ] && [ "$dca_hh" != "06" ] \
+    if stopped_recently "$DCAP_LOG"; then
+        echo "[$(now)] DCA-книги: прошлый прогон остановился сам по памяти — повтор не раньше часа (смотри $DCAP_LOG)"
+    elif [ "$dca_hh" != "02" ] && [ "$dca_hh" != "06" ] \
        && [ "$dca_age" -gt "$BOOKS_EVERY_S" ] && books_mem_ok; then
         echo "[$(now)] DCA-книги: последний счёт ${dca_age} с назад — прогон $(publish_flag)"
         setsid nohup bash -c "

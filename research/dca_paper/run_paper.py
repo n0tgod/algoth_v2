@@ -1608,6 +1608,13 @@ def publish(name):
         subprocess.run(["bash", sh, name], check=False)
 
 
+# Предел памяти длинного прогона, МБ. Короткий прогон держит 1200
+# (`arm_book.MEM_LIMIT_MB`), общий счёт 1800; длинный — выше: кэш реплея
+# 8 тысяч позиций и бары 31 открытой. Пик печатается в строке фаз —
+# предел подтягивается к мере, а не наоборот.
+RUN_MEM_LIMIT_MB = 2400
+
+
 class Phases:
     """Секунды по фазам прогона — печатаются строкой и кладутся в артефакт
     (`timing`): куда уходят 47–100 с тёплого прогона, решается замером, а
@@ -1623,7 +1630,18 @@ class Phases:
         self.t = now
 
     def line(self):
-        return "фазы: " + ", ".join(f"{k} {v:g} с" for k, v in self.out.items())
+        return ("фазы: " + ", ".join(f"{k} {v:g} с" for k, v in self.out.items())
+                + f"; пик RSS {self.peak_rss_mb()} МБ")
+
+    @staticmethod
+    def peak_rss_mb():
+        """Пик памяти прогона (ru_maxrss), МБ: ядро 06:36 15.10 убило прогон
+        книг с 2.86 ГБ, а сколько прогон занимает обычно, никто не мерил."""
+        try:
+            import resource
+            return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024
+        except Exception:                                 # noqa: BLE001
+            return None
 
 
 def main():
@@ -1709,8 +1727,14 @@ def main():
         # заполняется без принта) держат `tail.apply` и `simulate_dca`.
         # журнал чтения не глушится: `read_hour` говорит им о спасении
         # испорченного архива, а такое молчание уже теряло сигнал
-        src = TL.TailBars(log=print)
-        got = D6.collect_recs(rulers=pairs, legs=legs, src=src,
+        # Предел памяти — В САМОМ прогоне (урок D10 и 06:36 15.10: ядро
+        # выбирает жертву само, и у длинных книг предела не было — короткие
+        # и общий счёт его давно несут). Сторож читает «СТОП: память» в
+        # хвосте лога и не повторяет прогон час.
+        import arm_book as AB
+        glog = AB.guarded(print, limit=RUN_MEM_LIMIT_MB)
+        src = TL.TailBars(log=glog)
+        got = D6.collect_recs(rulers=pairs, legs=legs, src=src, log=glog,
                               only=[(g["sym"], g["at"]) for g in need])
         ph.mark("реплей")
         tail = dict(src.stats(),
@@ -1765,6 +1789,7 @@ def main():
     ph.mark("свод")
     s["secs"] = round(time.time() - t0, 1)
     s["timing"] = dict(ph.out)
+    s["peak_rss_mb"] = ph.peak_rss_mb()
     s["rules"] = rules_snapshot()
     with open(R.ARTIFACT, "w", encoding="utf-8") as f:
         json.dump(s, f, ensure_ascii=False, indent=1)
