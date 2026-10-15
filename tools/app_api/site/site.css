@@ -139,10 +139,11 @@ header.top .brand img { display:block } header.top .brand img.mark { width:34px;
 
 /* Просадка открытых на графике (владелец 15.10): впадина своим цветом,
    худшая точка с подписью; легенда из двух знаков */
-.chart-wrap .dip { fill:var(--ask); opacity:.38 }
+.chart-wrap .dip-area { fill:var(--ask); opacity:.28 }
+.chart-wrap .dip-line { fill:none; stroke:var(--ask); stroke-width:1.6; stroke-linejoin:round; opacity:.9 }
 .chart-wrap .dip-dot { fill:var(--ask); stroke:var(--bg); stroke-width:2 }
 .chart-wrap .dip-text { fill:var(--ask); font-size:11px; font-family:"JetBrains Mono",ui-monospace,Menlo,monospace }
 .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--muted); margin:2px 0 4px }
 .legend span { display:inline-flex; align-items:center; gap:6px }
 .legend .lg-line { width:16px; height:2px; background:var(--bid); display:inline-block }
-.legend .lg-dip { width:10px; height:10px; background:var(--ask); opacity:.55; display:inline-block; border-radius:2px }
+.legend .lg-dip { width:16px; height:2px; background:var(--ask); display:inline-block }

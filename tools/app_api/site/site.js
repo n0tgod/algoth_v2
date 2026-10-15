@@ -82,7 +82,7 @@ const Site = (() => {
       ["record since", t.days && t.days.length ? t.days[0][0] : "—", "paper book"],
     ].map(([k, v, s]) => `<div class="tile"><small>${esc(k)}</small><b>${esc(v)}</b><small>${esc(s)}</small></div>`).join("");
     drawLine($("f-chart"), $("f-tip"), t.days, t.final >= 0 ? "var(--bid)" : "var(--ask)", t.open_dips);
-    $("f-legend").innerHTML = t.open_dips ? `<span><i class="lg-line"></i>closed trades</span><span><i class="lg-dip"></i>open positions at their worst hour of the day</span>` : "";
+    $("f-legend").innerHTML = t.open_dips ? `<span><i class="lg-line"></i>closed trades</span><span><i class="lg-dip"></i>with open positions at their worst hour of the day</span>` : "";
     const tb = document.querySelector("#rank tbody");
     tb.innerHTML = (r.ranking || []).map((x, i) => `<tr class="${i === 0 ? "top" : ""}"><td>${i + 1}</td><td>Ladder · ${esc(x.title_en)}</td><td>${esc(side === x.side ? side : ({long: "Long", short: "Short", both: "Both"}[x.side] || x.side))}</td>
       <td class="num ${x.final >= 0 ? "good" : "bad"}">${pct(x.final)}</td><td class="num">${pct(x.max_dd)}</td><td class="num">${x.n ?? "—"}</td><td class="num">${x.win == null ? "—" : Math.round(x.win * 100) + " %"}</td></tr>`).join("");
@@ -112,22 +112,23 @@ const Site = (() => {
     if (lo < 0 && hi > 0) svg.appendChild(el("line", {x1: L, x2: W - R, y1: y(0), y2: y(0), class: "grid-line", style: "stroke:var(--muted)"}));
     const pts = days.map((d, i) => `${x(i).toFixed(1)},${y(d[1]).toFixed(1)}`);
     svg.appendChild(el("path", {d: `M${pts[0]} L${pts.slice(1).join(" ")} L${x(days.length - 1).toFixed(1)},${y(lo)} L${x(0)},${y(lo)} Z`, class: "area", fill: color}));
-    // Просадка открытых: впадина от линии закрытых вниз до худшей отметки
-    // открытых за день, свой цвет; худшая точка всей записи подписана.
+    // Просадка открытых — ЛИНИЕЙ (владелец 15.10): вторая кривая «счёт с
+    // открытыми в худший час дня»; где открытые не были в минусе, она
+    // совпадает с линией закрытых; промежуток между линиями — впадина
+    // своим цветом. Худшая точка всей записи подписана.
     if (dips && dips.length === days.length) {
+      const low = days.map((d, i) => (dips[i] != null && dips[i] < d[1]) ? dips[i] : d[1]);
+      const lowPts = low.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`);
+      svg.appendChild(el("path", {d: "M" + lowPts.join(" L") + " L" + pts.slice().reverse().join(" L") + " Z", class: "dip-area"}));
+      svg.appendChild(el("path", {d: "M" + lowPts.join(" L"), class: "dip-line"}));
       let worst = -1;
-      for (let i = 0; i < days.length; i++) {
-        if (dips[i] == null || dips[i] >= days[i][1]) continue;
-        const w = Math.max(2, (W - L - R) / Math.max(1, days.length - 1) * 0.8);
-        svg.appendChild(el("rect", {x: x(i) - w / 2, y: y(days[i][1]), width: w, height: Math.max(1, y(dips[i]) - y(days[i][1])), class: "dip"}));
-        if (worst < 0 || dips[i] - days[i][1] < dips[worst] - days[worst][1]) worst = i;
-      }
-      const dipPts = []; for (let i = 0; i < days.length; i++) if (dips[i] != null) dipPts.push(`${x(i).toFixed(1)},${y(dips[i]).toFixed(1)}`);
+      for (let i = 0; i < days.length; i++)
+        if (low[i] < days[i][1] && (worst < 0 || low[i] - days[i][1] < low[worst] - days[worst][1])) worst = i;
       if (worst >= 0) {
-        svg.appendChild(el("circle", {cx: x(worst), cy: y(dips[worst]), r: 4, class: "dip-dot"}));
+        svg.appendChild(el("circle", {cx: x(worst), cy: y(low[worst]), r: 4, class: "dip-dot"}));
         const right = x(worst) > W * 0.6;
-        svg.appendChild(Object.assign(el("text", {x: x(worst) + (right ? -8 : 8), y: Math.min(H - B - 4, y(dips[worst]) + 4), class: "dip-text", "text-anchor": right ? "end" : "start"}),
-          {textContent: `worst open loss ${pct(dips[worst] - days[worst][1], 1)} · ${days[worst][0]}`}));
+        svg.appendChild(Object.assign(el("text", {x: x(worst) + (right ? -8 : 8), y: Math.min(H - B - 4, y(low[worst]) + 14), class: "dip-text", "text-anchor": right ? "end" : "start"}),
+          {textContent: `worst open loss ${pct(low[worst] - days[worst][1], 1)} · ${days[worst][0]}`}));
       }
     }
     svg.appendChild(el("path", {d: "M" + pts.join(" L"), class: "line", stroke: color}));
