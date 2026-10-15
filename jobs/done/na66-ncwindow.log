@@ -71,3 +71,12 @@ A — вход только в окне: отсекает 663 решений. B 
 Граница половин 2026-08-20. Прогон 91 с, 2026-10-15 15:50 UTC.
 
 конец: 2026-10-15T15:50:17Z, код 0
+публикуется в ветку main:
+ jobs/done/na66-ncwindow.log                        | 69 ++++++++++++++++++++++
+ .../dca_paper/out/fixed_journal-2026-10-15.jsonl   |  6 ++
+ research/dca_paper/out/journal-2026-10-15.jsonl    |  6 ++
+ 3 files changed, 81 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   b496de53..b81c5984  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
