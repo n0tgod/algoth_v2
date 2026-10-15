@@ -2141,3 +2141,5 @@ Terminated
 _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792046243 ==
+[2026-10-15T06:37:30Z] задание na04-status: состояние снято
+[2026-10-15T06:37:30Z] задание na05-memtop запущено: tools/memtop.py

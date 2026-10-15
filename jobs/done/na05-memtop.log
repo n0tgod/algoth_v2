@@ -1,0 +1,68 @@
+== задание na05-memtop ==
+строка: run tools/memtop.py --tail=0
+начало: 2026-10-15T06:37:30Z
+запускаю: .venv/bin/python tools/memtop.py --tail=0
+(хвосты логов — первыми, таблицы памяти — в конце: очередь заданий хранит последние 400 строк)
+
+== research/s8_loop/out/train.log (хвост 0) ==
+  строк всего 86971
+
+== research/dca_paper/out/short.log (хвост 0) ==
+  строк всего 82201
+
+== research/dca_paper/out/daily.log (хвост 0) ==
+  строк всего 233424
+
+== research/dca_paper/out/pair.log (хвост 0) ==
+  строк всего 116946
+
+== research/b1_book/out/collect.log (хвост 0) ==
+  строк всего 1361916
+
+== research/b1_book/out/watchdog.log (хвост 0) ==
+  строк всего 11239
+
+== research/b1_book/out/ship.log (хвост 0) ==
+  строк всего 505
+
+== research/a1_universe/out/refresh.log (хвост 0) ==
+  строк всего 22522
+
+== research/a1_universe/out/instruments.log (хвост 0) ==
+  строк всего 721
+
+== research/s8_loop/out/model/train_log.jsonl (хвост 0) ==
+  строк всего 795
+
+== убийства ядра с 2026-10-15 00:00 UTC ==
+  строк 1, убийств 1
+  первое: 2026-10-15T06:36:50+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2018325 (python) total-vm:3113384kB, anon-rss:2858148kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:5860kB oom_score_adj:0
+  последнее: 2026-10-15T06:36:50+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2018325 (python) total-vm:3113384kB, anon-rss:2858148kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:5860kB oom_score_adj:0
+  2026-10-15T06:36:50+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2018325 (python) total-vm:3113384kB, anon-rss:2858148kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:5860kB oom_score_adj:0
+
+== free -m (2026-10-15 06:37:31 UTC) ==
+                 total        used        free      shared  buff/cache   available
+  Mem:            7745        4870        2143           4        1110        2875
+  Swap:              0           0           0
+
+== процессы по памяти (RSS, МБ; возраст чч:мм; первые 18) ==
+  всего памяти у первых 18: 4326 МБ
+   2013595        1   2005   00:07  .venv/bin/python research/s8_loop/train.py
+   2010354        1   1628   00:12  .venv/bin/python research/b1_book/collect.py --http 8765
+     21675    14604    303 1903:59  claude --continue
+   1906282        1    231   07:01  /root/algoth_v2/.venv/bin/python /root/algoth_v2/tools/app_api/server.py
+   2019474  2019470     35   00:00  .venv/bin/python tools/memtop.py --tail=0
+   2637243        1     26  791:49  /sbin/multipathd -d -s
+   2329852        1     24  336:13  /usr/lib/systemd/systemd-journald
+   1259830        1     14   58:17  /root/algoth_v2/bot/target/release/bot ladder --dir /root/algoth_v2/bot/out/dca/sub_b0b417879b985874 --base https://api.bybit.com --keys-stdin --inter
+         1        0      9 1912:53  /usr/lib/systemd/systemd --system --deserialize=89
+       961        1      9 1912:53  /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+   2019416  2329848      9   00:00  sshd: unknown [priv]
+   2019417  2019416      6   00:00  sshd: unknown [net]
+   2329846        1      6  336:13  /usr/lib/systemd/systemd-resolved
+    691277        1      5  527:52  /usr/sbin/rsyslogd -n -iNONE
+       922        1      4 1912:53  /usr/lib/systemd/systemd-logind
+   1496656        1      4  432:34  /usr/lib/polkit-1/polkitd --no-debug
+   2019762  2019474      4   00:00  ps -eo pid,ppid,rss,etimes,args --no-headers
+   2329848        1      4  336:13  sshd: /usr/sbin/sshd -D [listener] 1 of 10-100 startups
+конец: 2026-10-15T06:37:31Z, код 0

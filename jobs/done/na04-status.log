@@ -49,3 +49,12 @@ sub_b0b417879b985874: статусу 1 с, режим live, позиций 3 (о
     SHOPUSDT long глубина 3/3: средняя 175.18548387096774, цель 181.15, пол 109.08046826327282, стоп биржи 109.08, рунгов лежит 0, закрытие None
   чужое на счёте: нет
 конец: 2026-10-15T06:37:26Z
+публикуется в ветку main:
+ jobs/done/na03-paper-warm.log | 11 ++++++++++
+ jobs/done/na04-status.log     | 51 +++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                 |  2 ++
+ 3 files changed, 64 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   e2b5f0af..652bde87  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
