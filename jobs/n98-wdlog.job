@@ -1,0 +1,1 @@
+run tools/loggrep.py --file=watchdog --pattern=2026-10-15T06 --last=60
