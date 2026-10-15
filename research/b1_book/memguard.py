@@ -30,7 +30,7 @@ import os
 import signal
 import time
 
-SOFT_MB = 1700
+SOFT_MB = 1500       # было 1700; 15.10 — раньше сбрасывать кеши ради памяти обучению S8
 HARD_MB = 2100
 
 
