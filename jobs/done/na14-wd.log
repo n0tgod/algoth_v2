@@ -1,0 +1,45 @@
+== задание na14-wd ==
+строка: run tools/loggrep.py --file=watchdog --preset=books --last=12
+начало: 2026-10-15T07:13:20Z
+запускаю: .venv/bin/python tools/loggrep.py --file=watchdog --preset=books --last=12
+== research/b1_book/out/watchdog.log по образцу /DCA-книги|короткие книги h24|общий счёт|прогон книг отложен|ПЕРЕЗАПУСК/ за 10 сут ==
+  совпадений 1342
+  2026-10-06: 65
+  2026-10-07: 64
+  2026-10-08: 65
+  2026-10-09: 70
+  2026-10-10: 303
+  2026-10-11: 63
+  2026-10-12: 172
+  2026-10-13: 335
+  2026-10-14: 118
+  2026-10-15: 87
+  [2026-10-15T05:35:01Z] DCA-книги: последний счёт 301 с назад — прогон --no-publish
+  [2026-10-15T05:40:01Z] DCA-книги: последний счёт 301 с назад — прогон --no-publish
+  [2026-10-15T05:45:02Z] короткие книги h24: последний счёт 1082 с назад — прогон --no-publish
+  [2026-10-15T05:45:02Z] прогон книг отложен: в этом такте уже запущен короткие книги — по одному
+  [2026-10-15T05:50:01Z] DCA-книги: последний счёт 601 с назад — прогон --no-publish
+  [2026-10-15T05:55:01Z] DCA-книги: последний счёт 301 с назад — прогон --no-publish
+  [2026-10-15T07:00:02Z] прогон книг отложен: идёт обучение S8 (цикл 2895 МБ > 2000)
+  [2026-10-15T07:00:02Z] прогон книг отложен: идёт обучение S8 (цикл 2921 МБ > 2000)
+  [2026-10-15T07:05:02Z] прогон книг отложен: идёт обучение S8 (цикл 3113 МБ > 2000)
+  [2026-10-15T07:05:02Z] прогон книг отложен: идёт обучение S8 (цикл 3157 МБ > 2000)
+  [2026-10-15T07:10:02Z] прогон книг отложен: идёт обучение S8 (цикл 3376 МБ > 2000)
+  [2026-10-15T07:10:02Z] прогон книг отложен: идёт обучение S8 (цикл 3459 МБ > 2000)
+конец: 2026-10-15T07:13:20Z, код 0
+публикуется в ветку main:
+ jobs/done/na12-status.done |  1 +
+ jobs/done/na12-status.log  | 10 ++++++++++
+ jobs/done/na13-cycle.done  |  1 +
+ jobs/done/na13-cycle.log   |  4 ++++
+ jobs/done/na14-wd.done     |  1 +
+ jobs/done/na14-wd.log      | 29 +++++++++++++++++++++++++++++
+ jobs/poke.log              |  3 +++
+ 7 files changed, 49 insertions(+)
+fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
