@@ -1,0 +1,37 @@
+== задание na48-bprobe ==
+строка: run tools/bars_cache_probe.py
+начало: 2026-10-15T13:22:14Z
+запускаю: .venv/bin/python tools/bars_cache_probe.py 
+REMOTE: Remote, кэш /root/algoth_v2/research/b1_book/out/cache
+заново 6; кэш баров /root/algoth_v2/research/dca_paper/out/bars_cache: файлов 86
+HDUSDT проход 1: 0.02 с, баров 90, read_hour 29 (pickle был: True)
+HDUSDT проход 2: 0.01 с, баров 90, read_hour 29 (pickle был: True)
+  подпись 2026-08-22-11: (('remote', 1792070536822202674, 106),); файлы: []
+  в кэше хранилища: True (/root/algoth_v2/research/b1_book/out/cache/trades/HDUSDT/2026-08-22-11.jsonl.gz); промахов 5, попаданий 48
+  pickle: часов 48, ['2026-08-21-10', '2026-08-21-11'] … ['2026-08-23-16', '2026-08-23-17']; 2026-08-22-11 в pickle: True; подпись там: (('remote', 1792070536817202643, 106),)
+HDUSDT проход 1: 0.00 с, баров 90, read_hour 29 (pickle был: True)
+HDUSDT проход 2: 0.01 с, баров 90, read_hour 29 (pickle был: True)
+  подпись 2026-08-22-13: (('remote', 1792070536833202742, 140),); файлы: []
+  в кэше хранилища: True (/root/algoth_v2/research/b1_book/out/cache/trades/HDUSDT/2026-08-22-13.jsonl.gz); промахов 5, попаданий 98
+  pickle: часов 48, ['2026-08-21-10', '2026-08-21-11'] … ['2026-08-23-16', '2026-08-23-17']; 2026-08-22-13 в pickle: True; подпись там: (('remote', 1792070536828202711, 140),)
+HDUSDT проход 1: 0.01 с, баров 94, read_hour 29 (pickle был: True)
+HDUSDT проход 2: 0.01 с, баров 94, read_hour 29 (pickle был: True)
+  подпись 2026-08-22-15: (('remote', 1792070536844202810, 108),); файлы: []
+  в кэше хранилища: True (/root/algoth_v2/research/b1_book/out/cache/trades/HDUSDT/2026-08-22-15.jsonl.gz); промахов 5, попаданий 148
+  pickle: часов 48, ['2026-08-21-10', '2026-08-21-11'] … ['2026-08-23-16', '2026-08-23-17']; 2026-08-22-15 в pickle: True; подпись там: (('remote', 1792070536838202773, 108),)
+HDUSDT проход 1: 0.01 с, баров 97, read_hour 29 (pickle был: True)
+HDUSDT проход 2: 0.00 с, баров 97, read_hour 29 (pickle был: True)
+  подпись 2026-08-22-16: (('remote', 1792070536857202890, 283),); файлы: []
+  в кэше хранилища: True (/root/algoth_v2/research/b1_book/out/cache/trades/HDUSDT/2026-08-22-16.jsonl.gz); промахов 5, попаданий 198
+  pickle: часов 48, ['2026-08-21-10', '2026-08-21-11'] … ['2026-08-23-16', '2026-08-23-17']; 2026-08-22-16 в pickle: True; подпись там: (('remote', 1792070536850202847, 283),)
+1000NEIROCTOUSDT проход 1: 0.66 с, баров 1599, read_hour 29 (pickle был: True)
+1000NEIROCTOUSDT проход 2: 0.63 с, баров 1599, read_hour 29 (pickle был: True)
+  подпись 2026-08-22-18: (('remote', 1792070537649207795, 19191),); файлы: []
+  в кэше хранилища: True (/root/algoth_v2/research/b1_book/out/cache/trades/1000NEIROCTOUSDT/2026-08-22-18.jsonl.gz); промахов 7, попаданий 252
+  pickle: часов 49, ['2026-08-21-17', '2026-08-21-18'] … ['2026-08-23-16', '2026-08-23-17']; 2026-08-22-18 в pickle: True; подпись там: (('remote', 1792070537011203844, 19191),)
+SQDUSDT проход 1: 0.51 с, баров 1601, read_hour 29 (pickle был: True)
+SQDUSDT проход 2: 0.48 с, баров 1601, read_hour 29 (pickle был: True)
+  подпись 2026-08-22-18: (('remote', 1792070538851215242, 30489),); файлы: []
+  в кэше хранилища: True (/root/algoth_v2/research/b1_book/out/cache/trades/SQDUSDT/2026-08-22-18.jsonl.gz); промахов 9, попаданий 306
+  pickle: часов 49, ['2026-08-21-17', '2026-08-21-18'] … ['2026-08-23-16', '2026-08-23-17']; 2026-08-22-18 в pickle: True; подпись там: (('remote', 1792070538363212218, 30489),)
+конец: 2026-10-15T13:22:19Z, код 0

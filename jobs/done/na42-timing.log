@@ -48,3 +48,16 @@
   Слева общий счёт: депозит один на обе стороны. Справа те же книги, как их показывают собственные вкладки: у каждой свой депозит, то есть капитала вдвое больше. Поэтому сравниваются ДЕНЬГИ и просадка, 
   - Живого исполнения здесь нет: исходы позиций взяты из кэшей реплея обеих книг, посчитанных по барам записи. Очередь в стакане и задержка входа не моделируются.
 конец: 2026-10-15T13:21:18Z, код 0
+публикуется в ветку main:
+ jobs/done/na42-timing.done            |    1 +
+ jobs/done/na42-timing.log             |   50 +
+ jobs/done/na43-sizes.done             |    1 +
+ jobs/done/na43-sizes.log              |   24 +
+ jobs/done/na47-api-restart.log        |   21 +
+ jobs/poke.log                         |    4 +
+ research/dca_paper/out/DCA-pair.json  |    2 +-
+ research/dca_paper/out/DCA-paper.json | 5110 ++++++++++++++++-----------------
+ research/dca_paper/out/DCA-paper.md   |   20 +-
+ research/s8_loop/out/day_brake.json   |    2 +-
+ 10 files changed, 2668 insertions(+), 2567 deletions(-)
+fatal: cannot lock ref 'HEAD': is at 352f5358c7d44bfc188e6c7e14f49a5133c1a301 but expected 641249bbb862dcd35f7bce0ab4084821d04b1ef2
