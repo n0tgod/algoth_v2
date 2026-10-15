@@ -237,6 +237,7 @@ class App:
             rows.append({"book": key, "title_en": r.get("title_en") or key, "side": r.get("side") or "long",
                          "plain": r.get("plain_en_short") or "", "deposit": dep,
                          "final": st.get("final"), "max_dd": st.get("max_dd"), "n": st.get("n"),
+                         "max_dd_usd": st.get("max_dd_usd"), "open_dd": st.get("open_dd"),
                          "win": st.get("win"), "usd": st.get("usd"),
                          "forward_final": fw.get("final"), "forward_n": fw.get("n"), "forward_since": b.get("forward_since"),
                          "open_n": len(((b.get("open") or {}).get("positions") or [])),

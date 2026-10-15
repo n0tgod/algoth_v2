@@ -673,6 +673,26 @@ def dups(rows):
                                if pauses else None)}
 
 
+def _dd_usd(v, deposit):
+    """Та же просадка, что `_dd`, — в долларах: пик минус дно в точке, где
+    ДОЛЯ от пика худшая (владелец 15.10: доллары и проценты рядом, одним
+    моментом)."""
+    eq = float(deposit) + np.cumsum(np.asarray(v, dtype=float))
+    pk = np.maximum.accumulate(np.maximum(eq, float(deposit)))
+    i = int(np.argmin(eq / pk - 1.0))
+    return float(eq[i] - pk[i])
+
+
+def _day_shares(v, deposit):
+    """Доля каждого дня от СЧЁТА НА НАЧАЛО ДНЯ (решение владельца 15.10:
+    «справедливее считать от текущего депозита книги»): книга $100,
+    выросшая до $531, теряет за день $212 — это −40 % счёта, а не −212 %
+    стартового депозита. Счёт съеден до нуля — день −100 %."""
+    v = np.asarray(v, dtype=float)
+    start = float(deposit) + np.concatenate([[0.0], np.cumsum(v)[:-1]])
+    return np.where(start > 0, v / np.where(start > 0, start, 1.0), -1.0)
+
+
 def _dd(v, deposit):
     """Просадка по дневному ряду — ОДНОЙ формулой на ВСЕ разрезы.
 
@@ -769,13 +789,21 @@ def _stats(rows, deposit):
     # месяц, живут по-разному, а число просадки у них одно.
     i_worst = int(np.argmin(v))
     top3i = list(np.argsort(v)[-3:]) if len(ks) > 3 else []
+    sh = _day_shares(v, deposit)
+    i_ws = int(np.argmin(sh))
     return {
         "n": len(rows), "days": len(ks),
         "usd": round(float(v.sum()), 2),
         "final": round(float(v.sum()) / float(deposit), 4),
         "max_dd": round(dd, 4),
-        "day_median": round(float(np.median(v)) / float(deposit), 5),
-        "day_worst": round(float(np.min(v)) / float(deposit), 4),
+        "max_dd_usd": round(_dd_usd(v, deposit), 2),
+        # Дни — доля СЧЁТА на начало дня (15.10), рядом доллары: медиана
+        # дня в $ и худший по доле день — его $ и дата.
+        "day_median": round(float(np.median(sh)), 5),
+        "day_median_usd": round(float(np.median(v)), 2),
+        "day_worst": round(float(sh[i_ws]), 4),
+        "day_worst_usd": round(float(v[i_ws]), 2),
+        "day_worst_d": ks[i_ws],
         "day_green": round(float(np.mean(v > 0)), 3),
         # Доля прибыльных позиций и среднее время в сделке: день и
         # позиция — разные знаменатели, и «зелёных дней» на вопрос

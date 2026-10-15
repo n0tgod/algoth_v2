@@ -1169,6 +1169,15 @@
 - L255 `test_run_refuses_when_the_rule_is_already_in_the_book()` — Правило внедрено — замер обязан отказать СЛОВАМИ, а не дать ноль.
 - L280 `main()`
 
+## research/dca_paper/test_day_shares.py · 45 строк
+
+Дни и просадка — от счёта, доллары рядом (`run_paper._stats`, 15.10): худший день — доля счёта на начало дня,…
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L15 `DAY = 86400`
+- L18 `row(day, usd, sym='AUSDT')`
+- L23 `main()`
+
 ## research/dca_paper/test_entry_gate.py · 160 строк
 
 Проверки замера «гейты входа книг DCA».

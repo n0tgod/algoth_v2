@@ -49,6 +49,14 @@ const Site = (() => {
 
   // Депозит — переключателем (владелец 14.10): тот же ответ сервера с
   // другим депозитом; выбор запоминается на устройстве.
+  // Деньги — всегда «$ (%)» (владелец 15.10): нет долларов — одна доля.
+  function both(u, f, d) {
+    if (u == null && f == null) return "—";
+    if (u == null) return pct(f, d);
+    const s = (u >= 0 ? "+" : "−") + "$" + Math.abs(u).toLocaleString("en-US", {maximumFractionDigits: 2, minimumFractionDigits: 2});
+    return f == null ? s : s + " (" + pct(f, d) + ")";
+  }
+
   async function featured(dep) {
     let r; try { r = await api("GET", "pub/top" + (dep ? "?deposit=" + encodeURIComponent(dep) : "")); }
     catch (e) { $("f-title").textContent = "The strategy server is not responding."; return; }
@@ -71,22 +79,23 @@ const Site = (() => {
     $("f-title").textContent = `Ladder · ${t.title_en} · ${side}`;
     $("f-plain").textContent = t.plain || "";
     const ret = $("f-return"); ret.textContent = pct(t.final); ret.className = t.final >= 0 ? "good" : "bad";
+    $("f-return-usd").textContent = both(t.usd, null) + " · return over the whole record";
     stat("s-trades", t.n != null ? String(t.n) : "—");
     stat("s-win", t.win == null ? "closed trades" : `closed trades · ${Math.round(t.win * 100)} % won`);
     $("f-tiles").innerHTML = [
-      ["max drawdown", pct(t.max_dd), "closed trades, from the account peak"],
-      ["worst open loss", t.open_dd_share == null ? "—" : pct(t.open_dd_share), t.open_dd_at ? "of the account then, " + new Date(t.open_dd_at * 1000).toISOString().slice(0, 10) : "of the account then"],
+      ["max drawdown", both(t.max_dd_usd, t.max_dd), "closed trades, from the account peak"],
+      ["worst open loss", t.open_dd_share == null ? "—" : both(t.open_dd, t.open_dd_share), t.open_dd_at ? "of the account then, " + new Date(t.open_dd_at * 1000).toISOString().slice(0, 10) : "of the account then"],
       ["trades", t.n ?? "—", `${t.days_n} days of record`],
       ["win rate", t.win == null ? "—" : Math.round(t.win * 100) + " %", "closed trades"],
       ["open now", t.open_n ?? "—", "positions"],
       ["record since", t.days && t.days.length ? t.days[0][0] : "—", "paper book"],
     ].map(([k, v, s]) => `<div class="tile"><small>${esc(k)}</small><b>${esc(v)}</b><small>${esc(s)}</small></div>`).join("");
-    drawLine._meta = {at: t.open_dd_at, share: t.open_dd_share};
+    drawLine._meta = {at: t.open_dd_at, share: t.open_dd_share, usd: t.open_dd};
     drawLine($("f-chart"), $("f-tip"), t.days, t.final >= 0 ? "var(--bid)" : "var(--ask)", t.open_dips);
     $("f-legend").innerHTML = t.open_dips ? `<span><i class="lg-line"></i>closed trades</span><span><i class="lg-dip"></i>with open positions at their worst hour of the day</span>` : "";
     const tb = document.querySelector("#rank tbody");
     tb.innerHTML = (r.ranking || []).map((x, i) => `<tr class="${i === 0 ? "top" : ""}"><td>${i + 1}</td><td>Ladder · ${esc(x.title_en)}</td><td>${esc(side === x.side ? side : ({long: "Long", short: "Short", both: "Both"}[x.side] || x.side))}</td>
-      <td class="num ${x.final >= 0 ? "good" : "bad"}">${pct(x.final)}</td><td class="num">${pct(x.max_dd)}</td><td class="num">${x.n ?? "—"}</td><td class="num">${x.win == null ? "—" : Math.round(x.win * 100) + " %"}</td></tr>`).join("");
+      <td class="num ${x.final >= 0 ? "good" : "bad"}">${pct(x.final)}<small class="usd">${both(x.usd, null)}</small></td><td class="num">${pct(x.max_dd)}<small class="usd">${both(x.max_dd_usd, null)}</small></td><td class="num">${x.n ?? "—"}</td><td class="num">${x.win == null ? "—" : Math.round(x.win * 100) + " %"}</td></tr>`).join("");
   }
 
   // Линия одной серии: накопленный % депозита по дням (значения с
@@ -131,7 +140,7 @@ const Site = (() => {
         svg.appendChild(el("circle", {cx: x(worst), cy: y(low[worst]), r: 4, class: "dip-dot"}));
         const right = x(worst) > W * 0.6;
         svg.appendChild(Object.assign(el("text", {x: x(worst) + (right ? -8 : 8), y: Math.min(H - B - 4, y(low[worst]) + 14), class: "dip-text", "text-anchor": right ? "end" : "start"}),
-          {textContent: `worst open loss ${pct(drawLine._meta.share, 1)} of the account · ${wd}`}));
+          {textContent: `worst open loss ${both(drawLine._meta.usd, drawLine._meta.share, 1)} of the account · ${wd}`}));
       }
     }
     svg.appendChild(el("path", {d: "M" + pts.join(" L"), class: "line", stroke: color}));

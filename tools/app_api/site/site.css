@@ -147,3 +147,6 @@ header.top .brand img { display:block } header.top .brand img.mark { width:34px;
 .legend span { display:inline-flex; align-items:center; gap:6px }
 .legend .lg-line { width:16px; height:2px; background:var(--bid); display:inline-block }
 .legend .lg-dip { width:16px; height:2px; background:var(--ask); display:inline-block }
+
+/* доллары под долей в таблице рейтинга (15.10: «$ и %» всегда) */
+table.rank td small.usd { display:block; font-size:11px; color:var(--muted); font-weight:400 }
