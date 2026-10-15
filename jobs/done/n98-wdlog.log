@@ -1,0 +1,9 @@
+== задание n98-wdlog ==
+строка: run tools/loggrep.py --file=watchdog --pattern=2026-10-15T06 --last=60
+начало: 2026-10-15T06:29:18Z
+запускаю: .venv/bin/python tools/loggrep.py --file=watchdog --pattern=2026-10-15T06 --last=60
+== research/b1_book/out/watchdog.log по образцу /2026-10-15T06/ за 10 сут ==
+  совпадений 1
+  2026-10-15: 1
+  [2026-10-15T06:00:01Z] книга: артефакту 86180 с — докачка и прогон
+конец: 2026-10-15T06:29:18Z, код 0
