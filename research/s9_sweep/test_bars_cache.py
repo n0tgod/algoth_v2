@@ -89,6 +89,33 @@ def main():
         assert far == [] and hh(t0 + 10 * H) in calls
         with open(cp, "rb") as f:
             assert hh(t0 + 10 * H) not in pickle.load(f)
+        # час из хранилища: на диске записи его нет, read_hour берёт его из
+        # кэша REMOTE — подпись снимается после чтения, второй вызов без чтения
+        rdir = os.path.join(d, "rcache")
+        rsym = "RUSDT"
+        rpath = os.path.join(rdir, "trades", rsym, f"{hh(t0 + 20 * H)}.jsonl.gz")
+        os.makedirs(os.path.dirname(rpath))
+        import gzip
+        with gzip.open(rpath, "wt", encoding="utf-8") as f:
+            for i in range(10):
+                f.write(json.dumps({"ts": int((t0 + 20 * H + i * 60) * 1000), "p": 50.0, "v": 2.0}) + "\n")
+
+        class FakeRemote:
+            cache = rdir
+
+            def get(self, dirpath, hour):
+                p = os.path.join(rdir, "trades", os.path.basename(dirpath), f"{hour}.jsonl.gz")
+                return p if os.path.exists(p) else None
+        store.REMOTE = FakeRemote()
+        try:
+            calls.clear()
+            r1 = SW.read_bars(d, rsym, t0 + 20 * H, t0 + 20 * H + 30 * 60, cache=cache)
+            assert len(r1) == 10 and calls, (len(r1), calls)
+            calls.clear()
+            r2 = SW.read_bars(d, rsym, t0 + 20 * H, t0 + 20 * H + 30 * 60, cache=cache)
+            assert r2 == r1 and calls == [], ("час из хранилища не закэширован", calls)
+        finally:
+            store.REMOTE = None
         # предел часов на имя
         was = SW.BARS_CACHE_KEEP_H
         SW.BARS_CACHE_KEEP_H = 2
@@ -102,7 +129,7 @@ def main():
     finally:
         store.read_hour = real
     print(f"ok  кэш баров: с кэшем = без кэша ({len(ref)} баров), второй вызов без чтения принтов, "
-          "дописанный час — заново, подделка читается (контроль) и вытесняется, предел часов держится")
+          "дописанный час — заново, подделка читается (контроль) и вытесняется, час из хранилища кэшируется, предел часов держится")
     return 0
 
 

@@ -4089,7 +4089,7 @@
 - L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L18 `main()`
 
-## research/s9_sweep/test_bars_cache.py · 110 строк
+## research/s9_sweep/test_bars_cache.py · 137 строк
 
 Кэш минутных баров на диске (`sweep.read_bars(cache=…)`, 15.10): с кэшем то же, что без него, бит в бит; втор…
 

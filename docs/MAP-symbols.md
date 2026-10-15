@@ -7659,7 +7659,7 @@ S8.2: цикл переобучения модели на стакане (спе
 - L135 `report(rows, legs, path)`
 - L204 `main()`
 
-## research/s9_sweep/sweep.py · 619 строк
+## research/s9_sweep/sweep.py · 639 строк
 
 Перебор правил ситуационной книги по УЖЕ ЗАПИСАННЫМ решениям модели.
 
@@ -7675,22 +7675,22 @@ S8.2: цикл переобучения модели на стакане (спе
   - L94 `HttpBars.__init__(self, base, key, log=print, disk=None)`
   - L105 `HttpBars.bars(self, sym, t0, t1)`
 - L165 `BARS_CACHE_KEEP_H = 240` — Кэш минутных баров на диске (15.10): pickle на имя, {час: (подпись, бары)}. Подпись часа — (суффикс, mtime_ns…
-- L168 `_hour_sig(dirpath, hh)`
-- L179 `_bars_cache_path(cache, sym)`
-- L183 `_bars_cache_load(cache, sym)`
-- L194 `_bars_cache_save(cache, sym, d, keep=BARS_CACHE_KEEP_H)`
-- L208 `read_bars(root, sym, t0, t1, cache=None)` — Минутные бары собственной записи сборщика в окне `[t0, t1]`.
-- L246 `bracket(bars, entry_ts, entry_px, side, adv, fav, max_h=MAX_AGE…` — Чем кончилась сделка: стоп, цель или срок.
-- L284 `net_bp(side, move, adv)` — Нетто ноги и её риск в тех же единицах.
-- L295 `legs_of(book_dir)` — Ноги всех выборов книги: цена входа, прогноз, обещания пути.
-- L311 `legs_of_records(recs, book)` — Разбор записей выбора — ОДИН на оба источника (файл и HTTP).
-- L345 `rr_of(leg)`
-- L349 `run(root, books, log=print, src=None, legs=None)` — `src` — источник баров (`None` — записи на диске).
-- L391 `measure(sel, take, null=False, mirror=False)` — `null` — сдвиг момента, `mirror` — та же сделка в другую сторону.
-- L447 `drift(legs)` — Куда ехал рынок в окне и как перекошены стороны.
-- L475 `report(legs, cells, path, root, books)`
-- L553 `legs_from_http(base, key, books, log=print)` — Выборы через страницу наблюдения: те же записи, другой путь.
-- L577 `main()`
+- L168 `_hour_sig(dirpath, hh)` — Подпись часа: файлы часа на диске записи, а если их нет — тот же час в местном кэше хранилища (`remote.Remote…
+- L195 `_bars_cache_path(cache, sym)`
+- L199 `_bars_cache_load(cache, sym)`
+- L210 `_bars_cache_save(cache, sym, d, keep=BARS_CACHE_KEEP_H)`
+- L224 `read_bars(root, sym, t0, t1, cache=None)` — Минутные бары собственной записи сборщика в окне `[t0, t1]`.
+- L266 `bracket(bars, entry_ts, entry_px, side, adv, fav, max_h=MAX_AGE…` — Чем кончилась сделка: стоп, цель или срок.
+- L304 `net_bp(side, move, adv)` — Нетто ноги и её риск в тех же единицах.
+- L315 `legs_of(book_dir)` — Ноги всех выборов книги: цена входа, прогноз, обещания пути.
+- L331 `legs_of_records(recs, book)` — Разбор записей выбора — ОДИН на оба источника (файл и HTTP).
+- L365 `rr_of(leg)`
+- L369 `run(root, books, log=print, src=None, legs=None)` — `src` — источник баров (`None` — записи на диске).
+- L411 `measure(sel, take, null=False, mirror=False)` — `null` — сдвиг момента, `mirror` — та же сделка в другую сторону.
+- L467 `drift(legs)` — Куда ехал рынок в окне и как перекошены стороны.
+- L495 `report(legs, cells, path, root, books)`
+- L573 `legs_from_http(base, key, books, log=print)` — Выборы через страницу наблюдения: те же записи, другой путь.
+- L597 `main()`
 
 ## research/t0_orderflow_inventory/inventory.py · 313 строк
 

@@ -166,6 +166,11 @@ BARS_CACHE_KEEP_H = 240
 
 
 def _hour_sig(dirpath, hh):
+    """Подпись часа: файлы часа на диске записи, а если их нет — тот же час
+    в местном кэше хранилища (`remote.Remote.get` кладёт его в
+    `out/cache/<sub>/<SYM>/<час>.jsonl.gz`). Без второй ветки часы старше
+    местного окна (21 сутки) никогда не кэшировались: короткий реплей
+    15.10 разбирал 15 млн принтов августа каждые пять минут (123 с)."""
     sig = []
     for sfx in ("", ".gz"):
         try:
@@ -173,6 +178,17 @@ def _hour_sig(dirpath, hh):
             sig.append((sfx, st_.st_mtime_ns, st_.st_size))
         except OSError:
             pass
+    if not sig:
+        from store import REMOTE
+        cache_dir = getattr(REMOTE, "cache", None)
+        if cache_dir:
+            sub = os.path.basename(os.path.dirname(dirpath))
+            sym = os.path.basename(dirpath)
+            try:
+                st_ = os.stat(os.path.join(cache_dir, sub, sym, f"{hh}.jsonl.gz"))
+                sig.append(("remote", st_.st_mtime_ns, st_.st_size))
+            except OSError:
+                pass
     return tuple(sig) or None
 
 
@@ -233,6 +249,10 @@ def read_bars(root, sym, t0, t1, cache=None):
         else:
             rows = read_hour(dirpath, hh)
             bars = minute_bars(rows) if rows else []
+            if cache and sig is None:
+                # час мог только что приехать из хранилища в кэш — подпись
+                # снимается ПОСЛЕ чтения, иначе он не кэшируется никогда
+                sig = _hour_sig(dirpath, hh)
             if sig is not None:
                 cached[hh] = (sig, bars)
                 dirty = True
