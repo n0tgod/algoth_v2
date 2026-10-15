@@ -325,3 +325,13 @@
 | aggr · $10,000 | +21.2 % | -10.5 % | 654 | +3.5 % |
 
 Прогон 2312.2 с, 2026-10-15 23:01 UTC.
+публикуется в ветку main:
+ jobs/done/na85-stress.log                 |  100 ++
+ research/dca_ladder/out/STRESS-crash.json | 2540 +++++++++++++++++++++++++++++
+ research/dca_ladder/out/STRESS-crash.md   |   93 ++
+ 3 files changed, 2733 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   f11e2577..930d16a9  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-15T23:01:33Z, код 0
