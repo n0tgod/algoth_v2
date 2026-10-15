@@ -2324,3 +2324,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792088239 ==
 [2026-10-15T18:17:21Z] задание na80-books запущено: tools/loggrep.py
+
+== сигнал 1792090513 ==
+[2026-10-15T18:55:15Z] задание na81-ncpair запущено: research/dca_paper/noncrypto_pair.py
