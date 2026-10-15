@@ -45,3 +45,12 @@
   [2026-10-15T06:00:01Z] книга: артефакту 86180 с — докачка и прогон
   [2026-10-15T06:30:01Z] цикл обучения не найден — поднимаю
 конец: 2026-10-15T06:30:43Z, код 0
+публикуется в ветку main:
+ jobs/done/n98-wdlog.log             | 11 +++++++++
+ jobs/done/n99-wdtail.done           |  1 +
+ jobs/done/n99-wdtail.log            | 47 +++++++++++++++++++++++++++++++++++++
+ jobs/done/na01-status.log           | 17 ++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 80 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at 31a79e5ba78b7e8c4fc650ced7d7c5c8d510ad6e but expected 390a38b24c9b89ff599b6948049fe2e04ff1e6bf
