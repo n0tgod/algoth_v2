@@ -157,12 +157,18 @@ class HttpBars:
                       key=lambda b: b[0])
 
 
-# Кэш минутных баров на диске (15.10): pickle на имя, {час: (подпись, бары)}.
-# Подпись часа — (суффикс, mtime_ns, размер) каждого файла часа на диске;
-# закрытый час не меняется, текущий меняется каждую минуту и считается
-# заново. Часа на диске нет (хранилище, пропуск) — подписи нет, и такой
-# час не кэшируется. Файл имени держит последние BARS_CACHE_KEEP_H часов.
-BARS_CACHE_KEEP_H = 240
+# Кэш минутных баров на диске (15.10): pickle на имя,
+# {час: (подпись, бары, момент последнего обращения)}. Подпись часа —
+# (суффикс, mtime_ns, размер) каждого файла часа на диске; закрытый час не
+# меняется, текущий меняется каждую минуту и считается заново. Часа на
+# диске нет (хранилище, пропуск) — подписи нет, такой час не кэшируется.
+# Вытеснение — ПО ДАВНОСТИ ОБРАЩЕНИЯ, не по календарю: первая версия держала
+# 240 последних часов на имя, а позиции одного имени лежат в двух месяцах —
+# августовские часы вытеснялись и перечитывались каждый прогон (профиль
+# 13:28 15.10: 1632 чтения на тёплом кэше). Час, к которому не обращались
+# BARS_CACHE_TTL_S, уходит; потолок на имя — BARS_CACHE_KEEP_H самых недавних.
+BARS_CACHE_TTL_S = 7 * 86400
+BARS_CACHE_KEEP_H = 5000
 
 
 def _hour_sig(dirpath, hh):
@@ -211,12 +217,15 @@ def _bars_cache_load(cache, sym):
         return {}
 
 
-def _bars_cache_save(cache, sym, d, keep=BARS_CACHE_KEEP_H):
+def _bars_cache_save(cache, sym, d, keep=BARS_CACHE_KEEP_H, ttl=BARS_CACHE_TTL_S, now=None):
     import pickle
+    now = time.time() if now is None else now
     try:
         os.makedirs(cache, exist_ok=True)
+        used = lambda v: v[2] if len(v) > 2 else now      # noqa: E731  (старый формат — как свежий)
+        d = {k: v for k, v in d.items() if now - used(v) <= ttl}
         if len(d) > keep:
-            d = {k: d[k] for k in sorted(d)[-keep:]}
+            d = {k: d[k] for k in sorted(d, key=lambda k: used(d[k]))[-keep:]}
         path = _bars_cache_path(cache, sym)
         with open(path + ".tmp", "wb") as f:
             pickle.dump(d, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -250,6 +259,8 @@ def read_bars(root, sym, t0, t1, cache=None):
         hit = cached.get(hh) if sig is not None else None
         if hit is not None and hit[0] == sig:
             bars = hit[1]
+            cached[hh] = (sig, bars, time.time())
+            dirty = True
         else:
             rows = read_hour(dirpath, hh)
             bars = minute_bars(rows) if rows else []
@@ -258,7 +269,7 @@ def read_bars(root, sym, t0, t1, cache=None):
                 # снимается ПОСЛЕ чтения, иначе он не кэшируется никогда
                 sig = _hour_sig(dirpath, hh)
             if sig is not None:
-                cached[hh] = (sig, bars)
+                cached[hh] = (sig, bars, time.time())
                 dirty = True
         out += bars
         h += 3600

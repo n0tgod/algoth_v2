@@ -121,20 +121,29 @@ def main():
             assert r2 == r1 and calls == [], ("час из хранилища не закэширован", calls)
         finally:
             store.REMOTE = None
-        # предел часов на имя
-        was = SW.BARS_CACHE_KEEP_H
-        SW.BARS_CACHE_KEEP_H = 2
-        try:
-            SW._bars_cache_save(cache, sym, SW._bars_cache_load(cache, sym), keep=2)
-            with open(cp, "rb") as f:
-                kept = pickle.load(f)
-            assert sorted(kept) == sorted([hh(t0 + 2 * H), hh(t0 + 3 * H)]), sorted(kept)
-        finally:
-            SW.BARS_CACHE_KEEP_H = was
+        # вытеснение по давности обращения: час, к которому не обращались
+        # дольше ttl, уходит; потолок — самые недавние; старый формат (без
+        # момента) считается свежим
+        dd = SW._bars_cache_load(cache, sym)
+        now = time.time()
+        keys = sorted(dd)
+        dd[keys[0]] = (dd[keys[0]][0], dd[keys[0]][1], now - 10 * 86400)     # давно не трогали
+        dd[keys[1]] = (dd[keys[1]][0], dd[keys[1]][1])                        # старый формат
+        SW._bars_cache_save(cache, sym, dd, keep=2, ttl=7 * 86400, now=now)
+        with open(cp, "rb") as f:
+            kept = pickle.load(f)
+        assert keys[0] not in kept and len(kept) == 2 and keys[1] in kept, (keys, sorted(kept))
+        # обращение обновляет момент: чтение из кэша переписывает used_at
+        before = SW._bars_cache_load(cache, sym)
+        k = sorted(before)[-1]
+        time.sleep(0.01)
+        SW.read_bars(d, sym, a0, a1, cache=cache)
+        after = SW._bars_cache_load(cache, sym)
+        assert k in after and after[k][2] > before[k][2]
     finally:
         store.read_hour = real
     print(f"ok  кэш баров: с кэшем = без кэша ({len(ref)} баров), второй вызов без чтения принтов, "
-          "дописанный час — заново, подделка читается (контроль) и вытесняется, час из хранилища кэшируется, предел часов держится")
+          "дописанный час — заново, подделка читается (контроль) и вытесняется, час из хранилища кэшируется, вытеснение по давности обращения")
     return 0
 
 
