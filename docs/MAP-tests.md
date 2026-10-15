@@ -1024,6 +1024,16 @@
 - L46 `test_refusal_reasons()`
 - L62 `test_ration_skips_what_exchange_refuses()`
 
+## research/dca_ladder/test_stress_crash.py · 93 строк
+
+Стресс-прогон Ladder без сигнала: калибровочная пара на подставном ряде.
+
+- L16 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L21 `_series(t0, t1, drift_total, seed, px0=10.0)` — Минутный ряд: дрейф на `drift_total` за окно плюс шум 20 б.п./мин.
+- L40 `_run(drift, log)`
+- L55 `test_calibration_pair()`
+- L75 `test_report_renders()`
+
 ## research/dca_paper/test_agree_book.py · 201 строк
 
 Проверки замера «книги DCA на согласии рук».

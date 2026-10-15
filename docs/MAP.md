@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 603, строк: 255035, каталогов: 86.
+Модулей кода: 605, строк: 255526, каталогов: 86.
 
 
 ## корень — память проекта, идеи, README
@@ -166,7 +166,8 @@
 - `run_d8.py` · 657 строк — D8 — замер ТЕЙКА DCA-книги (вопрос владельца 2026-09-05).
 - `run_d9.py` · 684 строк — D9 — варианты ВЫХОДА коротких DCA-книг (вопрос владельца 2026-09-05).
 - `run_dca.py` · 406 строк — D1 (спека 14) — дешёвый потолок DCA-лестницы: реплей по хранилищу A2.
-- тесты: `test_ladder.py` (1517), `test_legs_cache.py` (88), `test_noncrypto_gate.py` (91), `test_run_d10.py` (668), `test_run_d11.py` (112), `test_run_d12.py` (72), `test_run_d13.py` (137), `test_run_d2.py` (207), `test_run_d3.py` (427), `test_run_d4.py` (266), `test_run_d5.py` (486), `test_run_d6.py` (706), `test_run_d7.py` (283), `test_run_d8.py` (365), `test_run_d9.py` (518), `test_run_dca.py` (141), `test_rung_step.py` (91)
+- `stress_crash.py` · 398 строк — Стресс: что делает механика Ladder в затяжном падении — без сигнала.
+- тесты: `test_ladder.py` (1517), `test_legs_cache.py` (88), `test_noncrypto_gate.py` (91), `test_run_d10.py` (668), `test_run_d11.py` (112), `test_run_d12.py` (72), `test_run_d13.py` (137), `test_run_d2.py` (207), `test_run_d3.py` (427), `test_run_d4.py` (266), `test_run_d5.py` (486), `test_run_d6.py` (706), `test_run_d7.py` (283), `test_run_d8.py` (365), `test_run_d9.py` (518), `test_run_dca.py` (141), `test_rung_step.py` (91), `test_stress_crash.py` (93)
 - документы: `RUNBOOK.md` — D1 — потолок DCA-лестницы: как прогонять
 - отчёты в `out/` (20): D1-dca-1m.md, D1-dca-smoke-1m.md, D10-short-1m.md, D11-h24-gbm-h72-1m.md, D11-h24-nn-h24-1m.md, D11-h24-nn-h72-1m.md, D12-own-nn-h24-1m.md, D12-own-nn-h72-1m.md, D13-pair-nn-h24-1m.md, D2-dca-1m.md, D2-dca-smoke.md, D3-fence-1m.md, D4-bookhedge-1m.md, D5-ruler-1m.md, D6-cash-1m-d10000.md, D6-cash-1m.md, D7-hold-1m.md, D8-take-1m.md, D8-take-smoke-1m.md, D9-exit-1m.md
 
@@ -821,7 +822,7 @@
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
 - документы: `README.md` — Очередь заданий, `queue-state.md` — 
-- заданий `.job`: 886, логов `done/*.log`: 887 (в карту не перечисляются — их читают по имени)
+- заданий `.job`: 887, логов `done/*.log`: 887 (в карту не перечисляются — их читают по имени)
 
 ## tools — команды сервера, защита коммитов, хуки
 

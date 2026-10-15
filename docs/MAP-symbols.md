@@ -1731,6 +1731,36 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L378 `publish(name)`
 - L383 `main()`
 
+## research/dca_ladder/stress_crash.py · 398 строк
+
+Стресс: что делает механика Ladder в затяжном падении — без сигнала.
+
+- L45 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L46 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L56 `OUT_MD = os.path.join(HERE, 'out', 'STRESS-crash…`
+- L57 `OUT_JSON = os.path.join(HERE, 'out', 'STRESS-crash…`
+- L58 `HOUR = 3600.0`
+- L59 `LEV_CAP = 25.0`
+- L62 `WINDOWS = [('обвал 05.2021', '2021-05-01', '2021-…` — Окна (UTC): имя, начало, конец, что это. Объявлены до прогона.
+- L71 `BOOKS = ('safe', 'optimal', 'aggr')`
+- L72 `DEPS = (1000.0, 10000.0)`
+- L73 `STABLE_PFX = ('USDC', 'BUSD', 'TUSD', 'USDP', 'DAI',…`
+- L77 `ts_of(day)`
+- L81 `is_stable(sym)`
+- L88 `load_window(t0, t1, n_syms, log)` — Бары окна из A2: `{sym: (ts, o, h, l, c, qv)}` numpy; имена — самые оборотные в окне. Край окна расширен на B…
+- L135 `bars_slice(series, t_a, t_b)` — Срез ряда символа в [t_a, t_b] списком баров ядра `[t,o,h,l,c,qv]`.
+- L146 `move_of(series, t0, t1)` — Ход цены за окно долей: закрытие у конца к закрытию у начала.
+- L157 `fav_pool(log)` — Эмпирические (fwd, fav) гейтованных ног настоящего листа.
+- L176 `random_legs(syms, t0, t1, per_day, pool, rng)`
+- L191 `positions(legs, data, book, log)`
+- L216 `book_cells(recs, book)`
+- L242 `real_sheet_cells(t0, t1, log)` — Настоящий лист на том же окне — калибровка (сколько даёт сигнал).
+- L262 `run(a, log)`
+- L309 `_p(v)`
+- L313 `_rng(vals)`
+- L322 `report(res)`
+- L370 `main(argv=None)`
+
 ## research/dca_live/probe_levels.py · 138 строк
 
 Замер перед постройкой живой DCA-книги: почём лестница и бывает ли она.
