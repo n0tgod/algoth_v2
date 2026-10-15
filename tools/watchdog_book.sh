@@ -162,6 +162,22 @@ books_mem_ok() {
     return 1
 }
 
+# --- порт 80 → сборщик -----------------------------------------------
+# Страница наблюдения, очередь заданий (`/jobs-poke`) и проверка ACME
+# (`/.well-known/acme-challenge/`) живут на 80, а сборщик слушает 8765:
+# правило NAT ставилось руками и ПЕРЕЗАГРУЗКУ НЕ ПЕРЕЖИВАЕТ (15.10,
+# после rescale: 443 жив, 80 — 503, единственный канал ассистента
+# пропал). Сторож проверяет правило каждый такт и ставит, если его нет.
+if command -v iptables >/dev/null 2>&1; then
+    if ! iptables -t nat -C PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8765 >/dev/null 2>&1; then
+        if iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8765 2>/dev/null; then
+            echo "[$(now)] порт 80: правила NAT не было (перезагрузка?) — поставлено 80 → 8765"
+        else
+            echo "[$(now)] порт 80: правило NAT поставить не удалось — страница, очередь и ACME на 80 недоступны"
+        fi
+    fi
+fi
+
 # --- сборщик ---------------------------------------------------------
 need_restart=""
 if ! pgrep -f "b1_book/collect.py" >/dev/null; then

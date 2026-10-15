@@ -99,6 +99,11 @@ check "stopped_recently видит СТОП в хвосте свежего ло�
 printf 'строка\nвсё хорошо\n' > "$tmp/d.log"
 check "без СТОП — не остановлен" '( . "$tmp/stop.sh"; ! stopped_recently "$tmp/d.log" )'
 
+# Порт 80 → 8765 (15.10): правило NAT проверяется и ставится сторожем —
+# ровно той формой, что в памяти проекта; без него канала заданий нет
+check "сторож проверяет правило NAT 80 → 8765 (-C) и ставит его (-A)" \
+      'grep -q "iptables -t nat -C PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8765" tools/watchdog_book.sh && grep -q "iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8765" tools/watchdog_book.sh'
+
 # Сторож ставит метку после КАЖДОГО из трёх запусков
 n=$(grep -c '^        BOOKS_LAUNCHED="' tools/watchdog_book.sh)
 check "метка запуска стоит у всех трёх прогонов книг ($n)" '[ "$n" -eq 3 ]'
