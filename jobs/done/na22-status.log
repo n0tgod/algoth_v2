@@ -1,0 +1,42 @@
+== задание na22-status ==
+строка: status
+начало: 2026-10-15T11:03:04Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   75G   70G  52% /
+/dev/sdb        147G   77G   63G  56% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 669148 4455319 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.
+1259830  225773 /root/algoth_v2/bot/target/release/bot ladder --dir /root/algoth_v2/bot/out/dca/sub_b0b417879b985874 --base https://api.bybit.com --keys-stdin -
+2031674   15262 .venv/bin/python research/b1_book/collect.py --http 8765
+2031877   15182 .venv/bin/python research/s8_loop/train.py
+--- убийства ядра по памяти за сутки ---
+1 (подробно: run tools/memtop.py)
+--- обучение S8 ---
+обучение S8: веса от 2026-10-14 01:14 UTC, 33.8 ч назад (каденция 24, тревога с 36 ч); последний цикл 06:45 UTC: память: доступно 2818 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час; ждал 600 с, память не освободилась
+--- идущие прогоны ---
+нет
+--- статус сбора ---
+{"t": 1792062183.0, "uptime_sec": 15259.5, "rss_mb": 1483, "mem_guard": {"drops": 1, "dies": 0, "max_rss_mb": 1501}, "messages": 74396712, "trades": 7218466, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 10821947, "snapshot_errors": 0, "last_snap_age_sec": 1.4, "snap_pass_sec": 1.388, "writes": {"book": 10821947, "trades": 7218455, "raw": 322475, "liq": 1705, "metrics": 39900}, "write_age_sec": {"book": 1.4, "trades": 12.3, "raw": 0.1, "liq": 19.9, "metrics": 107.6}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.2361, "ask": 0.2363, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0003596, "ask": 0.0003597, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.0999, "as
+--- живой исполнитель ---
+{
+  "at_ms": 1792062180222,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 268.11562509,
+    "equity": 264.80792509
+  }
+}
+--- исполнитель Ladder ---

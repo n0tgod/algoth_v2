@@ -28,3 +28,4 @@
  jobs/done/na17-train.log   | 21 +++++++++++++++++++++
  jobs/poke.log              |  3 +++
  7 files changed, 41 insertions(+)
+fatal: cannot lock ref 'HEAD': is at 752f50b8a711868a1294dfb90243163a3cf2fe36 but expected 18b2527989da61b9986366d57db8bfe89bd0008e
