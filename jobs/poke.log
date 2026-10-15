@@ -2282,3 +2282,9 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792078695 ==
 [2026-10-15T15:38:17Z] задание na64-noncrypto запущено: research/dca_paper/noncrypto_cut.py
+
+== сигнал 1792079217 ==
+[2026-10-15T15:47:00Z] задание na65-nchold запущено: research/dca_paper/noncrypto_hold.py
+
+== сигнал 1792079319 ==
+[2026-10-15T15:48:41Z] задание na66-ncwindow запущено: research/dca_paper/noncrypto_window.py
