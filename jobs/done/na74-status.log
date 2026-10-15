@@ -48,3 +48,40 @@ sub_b0b417879b985874: статусу 3 с, режим live, позиций 3 (о
     SHOPUSDT long глубина 3/3: средняя 175.18548387096774, цель 181.15, пол 109.08046826327282, стоп биржи 109.08, рунгов лежит 0, закрытие None
   чужое на счёте: нет
 конец: 2026-10-15T17:38:41Z
+публикуется в ветку main:
+ jobs/done/na73-apirestart.log                      | 10 +++++
+ jobs/done/na74-status.log                          | 50 ++++++++++++++++++++++
+ jobs/poke.log                                      |  2 +
+ research/dca_paper/out/DCA-pair.json               |  2 +-
+ research/dca_paper/out/DCA-pair.md                 | 28 ++++++------
+ research/dca_paper/out/DCA-short.json              |  2 +-
+ research/dca_paper/out/DCA-short.md                |  8 ++--
+ research/dca_paper/out/fixed_pair-2026-08-19.jsonl |  2 +
+ .../dca_paper/out/fixed_pair-2026-08-20.01.jsonl   |  4 ++
+ .../dca_paper/out/fixed_pair-2026-08-21.01.jsonl   |  9 ++++
+ research/dca_paper/out/fixed_pair-2026-08-22.jsonl |  4 ++
+ research/dca_paper/out/fixed_pair-2026-08-23.jsonl |  1 +
+ research/dca_paper/out/fixed_pair-2026-08-24.jsonl |  1 +
+ research/dca_paper/out/fixed_pair-2026-08-26.jsonl |  1 +
+ research/dca_paper/out/fixed_pair-2026-09-09.jsonl |  2 +
+ research/dca_paper/out/fixed_pair-2026-09-10.jsonl |  1 +
+ research/dca_paper/out/fixed_pair-2026-09-11.jsonl |  2 +
+ research/dca_paper/out/fixed_pair-2026-09-12.jsonl |  1 +
+ research/dca_paper/out/fixed_pair-2026-09-18.jsonl |  1 +
+ research/dca_paper/out/fixed_pair-2026-09-19.jsonl |  2 +
+ research/dca_paper/out/fixed_pair-2026-10-02.jsonl |  2 +
+ research/dca_paper/out/fixed_pair-2026-10-03.jsonl |  1 +
+ research/dca_paper/out/pair-2026-08-16.jsonl       |  4 ++
+ research/dca_paper/out/pair-2026-09-18.jsonl       |  2 +
+ research/dca_paper/out/pair-2026-09-19.jsonl       |  4 ++
+ research/dca_paper/out/pair-2026-09-20.jsonl       |  1 +
+ research/dca_paper/out/pair-2026-09-21.jsonl       |  1 +
+ research/dca_paper/out/pair-2026-10-12.jsonl       |  1 +
+ research/dca_paper/out/pair-2026-10-14.jsonl       |  1 +
+ research/dca_paper/out/pair-2026-10-15.jsonl       |  2 +
+ research/s8_loop/out/day_brake.json                |  2 +-
+ 31 files changed, 133 insertions(+), 21 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   30230642..c174829c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
