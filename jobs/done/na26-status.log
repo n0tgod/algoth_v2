@@ -49,3 +49,17 @@ sub_b0b417879b985874: статусу 0 с, режим live, позиций 3 (о
     SHOPUSDT long глубина 3/3: средняя 175.18548387096774, цель 181.15, пол 109.08046826327282, стоп биржи 109.08, рунгов лежит 0, закрытие None
   чужое на счёте: нет
 конец: 2026-10-15T11:55:04Z
+публикуется в ветку main:
+ jobs/done/na25-status.done            |  1 +
+ jobs/done/na25-status.log             | 13 +++++++++
+ jobs/done/na26-status.log             | 51 +++++++++++++++++++++++++++++++++++
+ research/dca_paper/out/DCA-pair.json  |  2 +-
+ research/dca_paper/out/DCA-pair.md    | 12 ++++-----
+ research/dca_paper/out/DCA-short.json |  2 +-
+ research/dca_paper/out/DCA-short.md   | 14 +++++-----
+ research/s8_loop/out/day_brake.json   |  2 +-
+ 8 files changed, 81 insertions(+), 16 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   0336a4c2..10a971b5  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
