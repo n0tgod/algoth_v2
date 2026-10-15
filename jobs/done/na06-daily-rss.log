@@ -5,3 +5,14 @@
 == research/dca_paper/out/daily.log по образцу /память: [\d.]+ МБ|фазы:|прогон [\d.]+ с|остановлен по памяти|Killed/ за 10 сут ==
   совпадений 0
 конец: 2026-10-15T06:39:29Z, код 0
+публикуется в ветку main:
+ jobs/done/na05-memtop.log     | 11 ++++++++++
+ jobs/done/na06-daily-rss.done |  1 +
+ jobs/done/na06-daily-rss.log  |  7 +++++++
+ jobs/done/na07-short-rss.done |  1 +
+ jobs/done/na07-short-rss.log  | 24 +++++++++++++++++++++
+ jobs/done/na08-cycle.done     |  1 +
+ jobs/done/na08-cycle.log      | 49 +++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                 |  5 +++++
+ 8 files changed, 99 insertions(+)
+fatal: cannot lock ref 'HEAD': is at ac2911f5d1a7b89122bc27b82f39411f97c6fab7 but expected b3daded3fb83448cd9c19333febab590484c4409
