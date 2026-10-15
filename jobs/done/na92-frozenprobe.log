@@ -1,0 +1,10 @@
+== задание na92-frozenprobe ==
+строка: run tools/frozen_probe.py
+начало: 2026-10-15T23:25:53Z
+запускаю: .venv/bin/python tools/frozen_probe.py 
+заморозка: {'train_seq': 534, 'trained_upto': '2026-10-15-05', 'frozen_at': '2026-10-15 23:03', 'files': 28, 'bytes': 1723258}
+sheets_frozen.jsonl: 1 строк, 0.4 МБ
+   ('2026-10-15-22', 534, 534, {'gbm': 793, 'nn': 793})
+архив: пуст (первое обучение после деплоя ещё не прошло)
+живой лист, последний час: {"hour": "2026-10-15-22", "written_at": 1792105934.6, "train_seq": 534, "scan_rank": "fwd_4h_z", "min_edge_bp": 33.0, "m
+конец: 2026-10-15T23:25:53Z, код 0
