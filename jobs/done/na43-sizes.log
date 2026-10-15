@@ -1,0 +1,24 @@
+== задание na43-sizes ==
+строка: run tools/cache_sizes.py
+начало: 2026-10-15T13:21:18Z
+запускаю: .venv/bin/python tools/cache_sizes.py 
+research/dca_ladder/out/legs_cache.pkl: 1.3 МБ, файлов 1
+research/dca_paper/out/journal_cache: 50.0 МБ, файлов 405
+research/dca_paper/out/bars_cache: 10.0 МБ, файлов 86
+research/dca_paper/out/costs_context.pkl: 45.9 МБ, файлов 1
+research/dca_paper/out/replay_cache.pkl: нет
+research/dca_paper/out: 371.3 МБ, файлов 999
+research/s8_loop/out/model_sit/sheets.jsonl: 513.4 МБ, файлов 1
+конец: 2026-10-15T13:21:18Z, код 0
+публикуется в ветку main:
+ jobs/done/na42-timing.done            |    1 +
+ jobs/done/na42-timing.log             |    4 +
+ jobs/done/na43-sizes.done             |    1 +
+ jobs/done/na43-sizes.log              |   12 +
+ jobs/done/na47-api-restart.log        |   21 +
+ jobs/poke.log                         |    4 +
+ research/dca_paper/out/DCA-pair.json  |    2 +-
+ research/dca_paper/out/DCA-paper.json | 5110 ++++++++++++++++-----------------
+ research/dca_paper/out/DCA-paper.md   |   20 +-
+ research/s8_loop/out/day_brake.json   |    2 +-
+ 10 files changed, 2610 insertions(+), 2567 deletions(-)
