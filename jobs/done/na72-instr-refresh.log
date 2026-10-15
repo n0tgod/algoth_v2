@@ -9,3 +9,22 @@
 
 Старые записи не удаляются: делистнутый символ остаётся с последним известным состоянием, иначе история потеряет имена, которыми книги торговали.
 
+публикуется в ветку main:
+ jobs/done/na65-nchold.log                         |    9 +
+ jobs/done/na72-instr-refresh.done                 |    1 +
+ jobs/done/na72-instr-refresh.log                  |   11 +
+ jobs/poke.log                                     |    3 +
+ research/a1_universe/out/instruments-refresh.json |    6 +-
+ research/a1_universe/out/instruments-refresh.md   |    2 +-
+ research/a1_universe/out/instruments.json         |    2 +-
+ research/dca_paper/out/DCA-pair.json              |    2 +-
+ research/dca_paper/out/DCA-pair.md                |   12 +-
+ research/dca_paper/out/DCA-paper.json             | 2844 ++++++++++-----------
+ research/dca_paper/out/DCA-paper.md               |   20 +-
+ research/s8_loop/out/day_brake.json               |    2 +-
+ 12 files changed, 1469 insertions(+), 1445 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   4248d6ab..88b1f6e1  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-15T17:30:55Z, код 0
