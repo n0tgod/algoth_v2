@@ -2220,3 +2220,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792068854 ==
 [2026-10-15T12:54:16Z] задание na44-api-restart запущено: tools/app_api/restart.py
+
+== сигнал 1792068990 ==
+[2026-10-15T12:56:32Z] задание na45-api-restart запущено: tools/app_api/restart.py
