@@ -9188,6 +9188,13 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L1573 `read_operator_token(path)`
 - L1581 `main(argv=None)`
 
+## tools/app_api/set_site.py · 45 строк
+
+Задать настройки сайта (`out/site.json`) с сервера через очередь — то же, что панель оператора на /account, к…
+
+- L14 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L19 `main()`
+
 ## tools/app_api/set_topic.py · 44 строк
 
 Сменить тему пушей APNs (Bundle ID приложения) в `out/apns.json`.
