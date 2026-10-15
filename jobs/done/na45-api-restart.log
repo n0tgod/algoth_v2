@@ -4,3 +4,17 @@
 запускаю: .venv/bin/python tools/app_api/restart.py 
 порт 443: слушает
 конец: 2026-10-15T12:56:37Z, код 0
+публикуется в ветку main:
+ jobs/done/na44-api-restart.log        |   15 +
+ jobs/done/na45-api-restart.done       |    1 +
+ jobs/done/na45-api-restart.log        |    6 +
+ jobs/poke.log                         |    3 +
+ research/dca_paper/out/DCA-pair.json  |    2 +-
+ research/dca_paper/out/DCA-paper.json | 5104 ++++++++++++++++-----------------
+ research/dca_paper/out/DCA-paper.md   |   20 +-
+ research/s8_loop/out/day_brake.json   |    2 +-
+ 8 files changed, 2589 insertions(+), 2564 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   d1996860..c8b73221  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
