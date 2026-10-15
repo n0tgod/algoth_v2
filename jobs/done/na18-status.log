@@ -50,3 +50,29 @@ sub_b0b417879b985874: статусу 1 с, режим live, позиций 3 (о
     SHOPUSDT long глубина 3/3: средняя 175.18548387096774, цель 181.15, пол 109.08046826327282, стоп биржи 109.08, рунгов лежит 0, закрытие None
   чужое на счёте: нет
 конец: 2026-10-15T11:35:24Z
+публикуется в ветку main:
+ jobs/done/na18-status.log                          | 52 +++++++++++++
+ jobs/done/na21-train.log                           | 16 ++++
+ jobs/done/na22-status.done                         |  1 +
+ jobs/done/na22-status.log                          | 36 +++++++++
+ jobs/poke.log                                      |  3 +
+ research/dca_paper/out/DCA-pair.json               |  2 +-
+ research/dca_paper/out/DCA-pair.md                 | 88 +++++++++++-----------
+ research/dca_paper/out/DCA-short.json              |  2 +-
+ research/dca_paper/out/DCA-short.md                | 36 ++++-----
+ research/dca_paper/out/fixed_pair-2026-10-12.jsonl |  6 ++
+ research/dca_paper/out/fixed_pair-2026-10-14.jsonl | 15 ++++
+ research/dca_paper/out/fixed_pair-2026-10-15.jsonl |  4 +
+ .../dca_paper/out/fixed_short-2026-10-14.jsonl     | 16 ++++
+ .../dca_paper/out/fixed_short-2026-10-15.jsonl     |  4 +
+ research/dca_paper/out/pair-2026-10-12.jsonl       |  6 ++
+ research/dca_paper/out/pair-2026-10-14.jsonl       | 14 ++++
+ research/dca_paper/out/pair-2026-10-15.jsonl       |  4 +
+ research/dca_paper/out/short-2026-10-14.jsonl      | 14 ++++
+ research/dca_paper/out/short-2026-10-15.jsonl      |  4 +
+ research/s8_loop/out/day_brake.json                |  2 +-
+ 20 files changed, 260 insertions(+), 65 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   c98ebeca..05c0fe70  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
