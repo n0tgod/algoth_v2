@@ -398,3 +398,15 @@
    1916021  1915730      4   00:00  ps -eo pid,ppid,rss,etimes,args --no-headers
    2329847        1      4  329:38  /usr/lib/systemd/systemd-timesyncd
 конец: 2026-10-15T00:02:02Z, код 0
+публикуется в ветку main:
+ jobs/done/n82-status.done           |   1 +
+ jobs/done/n82-status.log            |   8 +
+ jobs/done/n83-memtop.done           |   1 +
+ jobs/done/n83-memtop.log            | 400 ++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |   4 +
+ research/s8_loop/out/day_brake.json |   2 +-
+ 6 files changed, 415 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   bb76303e..7fdfc28f  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
