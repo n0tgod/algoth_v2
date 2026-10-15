@@ -132,3 +132,7 @@ header.top nav a.nav-cta { border:1px solid rgba(139,92,246,.5); border-radius:9
 /* Таблица рейтинга на телефоне: колонки «side» и «win» скрыты, остальное
    помещается в 390 px без прокрутки внутри блока */
 @media (max-width:640px) { .landing table.rank th:nth-child(3), .landing table.rank td:nth-child(3), .landing table.rank th:nth-child(7), .landing table.rank td:nth-child(7) { display:none } .landing table.rank { font-size:13px } .landing table.rank th, .landing table.rank td { padding:7px 6px } }
+
+/* знак в шапке (логотип 15.10) */
+header.top .brand { display:inline-flex; align-items:center; gap:8px }
+header.top .brand img { width:30px; height:30px; border-radius:8px; display:block }

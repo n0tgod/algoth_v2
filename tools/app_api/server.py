@@ -1241,7 +1241,13 @@ SITE_PAGES = {"/": ("index.html", "text/html; charset=utf-8"),
               "/account": ("account.html", "text/html; charset=utf-8"),
               "/legal": ("legal.html", "text/html; charset=utf-8"),
               "/site.css": ("site.css", "text/css; charset=utf-8"),
-              "/site.js": ("site.js", "application/javascript; charset=utf-8")}
+              "/site.js": ("site.js", "application/javascript; charset=utf-8"),
+              # знак и превью (логотип владельца 15.10): иконка вкладки, иконка
+              # на экране iPhone, знак в шапке, карточка для соцсетей
+              "/favicon.png": ("favicon.png", "image/png"),
+              "/apple-touch-icon.png": ("apple-touch-icon.png", "image/png"),
+              "/logo-mark.png": ("logo-mark.png", "image/png"),
+              "/og.png": ("og.png", "image/png")}
 SITE_KEYS = ("apple_client_id", "company", "ios_url", "mac_url", "testflight_url")
 SITE_ID = re.compile(r"^[A-Za-z0-9._-]{0,120}$")
 
