@@ -19,3 +19,16 @@
   [10-15 06:52:54] матрица: 807 символов × 1838 часов, сечений с ≥30 именами: 1649, признаков 50
   [10-15 06:56:42] переобучаю: весам 29.7 ч при каденции 24
 конец: 2026-10-15T07:13:20Z, код 0
+публикуется в ветку main:
+ jobs/done/na12-status.done |  1 +
+ jobs/done/na12-status.log  | 10 ++++++++++
+ jobs/done/na13-cycle.done  |  1 +
+ jobs/done/na13-cycle.log   | 21 +++++++++++++++++++++
+ jobs/done/na14-wd.done     |  1 +
+ jobs/done/na14-wd.log      | 45 +++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log              |  3 +++
+ 7 files changed, 82 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   0b8fbf15..3e203563  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
