@@ -157,23 +157,89 @@ class HttpBars:
                       key=lambda b: b[0])
 
 
-def read_bars(root, sym, t0, t1):
+# Кэш минутных баров на диске (15.10): pickle на имя, {час: (подпись, бары)}.
+# Подпись часа — (суффикс, mtime_ns, размер) каждого файла часа на диске;
+# закрытый час не меняется, текущий меняется каждую минуту и считается
+# заново. Часа на диске нет (хранилище, пропуск) — подписи нет, и такой
+# час не кэшируется. Файл имени держит последние BARS_CACHE_KEEP_H часов.
+BARS_CACHE_KEEP_H = 240
+
+
+def _hour_sig(dirpath, hh):
+    sig = []
+    for sfx in ("", ".gz"):
+        try:
+            st_ = os.stat(os.path.join(dirpath, f"{hh}.jsonl{sfx}"))
+            sig.append((sfx, st_.st_mtime_ns, st_.st_size))
+        except OSError:
+            pass
+    return tuple(sig) or None
+
+
+def _bars_cache_path(cache, sym):
+    return os.path.join(cache, f"{sym}.pkl")
+
+
+def _bars_cache_load(cache, sym):
+    import pickle
+    try:
+        with open(_bars_cache_path(cache, sym), "rb") as f:
+            d = pickle.load(f)
+        return d if isinstance(d, dict) else {}
+    except (OSError, EOFError, ValueError, TypeError, AttributeError,
+            pickle.UnpicklingError):
+        return {}
+
+
+def _bars_cache_save(cache, sym, d, keep=BARS_CACHE_KEEP_H):
+    import pickle
+    try:
+        os.makedirs(cache, exist_ok=True)
+        if len(d) > keep:
+            d = {k: d[k] for k in sorted(d)[-keep:]}
+        path = _bars_cache_path(cache, sym)
+        with open(path + ".tmp", "wb") as f:
+            pickle.dump(d, f, protocol=pickle.HIGHEST_PROTOCOL)
+        os.replace(path + ".tmp", path)
+    except OSError:
+        pass
+
+
+def read_bars(root, sym, t0, t1, cache=None):
     """Минутные бары собственной записи сборщика в окне `[t0, t1]`.
 
     Пустая минута отсутствует, а не выходит нулевой (урок A2), поэтому
-    ходьба по барам обязана смотреть на время бара, а не на их число.
+    ходьба по барам обязана смотреть на время бара, а не их число.
+
+    `cache` — каталог кэша баров на диске (см. `BARS_CACHE_KEEP_H`):
+    реплей 31 открытой позиции читал ~100 часов принтов на имя каждые
+    пять минут (16 с из 56), а закрытые часы не меняются. Без `cache` —
+    как прежде, бит в бит: кэш хранит результат того же `minute_bars`.
     """
     from collect import minute_bars
     from store import read_hour
+    dirpath = os.path.join(root, "trades", sym)
+    cached = _bars_cache_load(cache, sym) if cache else {}
+    dirty = False
     out = []
     h = int(t0 // 3600) * 3600
     while h <= t1:
         hh = datetime.fromtimestamp(h, timezone.utc).strftime(
             "%Y-%m-%d-%H")
-        rows = read_hour(os.path.join(root, "trades", sym), hh)
-        if rows:
-            out += minute_bars(rows)
+        sig = _hour_sig(dirpath, hh) if cache else None
+        hit = cached.get(hh) if sig is not None else None
+        if hit is not None and hit[0] == sig:
+            bars = hit[1]
+        else:
+            rows = read_hour(dirpath, hh)
+            bars = minute_bars(rows) if rows else []
+            if sig is not None:
+                cached[hh] = (sig, bars)
+                dirty = True
+        out += bars
         h += 3600
+    if cache and dirty:
+        _bars_cache_save(cache, sym, cached)
     return [b for b in out if t0 <= b[0] <= t1]
 
 

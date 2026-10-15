@@ -4082,6 +4082,16 @@
 - L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L18 `main()`
 
+## research/s9_sweep/test_bars_cache.py · 110 строк
+
+Кэш минутных баров на диске (`sweep.read_bars(cache=…)`, 15.10): с кэшем то же, что без него, бит в бит; втор…
+
+- L18 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L24 `H = 3600`
+- L27 `hh(t)`
+- L31 `write_hour(d, sym, t, n=30, px=100.0)`
+- L40 `main()`
+
 ## research/s9_sweep/test_sweep.py · 179 строк
 
 Проверки перебора правил: геометрия сделки и отбор ног.

@@ -70,6 +70,8 @@ import store                                                  # noqa: E402
 from store import read_hour                                   # noqa: E402
 
 ROOT_B1 = D6.ROOT_B1
+# Каталог кэша минутных баров для прогонов книг (в git не идёт)
+BARS_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "bars_cache")
 HOUR = 3600.0
 MINUTE = 60.0
 
@@ -120,9 +122,12 @@ class TailBars:
     признак «принт был» перестал различать).
     """
 
-    def __init__(self, root=ROOT_B1, log=None, remote=None):
+    def __init__(self, root=ROOT_B1, log=None, remote=None, cache=None):
         self.root = root
         self.log = log
+        # кэш минутных баров ленты на диске (`sweep.read_bars`, 15.10);
+        # None — читать принты каждый раз, как прежде
+        self.cache = cache
         # Часы, которых на диске уже нет (выгружены в хранилище и сняты),
         # читаются из хранилища в кэш — включается здесь, у читателя
         # истории, а не в сборщике. Ключей нет — одна строка и только диск.
@@ -151,7 +156,7 @@ class TailBars:
         hours = self.hours_of(t0, t1)
         store.prefetch(os.path.join(self.root, "trades", sym), hours)
         store.prefetch(os.path.join(self.root, "book", sym), hours)
-        tape = SW.read_bars(self.root, sym, t0, t1)
+        tape = SW.read_bars(self.root, sym, t0, t1, cache=self.cache)
         if not tape:
             # Ленты нет вовсе — значит нет ни входа, ни уровней. Такую
             # позицию досчитывать не из чего, и подменять её книгой

@@ -3111,28 +3111,29 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L115 `repack(path=None, cap=None, log=print, apply=True)` — Переложить строки суток по частям, не переступая порог размера.
 - L184 `main()`
 
-## research/dca_paper/tail.py · 303 строк
+## research/dca_paper/tail.py · 308 строк
 
 Хвост ленты, продолженный серединой стакана: ПРАВИЛО книги.
 
 - L58 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L59 `ROOT = os.path.dirname(os.path.dirname(HERE))`
 - L72 `ROOT_B1 = D6.ROOT_B1`
-- L73 `HOUR = 3600.0`
-- L74 `MINUTE = 60.0`
-- L77 `book_minute_bars(root, sym, t0, t1, log=None)` — Минутные бары по СЕРЕДИНЕ стакана в окне `[t0, t1]`.
-- L108 `class TailBars` — Бары ленты, продолженные серединой стакана ПОСЛЕ последнего принта.
-  - L123 `TailBars.__init__(self, root=ROOT_B1, log=None, remote=None)`
-  - L140 `TailBars.hours_of(t0, t1)`
-  - L147 `TailBars.bars(self, sym, t0, t1)`
-  - L184 `TailBars.record_end(self)` — Докуда доходит ЗАПИСЬ: момент последнего такта сборщика.
-  - L204 `TailBars.stats(self)` — Числа правила: их печатает отчёт, а не пересказ прогона.
-- L217 `apply(recs, last_tape, last_book=None)` — Разметить исходы хвостом и не пустить ВХОД из котировки.
-- L275 `CUT_NO_BOOK = 'книги в хвосте нет вовсе'` — Причины, по которым позиция остаётся оборванной ПОСЛЕ правила хвоста. Объявлены строками один раз: два дослов…
-- L276 `CUT_BOOK_SHORT = 'книга кончилась раньше планового конца'`
-- L277 `CUT_BOOK_HOLE = 'книга есть, но не в окне этой позиции'`
-- L278 `CUT_UNKNOWN = 'причина не измерена'`
-- L281 `cut_reason(r, last_tape, last_book)` — Почему эта позиция осталась оборванной, когда хвост уже применён.
+- L74 `BARS_CACHE = os.path.join(os.path.dirname(os.path.ab…` — Каталог кэша минутных баров для прогонов книг (в git не идёт)
+- L75 `HOUR = 3600.0`
+- L76 `MINUTE = 60.0`
+- L79 `book_minute_bars(root, sym, t0, t1, log=None)` — Минутные бары по СЕРЕДИНЕ стакана в окне `[t0, t1]`.
+- L110 `class TailBars` — Бары ленты, продолженные серединой стакана ПОСЛЕ последнего принта.
+  - L125 `TailBars.__init__(self, root=ROOT_B1, log=None, remote=None, cache=None)`
+  - L145 `TailBars.hours_of(t0, t1)`
+  - L152 `TailBars.bars(self, sym, t0, t1)`
+  - L189 `TailBars.record_end(self)` — Докуда доходит ЗАПИСЬ: момент последнего такта сборщика.
+  - L209 `TailBars.stats(self)` — Числа правила: их печатает отчёт, а не пересказ прогона.
+- L222 `apply(recs, last_tape, last_book=None)` — Разметить исходы хвостом и не пустить ВХОД из котировки.
+- L280 `CUT_NO_BOOK = 'книги в хвосте нет вовсе'` — Причины, по которым позиция остаётся оборванной ПОСЛЕ правила хвоста. Объявлены строками один раз: два дослов…
+- L281 `CUT_BOOK_SHORT = 'книга кончилась раньше планового конца'`
+- L282 `CUT_BOOK_HOLE = 'книга есть, но не в окне этой позиции'`
+- L283 `CUT_UNKNOWN = 'причина не измерена'`
+- L286 `cut_reason(r, last_tape, last_book)` — Почему эта позиция осталась оборванной, когда хвост уже применён.
 
 ## research/dca_paper/tail_screen.py · 495 строк
 
@@ -7655,7 +7656,7 @@ S8.2: цикл переобучения модели на стакане (спе
 - L135 `report(rows, legs, path)`
 - L204 `main()`
 
-## research/s9_sweep/sweep.py · 553 строк
+## research/s9_sweep/sweep.py · 619 строк
 
 Перебор правил ситуационной книги по УЖЕ ЗАПИСАННЫМ решениям модели.
 
@@ -7670,18 +7671,23 @@ S8.2: цикл переобучения модели на стакане (спе
 - L79 `class HttpBars` — Бары через страницу наблюдения, когда записи нет под рукой.
   - L94 `HttpBars.__init__(self, base, key, log=print, disk=None)`
   - L105 `HttpBars.bars(self, sym, t0, t1)`
-- L160 `read_bars(root, sym, t0, t1)` — Минутные бары собственной записи сборщика в окне `[t0, t1]`.
-- L180 `bracket(bars, entry_ts, entry_px, side, adv, fav, max_h=MAX_AGE…` — Чем кончилась сделка: стоп, цель или срок.
-- L218 `net_bp(side, move, adv)` — Нетто ноги и её риск в тех же единицах.
-- L229 `legs_of(book_dir)` — Ноги всех выборов книги: цена входа, прогноз, обещания пути.
-- L245 `legs_of_records(recs, book)` — Разбор записей выбора — ОДИН на оба источника (файл и HTTP).
-- L279 `rr_of(leg)`
-- L283 `run(root, books, log=print, src=None, legs=None)` — `src` — источник баров (`None` — записи на диске).
-- L325 `measure(sel, take, null=False, mirror=False)` — `null` — сдвиг момента, `mirror` — та же сделка в другую сторону.
-- L381 `drift(legs)` — Куда ехал рынок в окне и как перекошены стороны.
-- L409 `report(legs, cells, path, root, books)`
-- L487 `legs_from_http(base, key, books, log=print)` — Выборы через страницу наблюдения: те же записи, другой путь.
-- L511 `main()`
+- L165 `BARS_CACHE_KEEP_H = 240` — Кэш минутных баров на диске (15.10): pickle на имя, {час: (подпись, бары)}. Подпись часа — (суффикс, mtime_ns…
+- L168 `_hour_sig(dirpath, hh)`
+- L179 `_bars_cache_path(cache, sym)`
+- L183 `_bars_cache_load(cache, sym)`
+- L194 `_bars_cache_save(cache, sym, d, keep=BARS_CACHE_KEEP_H)`
+- L208 `read_bars(root, sym, t0, t1, cache=None)` — Минутные бары собственной записи сборщика в окне `[t0, t1]`.
+- L246 `bracket(bars, entry_ts, entry_px, side, adv, fav, max_h=MAX_AGE…` — Чем кончилась сделка: стоп, цель или срок.
+- L284 `net_bp(side, move, adv)` — Нетто ноги и её риск в тех же единицах.
+- L295 `legs_of(book_dir)` — Ноги всех выборов книги: цена входа, прогноз, обещания пути.
+- L311 `legs_of_records(recs, book)` — Разбор записей выбора — ОДИН на оба источника (файл и HTTP).
+- L345 `rr_of(leg)`
+- L349 `run(root, books, log=print, src=None, legs=None)` — `src` — источник баров (`None` — записи на диске).
+- L391 `measure(sel, take, null=False, mirror=False)` — `null` — сдвиг момента, `mirror` — та же сделка в другую сторону.
+- L447 `drift(legs)` — Куда ехал рынок в окне и как перекошены стороны.
+- L475 `report(legs, cells, path, root, books)`
+- L553 `legs_from_http(base, key, books, log=print)` — Выборы через страницу наблюдения: те же записи, другой путь.
+- L577 `main()`
 
 ## research/t0_orderflow_inventory/inventory.py · 313 строк
 

@@ -28,3 +28,5 @@ research/dca_paper/out/journal_cache/
 # флаг цикла S8 «обучение ждёт памяти или идёт» (train.py, 15.10) — состояние процесса, не запись
 research/s8_loop/out/train_wait.flag
 research/s8_loop/out/train_wait.flag.tmp
+# кэш минутных баров ленты для прогонов книг (sweep.read_bars cache=…, 15.10)
+research/dca_paper/out/bars_cache/

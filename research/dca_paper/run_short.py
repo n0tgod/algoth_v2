@@ -197,7 +197,7 @@ def replay_cells(need, cells, src=None, log=print, ckpt_hours=None,
         return {c[0]: {} for c in cells}, {}
     was = D11.configure(int(hold_h) if hold_h else R.H24_HOLD_H)
     try:
-        src = src or TL.TailBars(log=log)
+        src = src or TL.TailBars(log=log, cache=TL.BARS_CACHE)
         got = {"recs": {}}
         data_end = 0.0
         was_floor = D2.FLOOR_FRAC

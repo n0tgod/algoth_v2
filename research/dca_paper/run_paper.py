@@ -1733,7 +1733,7 @@ def main():
         # хвосте лога и не повторяет прогон час.
         import arm_book as AB
         glog = AB.guarded(print, limit=RUN_MEM_LIMIT_MB)
-        src = TL.TailBars(log=glog)
+        src = TL.TailBars(log=glog, cache=TL.BARS_CACHE)
         got = D6.collect_recs(rulers=pairs, legs=legs, src=src, log=glog,
                               only=[(g["sym"], g["at"]) for g in need])
         ph.mark("реплей")
