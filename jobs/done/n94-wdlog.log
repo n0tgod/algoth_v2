@@ -1,0 +1,4 @@
+== задание n94-wdlog ==
+строка: run tools/loggrep.py --file=watchdog --pattern=DCA|h24|S8 --last=40
+начало: 2026-10-15T06:21:19Z
+ОТКАЗ: недопустимый символ в аргументе: --pattern=DCA|h24|S8
