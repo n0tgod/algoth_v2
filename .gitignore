@@ -25,3 +25,6 @@ research/dca_ladder/out/legs_cache.pkl
 research/dca_ladder/out/legs_cache.pkl.tmp
 # разобранные куски журналов DCA (rules.read_journal disk=…, 15.10): пересоздаются по подписи
 research/dca_paper/out/journal_cache/
+# флаг цикла S8 «обучение ждёт памяти или идёт» (train.py, 15.10) — состояние процесса, не запись
+research/s8_loop/out/train_wait.flag
+research/s8_loop/out/train_wait.flag.tmp

@@ -52,6 +52,25 @@ run "" "" 555 1126400 2048000
 check "памяти 2000 МБ при пороге 2500 — отложить" \
       '! grep -q ИДТИ "$tmp/out.log" && grep -q "доступно 2000 МБ" "$tmp/out.log"'
 
+# Флаг цикла «обучение ждёт памяти или идёт» (15.10): живой pid — отложить;
+# мёртвый pid — флаг снесён, идти
+printf '%s\n%s\n' "$$" "2026-10-15T06:30:00+00:00" > "$tmp/train_wait.flag"
+run_flag() {  # как run, но с флагом $1
+    printf 'MemAvailable:   %s kB\n' 4096000 > "$tmp/meminfo"
+    ( cd "$tmp" && PATH="$tmp/stubs:$PATH" BOOKS="" TRAIN="" TRAIN_KB="" MEMINFO="$tmp/meminfo" TRAIN_WAIT_FLAG="$1" \
+        bash -c "now() { echo T; }; . ./gate.sh; BOOKS_LAUNCHED=''; if books_mem_ok; then echo ИДТИ; fi" \
+        > "$tmp/out.log" 2>&1 )
+}
+run_flag "$tmp/train_wait.flag"
+check "флаг с живым pid — отложить: обучение S8 ждёт памяти" \
+      '! grep -q ИДТИ "$tmp/out.log" && grep -q "обучение S8 ждёт памяти или идёт" "$tmp/out.log" && [ -f "$tmp/train_wait.flag" ]'
+sh -c 'exit 0' & dead=$!; wait "$dead" 2>/dev/null
+printf '%s\n' "$dead" > "$tmp/train_wait.flag"
+run_flag "$tmp/train_wait.flag"
+check "флаг с мёртвым pid $dead — снесён, идти" 'grep -q ИДТИ "$tmp/out.log" && [ ! -f "$tmp/train_wait.flag" ]'
+run_flag "$tmp/no_such.flag"
+check "флага нет — идти" 'grep -q ИДТИ "$tmp/out.log"'
+
 # Отрицательный контроль: без проверки «уже запущен в такте» второй
 # прогон того же такта проходит — сперва доказываем, что подделка легла.
 cp "$tmp/gate.sh" "$tmp/gate.good"

@@ -2445,6 +2445,66 @@ def log_cycle(row, log_):
 # счёта и смерти цикла от ядра — 13 раз за 01.10, по разу в час, когда
 # рядом стояли турнир (1.5 ГБ) и фабрика.
 TRAIN_MEM_MIN_MB = 3072
+# Ожидание памяти (15.10). Книги считаются каждые 5 минут (прогон ≤ 2.5
+# мин), и разовая проверка в :09 попадала на соседний прогон: «доступно
+# 2790 при пороге 3072 — отложено на час», при том что через минуту было
+# 3600. Цикл ждёт до TRAIN_MEM_WAIT_S, подняв ФЛАГ: пока флаг стоит и
+# процесс жив, сторож книг не запускает (`watchdog_book.sh`,
+# `train_waiting`), а идущий прогон кончается сам. Флаг держится до
+# конца цикла — и во время обучения, когда RSS ещё не перевалил порог
+# сторожа. Флаг без живого процесса сторож сносит сам.
+TRAIN_MEM_WAIT_S = 600
+TRAIN_MEM_STEP_S = 15
+TRAIN_WAIT_FLAG = os.path.join(OUT, "train_wait.flag")
+
+
+def raise_train_flag(path=TRAIN_WAIT_FLAG):
+    """Флаг «обучение ждёт памяти или идёт»: pid цикла и момент."""
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path + ".tmp", "w", encoding="utf-8") as f:
+            f.write(f"{os.getpid()}\n{datetime.now(timezone.utc).isoformat()}\n")
+        os.replace(path + ".tmp", path)
+    except OSError:
+        pass
+
+
+def clear_train_flag(path=TRAIN_WAIT_FLAG):
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
+
+
+def wait_train_mem(min_mb=None, max_wait_s=None, step_s=None, log_=print,
+                   avail=None, sleep=None, flag=TRAIN_WAIT_FLAG):
+    """Хватает ли памяти на обучение — с ожиданием до `max_wait_s`.
+
+    Возвращает (да/нет, причина). Первая проверка без ожидания; дальше
+    поднят флаг для сторожа, и каждые `step_s` мера снимается снова.
+    Флаг при успехе НЕ снимается: он держит книги до конца обучения
+    (снимает `main` по концу цикла). При отказе — снимается здесь.
+    """
+    min_mb = TRAIN_MEM_MIN_MB if min_mb is None else min_mb
+    max_wait_s = TRAIN_MEM_WAIT_S if max_wait_s is None else max_wait_s
+    step_s = TRAIN_MEM_STEP_S if step_s is None else step_s
+    avail = mem_available_mb if avail is None else avail
+    sleep = time.sleep if sleep is None else sleep
+    ok, why = train_mem_ok(avail(), min_mb)
+    if ok:
+        raise_train_flag(flag)
+        return True, why
+    raise_train_flag(flag)
+    log_(f"{why} — жду до {max_wait_s} с, книги уступают (флаг {os.path.basename(flag)})")
+    t0, n = time.time(), 0
+    while time.time() - t0 < max_wait_s:
+        sleep(step_s)
+        n += 1
+        ok, why = train_mem_ok(avail(), min_mb)
+        if ok:
+            return True, f"{why}; дождался за {time.time() - t0:.0f} с ({n} проверок)"
+    clear_train_flag(flag)
+    return False, f"{why}; ждал {max_wait_s} с, память не освободилась"
 
 
 def mem_available_mb():
@@ -3490,7 +3550,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     if due and booked is not None:
         # Пора по каденции — но есть ли место. Гейт стоит ПОСЛЕ раннего
         # шага книг: откладывается только обучение, час книг записан.
-        mem_ok, mem_why = train_mem_ok(mem_available_mb())
+        mem_ok, mem_why = wait_train_mem(log_=log_)
         log_(mem_why)
         if not mem_ok:
             due, why, deferred = False, mem_why, True
@@ -3955,6 +4015,9 @@ def main():
                               error=f"{type(e).__name__}: {e}")
             except Exception:                             # noqa: BLE001
                 pass
+        # флаг «обучение ждёт/идёт» живёт ровно один цикл: снят здесь и
+        # при успехе, и при падении — иначе сторож держал бы книги зря
+        clear_train_flag()
         if a.once:
             if PROBE:
                 # Отчёт пишет сама проба, а не человек следом. Отдельная

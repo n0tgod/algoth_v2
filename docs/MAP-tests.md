@@ -4075,6 +4075,13 @@
 - L23 `man(now, age_h)`
 - L28 `main()`
 
+## research/s8_loop/test_train_wait.py · 64 строк
+
+Ожидание памяти под обучение (`train.wait_train_mem`, 15.10): памяти хватает сразу — идти, флаг поднят; не хв…
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L18 `main()`
+
 ## research/s9_sweep/test_sweep.py · 179 строк
 
 Проверки перебора правил: геометрия сделки и отбор ног.
@@ -4873,12 +4880,13 @@ X1: исполнитель против подставной биржи.
 - L16 `check()`
 - L18 `tick()`
 
-## tools/test_watchdog_books.sh · 78 строк
+## tools/test_watchdog_books.sh · 97 строк
 
 Проверка гейта прогонов книг в стороже (`books_mem_ok`): один прогон
 
 - L32 `check()`
 - L33 `run()`
+- L58 `run_flag()`
 
 ## tools/test_watchdog_mem.sh · 68 строк
 

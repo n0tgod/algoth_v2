@@ -7486,7 +7486,7 @@ S8.1, этап 1: запись стакана → почасовая сводк�
 - L1814 `mark(trades, prices, cost_bp=ROUND_COST_BP)` — Проставить открытым сделкам нереализованный результат.
 - L1842 `by_symbol(trades, sym)` — Сделки одной монеты — для меток на её графике.
 
-## research/s8_loop/train.py · 4008 строк
+## research/s8_loop/train.py · 4071 строк
 
 S8.2: цикл переобучения модели на стакане (спека 08 §5).
 
@@ -7611,20 +7611,26 @@ S8.2: цикл переобучения модели на стакане (спе
 - L2394 `stamp_book(syms, ts, book_root, log_=None, what='')` — `{символ: {mid, b, a, t}}` — книга для расчёта исполнения.
 - L2420 `log_cycle(row, log_)` — Строка журнала циклов. Один писатель на оба пути.
 - L2447 `TRAIN_MEM_MIN_MB = 3072` — Обучение начинается, только когда в машине есть под него место. Замер 02.10 (строки «память» в train.log): ба…
-- L2450 `mem_available_mb()` — MemAvailable ядра в МБ; None — если /proc не читается.
-- L2462 `train_mem_ok(avail_mb, min_mb=None)` — Хватает ли памяти на обучение: (да/нет, причина словами).
-- L2478 `mem_holders_line(lines=None, n=3, width=60)` — Кто держит память — строкой в лог при откладывании обучения.
-- L2509 `train_due(prev_man, now_ts, every_h=None)` — Пора ли переобучать: (да/нет, причина словами).
-- L2546 `load_prev_models(names)` — Веса ПРОШЛОГО цикла с диска — для шага книг до обучения.
-- L2583 `cand_sheet_entry(b)` — Запись кандидата в списке книг листа сечения.
-- L2618 `cand_book(b, sm, models_b, x, mats, syms, rows_sit, j_last, gri…` — Свести одну книгу кандидата: манифест, выборы, счёт.
-- L2675 `retire_dropped_books(books, log_)` — Каталог книги кандидата вне состава — в архив.
-- L2733 `candidate_books(log_)` — Кандидаты фабрики → живые книги. Возвращает список записей.
-- L2792 `run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, el…` — Шаг книг: разбор, выборы, лист сканера и счета всех книг.
-- L3347 `cycle(sum_dir, log_, book_root=SM.BOOK_ROOT)`
-- L3820 `stale_summary()` — Отстал ли последний прогон от закрывшегося часа.
-- L3840 `demo()` — Полный вывод цикла на синтетике — ответ на «что я буду видеть».
-- L3886 `main()`
+- L2456 `TRAIN_MEM_WAIT_S = 600` — Ожидание памяти (15.10). Книги считаются каждые 5 минут (прогон ≤ 2.5 мин), и разовая проверка в :09 попадала…
+- L2457 `TRAIN_MEM_STEP_S = 15`
+- L2458 `TRAIN_WAIT_FLAG = os.path.join(OUT, 'train_wait.flag')`
+- L2461 `raise_train_flag(path=TRAIN_WAIT_FLAG)` — Флаг «обучение ждёт памяти или идёт»: pid цикла и момент.
+- L2472 `clear_train_flag(path=TRAIN_WAIT_FLAG)`
+- L2479 `wait_train_mem(min_mb=None, max_wait_s=None, step_s=None, log_=…` — Хватает ли памяти на обучение — с ожиданием до `max_wait_s`.
+- L2510 `mem_available_mb()` — MemAvailable ядра в МБ; None — если /proc не читается.
+- L2522 `train_mem_ok(avail_mb, min_mb=None)` — Хватает ли памяти на обучение: (да/нет, причина словами).
+- L2538 `mem_holders_line(lines=None, n=3, width=60)` — Кто держит память — строкой в лог при откладывании обучения.
+- L2569 `train_due(prev_man, now_ts, every_h=None)` — Пора ли переобучать: (да/нет, причина словами).
+- L2606 `load_prev_models(names)` — Веса ПРОШЛОГО цикла с диска — для шага книг до обучения.
+- L2643 `cand_sheet_entry(b)` — Запись кандидата в списке книг листа сечения.
+- L2678 `cand_book(b, sm, models_b, x, mats, syms, rows_sit, j_last, gri…` — Свести одну книгу кандидата: манифест, выборы, счёт.
+- L2735 `retire_dropped_books(books, log_)` — Каталог книги кандидата вне состава — в архив.
+- L2793 `candidate_books(log_)` — Кандидаты фабрики → живые книги. Возвращает список записей.
+- L2852 `run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, el…` — Шаг книг: разбор, выборы, лист сканера и счета всех книг.
+- L3407 `cycle(sum_dir, log_, book_root=SM.BOOK_ROOT)`
+- L3880 `stale_summary()` — Отстал ли последний прогон от закрывшегося часа.
+- L3900 `demo()` — Полный вывод цикла на синтетике — ответ на «что я буду видеть».
+- L3946 `main()`
 
 ## research/s8_loop/why.py · 141 строк
 
@@ -9544,7 +9550,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 660 строк
+## tools/watchdog_book.sh · 680 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 
@@ -9553,7 +9559,8 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L51 `pair_due()` — Общий счёт считается ПОСЛЕ книг, из которых он читает: его кэши пишут прогоны коротких и длинных книг, и свой…
 - L60 `stopped_recently()` — Самоостанов прогона по памяти — не повод перезапускать его следующим тактом (13.10: «СТОП: память» каждые 5 м…
 - L76 `mem_avail_mb()`
-- L86 `train_rss_mb()`
-- L112 `publish_flag()`
-- L115 `books_running()`
-- L118 `books_mem_ok()`
+- L92 `train_waiting()`
+- L102 `train_rss_mb()`
+- L128 `publish_flag()`
+- L131 `books_running()`
+- L134 `books_mem_ok()`

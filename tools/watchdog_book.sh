@@ -83,6 +83,22 @@ mem_avail_mb() {
 # (`restart_book.sh`): цикл тяжелее `TRAIN_BUSY_MB` — учится, книги
 # ждут такта. Цикла нет или `ps` молчит — ноль, гейт по памяти остаётся.
 TRAIN_BUSY_MB=${TRAIN_BUSY_MB:-2000}
+# Флаг цикла «обучение S8 ждёт памяти или идёт» (15.10, `train.py`
+# `wait_train_mem`): файл с pid цикла. Пока процесс жив — книги уступают:
+# разовая проверка памяти в :09 раз за разом попадала на соседний прогон
+# книг и откладывала обучение на час (веса 29 ч). Флаг без живого
+# процесса — мусор упавшего цикла, сносится.
+TRAIN_WAIT_FLAG=${TRAIN_WAIT_FLAG:-research/s8_loop/out/train_wait.flag}
+train_waiting() {
+    local pid
+    [ -f "$TRAIN_WAIT_FLAG" ] || return 1
+    pid=$(head -c 32 "$TRAIN_WAIT_FLAG" 2>/dev/null | head -n1 | tr -dc '0-9')
+    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+        return 0
+    fi
+    rm -f "$TRAIN_WAIT_FLAG"
+    return 1
+}
 train_rss_mb() {
     local pids kb
     pids=$(pgrep -d' ' -f "s8_loop/train.py$" 2>/dev/null || true)
@@ -128,6 +144,10 @@ books_mem_ok() {
     t=$(train_rss_mb)
     if [ "${t:-0}" -gt "$TRAIN_BUSY_MB" ]; then
         echo "[$(now)] прогон книг отложен: идёт обучение S8 (цикл ${t} МБ > ${TRAIN_BUSY_MB})"
+        return 1
+    fi
+    if train_waiting; then
+        echo "[$(now)] прогон книг отложен: обучение S8 ждёт памяти или идёт (флаг ${TRAIN_WAIT_FLAG})"
         return 1
     fi
     a=$(mem_avail_mb)
