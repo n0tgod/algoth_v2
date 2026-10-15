@@ -2332,3 +2332,7 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 [2026-10-15T20:18:33Z] задание na82-apirestart запущено: tools/app_api/restart.py
 
 == сигнал 1792096110 ==
+[2026-10-15T20:28:57Z] задание na83-status: состояние снято
+
+== сигнал 1792096184 ==
+[2026-10-15T20:29:46Z] задание na84-rungprobe запущено: tools/rung_probe.py
