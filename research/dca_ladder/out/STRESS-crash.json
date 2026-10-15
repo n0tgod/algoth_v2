@@ -1,0 +1,2540 @@
+{
+ "per_day": 60,
+ "seeds": 3,
+ "symbols": 120,
+ "windows": [
+  {
+   "name": "обвал 05.2021",
+   "from": "2021-05-01",
+   "to": "2021-06-30",
+   "kind": "crash",
+   "btc": -0.3755269025111073,
+   "median_move": -0.5719494650620611,
+   "symbols": 112,
+   "seeds": [
+    {
+     "safe": {
+      "1000": {
+       "final": -0.4398,
+       "max_dd": -0.487,
+       "taken": 852,
+       "no_cash": 81,
+       "too_small": 1019,
+       "day_median": 0.00031,
+       "exits": {
+        "тейк": 1282,
+        "срок": 662,
+        "пол": 8
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.011177499999999979,
+       "floor_share": 0.004098360655737705
+      },
+      "10000": {
+       "final": -0.0498,
+       "max_dd": -0.0666,
+       "taken": 1696,
+       "no_cash": 0,
+       "too_small": 256,
+       "day_median": 0.00025,
+       "exits": {
+        "тейк": 1282,
+        "срок": 662,
+        "пол": 8
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.011177499999999979,
+       "floor_share": 0.004098360655737705
+      },
+      "positions": 3520,
+      "missing": 80
+     },
+     "optimal": {
+      "1000": {
+       "final": -0.6168,
+       "max_dd": -0.6818,
+       "taken": 1070,
+       "no_cash": 86,
+       "too_small": 835,
+       "day_median": 0.0028,
+       "exits": {
+        "тейк": 1316,
+        "срок": 621,
+        "пол": 54
+       },
+       "lev_median": 1.7938286195567343,
+       "pos_pnl_median": 0.013016000000000045,
+       "floor_share": 0.027122049221496736
+      },
+      "10000": {
+       "final": -0.0802,
+       "max_dd": -0.1063,
+       "taken": 1784,
+       "no_cash": 0,
+       "too_small": 207,
+       "day_median": 0.0004,
+       "exits": {
+        "тейк": 1316,
+        "срок": 621,
+        "пол": 54
+       },
+       "lev_median": 1.7938286195567343,
+       "pos_pnl_median": 0.013016000000000045,
+       "floor_share": 0.027122049221496736
+      },
+      "positions": 3520,
+      "missing": 80
+     },
+     "aggr": {
+      "1000": {
+       "final": -0.0749,
+       "max_dd": -0.1045,
+       "taken": 237,
+       "no_cash": 0,
+       "too_small": 18,
+       "day_median": -0.00045,
+       "exits": {
+        "тейк": 185,
+        "пол": 56,
+        "срок": 12,
+        "ликвидация": 2
+       },
+       "lev_median": 6.825466001333552,
+       "pos_pnl_median": 0.08720119446445179,
+       "floor_share": 0.22745098039215686
+      },
+      "10000": {
+       "final": -0.0374,
+       "max_dd": -0.0534,
+       "taken": 253,
+       "no_cash": 0,
+       "too_small": 2,
+       "day_median": -0.00014,
+       "exits": {
+        "тейк": 185,
+        "пол": 56,
+        "срок": 12,
+        "ликвидация": 2
+       },
+       "lev_median": 6.825466001333552,
+       "pos_pnl_median": 0.08720119446445179,
+       "floor_share": 0.22745098039215686
+      },
+      "positions": 3520,
+      "missing": 80
+     }
+    },
+    {
+     "safe": {
+      "1000": {
+       "final": -0.3598,
+       "max_dd": -0.4204,
+       "taken": 956,
+       "no_cash": 84,
+       "too_small": 882,
+       "day_median": 0.00209,
+       "exits": {
+        "тейк": 1245,
+        "срок": 674,
+        "ликвидация": 1,
+        "пол": 2
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.010663999999999986,
+       "floor_share": 0.0015608740894901144
+      },
+      "10000": {
+       "final": -0.0429,
+       "max_dd": -0.059,
+       "taken": 1657,
+       "no_cash": 0,
+       "too_small": 265,
+       "day_median": 0.00041,
+       "exits": {
+        "тейк": 1245,
+        "срок": 674,
+        "ликвидация": 1,
+        "пол": 2
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.010663999999999986,
+       "floor_share": 0.0015608740894901144
+      },
+      "positions": 3518,
+      "missing": 82
+     },
+     "optimal": {
+      "1000": {
+       "final": -0.4621,
+       "max_dd": -0.5608,
+       "taken": 1152,
+       "no_cash": 116,
+       "too_small": 691,
+       "day_median": 0.00139,
+       "exits": {
+        "тейк": 1285,
+        "срок": 631,
+        "пол": 41,
+        "ликвидация": 2
+       },
+       "lev_median": 1.7982543122998322,
+       "pos_pnl_median": 0.012763499999999978,
+       "floor_share": 0.021949974476773864
+      },
+      "10000": {
+       "final": -0.0506,
+       "max_dd": -0.0748,
+       "taken": 1766,
+       "no_cash": 0,
+       "too_small": 193,
+       "day_median": 0.00019,
+       "exits": {
+        "тейк": 1285,
+        "срок": 631,
+        "пол": 41,
+        "ликвидация": 2
+       },
+       "lev_median": 1.7982543122998322,
+       "pos_pnl_median": 0.012763499999999978,
+       "floor_share": 0.021949974476773864
+      },
+      "positions": 3518,
+      "missing": 82
+     },
+     "aggr": {
+      "1000": {
+       "final": 0.0052,
+       "max_dd": -0.0573,
+       "taken": 223,
+       "no_cash": 0,
+       "too_small": 12,
+       "day_median": 0.00013,
+       "exits": {
+        "тейк": 185,
+        "пол": 42,
+        "срок": 6,
+        "ликвидация": 2
+       },
+       "lev_median": 6.6939112796098925,
+       "pos_pnl_median": 0.10635624407199258,
+       "floor_share": 0.18723404255319148
+      },
+      "10000": {
+       "final": 0.0002,
+       "max_dd": -0.0271,
+       "taken": 235,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 1e-05,
+       "exits": {
+        "тейк": 185,
+        "пол": 42,
+        "срок": 6,
+        "ликвидация": 2
+       },
+       "lev_median": 6.6939112796098925,
+       "pos_pnl_median": 0.10635624407199258,
+       "floor_share": 0.18723404255319148
+      },
+      "positions": 3518,
+      "missing": 82
+     }
+    },
+    {
+     "safe": {
+      "1000": {
+       "final": -0.3647,
+       "max_dd": -0.4269,
+       "taken": 919,
+       "no_cash": 96,
+       "too_small": 941,
+       "day_median": 0.00225,
+       "exits": {
+        "тейк": 1280,
+        "срок": 674,
+        "пол": 2
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.01065267108470317,
+       "floor_share": 0.0010224948875255625
+      },
+      "10000": {
+       "final": -0.0455,
+       "max_dd": -0.0589,
+       "taken": 1695,
+       "no_cash": 0,
+       "too_small": 261,
+       "day_median": 0.00028,
+       "exits": {
+        "тейк": 1280,
+        "срок": 674,
+        "пол": 2
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.01065267108470317,
+       "floor_share": 0.0010224948875255625
+      },
+      "positions": 3541,
+      "missing": 59
+     },
+     "optimal": {
+      "1000": {
+       "final": -0.6017,
+       "max_dd": -0.675,
+       "taken": 1154,
+       "no_cash": 58,
+       "too_small": 782,
+       "day_median": 0.00492,
+       "exits": {
+        "тейк": 1315,
+        "срок": 620,
+        "пол": 55,
+        "ликвидация": 4
+       },
+       "lev_median": 1.833403376978822,
+       "pos_pnl_median": 0.012260750000000036,
+       "floor_share": 0.02958876629889669
+      },
+      "10000": {
+       "final": -0.0812,
+       "max_dd": -0.1006,
+       "taken": 1779,
+       "no_cash": 0,
+       "too_small": 215,
+       "day_median": 0.00034,
+       "exits": {
+        "тейк": 1315,
+        "срок": 620,
+        "пол": 55,
+        "ликвидация": 4
+       },
+       "lev_median": 1.833403376978822,
+       "pos_pnl_median": 0.012260750000000036,
+       "floor_share": 0.02958876629889669
+      },
+      "positions": 3541,
+      "missing": 59
+     },
+     "aggr": {
+      "1000": {
+       "final": -0.0878,
+       "max_dd": -0.107,
+       "taken": 251,
+       "no_cash": 0,
+       "too_small": 18,
+       "day_median": -0.00028,
+       "exits": {
+        "тейк": 192,
+        "пол": 56,
+        "срок": 17,
+        "ликвидация": 4
+       },
+       "lev_median": 6.8800477002732805,
+       "pos_pnl_median": 0.08757149832064667,
+       "floor_share": 0.22304832713754646
+      },
+      "10000": {
+       "final": -0.0387,
+       "max_dd": -0.048,
+       "taken": 267,
+       "no_cash": 0,
+       "too_small": 2,
+       "day_median": -0.00015,
+       "exits": {
+        "тейк": 192,
+        "пол": 56,
+        "срок": 17,
+        "ликвидация": 4
+       },
+       "lev_median": 6.8800477002732805,
+       "pos_pnl_median": 0.08757149832064667,
+       "floor_share": 0.22304832713754646
+      },
+      "positions": 3541,
+      "missing": 59
+     }
+    }
+   ]
+  },
+  {
+   "name": "LUNA 05.2022",
+   "from": "2022-05-01",
+   "to": "2022-06-30",
+   "kind": "crash",
+   "btc": -0.46572623501402943,
+   "median_move": -0.4983541553926473,
+   "symbols": 120,
+   "seeds": [
+    {
+     "safe": {
+      "1000": {
+       "final": -0.2348,
+       "max_dd": -0.3546,
+       "taken": 1006,
+       "no_cash": 152,
+       "too_small": 844,
+       "day_median": -0.00134,
+       "exits": {
+        "тейк": 1313,
+        "срок": 688,
+        "пол": 1
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.011486749999999981,
+       "floor_share": 0.0004995004995004995
+      },
+      "10000": {
+       "final": -0.0268,
+       "max_dd": -0.0539,
+       "taken": 1903,
+       "no_cash": 0,
+       "too_small": 99,
+       "day_median": -6e-05,
+       "exits": {
+        "тейк": 1313,
+        "срок": 688,
+        "пол": 1
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.011486749999999981,
+       "floor_share": 0.0004995004995004995
+      },
+      "positions": 3530,
+      "missing": 70
+     },
+     "optimal": {
+      "1000": {
+       "final": -0.3276,
+       "max_dd": -0.5922,
+       "taken": 1011,
+       "no_cash": 104,
+       "too_small": 902,
+       "day_median": -0.00012,
+       "exits": {
+        "тейк": 1328,
+        "срок": 661,
+        "пол": 28
+       },
+       "lev_median": 1.7198959108791314,
+       "pos_pnl_median": 0.013015500000000011,
+       "floor_share": 0.013882002974714923
+      },
+      "10000": {
+       "final": -0.032,
+       "max_dd": -0.0845,
+       "taken": 1926,
+       "no_cash": 0,
+       "too_small": 91,
+       "day_median": -6e-05,
+       "exits": {
+        "тейк": 1328,
+        "срок": 661,
+        "пол": 28
+       },
+       "lev_median": 1.7198959108791314,
+       "pos_pnl_median": 0.013015500000000011,
+       "floor_share": 0.013882002974714923
+      },
+      "positions": 3530,
+      "missing": 70
+     },
+     "aggr": {
+      "1000": {
+       "final": -0.034,
+       "max_dd": -0.0917,
+       "taken": 176,
+       "no_cash": 0,
+       "too_small": 2,
+       "day_median": 0.0008,
+       "exits": {
+        "тейк": 131,
+        "пол": 30,
+        "срок": 16,
+        "ликвидация": 1
+       },
+       "lev_median": 6.645138602783845,
+       "pos_pnl_median": 0.09639875955636759,
+       "floor_share": 0.17415730337078653
+      },
+      "10000": {
+       "final": -0.0137,
+       "max_dd": -0.0416,
+       "taken": 178,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.00036,
+       "exits": {
+        "тейк": 131,
+        "пол": 30,
+        "срок": 16,
+        "ликвидация": 1
+       },
+       "lev_median": 6.645138602783845,
+       "pos_pnl_median": 0.09639875955636759,
+       "floor_share": 0.17415730337078653
+      },
+      "positions": 3530,
+      "missing": 70
+     }
+    },
+    {
+     "safe": {
+      "1000": {
+       "final": -0.2277,
+       "max_dd": -0.3854,
+       "taken": 1076,
+       "no_cash": 180,
+       "too_small": 715,
+       "day_median": 0.00384,
+       "exits": {
+        "тейк": 1272,
+        "срок": 698,
+        "пол": 1
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.011594318351464676,
+       "floor_share": 0.0005073566717402334
+      },
+      "10000": {
+       "final": -0.023,
+       "max_dd": -0.0514,
+       "taken": 1876,
+       "no_cash": 0,
+       "too_small": 95,
+       "day_median": 0.0004,
+       "exits": {
+        "тейк": 1272,
+        "срок": 698,
+        "пол": 1
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.011594318351464676,
+       "floor_share": 0.0005073566717402334
+      },
+      "positions": 3526,
+      "missing": 74
+     },
+     "optimal": {
+      "1000": {
+       "final": -0.2792,
+       "max_dd": -0.5603,
+       "taken": 1079,
+       "no_cash": 100,
+       "too_small": 817,
+       "day_median": 0.00455,
+       "exits": {
+        "тейк": 1296,
+        "срок": 665,
+        "пол": 35
+       },
+       "lev_median": 1.8288714943846571,
+       "pos_pnl_median": 0.012850750000000018,
+       "floor_share": 0.01753507014028056
+      },
+      "10000": {
+       "final": -0.0271,
+       "max_dd": -0.0771,
+       "taken": 1909,
+       "no_cash": 0,
+       "too_small": 87,
+       "day_median": 0.00062,
+       "exits": {
+        "тейк": 1296,
+        "срок": 665,
+        "пол": 35
+       },
+       "lev_median": 1.8288714943846571,
+       "pos_pnl_median": 0.012850750000000018,
+       "floor_share": 0.01753507014028056
+      },
+      "positions": 3526,
+      "missing": 74
+     },
+     "aggr": {
+      "1000": {
+       "final": 0.011,
+       "max_dd": -0.0705,
+       "taken": 179,
+       "no_cash": 0,
+       "too_small": 1,
+       "day_median": 0.00103,
+       "exits": {
+        "тейк": 132,
+        "срок": 18,
+        "пол": 30
+       },
+       "lev_median": 6.872430895586149,
+       "pos_pnl_median": 0.11975339489701253,
+       "floor_share": 0.16666666666666666
+      },
+      "10000": {
+       "final": 0.006,
+       "max_dd": -0.0319,
+       "taken": 180,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.00046,
+       "exits": {
+        "тейк": 132,
+        "срок": 18,
+        "пол": 30
+       },
+       "lev_median": 6.872430895586149,
+       "pos_pnl_median": 0.11975339489701253,
+       "floor_share": 0.16666666666666666
+      },
+      "positions": 3526,
+      "missing": 74
+     }
+    },
+    {
+     "safe": {
+      "1000": {
+       "final": -0.158,
+       "max_dd": -0.3193,
+       "taken": 1305,
+       "no_cash": 368,
+       "too_small": 315,
+       "day_median": 0.00211,
+       "exits": {
+        "срок": 687,
+        "тейк": 1300,
+        "пол": 1
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.011575999999999993,
+       "floor_share": 0.0005030181086519115
+      },
+      "10000": {
+       "final": -0.0221,
+       "max_dd": -0.0486,
+       "taken": 1896,
+       "no_cash": 0,
+       "too_small": 92,
+       "day_median": 0.00035,
+       "exits": {
+        "срок": 687,
+        "тейк": 1300,
+        "пол": 1
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.011575999999999993,
+       "floor_share": 0.0005030181086519115
+      },
+      "positions": 3526,
+      "missing": 74
+     },
+     "optimal": {
+      "1000": {
+       "final": -0.2092,
+       "max_dd": -0.4617,
+       "taken": 1231,
+       "no_cash": 251,
+       "too_small": 531,
+       "day_median": 0.00054,
+       "exits": {
+        "срок": 660,
+        "тейк": 1319,
+        "пол": 31,
+        "ликвидация": 3
+       },
+       "lev_median": 1.7890192264239886,
+       "pos_pnl_median": 0.012602167194396193,
+       "floor_share": 0.01689021361152509
+      },
+      "10000": {
+       "final": -0.0378,
+       "max_dd": -0.0796,
+       "taken": 1925,
+       "no_cash": 0,
+       "too_small": 88,
+       "day_median": 3e-05,
+       "exits": {
+        "срок": 660,
+        "тейк": 1319,
+        "пол": 31,
+        "ликвидация": 3
+       },
+       "lev_median": 1.7890192264239886,
+       "pos_pnl_median": 0.012602167194396193,
+       "floor_share": 0.01689021361152509
+      },
+      "positions": 3526,
+      "missing": 74
+     },
+     "aggr": {
+      "1000": {
+       "final": -0.0502,
+       "max_dd": -0.0823,
+       "taken": 169,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.00052,
+       "exits": {
+        "тейк": 123,
+        "пол": 30,
+        "ликвидация": 4,
+        "срок": 12
+       },
+       "lev_median": 7.046617705127574,
+       "pos_pnl_median": 0.08329360218566244,
+       "floor_share": 0.20118343195266272
+      },
+      "10000": {
+       "final": -0.0225,
+       "max_dd": -0.0374,
+       "taken": 169,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.00024,
+       "exits": {
+        "тейк": 123,
+        "пол": 30,
+        "ликвидация": 4,
+        "срок": 12
+       },
+       "lev_median": 7.046617705127574,
+       "pos_pnl_median": 0.08329360218566244,
+       "floor_share": 0.20118343195266272
+      },
+      "positions": 3526,
+      "missing": 74
+     }
+    }
+   ]
+  },
+  {
+   "name": "FTX 11.2022",
+   "from": "2022-11-01",
+   "to": "2022-12-31",
+   "kind": "crash",
+   "btc": -0.1885084093152346,
+   "median_move": -0.37350163941019193,
+   "symbols": 120,
+   "seeds": [
+    {
+     "safe": {
+      "1000": {
+       "final": -0.1094,
+       "max_dd": -0.1793,
+       "taken": 1028,
+       "no_cash": 578,
+       "too_small": 81,
+       "day_median": -0.00079,
+       "exits": {
+        "тейк": 680,
+        "срок": 1006,
+        "пол": 1
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.003101175499885123,
+       "floor_share": 0.0005927682276229994
+      },
+      "10000": {
+       "final": -0.018,
+       "max_dd": -0.0253,
+       "taken": 1626,
+       "no_cash": 0,
+       "too_small": 61,
+       "day_median": -0.00022,
+       "exits": {
+        "тейк": 680,
+        "срок": 1006,
+        "пол": 1
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.003101175499885123,
+       "floor_share": 0.0005927682276229994
+      },
+      "positions": 3560,
+      "missing": 40
+     },
+     "optimal": {
+      "1000": {
+       "final": -0.195,
+       "max_dd": -0.2961,
+       "taken": 1004,
+       "no_cash": 470,
+       "too_small": 216,
+       "day_median": -0.00063,
+       "exits": {
+        "тейк": 683,
+        "срок": 999,
+        "пол": 8
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.0032406855686524377,
+       "floor_share": 0.004733727810650888
+      },
+      "10000": {
+       "final": -0.0288,
+       "max_dd": -0.0395,
+       "taken": 1632,
+       "no_cash": 0,
+       "too_small": 58,
+       "day_median": -9e-05,
+       "exits": {
+        "тейк": 683,
+        "срок": 999,
+        "пол": 8
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.0032406855686524377,
+       "floor_share": 0.004733727810650888
+      },
+      "positions": 3560,
+      "missing": 40
+     },
+     "aggr": {
+      "1000": {
+       "final": -0.0066,
+       "max_dd": -0.0225,
+       "taken": 52,
+       "no_cash": 0,
+       "too_small": 1,
+       "day_median": 0.00019,
+       "exits": {
+        "тейк": 32,
+        "срок": 16,
+        "пол": 4,
+        "ликвидация": 1
+       },
+       "lev_median": 7.751208711866639,
+       "pos_pnl_median": 0.057643931555359414,
+       "floor_share": 0.09433962264150944
+      },
+      "10000": {
+       "final": -0.0028,
+       "max_dd": -0.0101,
+       "taken": 53,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 8e-05,
+       "exits": {
+        "тейк": 32,
+        "срок": 16,
+        "пол": 4,
+        "ликвидация": 1
+       },
+       "lev_median": 7.751208711866639,
+       "pos_pnl_median": 0.057643931555359414,
+       "floor_share": 0.09433962264150944
+      },
+      "positions": 3560,
+      "missing": 40
+     }
+    },
+    {
+     "safe": {
+      "1000": {
+       "final": -0.0903,
+       "max_dd": -0.1376,
+       "taken": 1041,
+       "no_cash": 584,
+       "too_small": 54,
+       "day_median": -0.00143,
+       "exits": {
+        "тейк": 696,
+        "срок": 983
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.0029364186242790604,
+       "floor_share": 0.0
+      },
+      "10000": {
+       "final": -0.0172,
+       "max_dd": -0.0229,
+       "taken": 1632,
+       "no_cash": 0,
+       "too_small": 47,
+       "day_median": -0.00017,
+       "exits": {
+        "тейк": 696,
+        "срок": 983
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.0029364186242790604,
+       "floor_share": 0.0
+      },
+      "positions": 3557,
+      "missing": 43
+     },
+     "optimal": {
+      "1000": {
+       "final": -0.1784,
+       "max_dd": -0.2363,
+       "taken": 1041,
+       "no_cash": 541,
+       "too_small": 98,
+       "day_median": -0.00198,
+       "exits": {
+        "тейк": 698,
+        "срок": 975,
+        "пол": 7
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.00305751080103838,
+       "floor_share": 0.004166666666666667
+      },
+      "10000": {
+       "final": -0.0263,
+       "max_dd": -0.0345,
+       "taken": 1634,
+       "no_cash": 0,
+       "too_small": 46,
+       "day_median": -0.00019,
+       "exits": {
+        "тейк": 698,
+        "срок": 975,
+        "пол": 7
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.00305751080103838,
+       "floor_share": 0.004166666666666667
+      },
+      "positions": 3557,
+      "missing": 43
+     },
+     "aggr": {
+      "1000": {
+       "final": -0.0183,
+       "max_dd": -0.0289,
+       "taken": 58,
+       "no_cash": 0,
+       "too_small": 1,
+       "day_median": -0.00021,
+       "exits": {
+        "тейк": 34,
+        "срок": 19,
+        "пол": 6
+       },
+       "lev_median": 7.4789828039793065,
+       "pos_pnl_median": 0.07408113687563976,
+       "floor_share": 0.1016949152542373
+      },
+      "10000": {
+       "final": -0.0085,
+       "max_dd": -0.0134,
+       "taken": 59,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": -9e-05,
+       "exits": {
+        "тейк": 34,
+        "срок": 19,
+        "пол": 6
+       },
+       "lev_median": 7.4789828039793065,
+       "pos_pnl_median": 0.07408113687563976,
+       "floor_share": 0.1016949152542373
+      },
+      "positions": 3557,
+      "missing": 43
+     }
+    },
+    {
+     "safe": {
+      "1000": {
+       "final": -0.0983,
+       "max_dd": -0.142,
+       "taken": 1000,
+       "no_cash": 605,
+       "too_small": 72,
+       "day_median": -0.00027,
+       "exits": {
+        "срок": 991,
+        "тейк": 685,
+        "пол": 1
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.0034020217729393604,
+       "floor_share": 0.0005963029218843172
+      },
+      "10000": {
+       "final": -0.0191,
+       "max_dd": -0.0265,
+       "taken": 1615,
+       "no_cash": 0,
+       "too_small": 62,
+       "day_median": 8e-05,
+       "exits": {
+        "срок": 991,
+        "тейк": 685,
+        "пол": 1
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.0034020217729393604,
+       "floor_share": 0.0005963029218843172
+      },
+      "positions": 3543,
+      "missing": 57
+     },
+     "optimal": {
+      "1000": {
+       "final": -0.1646,
+       "max_dd": -0.25,
+       "taken": 997,
+       "no_cash": 564,
+       "too_small": 119,
+       "day_median": 0.00113,
+       "exits": {
+        "срок": 983,
+        "тейк": 687,
+        "пол": 9,
+        "ликвидация": 1
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.003592374999999993,
+       "floor_share": 0.005952380952380952
+      },
+      "10000": {
+       "final": -0.0317,
+       "max_dd": -0.0409,
+       "taken": 1621,
+       "no_cash": 0,
+       "too_small": 59,
+       "day_median": 0.00021,
+       "exits": {
+        "срок": 983,
+        "тейк": 687,
+        "пол": 9,
+        "ликвидация": 1
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.003592374999999993,
+       "floor_share": 0.005952380952380952
+      },
+      "positions": 3543,
+      "missing": 57
+     },
+     "aggr": {
+      "1000": {
+       "final": -0.0151,
+       "max_dd": -0.0343,
+       "taken": 55,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.00042,
+       "exits": {
+        "тейк": 31,
+        "пол": 7,
+        "срок": 16,
+        "ликвидация": 1
+       },
+       "lev_median": 7.478473743321956,
+       "pos_pnl_median": 0.06050935474052942,
+       "floor_share": 0.14545454545454545
+      },
+      "10000": {
+       "final": -0.0067,
+       "max_dd": -0.0154,
+       "taken": 55,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.00019,
+       "exits": {
+        "тейк": 31,
+        "пол": 7,
+        "срок": 16,
+        "ликвидация": 1
+       },
+       "lev_median": 7.478473743321956,
+       "pos_pnl_median": 0.06050935474052942,
+       "floor_share": 0.14545454545454545
+      },
+      "positions": 3543,
+      "missing": 57
+     }
+    }
+   ]
+  },
+  {
+   "name": "йена 08.2024",
+   "from": "2024-07-15",
+   "to": "2024-09-15",
+   "kind": "crash",
+   "btc": -0.012987162625941684,
+   "median_move": -0.10050912065817208,
+   "symbols": 120,
+   "seeds": [
+    {
+     "safe": {
+      "1000": {
+       "final": 0.0199,
+       "max_dd": -0.1938,
+       "taken": 1171,
+       "no_cash": 554,
+       "too_small": 78,
+       "day_median": 0.00104,
+       "exits": {
+        "тейк": 964,
+        "срок": 839
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.008914500000000004,
+       "floor_share": 0.0
+      },
+      "10000": {
+       "final": -0.0036,
+       "max_dd": -0.03,
+       "taken": 1717,
+       "no_cash": 0,
+       "too_small": 86,
+       "day_median": 0.00016,
+       "exits": {
+        "тейк": 964,
+        "срок": 839
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.008914500000000004,
+       "floor_share": 0.0
+      },
+      "positions": 3555,
+      "missing": 165
+     },
+     "optimal": {
+      "1000": {
+       "final": 0.1781,
+       "max_dd": -0.2628,
+       "taken": 1181,
+       "no_cash": 567,
+       "too_small": 58,
+       "day_median": 0.00139,
+       "exits": {
+        "тейк": 966,
+        "срок": 836,
+        "ликвидация": 1,
+        "пол": 3
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.009400249999999999,
+       "floor_share": 0.0022148394241417496
+      },
+      "10000": {
+       "final": 0.0103,
+       "max_dd": -0.0392,
+       "taken": 1727,
+       "no_cash": 0,
+       "too_small": 79,
+       "day_median": -1e-05,
+       "exits": {
+        "тейк": 966,
+        "срок": 836,
+        "ликвидация": 1,
+        "пол": 3
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.009400249999999999,
+       "floor_share": 0.0022148394241417496
+      },
+      "positions": 3555,
+      "missing": 165
+     },
+     "aggr": {
+      "1000": {
+       "final": 0.0412,
+       "max_dd": -0.0279,
+       "taken": 122,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.00046,
+       "exits": {
+        "тейк": 92,
+        "ликвидация": 1,
+        "срок": 24,
+        "пол": 5
+       },
+       "lev_median": 6.972802511518239,
+       "pos_pnl_median": 0.09292207107958621,
+       "floor_share": 0.04918032786885246
+      },
+      "10000": {
+       "final": 0.0184,
+       "max_dd": -0.0125,
+       "taken": 122,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.0002,
+       "exits": {
+        "тейк": 92,
+        "ликвидация": 1,
+        "срок": 24,
+        "пол": 5
+       },
+       "lev_median": 6.972802511518239,
+       "pos_pnl_median": 0.09292207107958621,
+       "floor_share": 0.04918032786885246
+      },
+      "positions": 3555,
+      "missing": 165
+     }
+    },
+    {
+     "safe": {
+      "1000": {
+       "final": -0.0025,
+       "max_dd": -0.2041,
+       "taken": 1201,
+       "no_cash": 525,
+       "too_small": 99,
+       "day_median": 0.00019,
+       "exits": {
+        "тейк": 968,
+        "срок": 857
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.008487499999999986,
+       "floor_share": 0.0
+      },
+      "10000": {
+       "final": -0.0048,
+       "max_dd": -0.0347,
+       "taken": 1729,
+       "no_cash": 0,
+       "too_small": 96,
+       "day_median": 1e-05,
+       "exits": {
+        "тейк": 968,
+        "срок": 857
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.008487499999999986,
+       "floor_share": 0.0
+      },
+      "positions": 3569,
+      "missing": 151
+     },
+     "optimal": {
+      "1000": {
+       "final": 0.0731,
+       "max_dd": -0.2719,
+       "taken": 1200,
+       "no_cash": 549,
+       "too_small": 78,
+       "day_median": -0.0009,
+       "exits": {
+        "тейк": 967,
+        "срок": 852,
+        "пол": 8
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.009120499999999953,
+       "floor_share": 0.004378762999452655
+      },
+      "10000": {
+       "final": 0.0,
+       "max_dd": -0.0499,
+       "taken": 1738,
+       "no_cash": 0,
+       "too_small": 89,
+       "day_median": -4e-05,
+       "exits": {
+        "тейк": 967,
+        "срок": 852,
+        "пол": 8
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.009120499999999953,
+       "floor_share": 0.004378762999452655
+      },
+      "positions": 3569,
+      "missing": 151
+     },
+     "aggr": {
+      "1000": {
+       "final": 0.0374,
+       "max_dd": -0.0246,
+       "taken": 110,
+       "no_cash": 0,
+       "too_small": 2,
+       "day_median": 0.00076,
+       "exits": {
+        "тейк": 80,
+        "срок": 24,
+        "пол": 8
+       },
+       "lev_median": 7.259880652447464,
+       "pos_pnl_median": 0.0902339100771199,
+       "floor_share": 0.07142857142857142
+      },
+      "10000": {
+       "final": 0.0168,
+       "max_dd": -0.0111,
+       "taken": 112,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.00034,
+       "exits": {
+        "тейк": 80,
+        "срок": 24,
+        "пол": 8
+       },
+       "lev_median": 7.259880652447464,
+       "pos_pnl_median": 0.0902339100771199,
+       "floor_share": 0.07142857142857142
+      },
+      "positions": 3569,
+      "missing": 151
+     }
+    },
+    {
+     "safe": {
+      "1000": {
+       "final": 0.0081,
+       "max_dd": -0.2113,
+       "taken": 1182,
+       "no_cash": 543,
+       "too_small": 106,
+       "day_median": 0.00114,
+       "exits": {
+        "тейк": 989,
+        "срок": 842
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.008777500000000011,
+       "floor_share": 0.0
+      },
+      "10000": {
+       "final": -0.0047,
+       "max_dd": -0.0355,
+       "taken": 1726,
+       "no_cash": 0,
+       "too_small": 105,
+       "day_median": -6e-05,
+       "exits": {
+        "тейк": 989,
+        "срок": 842
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.008777500000000011,
+       "floor_share": 0.0
+      },
+      "positions": 3570,
+      "missing": 150
+     },
+     "optimal": {
+      "1000": {
+       "final": 0.0959,
+       "max_dd": -0.2941,
+       "taken": 1187,
+       "no_cash": 572,
+       "too_small": 77,
+       "day_median": 0.00293,
+       "exits": {
+        "тейк": 993,
+        "срок": 834,
+        "пол": 9
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.00943723113207548,
+       "floor_share": 0.004901960784313725
+      },
+      "10000": {
+       "final": -0.0022,
+       "max_dd": -0.0485,
+       "taken": 1738,
+       "no_cash": 0,
+       "too_small": 98,
+       "day_median": -1e-05,
+       "exits": {
+        "тейк": 993,
+        "срок": 834,
+        "пол": 9
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.00943723113207548,
+       "floor_share": 0.004901960784313725
+      },
+      "positions": 3570,
+      "missing": 150
+     },
+     "aggr": {
+      "1000": {
+       "final": 0.0514,
+       "max_dd": -0.0356,
+       "taken": 133,
+       "no_cash": 0,
+       "too_small": 1,
+       "day_median": 0.0007,
+       "exits": {
+        "тейк": 104,
+        "срок": 21,
+        "пол": 9
+       },
+       "lev_median": 7.367319195880555,
+       "pos_pnl_median": 0.10695898518657608,
+       "floor_share": 0.06716417910447761
+      },
+      "10000": {
+       "final": 0.0226,
+       "max_dd": -0.016,
+       "taken": 134,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.00019,
+       "exits": {
+        "тейк": 104,
+        "срок": 21,
+        "пол": 9
+       },
+       "lev_median": 7.367319195880555,
+       "pos_pnl_median": 0.10695898518657608,
+       "floor_share": 0.06716417910447761
+      },
+      "positions": 3570,
+      "missing": 150
+     }
+    }
+   ]
+  },
+  {
+   "name": "рост 11.2023",
+   "from": "2023-10-15",
+   "to": "2023-12-15",
+   "kind": "calm",
+   "btc": 0.6034052382549084,
+   "median_move": 0.7195361688084224,
+   "symbols": 120,
+   "seeds": [
+    {
+     "safe": {
+      "1000": {
+       "final": 0.3131,
+       "max_dd": -0.0745,
+       "taken": 1279,
+       "no_cash": 545,
+       "too_small": 47,
+       "day_median": 0.00757,
+       "exits": {
+        "тейк": 1222,
+        "срок": 649
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.011759323062368501,
+       "floor_share": 0.0
+      },
+      "10000": {
+       "final": 0.0423,
+       "max_dd": -0.0086,
+       "taken": 1806,
+       "no_cash": 0,
+       "too_small": 65,
+       "day_median": 0.00088,
+       "exits": {
+        "тейк": 1222,
+        "срок": 649
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.011759323062368501,
+       "floor_share": 0.0
+      },
+      "positions": 3505,
+      "missing": 155
+     },
+     "optimal": {
+      "1000": {
+       "final": 0.2716,
+       "max_dd": -0.1355,
+       "taken": 1290,
+       "no_cash": 548,
+       "too_small": 43,
+       "day_median": 0.00907,
+       "exits": {
+        "тейк": 1230,
+        "срок": 636,
+        "пол": 12,
+        "ликвидация": 3
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.012523999999999992,
+       "floor_share": 0.007974481658692184
+      },
+      "10000": {
+       "final": 0.0429,
+       "max_dd": -0.0149,
+       "taken": 1817,
+       "no_cash": 0,
+       "too_small": 64,
+       "day_median": 0.00127,
+       "exits": {
+        "тейк": 1230,
+        "срок": 636,
+        "пол": 12,
+        "ликвидация": 3
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.012523999999999992,
+       "floor_share": 0.007974481658692184
+      },
+      "positions": 3505,
+      "missing": 155
+     },
+     "aggr": {
+      "1000": {
+       "final": -0.0272,
+       "max_dd": -0.0416,
+       "taken": 100,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": -0.0,
+       "exits": {
+        "тейк": 62,
+        "срок": 23,
+        "пол": 12,
+        "ликвидация": 3
+       },
+       "lev_median": 7.203985583888425,
+       "pos_pnl_median": 0.08030584649977936,
+       "floor_share": 0.15
+      },
+      "10000": {
+       "final": -0.0122,
+       "max_dd": -0.0188,
+       "taken": 100,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": -0.0,
+       "exits": {
+        "тейк": 62,
+        "срок": 23,
+        "пол": 12,
+        "ликвидация": 3
+       },
+       "lev_median": 7.203985583888425,
+       "pos_pnl_median": 0.08030584649977936,
+       "floor_share": 0.15
+      },
+      "positions": 3505,
+      "missing": 155
+     }
+    },
+    {
+     "safe": {
+      "1000": {
+       "final": 0.4044,
+       "max_dd": -0.0638,
+       "taken": 1299,
+       "no_cash": 536,
+       "too_small": 36,
+       "day_median": 0.00929,
+       "exits": {
+        "тейк": 1209,
+        "срок": 662
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.012089499999999965,
+       "floor_share": 0.0
+      },
+      "10000": {
+       "final": 0.0459,
+       "max_dd": -0.0095,
+       "taken": 1805,
+       "no_cash": 0,
+       "too_small": 66,
+       "day_median": 0.00099,
+       "exits": {
+        "тейк": 1209,
+        "срок": 662
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.012089499999999965,
+       "floor_share": 0.0
+      },
+      "positions": 3478,
+      "missing": 182
+     },
+     "optimal": {
+      "1000": {
+       "final": 0.5098,
+       "max_dd": -0.1105,
+       "taken": 1310,
+       "no_cash": 529,
+       "too_small": 34,
+       "day_median": 0.01293,
+       "exits": {
+        "тейк": 1211,
+        "срок": 653,
+        "пол": 5,
+        "ликвидация": 4
+       },
+       "lev_median": 1.7444109079588088,
+       "pos_pnl_median": 0.012838000000000007,
+       "floor_share": 0.004805125467164976
+      },
+      "10000": {
+       "final": 0.0563,
+       "max_dd": -0.0188,
+       "taken": 1811,
+       "no_cash": 0,
+       "too_small": 62,
+       "day_median": 0.00169,
+       "exits": {
+        "тейк": 1211,
+        "срок": 653,
+        "пол": 5,
+        "ликвидация": 4
+       },
+       "lev_median": 1.7444109079588088,
+       "pos_pnl_median": 0.012838000000000007,
+       "floor_share": 0.004805125467164976
+      },
+      "positions": 3478,
+      "missing": 182
+     },
+     "aggr": {
+      "1000": {
+       "final": 0.0042,
+       "max_dd": -0.0333,
+       "taken": 87,
+       "no_cash": 0,
+       "too_small": 1,
+       "day_median": 0.00037,
+       "exits": {
+        "срок": 17,
+        "тейк": 60,
+        "пол": 7,
+        "ликвидация": 4
+       },
+       "lev_median": 7.149899738848035,
+       "pos_pnl_median": 0.0913937539651409,
+       "floor_share": 0.125
+      },
+      "10000": {
+       "final": 0.002,
+       "max_dd": -0.0151,
+       "taken": 88,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.00017,
+       "exits": {
+        "срок": 17,
+        "тейк": 60,
+        "пол": 7,
+        "ликвидация": 4
+       },
+       "lev_median": 7.149899738848035,
+       "pos_pnl_median": 0.0913937539651409,
+       "floor_share": 0.125
+      },
+      "positions": 3478,
+      "missing": 182
+     }
+    },
+    {
+     "safe": {
+      "1000": {
+       "final": 0.4074,
+       "max_dd": -0.0557,
+       "taken": 1306,
+       "no_cash": 543,
+       "too_small": 43,
+       "day_median": 0.00894,
+       "exits": {
+        "срок": 670,
+        "тейк": 1222
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.011634626618932293,
+       "floor_share": 0.0
+      },
+      "10000": {
+       "final": 0.0457,
+       "max_dd": -0.0078,
+       "taken": 1819,
+       "no_cash": 0,
+       "too_small": 73,
+       "day_median": 0.00108,
+       "exits": {
+        "срок": 670,
+        "тейк": 1222
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.011634626618932293,
+       "floor_share": 0.0
+      },
+      "positions": 3498,
+      "missing": 162
+     },
+     "optimal": {
+      "1000": {
+       "final": 0.6402,
+       "max_dd": -0.0977,
+       "taken": 1317,
+       "no_cash": 545,
+       "too_small": 37,
+       "day_median": 0.01294,
+       "exits": {
+        "срок": 662,
+        "тейк": 1229,
+        "ликвидация": 1,
+        "пол": 7
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.012456000000000023,
+       "floor_share": 0.00421274354923644
+      },
+      "10000": {
+       "final": 0.0664,
+       "max_dd": -0.0112,
+       "taken": 1830,
+       "no_cash": 0,
+       "too_small": 69,
+       "day_median": 0.00167,
+       "exits": {
+        "срок": 662,
+        "тейк": 1229,
+        "ликвидация": 1,
+        "пол": 7
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.012456000000000023,
+       "floor_share": 0.00421274354923644
+      },
+      "positions": 3498,
+      "missing": 162
+     },
+     "aggr": {
+      "1000": {
+       "final": 0.0654,
+       "max_dd": -0.014,
+       "taken": 108,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.0012,
+       "exits": {
+        "тейк": 85,
+        "срок": 15,
+        "ликвидация": 1,
+        "пол": 7
+       },
+       "lev_median": 7.3443273226876045,
+       "pos_pnl_median": 0.11845740989067144,
+       "floor_share": 0.07407407407407407
+      },
+      "10000": {
+       "final": 0.0289,
+       "max_dd": -0.0063,
+       "taken": 108,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.00052,
+       "exits": {
+        "тейк": 85,
+        "срок": 15,
+        "ликвидация": 1,
+        "пол": 7
+       },
+       "lev_median": 7.3443273226876045,
+       "pos_pnl_median": 0.11845740989067144,
+       "floor_share": 0.07407407407407407
+      },
+      "positions": 3498,
+      "missing": 162
+     }
+    }
+   ]
+  },
+  {
+   "name": "рост 02.2024",
+   "from": "2024-02-01",
+   "to": "2024-03-31",
+   "kind": "calm",
+   "btc": 0.6347055318070693,
+   "median_move": 0.6336675727396686,
+   "symbols": 120,
+   "seeds": [
+    {
+     "safe": {
+      "1000": {
+       "final": 0.4241,
+       "max_dd": -0.1236,
+       "taken": 1378,
+       "no_cash": 424,
+       "too_small": 89,
+       "day_median": 0.00635,
+       "exits": {
+        "тейк": 1305,
+        "срок": 586
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.0125127973959676,
+       "floor_share": 0.0
+      },
+      "10000": {
+       "final": 0.0454,
+       "max_dd": -0.0166,
+       "taken": 1758,
+       "no_cash": 0,
+       "too_small": 133,
+       "day_median": 0.0007,
+       "exits": {
+        "тейк": 1305,
+        "срок": 586
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.0125127973959676,
+       "floor_share": 0.0
+      },
+      "positions": 3446,
+      "missing": 94
+     },
+     "optimal": {
+      "1000": {
+       "final": 0.6713,
+       "max_dd": -0.199,
+       "taken": 1396,
+       "no_cash": 432,
+       "too_small": 72,
+       "day_median": 0.00844,
+       "exits": {
+        "тейк": 1316,
+        "срок": 571,
+        "пол": 12,
+        "ликвидация": 1
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.013803500000000005,
+       "floor_share": 0.006842105263157895
+      },
+      "10000": {
+       "final": 0.0658,
+       "max_dd": -0.0268,
+       "taken": 1783,
+       "no_cash": 0,
+       "too_small": 117,
+       "day_median": 0.0012,
+       "exits": {
+        "тейк": 1316,
+        "срок": 571,
+        "пол": 12,
+        "ликвидация": 1
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.013803500000000005,
+       "floor_share": 0.006842105263157895
+      },
+      "positions": 3446,
+      "missing": 94
+     },
+     "aggr": {
+      "1000": {
+       "final": 0.0204,
+       "max_dd": -0.0422,
+       "taken": 121,
+       "no_cash": 0,
+       "too_small": 6,
+       "day_median": 0.0005,
+       "exits": {
+        "срок": 18,
+        "тейк": 91,
+        "пол": 17,
+        "ликвидация": 1
+       },
+       "lev_median": 6.763793555423035,
+       "pos_pnl_median": 0.10174278275601799,
+       "floor_share": 0.14173228346456693
+      },
+      "10000": {
+       "final": 0.0096,
+       "max_dd": -0.0203,
+       "taken": 127,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.00022,
+       "exits": {
+        "срок": 18,
+        "тейк": 91,
+        "пол": 17,
+        "ликвидация": 1
+       },
+       "lev_median": 6.763793555423035,
+       "pos_pnl_median": 0.10174278275601799,
+       "floor_share": 0.14173228346456693
+      },
+      "positions": 3446,
+      "missing": 94
+     }
+    },
+    {
+     "safe": {
+      "1000": {
+       "final": 0.4967,
+       "max_dd": -0.1132,
+       "taken": 1384,
+       "no_cash": 451,
+       "too_small": 81,
+       "day_median": 0.00858,
+       "exits": {
+        "срок": 583,
+        "тейк": 1333
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.012835827981849405,
+       "floor_share": 0.0
+      },
+      "10000": {
+       "final": 0.0502,
+       "max_dd": -0.0162,
+       "taken": 1785,
+       "no_cash": 0,
+       "too_small": 131,
+       "day_median": 0.00099,
+       "exits": {
+        "срок": 583,
+        "тейк": 1333
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.012835827981849405,
+       "floor_share": 0.0
+      },
+      "positions": 3431,
+      "missing": 109
+     },
+     "optimal": {
+      "1000": {
+       "final": 0.7169,
+       "max_dd": -0.2027,
+       "taken": 1405,
+       "no_cash": 459,
+       "too_small": 63,
+       "day_median": 0.00743,
+       "exits": {
+        "срок": 570,
+        "тейк": 1337,
+        "ликвидация": 2,
+        "пол": 18
+       },
+       "lev_median": 1.8275427367698285,
+       "pos_pnl_median": 0.014037000000000015,
+       "floor_share": 0.010378827192527244
+      },
+      "10000": {
+       "final": 0.0722,
+       "max_dd": -0.0332,
+       "taken": 1823,
+       "no_cash": 0,
+       "too_small": 104,
+       "day_median": 0.00161,
+       "exits": {
+        "срок": 570,
+        "тейк": 1337,
+        "ликвидация": 2,
+        "пол": 18
+       },
+       "lev_median": 1.8275427367698285,
+       "pos_pnl_median": 0.014037000000000015,
+       "floor_share": 0.010378827192527244
+      },
+      "positions": 3431,
+      "missing": 109
+     },
+     "aggr": {
+      "1000": {
+       "final": 0.0224,
+       "max_dd": -0.051,
+       "taken": 154,
+       "no_cash": 0,
+       "too_small": 6,
+       "day_median": 0.00068,
+       "exits": {
+        "пол": 23,
+        "тейк": 113,
+        "срок": 22,
+        "ликвидация": 2
+       },
+       "lev_median": 6.957689229253447,
+       "pos_pnl_median": 0.0926533952841384,
+       "floor_share": 0.15625
+      },
+      "10000": {
+       "final": 0.0079,
+       "max_dd": -0.0257,
+       "taken": 159,
+       "no_cash": 0,
+       "too_small": 1,
+       "day_median": 0.00026,
+       "exits": {
+        "пол": 23,
+        "тейк": 113,
+        "срок": 22,
+        "ликвидация": 2
+       },
+       "lev_median": 6.957689229253447,
+       "pos_pnl_median": 0.0926533952841384,
+       "floor_share": 0.15625
+      },
+      "positions": 3431,
+      "missing": 109
+     }
+    },
+    {
+     "safe": {
+      "1000": {
+       "final": 0.4167,
+       "max_dd": -0.1252,
+       "taken": 1369,
+       "no_cash": 477,
+       "too_small": 95,
+       "day_median": 0.00514,
+       "exits": {
+        "срок": 606,
+        "тейк": 1335
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.012519999999999976,
+       "floor_share": 0.0
+      },
+      "10000": {
+       "final": 0.0458,
+       "max_dd": -0.0184,
+       "taken": 1795,
+       "no_cash": 0,
+       "too_small": 146,
+       "day_median": 0.00066,
+       "exits": {
+        "срок": 606,
+        "тейк": 1335
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.012519999999999976,
+       "floor_share": 0.0
+      },
+      "positions": 3436,
+      "missing": 104
+     },
+     "optimal": {
+      "1000": {
+       "final": 0.5613,
+       "max_dd": -0.2351,
+       "taken": 1380,
+       "no_cash": 489,
+       "too_small": 80,
+       "day_median": 0.00555,
+       "exits": {
+        "срок": 590,
+        "тейк": 1343,
+        "ликвидация": 3,
+        "пол": 13
+       },
+       "lev_median": 1.4753466960974038,
+       "pos_pnl_median": 0.013657499999999977,
+       "floor_share": 0.008209338122113904
+      },
+      "10000": {
+       "final": 0.0644,
+       "max_dd": -0.033,
+       "taken": 1825,
+       "no_cash": 0,
+       "too_small": 124,
+       "day_median": 0.00112,
+       "exits": {
+        "срок": 590,
+        "тейк": 1343,
+        "ликвидация": 3,
+        "пол": 13
+       },
+       "lev_median": 1.4753466960974038,
+       "pos_pnl_median": 0.013657499999999977,
+       "floor_share": 0.008209338122113904
+      },
+      "positions": 3436,
+      "missing": 104
+     },
+     "aggr": {
+      "1000": {
+       "final": 0.0277,
+       "max_dd": -0.0413,
+       "taken": 126,
+       "no_cash": 0,
+       "too_small": 4,
+       "day_median": 0.00103,
+       "exits": {
+        "срок": 16,
+        "тейк": 95,
+        "ликвидация": 3,
+        "пол": 16
+       },
+       "lev_median": 7.085932008092641,
+       "pos_pnl_median": 0.10164577228600069,
+       "floor_share": 0.14615384615384616
+      },
+      "10000": {
+       "final": 0.0098,
+       "max_dd": -0.0216,
+       "taken": 130,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.00046,
+       "exits": {
+        "срок": 16,
+        "тейк": 95,
+        "ликвидация": 3,
+        "пол": 16
+       },
+       "lev_median": 7.085932008092641,
+       "pos_pnl_median": 0.10164577228600069,
+       "floor_share": 0.14615384615384616
+      },
+      "positions": 3436,
+      "missing": 104
+     }
+    }
+   ]
+  },
+  {
+   "name": "запись книг",
+   "from": "2026-08-04",
+   "to": "2026-10-13",
+   "kind": "calib",
+   "btc": 0.2894788259244552,
+   "median_move": 0.2575781607382649,
+   "symbols": 120,
+   "seeds": [
+    {
+     "safe": {
+      "1000": {
+       "final": 0.3192,
+       "max_dd": -0.0498,
+       "taken": 1442,
+       "no_cash": 526,
+       "too_small": 188,
+       "day_median": 0.00532,
+       "exits": {
+        "срок": 972,
+        "тейк": 1184
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.009170664283823144,
+       "floor_share": 0.0
+      },
+      "10000": {
+       "final": 0.0327,
+       "max_dd": -0.007,
+       "taken": 1874,
+       "no_cash": 0,
+       "too_small": 282,
+       "day_median": 0.00059,
+       "exits": {
+        "срок": 972,
+        "тейк": 1184
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.009170664283823144,
+       "floor_share": 0.0
+      },
+      "positions": 4200,
+      "missing": 0
+     },
+     "optimal": {
+      "1000": {
+       "final": 0.6909,
+       "max_dd": -0.0675,
+       "taken": 1457,
+       "no_cash": 592,
+       "too_small": 122,
+       "day_median": 0.00998,
+       "exits": {
+        "срок": 955,
+        "тейк": 1202,
+        "пол": 11,
+        "ликвидация": 3
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.010249500000000036,
+       "floor_share": 0.006448641179180101
+      },
+      "10000": {
+       "final": 0.0591,
+       "max_dd": -0.0112,
+       "taken": 1921,
+       "no_cash": 0,
+       "too_small": 250,
+       "day_median": 0.0011,
+       "exits": {
+        "срок": 955,
+        "тейк": 1202,
+        "пол": 11,
+        "ликвидация": 3
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.010249500000000036,
+       "floor_share": 0.006448641179180101
+      },
+      "positions": 4200,
+      "missing": 0
+     },
+     "aggr": {
+      "1000": {
+       "final": 0.0822,
+       "max_dd": -0.0119,
+       "taken": 139,
+       "no_cash": 0,
+       "too_small": 10,
+       "day_median": 0.00073,
+       "exits": {
+        "тейк": 123,
+        "ликвидация": 3,
+        "пол": 7,
+        "срок": 16
+       },
+       "lev_median": 7.466016761871288,
+       "pos_pnl_median": 0.09776756412605445,
+       "floor_share": 0.06711409395973154
+      },
+      "10000": {
+       "final": 0.0369,
+       "max_dd": -0.0066,
+       "taken": 149,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.00035,
+       "exits": {
+        "тейк": 123,
+        "ликвидация": 3,
+        "пол": 7,
+        "срок": 16
+       },
+       "lev_median": 7.466016761871288,
+       "pos_pnl_median": 0.09776756412605445,
+       "floor_share": 0.06711409395973154
+      },
+      "positions": 4200,
+      "missing": 0
+     }
+    },
+    {
+     "safe": {
+      "1000": {
+       "final": 0.253,
+       "max_dd": -0.0499,
+       "taken": 1406,
+       "no_cash": 553,
+       "too_small": 218,
+       "day_median": 0.00346,
+       "exits": {
+        "срок": 986,
+        "тейк": 1191
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.009178499999999997,
+       "floor_share": 0.0
+      },
+      "10000": {
+       "final": 0.0241,
+       "max_dd": -0.0075,
+       "taken": 1886,
+       "no_cash": 0,
+       "too_small": 291,
+       "day_median": 0.0003,
+       "exits": {
+        "срок": 986,
+        "тейк": 1191
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.009178499999999997,
+       "floor_share": 0.0
+      },
+      "positions": 4200,
+      "missing": 0
+     },
+     "optimal": {
+      "1000": {
+       "final": 0.3925,
+       "max_dd": -0.0874,
+       "taken": 1445,
+       "no_cash": 565,
+       "too_small": 176,
+       "day_median": 0.00415,
+       "exits": {
+        "срок": 973,
+        "тейк": 1196,
+        "пол": 15,
+        "ликвидация": 2
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.0101205,
+       "floor_share": 0.00777676120768527
+      },
+      "10000": {
+       "final": 0.0355,
+       "max_dd": -0.0134,
+       "taken": 1930,
+       "no_cash": 0,
+       "too_small": 256,
+       "day_median": 0.00058,
+       "exits": {
+        "срок": 973,
+        "тейк": 1196,
+        "пол": 15,
+        "ликвидация": 2
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.0101205,
+       "floor_share": 0.00777676120768527
+      },
+      "positions": 4200,
+      "missing": 0
+     },
+     "aggr": {
+      "1000": {
+       "final": 0.0513,
+       "max_dd": -0.0188,
+       "taken": 157,
+       "no_cash": 0,
+       "too_small": 8,
+       "day_median": 0.0009,
+       "exits": {
+        "тейк": 126,
+        "срок": 26,
+        "пол": 11,
+        "ликвидация": 2
+       },
+       "lev_median": 7.591818098917429,
+       "pos_pnl_median": 0.09677172188794753,
+       "floor_share": 0.07878787878787878
+      },
+      "10000": {
+       "final": 0.0255,
+       "max_dd": -0.0085,
+       "taken": 165,
+       "no_cash": 0,
+       "too_small": 0,
+       "day_median": 0.0004,
+       "exits": {
+        "тейк": 126,
+        "срок": 26,
+        "пол": 11,
+        "ликвидация": 2
+       },
+       "lev_median": 7.591818098917429,
+       "pos_pnl_median": 0.09677172188794753,
+       "floor_share": 0.07878787878787878
+      },
+      "positions": 4200,
+      "missing": 0
+     }
+    },
+    {
+     "safe": {
+      "1000": {
+       "final": 0.2289,
+       "max_dd": -0.0474,
+       "taken": 1452,
+       "no_cash": 511,
+       "too_small": 226,
+       "day_median": 0.0029,
+       "exits": {
+        "срок": 973,
+        "тейк": 1216
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.00901473851478201,
+       "floor_share": 0.0
+      },
+      "10000": {
+       "final": 0.0266,
+       "max_dd": -0.0063,
+       "taken": 1896,
+       "no_cash": 0,
+       "too_small": 293,
+       "day_median": 0.00046,
+       "exits": {
+        "срок": 973,
+        "тейк": 1216
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.00901473851478201,
+       "floor_share": 0.0
+      },
+      "positions": 4200,
+      "missing": 0
+     },
+     "optimal": {
+      "1000": {
+       "final": 0.4608,
+       "max_dd": -0.0878,
+       "taken": 1490,
+       "no_cash": 553,
+       "too_small": 161,
+       "day_median": 0.00572,
+       "exits": {
+        "срок": 957,
+        "тейк": 1232,
+        "пол": 11,
+        "ликвидация": 4
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.010098829758121652,
+       "floor_share": 0.006805807622504537
+      },
+      "10000": {
+       "final": 0.0562,
+       "max_dd": -0.0101,
+       "taken": 1948,
+       "no_cash": 0,
+       "too_small": 256,
+       "day_median": 0.00083,
+       "exits": {
+        "срок": 957,
+        "тейк": 1232,
+        "пол": 11,
+        "ликвидация": 4
+       },
+       "lev_median": 1.0,
+       "pos_pnl_median": 0.010098829758121652,
+       "floor_share": 0.006805807622504537
+      },
+      "positions": 4200,
+      "missing": 0
+     },
+     "aggr": {
+      "1000": {
+       "final": 0.0772,
+       "max_dd": -0.0216,
+       "taken": 161,
+       "no_cash": 0,
+       "too_small": 6,
+       "day_median": 0.0009,
+       "exits": {
+        "тейк": 126,
+        "срок": 29,
+        "пол": 8,
+        "ликвидация": 4
+       },
+       "lev_median": 7.517168412960018,
+       "pos_pnl_median": 0.10928760898872222,
+       "floor_share": 0.0718562874251497
+      },
+      "10000": {
+       "final": 0.0352,
+       "max_dd": -0.0097,
+       "taken": 166,
+       "no_cash": 0,
+       "too_small": 1,
+       "day_median": 0.00038,
+       "exits": {
+        "тейк": 126,
+        "срок": 29,
+        "пол": 8,
+        "ликвидация": 4
+       },
+       "lev_median": 7.517168412960018,
+       "pos_pnl_median": 0.10928760898872222,
+       "floor_share": 0.0718562874251497
+      },
+      "positions": 4200,
+      "missing": 0
+     }
+    }
+   ],
+   "real": {
+    "safe": {
+     "1000": {
+      "final": 0.1467,
+      "max_dd": -0.0999,
+      "taken": 562,
+      "no_cash": 1250,
+      "too_small": 86,
+      "day_median": 0.00026,
+      "exits": {
+       "тейк": 1271,
+       "срок": 627
+      },
+      "lev_median": 1.5275258705296437,
+      "pos_pnl_median": 0.01835511989641579,
+      "floor_share": 0.0
+     },
+     "10000": {
+      "final": 0.0909,
+      "max_dd": -0.0375,
+      "taken": 1756,
+      "no_cash": 57,
+      "too_small": 85,
+      "day_median": 3e-05,
+      "exits": {
+       "тейк": 1271,
+       "срок": 627
+      },
+      "lev_median": 1.5275258705296437,
+      "pos_pnl_median": 0.01835511989641579,
+      "floor_share": 0.0
+     }
+    },
+    "optimal": {
+     "1000": {
+      "final": 0.2539,
+      "max_dd": -0.3149,
+      "taken": 564,
+      "no_cash": 1259,
+      "too_small": 87,
+      "day_median": 0.00066,
+      "exits": {
+       "тейк": 1279,
+       "срок": 617,
+       "пол": 10,
+       "ликвидация": 4
+      },
+      "lev_median": 1.9271005219852668,
+      "pos_pnl_median": 0.024176849133908433,
+      "floor_share": 0.007329842931937173
+     },
+     "10000": {
+      "final": 0.198,
+      "max_dd": -0.0966,
+      "taken": 1777,
+      "no_cash": 57,
+      "too_small": 76,
+      "day_median": 9e-05,
+      "exits": {
+       "тейк": 1279,
+       "срок": 617,
+       "пол": 10,
+       "ликвидация": 4
+      },
+      "lev_median": 1.9271005219852668,
+      "pos_pnl_median": 0.024176849133908433,
+      "floor_share": 0.007329842931937173
+     }
+    },
+    "aggr": {
+     "1000": {
+      "final": 0.3246,
+      "max_dd": -0.2038,
+      "taken": 515,
+      "no_cash": 139,
+      "too_small": 0,
+      "day_median": 0.00039,
+      "exits": {
+       "срок": 70,
+       "тейк": 561,
+       "пол": 16,
+       "ликвидация": 7
+      },
+      "lev_median": 8.606027193120099,
+      "pos_pnl_median": 0.12297987150630975,
+      "floor_share": 0.035168195718654434
+     },
+     "10000": {
+      "final": 0.2118,
+      "max_dd": -0.1049,
+      "taken": 654,
+      "no_cash": 0,
+      "too_small": 0,
+      "day_median": 0.00017,
+      "exits": {
+       "срок": 70,
+       "тейк": 561,
+       "пол": 16,
+       "ликвидация": 7
+      },
+      "lev_median": 8.606027193120099,
+      "pos_pnl_median": 0.12297987150630975,
+      "floor_share": 0.035168195718654434
+     }
+    }
+   }
+  }
+ ],
+ "secs": 2312.2,
+ "computed_at": "2026-10-15 23:01"
+}
