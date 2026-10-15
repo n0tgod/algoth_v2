@@ -1,0 +1,47 @@
+== задание na32-wd ==
+строка: run tools/loggrep.py --file=watchdog --preset=books --last=10
+начало: 2026-10-15T12:22:13Z
+запускаю: .venv/bin/python tools/loggrep.py --file=watchdog --preset=books --last=10
+== research/b1_book/out/watchdog.log по образцу /DCA-книги|короткие книги h24|общий счёт|прогон книг отложен|ПЕРЕЗАПУСК/ за 10 сут ==
+  совпадений 1500
+  2026-10-06: 65
+  2026-10-07: 64
+  2026-10-08: 65
+  2026-10-09: 70
+  2026-10-10: 303
+  2026-10-11: 63
+  2026-10-12: 172
+  2026-10-13: 335
+  2026-10-14: 118
+  2026-10-15: 245
+  [2026-10-15T11:43:48Z] DCA-книги: последний счёт 468 с назад — прогон --no-publish
+  [2026-10-15T11:50:01Z] короткие книги h24: последний счёт 1141 с назад — прогон --no-publish
+  [2026-10-15T11:50:01Z] прогон книг отложен: в этом такте уже запущен короткие книги — по одному
+  [2026-10-15T11:55:02Z] DCA-книги: последний счёт 662 с назад — прогон --no-publish
+  [2026-10-15T12:00:02Z] DCA-книги: последний счёт 301 с назад — прогон
+  [2026-10-15T12:05:02Z] DCA-книги: последний счёт 302 с назад — прогон --no-publish
+  [2026-10-15T12:10:02Z] короткие книги h24: последний счёт 1142 с назад — прогон --no-publish
+  [2026-10-15T12:10:02Z] прогон книг отложен: в этом такте уже запущен короткие книги — по одному
+  [2026-10-15T12:15:01Z] прогон книг отложен: идёт обучение S8 (цикл 2151 МБ > 2000)
+  [2026-10-15T12:20:01Z] DCA-книги: последний счёт 901 с назад — прогон --no-publish
+конец: 2026-10-15T12:22:13Z, код 0
+публикуется в ветку main:
+ jobs/done/na30-status.done                         |    1 +
+ jobs/done/na30-status.log                          |    9 +
+ jobs/done/na31-timing.done                         |    1 +
+ jobs/done/na31-timing.log                          |    4 +
+ jobs/done/na32-wd.done                             |    1 +
+ jobs/done/na32-wd.log                              |   27 +
+ jobs/poke.log                                      |    5 +
+ research/dca_paper/out/DCA-pair.json               |    2 +-
+ research/dca_paper/out/DCA-pair.md                 |   60 +-
+ research/dca_paper/out/DCA-paper.json              | 4990 ++++++++++----------
+ research/dca_paper/out/DCA-paper.md                |   20 +-
+ research/dca_paper/out/DCA-short.json              |    2 +-
+ research/dca_paper/out/DCA-short.md                |   30 +-
+ research/dca_paper/out/fixed_pair-2026-10-15.jsonl |    7 +
+ .../dca_paper/out/fixed_short-2026-10-15.jsonl     |    8 +
+ research/dca_paper/out/pair-2026-10-15.jsonl       |    7 +
+ research/dca_paper/out/short-2026-10-15.jsonl      |    8 +
+ research/s8_loop/out/day_brake.json                |    2 +-
+ 18 files changed, 2631 insertions(+), 2553 deletions(-)
