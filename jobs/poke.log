@@ -2184,3 +2184,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 == сигнал 1792065891 ==
 [2026-10-15T12:04:53Z] задание na27-wd80 запущено: tools/loggrep.py
 [2026-10-15T12:04:53Z] задание na28-timing запущено: tools/book_timing.py
+
+== сигнал 1792065952 ==
+[2026-10-15T12:05:54Z] задание na29-costs запущено: tools/costs_timing.py

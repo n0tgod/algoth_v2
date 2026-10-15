@@ -1,0 +1,14 @@
+== задание na29-costs ==
+строка: run tools/costs_timing.py
+начало: 2026-10-15T12:05:54Z
+запускаю: .venv/bin/python tools/costs_timing.py 
+context: 10.21 с; ключи ['assets', 'extra_symbols', 'funding', 'n_funding', 'taker', 'to_asset']; n_funding 1108; ошибка None
+  assets: dict len 1108
+  to_asset: dict len 1108
+  taker: dict len 1108
+  funding: dict len 1108
+  n_funding: int len -
+  extra_symbols: int len -
+журнал (текущие, с диска): 10763 строк за 0.07 с
+apply_to_rows: 0.21 с; applied 10763 из 10763; no_funding 31
+конец: 2026-10-15T12:06:05Z, код 0
