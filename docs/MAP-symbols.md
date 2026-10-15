@@ -2151,6 +2151,23 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L66 `exits(recs)`
 - L74 `main()`
 
+## research/dca_paper/noncrypto_window.py · 154 строк
+
+Замер: не-крипто в Ladder — входить только в торговое окно биржи (предложение владельца 2026-10-15: «если не…
+
+- L31 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L32 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L41 `OUT_MD = os.path.join(R.OUT, 'NONCRYPTO-window.m…`
+- L42 `OUT_JSON = os.path.join(R.OUT, 'NONCRYPTO-window.j…`
+- L43 `HOLD_H = 72`
+- L44 `HK = {'MEITUAN', 'XIAOMI', 'TENCENT', 'POPMA…`
+- L46 `KR = {'SAMSUNG', 'SKHY', 'HYUNDAI'}`
+- L47 `SESS = {'US': (13 * 60 + 30, 20 * 60), 'HK': (…`
+- L50 `market(sym)`
+- L61 `in_session(ts, mk)`
+- L70 `fits_week(ts, mk)` — Срок кончается до закрытия пятничного окна той же недели.
+- L79 `main()`
+
 ## research/dca_paper/pair_age.py · 363 строк
 
 Возраст имени как фильтр входа короткой стороны общего счёта.
