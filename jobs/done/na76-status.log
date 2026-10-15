@@ -48,3 +48,54 @@ sub_b0b417879b985874: статусу 0 с, режим live, позиций 3 (о
     SHOPUSDT long глубина 3/3: средняя 175.18548387096774, цель 181.15, пол 109.08046826327282, стоп биржи 109.08, рунгов лежит 0, закрытие None
   чужое на счёте: нет
 конец: 2026-10-15T17:57:46Z
+публикуется в ветку main:
+ jobs/done/na75-restart.log                         |    11 +
+ jobs/done/na76-status.log                          |    50 +
+ jobs/poke.log                                      |     2 +
+ research/dca_paper/out/DCA-pair.json               |     2 +-
+ research/dca_paper/out/DCA-pair.md                 |    16 +-
+ research/dca_paper/out/DCA-paper.json              | 55958 +++++++++----------
+ research/dca_paper/out/DCA-paper.md                |   106 +-
+ research/dca_paper/out/DCA-short.json              |     2 +-
+ research/dca_paper/out/DCA-short.md                |     8 +-
+ .../dca_paper/out/fixed_journal-2026-08-11.jsonl   |     3 +
+ .../dca_paper/out/fixed_journal-2026-08-12.jsonl   |     2 +
+ .../dca_paper/out/fixed_journal-2026-08-16.jsonl   |     1 +
+ .../dca_paper/out/fixed_journal-2026-08-19.jsonl   |     6 +
+ .../dca_paper/out/fixed_journal-2026-08-20.jsonl   |     2 +
+ .../out/fixed_journal-2026-08-21.01.jsonl          |     4 +
+ .../dca_paper/out/fixed_journal-2026-08-22.jsonl   |     1 +
+ .../dca_paper/out/fixed_journal-2026-08-24.jsonl   |     1 +
+ .../dca_paper/out/fixed_journal-2026-09-03.jsonl   |     3 +
+ .../dca_paper/out/fixed_journal-2026-09-09.jsonl   |     2 +
+ .../dca_paper/out/fixed_journal-2026-09-11.jsonl   |     2 +
+ .../dca_paper/out/fixed_journal-2026-09-17.jsonl   |     2 +
+ .../dca_paper/out/fixed_journal-2026-09-18.jsonl   |     3 +
+ .../dca_paper/out/fixed_journal-2026-09-20.jsonl   |     1 +
+ .../dca_paper/out/fixed_journal-2026-09-26.jsonl   |     1 +
+ .../dca_paper/out/fixed_journal-2026-09-29.jsonl   |     2 +
+ .../dca_paper/out/fixed_journal-2026-09-30.jsonl   |     1 +
+ .../dca_paper/out/fixed_journal-2026-10-02.jsonl   |     5 +
+ .../dca_paper/out/fixed_journal-2026-10-15.jsonl   |     2 +
+ research/dca_paper/out/journal-2026-08-11.jsonl    |     4 +
+ research/dca_paper/out/journal-2026-08-12.jsonl    |     2 +
+ research/dca_paper/out/journal-2026-08-14.jsonl    |     2 +
+ research/dca_paper/out/journal-2026-08-15.jsonl    |     4 +
+ research/dca_paper/out/journal-2026-08-19.jsonl    |     8 +
+ research/dca_paper/out/journal-2026-09-03.jsonl    |     2 +
+ research/dca_paper/out/journal-2026-09-09.jsonl    |     2 +
+ research/dca_paper/out/journal-2026-09-11.jsonl    |     2 +
+ research/dca_paper/out/journal-2026-09-17.jsonl    |     2 +
+ research/dca_paper/out/journal-2026-09-18.jsonl    |     1 +
+ research/dca_paper/out/journal-2026-09-20.jsonl    |     1 +
+ research/dca_paper/out/journal-2026-09-26.jsonl    |     2 +
+ research/dca_paper/out/journal-2026-09-29.jsonl    |     2 +
+ research/dca_paper/out/journal-2026-09-30.jsonl    |     1 +
+ research/dca_paper/out/journal-2026-10-02.jsonl    |     6 +
+ research/dca_paper/out/journal-2026-10-11.jsonl    |     2 +
+ research/s8_loop/out/day_brake.json                |     2 +-
+ 45 files changed, 25133 insertions(+), 31111 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   403f178d..8ac0bfa2  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
