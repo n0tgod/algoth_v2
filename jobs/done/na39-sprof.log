@@ -1,0 +1,53 @@
+== задание na39-sprof ==
+строка: run tools/short_profile.py --n=60
+начало: 2026-10-15T12:44:20Z
+запускаю: .venv/bin/python tools/short_profile.py --n=60
+решений 6590, в кэше 11392, заново 113; подготовка 1.4 с
+реплей 60 решений: 117.3 с, записей 108
+         257107475 function calls (257106236 primitive calls) in 117.254 seconds
+   Ordered by: cumulative time
+   List reduced from 1451 to 28 due to restriction <28>
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000  117.254  117.254 /root/algoth_v2/tools/../research/dca_paper/run_short.py:249(replay)
+        1    0.007    0.007  117.254  117.254 /root/algoth_v2/tools/../research/dca_paper/run_short.py:170(replay_cells)
+        2    0.083    0.041  117.246   58.623 /root/algoth_v2/research/dca_ladder/run_d10.py:425(collect)
+       68    0.048    0.001  116.554    1.714 /root/algoth_v2/research/dca_paper/tail.py:152(bars)
+       68    1.933    0.028  110.089    1.619 /root/algoth_v2/research/s9_sweep/sweep.py:208(read_bars)
+     3964    2.160    0.001   93.418    0.024 /root/algoth_v2/research/b1_book/store.py:233(read_hour)
+     3590    0.016    0.000   89.329    0.025 /root/algoth_v2/research/b1_book/store.py:168(read_jsonl)
+     3590   11.118    0.003   89.102    0.025 /root/algoth_v2/research/b1_book/store.py:279(_parse)
+ 15268758    9.853    0.000   66.150    0.000 /usr/lib/python3.12/json/__init__.py:299(loads)
+ 15268758   16.487    0.000   51.939    0.000 /usr/lib/python3.12/json/decoder.py:332(decode)
+ 15268758   21.132    0.000   21.132    0.000 /usr/lib/python3.12/json/decoder.py:343(raw_decode)
+     3470   12.690    0.004   19.685    0.006 /root/algoth_v2/research/b1_book/collect.py:235(minute_bars)
+ 30537633    9.236    0.000    9.236    0.000 {method 'match' of 're.Pattern' objects}
+       68    0.099    0.001    5.274    0.078 /root/algoth_v2/research/dca_paper/tail.py:79(book_minute_bars)
+   192110    0.162    0.000    4.531    0.000 /usr/lib/python3.12/gzip.py:326(read1)
+   192110    0.258    0.000    4.299    0.000 {method 'read1' of '_io.BufferedReader' objects}
+   192110    0.628    0.000    4.041    0.000 /usr/lib/python3.12/_compression.py:66(readinto)
+ 30537516    3.656    0.000    3.656    0.000 {method 'end' of 're.Match' objects}
+ 31081105    3.567    0.000    3.567    0.000 {method 'append' of 'list' objects}
+   264436    1.126    0.000    3.235    0.000 /root/algoth_v2/research/z2_book/bookfeat2.py:106(snap_line)
+   192110    0.430    0.000    3.219    0.000 /usr/lib/python3.12/gzip.py:502(read)
+ 15391131    2.906    0.000    2.906    0.000 {method 'startswith' of 'str' objects}
+ 15670810    2.782    0.000    2.782    0.000 {built-in method builtins.max}
+ 15407341    2.434    0.000    2.434    0.000 {built-in method builtins.min}
+ 15379100    2.001    0.000    2.001    0.000 {method 'get' of 'dict' objects}
+   188516    1.915    0.000    1.915    0.000 {method 'decompress' of 'zlib._ZlibDecompressor' objects}
+ 15754020    1.823    0.000    1.823    0.000 /usr/lib/python3.12/gzip.py:346(closed)
+16933803/16933792    1.630    0.000    1.630    0.000 {built-in method builtins.len}
+--- по собственному времени ---
+ 15268758   16.487    0.000   51.939    0.000 /usr/lib/python3.12/json/decoder.py:332(decode)
+     3470   12.690    0.004   19.685    0.006 /root/algoth_v2/research/b1_book/collect.py:235(minute_bars)
+     3590   11.118    0.003   89.102    0.025 /root/algoth_v2/research/b1_book/store.py:279(_parse)
+ 15268758    9.853    0.000   66.150    0.000 /usr/lib/python3.12/json/__init__.py:299(loads)
+ 30537633    9.236    0.000    9.236    0.000 {method 'match' of 're.Pattern' objects}
+ 30537516    3.656    0.000    3.656    0.000 {method 'end' of 're.Match' objects}
+ 31081105    3.567    0.000    3.567    0.000 {method 'append' of 'list' objects}
+ 15391131    2.906    0.000    2.906    0.000 {method 'startswith' of 'str' objects}
+ 15670810    2.782    0.000    2.782    0.000 {built-in method builtins.max}
+ 15407341    2.434    0.000    2.434    0.000 {built-in method builtins.min}
+     3964    2.160    0.001   93.418    0.024 /root/algoth_v2/research/b1_book/store.py:233(read_hour)
+ 15379100    2.001    0.000    2.001    0.000 {method 'get' of 'dict' objects}
+       68    1.933    0.028  110.089    1.619 /root/algoth_v2/research/s9_sweep/sweep.py:208(read_bars)
+конец: 2026-10-15T12:46:20Z, код 0
