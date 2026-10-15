@@ -7603,7 +7603,7 @@ S8.1, этап 1: запись стакана → почасовая сводк�
 - L1814 `mark(trades, prices, cost_bp=ROUND_COST_BP)` — Проставить открытым сделкам нереализованный результат.
 - L1842 `by_symbol(trades, sym)` — Сделки одной монеты — для меток на её графике.
 
-## research/s8_loop/train.py · 4071 строк
+## research/s8_loop/train.py · 4204 строк
 
 S8.2: цикл переобучения модели на стакане (спека 08 §5).
 
@@ -7702,52 +7702,60 @@ S8.2: цикл переобучения модели на стакане (спе
 - L1433 `archive_book(mdir, dst, log_=None)` — Перенести КНИГУ каталога `mdir` в каталог `dst`.
 - L1470 `fresh_book_on_rank_change(mdir, want, log_=None, floor=None)` — Сменился ПОРЯДОК сечения — старая книга уходит в архив.
 - L1541 `fresh_sit_on_rules_change(mdir, log_=None, rules=None, version=…` — Сменились правила ситуационной книги — старая уходит в архив.
-- L1593 `situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_las…` — Один проход ситуационной книги: сначала выходы, потом входы.
-- L1833 `H4_FLOOR_BP = 30.0` — Пол на вход книги 4 ч — из зонда крайности (probe_extreme, 2026-08-12): исход растёт монотонно с величиной пр…
-- L1836 `REMOVED_BOOKS = set(BK.REMOVED_HORIZONS)` — Снятые горизонты турнира темпов — из реестра книг, а не числом здесь: почему часовая удалена, записано там же…
-- L1856 `BASKET_H = 24` — Корзинные книги-эхо 24 ч (решение владельца 2026-08-14): под-модель, которая смотрит не на сделку, а на ОБЩИЙ…
-- L1857 `BASKET_TAKE_SHARE = 0.05`
-- L1858 `BASKET_FLOOR_SHARE = 0.05`
-- L1859 `BASKET_TAKE_REASON = 'корзина дошла до цели'`
-- L1860 `BASKET_FLOOR_REASON = 'корзина дошла до предела убытка'`
-- L1871 `BASKET_AGE_H = 24` — Третья корзинная книга `model_h24c` (решение владельца 2026-08-30, по реплею probe_basket серии 1–2): у ног Н…
-- L1872 `BASKET_AGE_REASON = 'корзина дошла до предела возраста'`
-- L1873 `BASKET_SLOTS = 6 * BASKET_H`
-- L1876 `make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, g…` — Выбор монет одной книги: цели fwd/mae/mfe СВОЕГО горизонта.
-- L1993 `write_pick(mdir, picks)` — Один выбор на (руку, час) — и не больше.
-- L2010 `rebuild_accounts(mdir, hold_h, slots=None)` — Счета книги — пересборкой ЦЕЛИКОМ из выборов и разборов.
-- L2049 `echo_picks(mdir, src_dir, cur_hour)` — Скопировать в книгу-эхо выборы источника за текущий час.
-- L2068 `echo_reviews(mdir, src_dir)` — Скопировать разборы источника для выборов, живущих в эхе.
-- L2094 `agree_keys(src_dir, hour)` — Что выбрала КАЖДАЯ рука источника за час: {(имя, сторона)}.
-- L2116 `agree_echo_cycle(mdir, src_dir, cur_hour, hold_h, log_)` — Один проход согласной книги-эха: пересечение рук источника.
-- L2189 `basket_state(trades, arm)` — Деньги корзины руки: сумма нереализованного нетто открытых.
-- L2212 `basket_close_records(op, arm, reason, now, books=None)` — Записи разбора закрытия корзины — по одной на час выбора.
-- L2250 `basket_echo_cycle(mdir, src_dir, cur_hour, take_share, floor_sh…` — Один проход корзинной книги-эха: копия, переоценка, решение.
-- L2326 `live_px(syms, book_root, now=None, log_=None)` — Цена, доступная В МОМЕНТ РЕШЕНИЯ, а не в момент сигнала.
-- L2360 `book_at(sym, ts, book_root, tol=120.0)` — Снимок книги, ближайший к моменту `ts` и не позже него.
-- L2394 `stamp_book(syms, ts, book_root, log_=None, what='')` — `{символ: {mid, b, a, t}}` — книга для расчёта исполнения.
-- L2420 `log_cycle(row, log_)` — Строка журнала циклов. Один писатель на оба пути.
-- L2447 `TRAIN_MEM_MIN_MB = 3072` — Обучение начинается, только когда в машине есть под него место. Замер 02.10 (строки «память» в train.log): ба…
-- L2456 `TRAIN_MEM_WAIT_S = 600` — Ожидание памяти (15.10). Книги считаются каждые 5 минут (прогон ≤ 2.5 мин), и разовая проверка в :09 попадала…
-- L2457 `TRAIN_MEM_STEP_S = 15`
-- L2458 `TRAIN_WAIT_FLAG = os.path.join(OUT, 'train_wait.flag')`
-- L2461 `raise_train_flag(path=TRAIN_WAIT_FLAG)` — Флаг «обучение ждёт памяти или идёт»: pid цикла и момент.
-- L2472 `clear_train_flag(path=TRAIN_WAIT_FLAG)`
-- L2479 `wait_train_mem(min_mb=None, max_wait_s=None, step_s=None, log_=…` — Хватает ли памяти на обучение — с ожиданием до `max_wait_s`.
-- L2510 `mem_available_mb()` — MemAvailable ядра в МБ; None — если /proc не читается.
-- L2522 `train_mem_ok(avail_mb, min_mb=None)` — Хватает ли памяти на обучение: (да/нет, причина словами).
-- L2538 `mem_holders_line(lines=None, n=3, width=60)` — Кто держит память — строкой в лог при откладывании обучения.
-- L2569 `train_due(prev_man, now_ts, every_h=None)` — Пора ли переобучать: (да/нет, причина словами).
-- L2606 `load_prev_models(names)` — Веса ПРОШЛОГО цикла с диска — для шага книг до обучения.
-- L2643 `cand_sheet_entry(b)` — Запись кандидата в списке книг листа сечения.
-- L2678 `cand_book(b, sm, models_b, x, mats, syms, rows_sit, j_last, gri…` — Свести одну книгу кандидата: манифест, выборы, счёт.
-- L2735 `retire_dropped_books(books, log_)` — Каталог книги кандидата вне состава — в архив.
-- L2793 `candidate_books(log_)` — Кандидаты фабрики → живые книги. Возвращает список записей.
-- L2852 `run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, el…` — Шаг книг: разбор, выборы, лист сканера и счета всех книг.
-- L3407 `cycle(sum_dir, log_, book_root=SM.BOOK_ROOT)`
-- L3880 `stale_summary()` — Отстал ли последний прогон от закрывшегося часа.
-- L3900 `demo()` — Полный вывод цикла на синтетике — ответ на «что я буду видеть».
-- L3946 `main()`
+- L1593 `sheet_rows(models, arm, x, mats, syms, rows_m, j_last, nov_lo, …` — Лист сечения одной руки по данным весам — без книги и без входов.
+- L1679 `FROZEN_DIR_NAME = 'frozen'` — Замороженная модель (решение владельца 2026-10-15): веса одного обучения лежат в `MODEL_DIR/frozen/` (кладёт…
+- L1680 `ARCHIVE_DIR_NAME = 'archive'`
+- L1681 `_FROZEN_CACHE = {'sig': None, 'models': None, 'seq': No…`
+- L1684 `frozen_dir()`
+- L1688 `load_frozen_models(names)` — Полная сетка весов из `frozen/` — либо (None, причина).
+- L1717 `frozen_sheets(mdir, x, mats, syms, rows_m, j_last, grid, nov_lo…` — Лист часа замороженными весами — в `sheets_frozen.jsonl`.
+- L1755 `archive_weights(train_seq, log_)` — Копия весов этого обучения — `archive/seq<N>/`; отказ — строкой.
+- L1779 `situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_las…` — Один проход ситуационной книги: сначала выходы, потом входы.
+- L1959 `H4_FLOOR_BP = 30.0` — Пол на вход книги 4 ч — из зонда крайности (probe_extreme, 2026-08-12): исход растёт монотонно с величиной пр…
+- L1962 `REMOVED_BOOKS = set(BK.REMOVED_HORIZONS)` — Снятые горизонты турнира темпов — из реестра книг, а не числом здесь: почему часовая удалена, записано там же…
+- L1982 `BASKET_H = 24` — Корзинные книги-эхо 24 ч (решение владельца 2026-08-14): под-модель, которая смотрит не на сделку, а на ОБЩИЙ…
+- L1983 `BASKET_TAKE_SHARE = 0.05`
+- L1984 `BASKET_FLOOR_SHARE = 0.05`
+- L1985 `BASKET_TAKE_REASON = 'корзина дошла до цели'`
+- L1986 `BASKET_FLOOR_REASON = 'корзина дошла до предела убытка'`
+- L1997 `BASKET_AGE_H = 24` — Третья корзинная книга `model_h24c` (решение владельца 2026-08-30, по реплею probe_basket серии 1–2): у ног Н…
+- L1998 `BASKET_AGE_REASON = 'корзина дошла до предела возраста'`
+- L1999 `BASKET_SLOTS = 6 * BASKET_H`
+- L2002 `make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, g…` — Выбор монет одной книги: цели fwd/mae/mfe СВОЕГО горизонта.
+- L2119 `write_pick(mdir, picks)` — Один выбор на (руку, час) — и не больше.
+- L2136 `rebuild_accounts(mdir, hold_h, slots=None)` — Счета книги — пересборкой ЦЕЛИКОМ из выборов и разборов.
+- L2175 `echo_picks(mdir, src_dir, cur_hour)` — Скопировать в книгу-эхо выборы источника за текущий час.
+- L2194 `echo_reviews(mdir, src_dir)` — Скопировать разборы источника для выборов, живущих в эхе.
+- L2220 `agree_keys(src_dir, hour)` — Что выбрала КАЖДАЯ рука источника за час: {(имя, сторона)}.
+- L2242 `agree_echo_cycle(mdir, src_dir, cur_hour, hold_h, log_)` — Один проход согласной книги-эха: пересечение рук источника.
+- L2315 `basket_state(trades, arm)` — Деньги корзины руки: сумма нереализованного нетто открытых.
+- L2338 `basket_close_records(op, arm, reason, now, books=None)` — Записи разбора закрытия корзины — по одной на час выбора.
+- L2376 `basket_echo_cycle(mdir, src_dir, cur_hour, take_share, floor_sh…` — Один проход корзинной книги-эха: копия, переоценка, решение.
+- L2452 `live_px(syms, book_root, now=None, log_=None)` — Цена, доступная В МОМЕНТ РЕШЕНИЯ, а не в момент сигнала.
+- L2486 `book_at(sym, ts, book_root, tol=120.0)` — Снимок книги, ближайший к моменту `ts` и не позже него.
+- L2520 `stamp_book(syms, ts, book_root, log_=None, what='')` — `{символ: {mid, b, a, t}}` — книга для расчёта исполнения.
+- L2546 `log_cycle(row, log_)` — Строка журнала циклов. Один писатель на оба пути.
+- L2573 `TRAIN_MEM_MIN_MB = 3072` — Обучение начинается, только когда в машине есть под него место. Замер 02.10 (строки «память» в train.log): ба…
+- L2582 `TRAIN_MEM_WAIT_S = 600` — Ожидание памяти (15.10). Книги считаются каждые 5 минут (прогон ≤ 2.5 мин), и разовая проверка в :09 попадала…
+- L2583 `TRAIN_MEM_STEP_S = 15`
+- L2584 `TRAIN_WAIT_FLAG = os.path.join(OUT, 'train_wait.flag')`
+- L2587 `raise_train_flag(path=TRAIN_WAIT_FLAG)` — Флаг «обучение ждёт памяти или идёт»: pid цикла и момент.
+- L2598 `clear_train_flag(path=TRAIN_WAIT_FLAG)`
+- L2605 `wait_train_mem(min_mb=None, max_wait_s=None, step_s=None, log_=…` — Хватает ли памяти на обучение — с ожиданием до `max_wait_s`.
+- L2636 `mem_available_mb()` — MemAvailable ядра в МБ; None — если /proc не читается.
+- L2648 `train_mem_ok(avail_mb, min_mb=None)` — Хватает ли памяти на обучение: (да/нет, причина словами).
+- L2664 `mem_holders_line(lines=None, n=3, width=60)` — Кто держит память — строкой в лог при откладывании обучения.
+- L2695 `train_due(prev_man, now_ts, every_h=None)` — Пора ли переобучать: (да/нет, причина словами).
+- L2732 `load_prev_models(names)` — Веса ПРОШЛОГО цикла с диска — для шага книг до обучения.
+- L2769 `cand_sheet_entry(b)` — Запись кандидата в списке книг листа сечения.
+- L2804 `cand_book(b, sm, models_b, x, mats, syms, rows_sit, j_last, gri…` — Свести одну книгу кандидата: манифест, выборы, счёт.
+- L2861 `retire_dropped_books(books, log_)` — Каталог книги кандидата вне состава — в архив.
+- L2919 `candidate_books(log_)` — Кандидаты фабрики → живые книги. Возвращает список записей.
+- L2978 `run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, el…` — Шаг книг: разбор, выборы, лист сканера и счета всех книг.
+- L3539 `cycle(sum_dir, log_, book_root=SM.BOOK_ROOT)`
+- L4013 `stale_summary()` — Отстал ли последний прогон от закрывшегося часа.
+- L4033 `demo()` — Полный вывод цикла на синтетике — ответ на «что я буду видеть».
+- L4079 `main()`
 
 ## research/s8_loop/train_effect.py · 321 строк
 
@@ -9460,6 +9468,14 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L35 `usage(path, statvfs=os.statvfs)` — Заполнение диска под путём в процентах и свободные ГБ.
 - L45 `check(paths, pct=PCT, asks_out=ASKS_OUT, statvfs=os.statvfs, no…` — Возвращает список путей над порогом; просьба пишется один раз.
 - L78 `main(argv=None, asks_out=ASKS_OUT, paths=None)`
+
+## tools/freeze_weights.py · 77 строк
+
+Заморозить текущие веса S8: копия в `out/model/frozen/`.
+
+- L22 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L23 `ROOT = os.path.dirname(HERE)`
+- L28 `main(argv=None)`
 
 ## tools/instr_fields.py · 47 строк
 

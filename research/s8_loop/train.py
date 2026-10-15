@@ -1590,6 +1590,192 @@ def fresh_sit_on_rules_change(mdir, log_=None, rules=None,
     return dst
 
 
+def sheet_rows(models, arm, x, mats, syms, rows_m, j_last, nov_lo, nov_hi,
+               log_, beta_row=None, names=None):
+    """Лист сечения одной руки по данным весам — без книги и без входов.
+
+    Вынесен из `situational_arm` (15.10) ради замороженной модели: тот
+    же лист по тем же строкам считается вторыми весами
+    (`frozen_sheets`), и вторая копия этого блока разошлась бы с живым
+    листом. Числа живого листа правкой не тронуты — закреплено
+    проверкой бит в бит.
+    """
+    kf, km, kx = (f"fwd_{SIT_SIGNAL_H}h", f"mae_{SIT_SIGNAL_H}h",
+                  f"mfe_{SIT_SIGNAL_H}h")
+    kmq, kxq = f"maeq_{SIT_SIGNAL_H}h", f"mfeq_{SIT_SIGNAL_H}h"
+    # Карта от модели: прогноз, СЫРЫЕ обещания пути и бета по каждому
+    # имени сечения. Сборщик секундами якорит её к живым ценам и
+    # спускает курок, когда остаток обещанного хода проходит гейты.
+    # Лист пишется ВСЕГДА, даже при полной кассе: сторожу выходов и
+    # сканеру нужна свежая карта независимо от свободных слотов.
+    xj = x[rows_m, j_last]
+    fwd = models[(arm, kf)].predict(xj)
+    mae = models[(arm, km)].predict(xj)
+    mfe = models[(arm, kx)].predict(xj)
+    # Квантильные концы пути — уровни стопа. Их может не быть (цель не
+    # набрала строк на молодой записи): тогда лист идёт без них, и
+    # сканер ставит стоп по среднему, как прежде. Отсутствие уровня
+    # обязано быть видно в самом листе полем `stop_tau`, а не
+    # угадываться по тому, есть ли ключ.
+    maeq = (models[(arm, kmq)].predict(xj)
+            if (arm, kmq) in models else None)
+    mfeq = (models[(arm, kxq)].predict(xj)
+            if (arm, kxq) in models else None)
+    # Объяснение прогноза — по каждой строке листа: сканер скопирует
+    # его в событие входа, цикл — в запись выбора. Считается здесь,
+    # потому что только у цикла есть и модель, и имена признаков;
+    # сканеру ехать должен готовый ответ.
+    whys, setups = (explain_rows(models[(arm, kf)], xj, names)
+                    if names is not None else (None, None))
+    # Прогноз в единицах собственной σ монеты — для ПОРЯДКА, а не для
+    # гейта. Решение владельца переводит ситуационные сделки на per σ, и
+    # переводится именно приоритет: когда гейт проходят больше имён, чем
+    # есть мест, слот достаётся тому, у кого ход крупен ДЛЯ НЕГО. Порог
+    # входа остаётся в базисных пунктах намеренно — он выведен из круга
+    # издержек, а в единицах σ такого якоря не существует, и назначать
+    # его заново значило бы взять число с потолка.
+    kz = rank_z(SIT_SIGNAL_H)
+    fwd_z = (models[(arm, kz)].predict(xj)
+             if (arm, kz) in models else None)
+    if fwd_z is None:
+        log_(f"[{arm}] ситуационная: порядок {kz} недоступен — "
+             f"приоритет по сырому прогнозу")
+    sheet = []
+    for i in range(len(rows_m)):
+        px = float(mats["mid_close"][rows_m[i], j_last])
+        if not np.isfinite(px):
+            continue
+        row = {"sym": syms[rows_m[i]], "fwd": round(float(fwd[i]), 2),
+               "mae": round(float(mae[i]), 2),
+               "mfe": round(float(mfe[i]), 2),
+               "beta": (round(float(beta_row[i]), 4)
+                        if beta_row is not None
+                        and np.isfinite(beta_row[i]) else 1.0),
+               "px": px}
+        if fwd_z is not None and np.isfinite(fwd_z[i]):
+            row["fwd_z"] = round(float(fwd_z[i]), 4)
+        if maeq is not None and mfeq is not None:
+            row["mae_q"] = round(float(maeq[i]), 2)
+            row["mfe_q"] = round(float(mfeq[i]), 2)
+        if whys is not None and whys[i]:
+            row["why"] = whys[i]
+        if setups is not None and setups[i]:
+            row["setup"] = setups[i]
+        nv = novelty(xj[i], nov_lo, nov_hi)
+        if nv is not None:
+            row["odd"] = round(nv, 3)
+        sheet.append(row)
+    return sheet
+
+
+# Замороженная модель (решение владельца 2026-10-15): веса одного
+# обучения лежат в `MODEL_DIR/frozen/` (кладёт `tools/freeze_weights.py`),
+# и каждый час рядом с живым листом пишется лист ТЕМИ ЖЕ строками по
+# замороженным весам — `sheets_frozen.jsonl` у ситуационной книги.
+# Через недели реплей Ladder по двум журналам отвечает, что даёт
+# ежедневное переобучение против модели, остановленной в дне заморозки.
+# Книг и входов у замороженной модели нет; отказ здесь не вправе
+# остановить цикл — он печатается строкой и уходит в статус листа.
+FROZEN_DIR_NAME = "frozen"
+ARCHIVE_DIR_NAME = "archive"
+_FROZEN_CACHE = {"sig": None, "models": None, "seq": None}
+
+
+def frozen_dir():
+    return os.path.join(MODEL_DIR, FROZEN_DIR_NAME)
+
+
+def load_frozen_models(names):
+    """Полная сетка весов из `frozen/` — либо (None, причина)."""
+    d = frozen_dir()
+    paths = [os.path.join(d, f"weights_{arm}_{tgt}.pkl")
+             for arm, _ in ARMS for tgt in TARGETS]
+    missing = [os.path.basename(p) for p in paths if not os.path.exists(p)]
+    if missing:
+        return None, None, f"нет весов: {', '.join(missing[:3])}" + (" …" if len(missing) > 3 else "")
+    sig = tuple(os.stat(p).st_mtime_ns for p in paths)
+    if _FROZEN_CACHE["sig"] == sig and _FROZEN_CACHE["models"] is not None:
+        return _FROZEN_CACHE["models"], _FROZEN_CACHE["seq"], None
+    models, seq = {}, None
+    for p, (arm, tgt) in zip(paths, [(a, t) for a, _ in ARMS for t in TARGETS]):
+        try:
+            with open(p, "rb") as f:
+                blob = pickle.load(f)
+        except (OSError, EOFError, AttributeError, ImportError,
+                pickle.UnpicklingError) as e:
+            return None, None, f"{os.path.basename(p)}: {e}"[:160]
+        if blob.get("version") != MODEL_VERSION:
+            return None, None, f"{os.path.basename(p)}: версия {blob.get('version')} ≠ {MODEL_VERSION}"
+        if names is not None and list(blob.get("features") or []) != list(names):
+            return None, None, f"{os.path.basename(p)}: другой список признаков"
+        models[(arm, tgt)] = blob["model"]
+        seq = blob.get("train_seq") if seq is None else seq
+    _FROZEN_CACHE.update(sig=sig, models=models, seq=seq)
+    return models, seq, None
+
+
+def frozen_sheets(mdir, x, mats, syms, rows_m, j_last, grid, nov_lo, nov_hi,
+                  log_, beta_row=None, names=None, live_seq=None):
+    """Лист часа замороженными весами — в `sheets_frozen.jsonl`.
+
+    Возвращает число рук в листе; 0 — заморозки нет или она не читается
+    (причина — строкой лога, один раз на подпись каталога).
+    """
+    if j_last is None or not os.path.isdir(frozen_dir()):
+        return 0
+    try:
+        models, seq, why = load_frozen_models(names)
+        if models is None:
+            if _FROZEN_CACHE.get("why") != why:
+                _FROZEN_CACHE["why"] = why
+                log_(f"замороженная модель не читается: {why}")
+            return 0
+        sheets = {}
+        for arm, _ in ARMS:
+            sh = sheet_rows(models, arm, x, mats, syms, rows_m, j_last,
+                            nov_lo, nov_hi, log_, beta_row=beta_row, names=names)
+            if sh:
+                sheets[arm] = sh
+        if not sheets:
+            return 0
+        with open(os.path.join(mdir, "sheets_frozen.jsonl"), "a",
+                  encoding="utf-8") as f:
+            f.write(json.dumps(
+                {"hour": grid[j_last], "written_at": round(time.time(), 1),
+                 "train_seq": seq, "live_seq": live_seq, "frozen": True,
+                 "scan_rank": rank_z(SIT_SIGNAL_H),
+                 "min_edge_bp": SIT_MIN_EDGE_BP, "min_rr": SIT_MIN_RR,
+                 "arms": sheets}, ensure_ascii=False) + "\n")
+        return len(sheets)
+    except Exception as e:                                # noqa: BLE001
+        log_(f"лист замороженной модели не посчитан: {e}"[:200])
+        return 0
+
+
+def archive_weights(train_seq, log_):
+    """Копия весов этого обучения — `archive/seq<N>/`; отказ — строкой."""
+    import shutil
+    dst = os.path.join(MODEL_DIR, ARCHIVE_DIR_NAME, f"seq{int(train_seq)}")
+    try:
+        os.makedirs(dst, exist_ok=True)
+        n, size = 0, 0
+        for arm, _ in ARMS:
+            for tgt in TARGETS:
+                p = os.path.join(MODEL_DIR, f"weights_{arm}_{tgt}.pkl")
+                if os.path.exists(p):
+                    shutil.copy2(p, os.path.join(dst, os.path.basename(p)))
+                    n += 1
+                    size += os.path.getsize(p)
+        mp = os.path.join(MODEL_DIR, "manifest.json")
+        if os.path.exists(mp):
+            shutil.copy2(mp, os.path.join(dst, "manifest.json"))
+        log_(f"веса обучения №{train_seq} отложены: {n} файлов, {size / 1e6:.1f} МБ")
+        return dst
+    except OSError as e:
+        log_(f"веса обучения №{train_seq} не отложены: {e}")
+        return None
+
+
 def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
                     grid, nov_lo, nov_hi, book_root, log_,
                     beta_row=None, names=None, train_seq=None):
@@ -1751,68 +1937,8 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
                              log_)
 
     # --- лист сечения для живого сканера ------------------------------
-    # Карта от модели: прогноз, СЫРЫЕ обещания пути и бета по каждому
-    # имени сечения. Сборщик секундами якорит её к живым ценам и
-    # спускает курок, когда остаток обещанного хода проходит гейты.
-    # Лист пишется ВСЕГДА, даже при полной кассе: сторожу выходов и
-    # сканеру нужна свежая карта независимо от свободных слотов.
-    xj = x[rows_m, j_last]
-    fwd = models[(arm, kf)].predict(xj)
-    mae = models[(arm, km)].predict(xj)
-    mfe = models[(arm, kx)].predict(xj)
-    # Квантильные концы пути — уровни стопа. Их может не быть (цель не
-    # набрала строк на молодой записи): тогда лист идёт без них, и
-    # сканер ставит стоп по среднему, как прежде. Отсутствие уровня
-    # обязано быть видно в самом листе полем `stop_tau`, а не
-    # угадываться по тому, есть ли ключ.
-    maeq = (models[(arm, kmq)].predict(xj)
-            if (arm, kmq) in models else None)
-    mfeq = (models[(arm, kxq)].predict(xj)
-            if (arm, kxq) in models else None)
-    # Объяснение прогноза — по каждой строке листа: сканер скопирует
-    # его в событие входа, цикл — в запись выбора. Считается здесь,
-    # потому что только у цикла есть и модель, и имена признаков;
-    # сканеру ехать должен готовый ответ.
-    whys, setups = (explain_rows(models[(arm, kf)], xj, names)
-                    if names is not None else (None, None))
-    # Прогноз в единицах собственной σ монеты — для ПОРЯДКА, а не для
-    # гейта. Решение владельца переводит ситуационные сделки на per σ, и
-    # переводится именно приоритет: когда гейт проходят больше имён, чем
-    # есть мест, слот достаётся тому, у кого ход крупен ДЛЯ НЕГО. Порог
-    # входа остаётся в базисных пунктах намеренно — он выведен из круга
-    # издержек, а в единицах σ такого якоря не существует, и назначать
-    # его заново значило бы взять число с потолка.
-    kz = rank_z(SIT_SIGNAL_H)
-    fwd_z = (models[(arm, kz)].predict(xj)
-             if (arm, kz) in models else None)
-    if fwd_z is None:
-        log_(f"[{arm}] ситуационная: порядок {kz} недоступен — "
-             f"приоритет по сырому прогнозу")
-    sheet = []
-    for i in range(len(rows_m)):
-        px = float(mats["mid_close"][rows_m[i], j_last])
-        if not np.isfinite(px):
-            continue
-        row = {"sym": syms[rows_m[i]], "fwd": round(float(fwd[i]), 2),
-               "mae": round(float(mae[i]), 2),
-               "mfe": round(float(mfe[i]), 2),
-               "beta": (round(float(beta_row[i]), 4)
-                        if beta_row is not None
-                        and np.isfinite(beta_row[i]) else 1.0),
-               "px": px}
-        if fwd_z is not None and np.isfinite(fwd_z[i]):
-            row["fwd_z"] = round(float(fwd_z[i]), 4)
-        if maeq is not None and mfeq is not None:
-            row["mae_q"] = round(float(maeq[i]), 2)
-            row["mfe_q"] = round(float(mfeq[i]), 2)
-        if whys is not None and whys[i]:
-            row["why"] = whys[i]
-        if setups is not None and setups[i]:
-            row["setup"] = setups[i]
-        nv = novelty(xj[i], nov_lo, nov_hi)
-        if nv is not None:
-            row["odd"] = round(nv, 3)
-        sheet.append(row)
+    sheet = sheet_rows(models, arm, x, mats, syms, rows_m, j_last,
+                       nov_lo, nov_hi, log_, beta_row=beta_row, names=names)
 
     # Входов здесь НЕТ — единственная дверь в книгу живой сканер
     # сборщика (события `entries_live`, превращённые выше). Часовой
@@ -3309,6 +3435,12 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
                      "slots": SIT_SLOTS, "stop_tau": STOP_TAU,
                      "arms": sheets},
                     ensure_ascii=False) + "\n")
+            n_fr = frozen_sheets(mdir, x, mats, syms, rows_sit, j_last, grid,
+                                 nov_lo, nov_hi, log_, beta_row=beta_row,
+                                 names=names, live_seq=seq_b)
+            if n_fr:
+                log_(f"лист замороженной модели (обучение "
+                     f"№{_FROZEN_CACHE.get('seq')}): {n_fr} рук")
         rebuild_accounts(mdir, None, slots=SIT_SLOTS)
         # Наблюдательная книга: та же ситуация без требования к
         # отношению. Свой каталог, свой счёт, своя запись — торгуемая
@@ -3725,6 +3857,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                  + extra)
 
     ts = step("обучение", ts)
+    archive_weights(train_seq, log_)
     mp = os.path.join(MODEL_DIR, "manifest.json")
     prev_man = None
     try:

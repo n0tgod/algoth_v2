@@ -3972,6 +3972,20 @@
 - L169 `test_e2e_report()`
 - L215 `main()`
 
+## research/s8_loop/test_frozen_sheet.py · 137 строк
+
+Замороженная модель: лист теми же строками, живой лист не тронут.
+
+- L19 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L25 `class Stub`
+  - L26 `Stub.__init__(self, by_row)`
+  - L30 `Stub.predict(self, xs)`
+- L35 `_world()`
+- L51 `test_sheet_rows_is_the_live_sheet()`
+- L64 `_grid_models()`
+- L72 `_write_weights(d, models, seq, skip=None)`
+- L82 `test_frozen_refuses_partial_grid_and_writes_full()`
+
 ## research/s8_loop/test_s8.py · 5990 строк
 
 Тесты S8.1. Главные — заглядывание (один тест на ВСЕ признаки, правило M1) и правильность пути (MFE/MAE): на…
