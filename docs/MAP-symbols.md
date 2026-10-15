@@ -9477,6 +9477,13 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L23 `ROOT = os.path.dirname(HERE)`
 - L28 `main(argv=None)`
 
+## tools/frozen_probe.py · 53 строк
+
+Зонд: пишет ли цикл лист замороженной модели и ложится ли архив весов.
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `main()`
+
 ## tools/instr_fields.py · 47 строк
 
 Зонд: какие поля справочника Bybit отличают перпы на акции от крипты.
