@@ -2122,6 +2122,21 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L217 `publish(name)`
 - L223 `main()`
 
+## research/dca_paper/noncrypto_cut.py · 150 строк
+
+Замер: что станет с длинными книгами Ladder, если отсечь не-крипто (вопрос владельца 2026-10-15, перп на фонд…
+
+- L30 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L31 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L39 `OUT_MD = os.path.join(R.OUT, 'NONCRYPTO-cut.md')`
+- L40 `OUT_JSON = os.path.join(R.OUT, 'NONCRYPTO-cut.json…`
+- L41 `METRICS = ('final', 'max_dd', 'open_dd_share', 't…`
+- L44 `by_ruler_of(cache, keys, keep=None)`
+- L54 `cash(cache, keys, keep=None)`
+- L65 `pctl(x, xs)`
+- L72 `fmt(v, pct=True)`
+- L78 `main()`
+
 ## research/dca_paper/pair_age.py · 363 строк
 
 Возраст имени как фильтр входа короткой стороны общего счёта.
