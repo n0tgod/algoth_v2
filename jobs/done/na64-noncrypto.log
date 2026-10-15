@@ -2,3 +2,72 @@
 строка: run research/dca_paper/noncrypto_cut.py --seeds=30
 начало: 2026-10-15T15:38:17Z
 запускаю: .venv/bin/python research/dca_paper/noncrypto_cut.py --seeds=30
+публикуется в ветку main:
+ jobs/done/na63-api-restart.log                     |   15 +
+ jobs/done/na64-noncrypto.done                      |    1 +
+ jobs/done/na64-noncrypto.log                       |    4 +
+ jobs/poke.log                                      |    3 +
+ research/dca_paper/out/DCA-pair.json               |    2 +-
+ research/dca_paper/out/DCA-pair.md                 |   38 +-
+ research/dca_paper/out/DCA-paper.json              | 6352 ++++++++++++--------
+ research/dca_paper/out/DCA-paper.md                |   58 +-
+ research/dca_paper/out/DCA-short.json              |    2 +-
+ research/dca_paper/out/DCA-short.md                |   38 +-
+ research/dca_paper/out/NONCRYPTO-cut.json          |  723 +++
+ research/dca_paper/out/NONCRYPTO-cut.md            |   37 +
+ .../dca_paper/out/fixed_short-2026-10-15.jsonl     |   60 +
+ research/dca_paper/out/short-2026-10-15.jsonl      |   52 +
+ research/s8_loop/out/day_brake.json                |    2 +-
+ 15 files changed, 4905 insertions(+), 2482 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   ec461ce2..1dc9f427  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+решений в кэше 8018, из них не-крипто 833 (10.4 %), имён 162: AALUSDT, AAPLUSDT, ADBEUSDT, ALABUSDT, AMATUSDT, AMCUSDT, AMDSTOCKUSDT, AMGNUSDT, AMZNUSDT, APLDUSDT, APPSTOCKUSDT, ARKKUSDT, ARMUSDT, ASMLUSDT, ASTSUSDT, AVGOUSDT, AXTIUSDT, BABAUSDT, BACUSDT, BBXUSDT, BEUSDT, BIIBUSDT, BITOUSDT, BMNRUSDT, BNCUSDT, BRKBUSDT, BXUSDT, BZUSDT, CATSTOCKUSDT, CIENUSDT, CIFRUSDT, CLSKUSDT, COHRUSDT, COINUSDT, COSTUSDT, CRCLUSDT, CRDOUSDT, CRMUSDT, CRWDUSDT, CRWVUSDT, CSCOUSDT, CSOPSAMSUNG2LUSDT, CSOPSKHYNIX2LUSDT, CVXSTOCKUSDT, CXMTUSDT, DELLUSDT, DKNGUSDT, EBAYUSDT, EWJUSDT, EWTUSDT, EWYUSDT, FLEXUSDT, FLNCUSDT, FLYUSDT, FORMSTOCKUSDT, FWDIUSDT, GDXUSDT, GEUSDT, GEVUSDT, GIGADEVICEUSDT, GILDUSDT, GLWUSDT, GMESTOCKUSDT, GOOGLUSDT, GSUSDT, HIMSUSDT, HOODUSDT, HPEUSDT, HYUNDAIUSDT, IBMUSDT, INTCUSDT, INTWUSDT, IRENUSDT, IWMUSDT, JNJUSDT, JPMUSDT, KLACUSDT, KOUSDT, KSTRUSDT, LITEUSDT, LLYUSDT, MARAUSDT, MAUSDT, MEITUANUSDT, METAUSDT, MINIMAXUSDT, MOUSDT, MSFTUSDT, MSTRUSDT, MUUSDT, MVLLUSDT, NBISUSDT, NFLXUSDT, NOKIAUSDT, NOWUSDT, NVDAUSDT, NVDLUSDT, NVOUSDT, ONDSUSDT, ONUSDT, ORCLUSDT, PANWUSDT, PENGSTOCKUSDT, PEPUSDT, PLTRUSDT, POPMARTUSDT, PYPLUSDT, QCOMUSDT, QNTXUSDT, QQQUSDT, RDDTUSDT, RDWUSDT, REGNUSDT, RIVNUSDT, RKLBUSDT, SAMSUNGUSDT, SHAZUSDT, SHOPUSDT, SKHYUSDT, SMHUSDT, SMICUSDT, SNDKUSDT, SNOWUSDT, SOFIUSDT, SONYUSDT, SOXSUSDT, SOXXUSDT, SPOTUSDT, SPYUSDT, SQQQUSDT, SSPCUSDT, STXXUSDT, TBTUSDT, TENCENTUSDT, TMFUSDT, TQQQUSDT, TSEMUSDT, TSLAUSDT, TSLLUSDT, TSMUSDT, TTWOUSDT, TXNUSDT, TZAUSDT, UBERUSDT, UNHUSDT, USARUSDT, UVXYUSDT, VRTXSTOCKUSDT, VUSDT, WDCUSDT, WENSTOCKUSDT, WMTUSDT, XAUUSDT, XBIUSDT, XIAOMIUSDT, XLEUSDT, XLFUSDT, XLKUSDT, XLVUSDT, XOMUSDT, ZHIPUUSDT, ZMUSDT
+как есть и без не-крипто посчитаны (4 с)
+  нуль: 5/30 зёрен (10 с)
+  нуль: 10/30 зёрен (17 с)
+  нуль: 15/30 зёрен (24 с)
+  нуль: 20/30 зёрен (31 с)
+  нуль: 25/30 зёрен (37 с)
+  нуль: 30/30 зёрен (43 с)
+половины посчитаны (45 с); граница 2026-08-20
+# Ladder без не-крипто: замер кассой
+
+Решений в кэше 8018, не-крипто 833 (10.4 %), имена: AALUSDT, AAPLUSDT, ADBEUSDT, ALABUSDT, AMATUSDT, AMCUSDT, AMDSTOCKUSDT, AMGNUSDT, AMZNUSDT, APLDUSDT, APPSTOCKUSDT, ARKKUSDT, ARMUSDT, ASMLUSDT, ASTSUSDT, AVGOUSDT, AXTIUSDT, BABAUSDT, BACUSDT, BBXUSDT, BEUSDT, BIIBUSDT, BITOUSDT, BMNRUSDT, BNCUSDT, BRKBUSDT, BXUSDT, BZUSDT, CATSTOCKUSDT, CIENUSDT, CIFRUSDT, CLSKUSDT, COHRUSDT, COINUSDT, COSTUSDT, CRCLUSDT, CRDOUSDT, CRMUSDT, CRWDUSDT, CRWVUSDT, CSCOUSDT, CSOPSAMSUNG2LUSDT, CSOPSKHYNIX2LUSDT, CVXSTOCKUSDT, CXMTUSDT, DELLUSDT, DKNGUSDT, EBAYUSDT, EWJUSDT, EWTUSDT, EWYUSDT, FLEXUSDT, FLNCUSDT, FLYUSDT, FORMSTOCKUSDT, FWDIUSDT, GDXUSDT, GEUSDT, GEVUSDT, GIGADEVICEUSDT, GILDUSDT, GLWUSDT, GMESTOCKUSDT, GOOGLUSDT, GSUSDT, HIMSUSDT, HOODUSDT, HPEUSDT, HYUNDAIUSDT, IBMUSDT, INTCUSDT, INTWUSDT, IRENUSDT, IWMUSDT, JNJUSDT, JPMUSDT, KLACUSDT, KOUSDT, KSTRUSDT, LITEUSDT, LLYUSDT, MARAUSDT, MAUSDT, MEITUANUSDT, METAUSDT, MINIMAXUSDT, MOUSDT, MSFTUSDT, MSTRUSDT, MUUSDT, MVLLUSDT, NBISUSDT, NFLXUSDT, NOKIAUSDT, NOWUSDT, NVDAUSDT, NVDLUSDT, NVOUSDT, ONDSUSDT, ONUSDT, ORCLUSDT, PANWUSDT, PENGSTOCKUSDT, PEPUSDT, PLTRUSDT, POPMARTUSDT, PYPLUSDT, QCOMUSDT, QNTXUSDT, QQQUSDT, RDDTUSDT, RDWUSDT, REGNUSDT, RIVNUSDT, RKLBUSDT, SAMSUNGUSDT, SHAZUSDT, SHOPUSDT, SKHYUSDT, SMHUSDT, SMICUSDT, SNDKUSDT, SNOWUSDT, SOFIUSDT, SONYUSDT, SOXSUSDT, SOXXUSDT, SPOTUSDT, SPYUSDT, SQQQUSDT, SSPCUSDT, STXXUSDT, TBTUSDT, TENCENTUSDT, TMFUSDT, TQQQUSDT, TSEMUSDT, TSLAUSDT, TSLLUSDT, TSMUSDT, TTWOUSDT, TXNUSDT, TZAUSDT, UBERUSDT, UNHUSDT, USARUSDT, UVXYUSDT, VRTXSTOCKUSDT, VUSDT, WDCUSDT, WENSTOCKUSDT, WMTUSDT, XAUUSDT, XBIUSDT, XIAOMIUSDT, XLEUSDT, XLFUSDT, XLKUSDT, XLVUSDT, XOMUSDT, ZHIPUUSDT, ZMUSDT. Нуль — 30 случайных срезов того же размера. Сложный процент; доля «под нулём» — сколько случайных срезов дали итог НИЖЕ, чем отсечение не-крипто (0.5 — неотличимо от случайного; около 1 — отсечение лучше случайного).
+
+| книга | итог как есть | итог без не-крипто | нуль: медиана | доля нуля ниже | просадка как есть → без | открытые как есть → без | сделок как есть → без |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| safe:100 | +28.0 % | +12.8 % | +22.3 % | 0.1 | -7.5 % → -6.2 % | -4.5 % → -3.4 % | 102 → 93 |
+| safe:1000 | +14.5 % | +16.6 % | +14.9 % | 1.0 | -10.0 % → -11.3 % | -9.2 % → -10.5 % | 603 → 488 |
+| safe:10000 | +9.2 % | +9.2 % | +8.9 % | 1.0 | -3.8 % → -3.8 % | -3.5 % → -3.5 % | 1867 → 1598 |
+| safe:100000 | +5.6 % | +5.5 % | +5.4 % | 0.867 | -2.2 % → -2.2 % | -2.1 % → -2.1 % | 1932 → 1635 |
+| optimal:100 | +371.7 % | +208.8 % | +253.9 % | 0.4 | -27.9 % → -27.2 % | -21.1 % → -17.3 % | 100 → 94 |
+| optimal:1000 | +26.0 % | +30.0 % | +26.2 % | 0.867 | -30.0 % → -34.4 % | -21.2 % → -25.9 % | 611 → 497 |
+| optimal:10000 | +19.9 % | +19.9 % | +19.2 % | 0.967 | -9.7 % → -9.7 % | -7.9 % → -7.9 % | 1880 → 1611 |
+| optimal:100000 | +11.9 % | +11.7 % | +11.5 % | 0.733 | -5.8 % → -5.8 % | -4.7 % → -4.7 % | 1944 → 1647 |
+| aggr:100 | +19.4 % | +11.9 % | +23.9 % | 0.167 | -57.8 % → -57.8 % | -47.2 % → -47.2 % | 127 → 119 |
+| aggr:1000 | +32.5 % | +32.2 % | +32.4 % | 0.5 | -20.4 % → -20.3 % | -15.1 % → -15.0 % | 516 → 508 |
+| aggr:10000 | +21.2 % | +20.8 % | +20.1 % | 0.767 | -10.5 % → -10.5 % | -7.5 % → -7.5 % | 655 → 644 |
+| aggr:100000 | +21.3 % | +20.9 % | +20.2 % | 0.767 | -10.5 % → -10.5 % | -7.6 % → -7.5 % | 655 → 644 |
+
+## По половинам окна
+
+| книга | 1-я: как есть → без | 2-я: как есть → без |
+|---|--:|--:|
+| safe:100 | +3.6 % → +1.4 % | +18.5 % → +27.7 % |
+| safe:1000 | +2.8 % → +3.4 % | +13.5 % → +14.1 % |
+| safe:10000 | +4.2 % → +4.3 % | +5.3 % → +5.3 % |
+| safe:100000 | +2.8 % → +2.7 % | +3.0 % → +3.0 % |
+| optimal:100 | +12.9 % → +2.6 % | +239.1 % → +86.3 % |
+| optimal:1000 | +3.6 % → +4.9 % | +24.4 % → +25.3 % |
+| optimal:10000 | +8.2 % → +8.4 % | +11.8 % → +11.7 % |
+| optimal:100000 | +5.4 % → +5.2 % | +6.8 % → +6.7 % |
+| aggr:100 | +7.6 % → +6.6 % | +22.3 % → +15.8 % |
+| aggr:1000 | +14.7 % → +14.6 % | +16.6 % → +16.4 % |
+| aggr:10000 | +10.7 % → +10.5 % | +9.9 % → +9.7 % |
+| aggr:100000 | +10.7 % → +10.6 % | +9.9 % → +9.7 % |
+
+Прогон 45 с, 2026-10-15 15:39 UTC.
+
+конец: 2026-10-15T15:39:07Z, код 0
