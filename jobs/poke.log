@@ -2246,3 +2246,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792070980 ==
 [2026-10-15T13:29:42Z] задание na52-sprof запущено: tools/short_profile.py
+
+== сигнал 1792071035 ==
+[2026-10-15T13:30:37Z] задание na53-sprof запущено: tools/short_profile.py

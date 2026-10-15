@@ -51,3 +51,14 @@
   4503248    0.735    0.000    0.735    0.000 {built-in method builtins.min}
    528967    0.720    0.000    0.720    0.000 {method 'search' of 're.Pattern' objects}
 конец: 2026-10-15T13:30:22Z, код 0
+публикуется в ветку main:
+ jobs/done/na51-sprof.log            | 10 +++++++
+ jobs/done/na52-sprof.done           |  1 +
+ jobs/done/na52-sprof.log            | 53 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 68 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   41a5c2f8..e5c320f5  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

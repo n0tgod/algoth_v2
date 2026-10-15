@@ -1,0 +1,53 @@
+== задание na53-sprof ==
+строка: run tools/short_profile.py --n=60
+начало: 2026-10-15T13:30:37Z
+запускаю: .venv/bin/python tools/short_profile.py --n=60
+решений 6596, в кэше 11404, заново 111; подготовка 1.5 с
+реплей 60 решений: 8.1 с, записей 108
+         10215744 function calls (10214451 primitive calls) in 8.133 seconds
+   Ordered by: cumulative time
+   List reduced from 1452 to 28 due to restriction <28>
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    8.133    8.133 /root/algoth_v2/tools/../research/dca_paper/run_short.py:249(replay)
+        1    0.008    0.008    8.133    8.133 /root/algoth_v2/tools/../research/dca_paper/run_short.py:170(replay_cells)
+        2    0.050    0.025    8.125    4.062 /root/algoth_v2/research/dca_ladder/run_d10.py:425(collect)
+       70    0.033    0.000    7.419    0.106 /root/algoth_v2/research/dca_paper/tail.py:152(bars)
+       70    0.132    0.002    5.700    0.081 /root/algoth_v2/research/dca_paper/tail.py:79(book_minute_bars)
+      500    0.045    0.000    5.576    0.011 /root/algoth_v2/research/b1_book/store.py:233(read_hour)
+      122    0.001    0.000    5.459    0.045 /root/algoth_v2/research/b1_book/store.py:168(read_jsonl)
+      122    0.366    0.003    5.447    0.045 /root/algoth_v2/research/b1_book/store.py:279(_parse)
+   266342    1.214    0.000    3.636    0.000 /root/algoth_v2/research/z2_book/bookfeat2.py:106(snap_line)
+    60992    0.047    0.000    1.243    0.000 /usr/lib/python3.12/gzip.py:326(read1)
+    60992    0.063    0.000    1.173    0.000 {method 'read1' of '_io.BufferedReader' objects}
+      140    0.006    0.000    1.153    0.008 /root/algoth_v2/research/b1_book/store.py:221(prefetch)
+    60992    0.158    0.000    1.110    0.000 /usr/lib/python3.12/_compression.py:66(readinto)
+      138    0.020    0.000    0.998    0.007 /root/algoth_v2/research/b1_book/remote.py:260(prefetch)
+    60992    0.115    0.000    0.893    0.000 /usr/lib/python3.12/gzip.py:502(read)
+  1864366    0.786    0.000    0.786    0.000 /root/algoth_v2/research/z2_book/bookfeat2.py:114(<genexpr>)
+   532807    0.685    0.000    0.685    0.000 {method 'search' of 're.Pattern' objects}
+      120    0.007    0.000    0.586    0.005 /root/algoth_v2/research/dca_ladder/run_d10.py:295(one_position)
+  1598028    0.542    0.000    0.542    0.000 /root/algoth_v2/research/z2_book/bookfeat2.py:115(<genexpr>)
+    60868    0.526    0.000    0.526    0.000 {method 'decompress' of 'zlib._ZlibDecompressor' objects}
+        6    0.000    0.000    0.496    0.083 /usr/lib/python3.12/concurrent/futures/_base.py:646(__exit__)
+        6    0.000    0.000    0.496    0.083 /usr/lib/python3.12/concurrent/futures/thread.py:219(shutdown)
+        6    0.000    0.000    0.495    0.083 /usr/lib/python3.12/threading.py:1115(join)
+   124/78    0.001    0.000    0.495    0.006 {method 'acquire' of '_thread.lock' objects}
+        6    0.000    0.000    0.495    0.082 /usr/lib/python3.12/threading.py:1153(_wait_for_tstate_lock)
+       12    0.000    0.000    0.494    0.041 /usr/lib/python3.12/concurrent/futures/_base.py:199(as_completed)
+       12    0.000    0.000    0.494    0.041 /usr/lib/python3.12/threading.py:637(wait)
+       18    0.000    0.000    0.494    0.027 /usr/lib/python3.12/threading.py:323(wait)
+--- по собственному времени ---
+  1864366    0.786    0.000    0.786    0.000 /root/algoth_v2/research/z2_book/bookfeat2.py:114(<genexpr>)
+   532807    0.685    0.000    0.685    0.000 {method 'search' of 're.Pattern' objects}
+  1598028    0.542    0.000    0.542    0.000 /root/algoth_v2/research/z2_book/bookfeat2.py:115(<genexpr>)
+    60868    0.526    0.000    0.526    0.000 {method 'decompress' of 'zlib._ZlibDecompressor' objects}
+       12    0.374    0.031    0.374    0.031 {method 'read' of '_ssl._SSLSocket' objects}
+      122    0.366    0.003    5.447    0.045 /root/algoth_v2/research/b1_book/store.py:279(_parse)
+      120    0.264    0.002    0.422    0.004 /root/algoth_v2/research/dca_ladder/ladder.py:431(simulate_dca)
+    61112    0.214    0.000    0.214    0.000 {built-in method zlib.crc32}
+   548729    0.159    0.000    0.159    0.000 {built-in method builtins.max}
+    60992    0.158    0.000    1.110    0.000 /usr/lib/python3.12/_compression.py:66(readinto)
+   532694    0.154    0.000    0.154    0.000 {method 'groups' of 're.Match' objects}
+       70    0.132    0.002    5.700    0.081 /root/algoth_v2/research/dca_paper/tail.py:79(book_minute_bars)
+    36208    0.132    0.000    0.132    0.000 {built-in method posix.stat}
+конец: 2026-10-15T13:30:47Z, код 0
