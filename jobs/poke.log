@@ -2139,3 +2139,5 @@ Terminated
 == сигнал 1792046126 ==
 [2026-10-15T06:35:29Z] задание na03-paper-warm запущено: research/dca_paper/run_paper.py
 _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
+
+== сигнал 1792046243 ==

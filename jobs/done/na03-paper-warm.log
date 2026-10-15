@@ -3,3 +3,14 @@
 начало: 2026-10-15T06:35:29Z
 запускаю: .venv/bin/python research/dca_paper/run_paper.py --no-publish
 конец: 2026-10-15T06:36:51Z, код 137
+публикуется в ветку main:
+ jobs/done/na02-paper-cold.log       | 16 ++++++++++++++++
+ jobs/done/na03-paper-warm.done      |  1 +
+ jobs/done/na03-paper-warm.log       |  5 +++++
+ jobs/poke.log                       |  4 ++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 27 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   01975ad4..90b6a9b5  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
