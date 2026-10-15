@@ -335,3 +335,19 @@ sheets.jsonl: ног 2017059
 
 фазы: кэш 0.94 с, решения 29.07 с, реплей 26.54 с, хвост и fav 0.01 с, запись кэша 0.59 с, касса 1.27 с, журнал 1.27 с, свод 8.99 с, артефакт 0.1 с, отчёт 0 с
 конец: 2026-10-15T06:34:42Z, код 0
+публикуется в ветку main:
+ jobs/done/n99-wdtail.log                           |     9 +
+ jobs/done/na01-status.done                         |     1 +
+ jobs/done/na01-status.log                          |    46 +
+ jobs/done/na02-paper-cold.done                     |     1 +
+ jobs/done/na02-paper-cold.log                      |   337 +
+ jobs/poke.log                                      |     4 +
+ research/dca_paper/out/DCA-paper.json              | 11068 ++++++++++++-------
+ research/dca_paper/out/DCA-paper.md                |   122 +-
+ .../dca_paper/out/fixed_journal-2026-10-12.jsonl   |     7 +
+ research/dca_paper/out/journal-2026-10-12.jsonl    |     6 +
+ 10 files changed, 7730 insertions(+), 3871 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   d84c93b9..9e680aa6  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
