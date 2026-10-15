@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 589, строк: 253284, каталогов: 86.
+Модулей кода: 590, строк: 253334, каталогов: 86.
 
 
 ## корень — память проекта, идеи, README
@@ -848,6 +848,7 @@
 - `app_api/tls_probe.py` · 52 строк — Разведка перед настоящим сертификатом (спека 16 L2): кто слушает 80 и 443, есть ли на машине certbot/acme.sh/…
 - `app_api/tradelog.py` · 277 строк — Журнал событий живого исполнителя → записи `trades` → пуши (спека 15 §7.6).
 - `book_timing.py` · 33 строк — Сколько длится прогон книг на тёплом кэше — из логов прогонов (спека 17, путь 1: каденция 5 минут возможна, т…
+- `cache_sizes.py` · 44 строк — Размеры кэшей прогонов книг на диске (15.10): ноги листа, куски журнала, бары, контекст издержек, кэши реплея…
 - `costs_timing.py` · 43 строк — Сколько стоит контекст издержек и их наложение на строки книги — по частям (спека 17 §0: «свод» 11.7 с на сер…
 - `diag_cycle.py` · 302 строк — Почему молчит цикл обучения: хвост журнала и состояние манифеста.
 - `diag_dca.py` · 49 строк — Идёт ли прогон бумажных DCA-книг и докуда дошёл.
@@ -878,5 +879,5 @@
 - `train_alarm.py` · 73 строк — Тревога «обучение S8 стоит» — сторожу, `status` и журналу «нужно от вас».
 - `unstick_publish.py` · 77 строк — Разморозить публикацию: вернуть разрезанный журнал к версии git.
 - `venv_add.py` · 75 строк — Установка пакетов в окружение сервера через очередь заданий.
-- `watchdog_book.sh` · 700 строк — Сторож сбора: поднимает умершее и перезапускает зависшее.
-- тесты: `app_api/test_app_api.py` (1539), `test_disk_alarm.py` (64), `test_jobs.sh` (240), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_api.sh` (47), `test_watchdog_books.sh` (112), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (59), `test_watchdog_ship.sh` (49)
+- `watchdog_book.sh` · 704 строк — Сторож сбора: поднимает умершее и перезапускает зависшее.
+- тесты: `app_api/test_app_api.py` (1539), `test_disk_alarm.py` (64), `test_jobs.sh` (240), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_api.sh` (47), `test_watchdog_books.sh` (114), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (59), `test_watchdog_ship.sh` (49)

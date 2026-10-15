@@ -4897,13 +4897,13 @@ X1: исполнитель против подставной биржи.
 - L16 `check()`
 - L18 `tick()`
 
-## tools/test_watchdog_books.sh · 112 строк
+## tools/test_watchdog_books.sh · 114 строк
 
 Проверка гейта прогонов книг в стороже (`books_mem_ok`): один прогон
 
 - L32 `check()`
 - L33 `run()`
-- L58 `run_flag()`
+- L60 `run_flag()`
 
 ## tools/test_watchdog_mem.sh · 68 строк
 

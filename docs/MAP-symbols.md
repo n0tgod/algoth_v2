@@ -9236,6 +9236,16 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L14 `RX = re.compile('(готово|за \\d+(\\.\\d+)? с…`
 - L17 `main()`
 
+## tools/cache_sizes.py · 44 строк
+
+Размеры кэшей прогонов книг на диске (15.10): ноги листа, куски журнала, бары, контекст издержек, кэши реплея…
+
+- L10 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L11 `ROOT = os.path.join(HERE, '..')`
+- L12 `PATHS = ['research/dca_ladder/out/legs_cache.pk…`
+- L18 `du(p)`
+- L32 `main()`
+
 ## tools/costs_timing.py · 43 строк
 
 Сколько стоит контекст издержек и их наложение на строки книги — по частям (спека 17 §0: «свод» 11.7 с на сер…
@@ -9568,7 +9578,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 700 строк
+## tools/watchdog_book.sh · 704 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 
@@ -9577,8 +9587,8 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L51 `pair_due()` — Общий счёт считается ПОСЛЕ книг, из которых он читает: его кэши пишут прогоны коротких и длинных книг, и свой…
 - L60 `stopped_recently()` — Самоостанов прогона по памяти — не повод перезапускать его следующим тактом (13.10: «СТОП: память» каждые 5 м…
 - L76 `mem_avail_mb()`
-- L92 `train_waiting()`
-- L102 `train_rss_mb()`
-- L128 `publish_flag()`
-- L131 `books_running()`
-- L134 `books_mem_ok()`
+- L96 `train_waiting()`
+- L106 `train_rss_mb()`
+- L132 `publish_flag()`
+- L135 `books_running()`
+- L138 `books_mem_ok()`
