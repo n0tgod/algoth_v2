@@ -5,3 +5,14 @@
 ('long', 'дорого') 50
   BTCUSDT: 50 решений, шаг 0.001, лот 0.001, цена 63237.3…81308.6
 конец: 2026-10-15T20:29:48Z, код 0
+публикуется в ветку main:
+ jobs/done/na83-status.done    |   1 +
+ jobs/done/na83-status.log     | 398 ++++++++++++++++++++++++++++++++++++++++++
+ jobs/done/na84-rungprobe.done |   1 +
+ jobs/done/na84-rungprobe.log  |   7 +
+ jobs/poke.log                 |   4 +
+ 5 files changed, 411 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   3d33fd67..4f05d619  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
