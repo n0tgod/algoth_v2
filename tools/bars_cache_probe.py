@@ -26,9 +26,12 @@ HOUR = 3600.0
 
 def main():
     quiet = lambda m: None                                    # noqa: E731
+    TL.TailBars(log=quiet)          # включает хранилище (store.REMOTE), как прогон
+    print(f"REMOTE: {type(store.REMOTE).__name__ if store.REMOTE else None}, кэш "
+          f"{getattr(store.REMOTE, 'cache', None)}")
     legs_ = S.legs(log=quiet)
     cache, _ = S.read_cache(log=quiet)
-    need = S.needs_replay(cache, legs_)[:3]
+    need = S.needs_replay(cache, legs_)[:6]
     print(f"заново {len(need)}; кэш баров {TL.BARS_CACHE}: файлов "
           f"{len(os.listdir(TL.BARS_CACHE)) if os.path.isdir(TL.BARS_CACHE) else 'нет каталога'}")
     calls = []
@@ -55,6 +58,10 @@ def main():
             hh = SW.datetime.fromtimestamp(int(t0 // 3600) * 3600 + 3 * 3600, SW.timezone.utc).strftime("%Y-%m-%d-%H")
             print(f"  подпись {hh}: {SW._hour_sig(dirpath, hh)}; файлы: "
                   f"{[f for f in os.listdir(dirpath) if f.startswith(hh)] if os.path.isdir(dirpath) else 'нет каталога'}")
+            if store.REMOTE is not None:
+                rp = os.path.join(store.REMOTE.cache, "trades", sym, f"{hh}.jsonl.gz")
+                print(f"  в кэше хранилища: {os.path.exists(rp)} ({rp}); промахов {getattr(store.REMOTE, 'misses', '?')}, "
+                      f"попаданий {getattr(store.REMOTE, 'hits', '?')}")
             try:
                 with open(cp, "rb") as f:
                     d = pickle.load(f)

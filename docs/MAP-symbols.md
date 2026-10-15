@@ -9229,7 +9229,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L229 `test_event(root, acc_id, text=None)` — Пробная строка в пробный журнал аккаунта: вид `test`, `mode: test`.
 - L252 `view(row)` — Запись `trades` для приложения.
 
-## tools/bars_cache_probe.py · 72 строк
+## tools/bars_cache_probe.py · 79 строк
 
 Почему кэш баров не попадает в коротком реплее (15.10, профиль: 3964 read_hour на 68 чтений). Берёт первые ре…
 
