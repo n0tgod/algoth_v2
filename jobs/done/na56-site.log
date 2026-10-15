@@ -1,0 +1,6 @@
+== задание na56-site ==
+строка: run tools/app_api/set_site.py --apple_client_id=trade.algoth.web
+начало: 2026-10-15T14:19:52Z
+запускаю: .venv/bin/python tools/app_api/set_site.py --apple_client_id=trade.algoth.web
+настройки сайта: {"apple_client_id": "trade.algoth.web", "company": "", "ios_url": "", "mac_url": "", "testflight_url": ""}
+конец: 2026-10-15T14:19:52Z, код 0
