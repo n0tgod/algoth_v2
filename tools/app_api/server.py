@@ -240,20 +240,25 @@ class App:
                          "win": st.get("win"), "usd": st.get("usd"),
                          "forward_final": fw.get("final"), "forward_n": fw.get("n"), "forward_since": b.get("forward_since"),
                          "open_n": len(((b.get("open") or {}).get("positions") or [])),
+                         "open_dd_share": st.get("open_dd_share"), "open_dd_at": st.get("open_dd_at"),
+                         "_open": st.get("open_days"),
                          "_days": st.get("days_rows") or []})
         rows.sort(key=lambda x: (x["final"] is None, -(x["final"] or 0)))
         top = None
         if rows:
             t = rows[0]
-            cum, series = 0.0, []
-            for x in t["_days"]:
-                cum += float(x.get("usd") or 0.0)
-                series.append([x.get("d"), round(cum / dep, 6)])
-            top = {k: v for k, v in t.items() if k != "_days"}
+            series, dips = top_series(t["_days"], t["_open"], dep)
+            top = {k: v for k, v in t.items() if k not in ("_days", "_open")}
             top["days"] = series
             top["days_n"] = len(series)
+            # Просадка открытых по дням: точка = закрытый итог дня + худшая
+            # почасовая отметка открытых в этот день, доля депозита; дня без
+            # отметки под водой нет (None) — «не было в минусе», не ноль.
+            # Ряд не передан артефактом (прежний образец) — поля нет вовсе.
+            top["open_dips"] = dips
         for x in rows:
             x.pop("_days", None)
+            x.pop("_open", None)
         return 200, {"rule": f"Ranked by return over the whole record at a ${dep:,.0f} deposit, compound sizing. "
                              "A showcase of past results, not a forecast.",
                      "deposit": dep, "deposits": deposits, "top": top, "ranking": rows, "stale": bool(d.get("stale")),
@@ -1213,6 +1218,35 @@ class App:
 # латиница; ключ страниц добавляет сервер, наружу он не выходит. Ответ
 # сборщика отдаётся как есть, байтами (свод в фокусе ≈ 2.6 МБ — разбирать
 # и собирать его заново незачем), сжатие — если клиент его принимает.
+def top_series(days_rows, open_days, dep):
+    """Кривая витрины и просадка открытых на ОДНОЙ оси дней.
+
+    Ось — каждый календарный день от первого до последнего (закрытые и дни
+    просадки открытых вместе): прежняя ось шла только по дням с закрытыми
+    сделками, и неделя без закрытий сжималась в точку. Закрытый итог в день
+    без закрытий переносится с прошлого дня — та же сумма Σ usd / депозит,
+    что у итога. `open_days` None (артефакт прежнего образца) — dips None."""
+    import datetime as _dt
+    real = {}
+    for x in days_rows or []:
+        if x.get("d"):
+            real[x["d"]] = real.get(x["d"], 0.0) + float(x.get("usd") or 0.0)
+    opn = {d: float(v) for d, v in (open_days or [])}
+    keys = sorted(set(real) | set(opn))
+    if not keys or not dep:
+        return [], (None if open_days is None else [])
+    d0 = _dt.date.fromisoformat(keys[0])
+    d1 = _dt.date.fromisoformat(keys[-1])
+    series, dips, cum = [], [], 0.0
+    while d0 <= d1:
+        k = d0.isoformat()
+        cum += real.get(k, 0.0)
+        series.append([k, round(cum / dep, 6)])
+        dips.append(round((cum + opn[k]) / dep, 6) if k in opn else None)
+        d0 += _dt.timedelta(days=1)
+    return series, (None if open_days is None else dips)
+
+
 def computed_at_of(d):
     """Момент последнего пересчёта длинных книг для витрины: свод сборщика
     несёт возраст артефакта в часах (`age_h`), а не метку — метка

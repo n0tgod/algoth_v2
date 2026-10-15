@@ -891,6 +891,21 @@ def attach_open_dd(s):
         if isinstance(b.get("all"), dict):
             b["all"]["open_dd"] = c["open_dd"]
             b["all"]["open_dd_share"] = c.get("open_dd_share")
+            # КОГДА была просадка открытых (владелец 15.10: «углубление на
+            # графике другим цветом»): худший час по дням UTC, $ на депозит,
+            # и момент худшего часа всей записи. Ряд — те же почасовые
+            # отметки кассы (`open_hours`, только часы под водой); дня без
+            # них в ряду нет — это «открытые не были в минусе», не ноль.
+            days, worst = {}, None
+            for h, v in (c.get("open_hours") or []):
+                d = time.strftime("%Y-%m-%d", time.gmtime(int(h)))
+                v = float(v)
+                if v < days.get(d, 0.0):
+                    days[d] = v
+                if worst is None or v < worst[1]:
+                    worst = (int(h), v)
+            b["all"]["open_days"] = [[d, round(days[d], 2)] for d in sorted(days)]
+            b["all"]["open_dd_at"] = worst[0] if worst else None
         since = b.get("forward_since")
         fw = b.get("forward")
         hours = c.get("open_hours")

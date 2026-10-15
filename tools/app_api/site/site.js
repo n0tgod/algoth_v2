@@ -74,14 +74,15 @@ const Site = (() => {
     stat("s-trades", t.n != null ? String(t.n) : "—");
     stat("s-win", t.win == null ? "closed trades" : `closed trades · ${Math.round(t.win * 100)} % won`);
     $("f-tiles").innerHTML = [
-      ["max drawdown", pct(t.max_dd), "of the deposit"],
+      ["max drawdown", pct(t.max_dd), "closed trades, of the deposit"],
+      ["worst open loss", t.open_dd_share == null ? "—" : pct(t.open_dd_share), t.open_dd_at ? "open positions, " + new Date(t.open_dd_at * 1000).toISOString().slice(0, 10) : "open positions"],
       ["trades", t.n ?? "—", `${t.days_n} days of record`],
       ["win rate", t.win == null ? "—" : Math.round(t.win * 100) + " %", "closed trades"],
       ["open now", t.open_n ?? "—", "positions"],
       ["record since", t.days && t.days.length ? t.days[0][0] : "—", "paper book"],
-      ["deposit", "$" + Number(t.deposit).toLocaleString("en-US"), "paper, compound"],
     ].map(([k, v, s]) => `<div class="tile"><small>${esc(k)}</small><b>${esc(v)}</b><small>${esc(s)}</small></div>`).join("");
-    drawLine($("f-chart"), $("f-tip"), t.days, t.final >= 0 ? "var(--bid)" : "var(--ask)");
+    drawLine($("f-chart"), $("f-tip"), t.days, t.final >= 0 ? "var(--bid)" : "var(--ask)", t.open_dips);
+    $("f-legend").innerHTML = t.open_dips ? `<span><i class="lg-line"></i>closed trades</span><span><i class="lg-dip"></i>open positions at their worst hour of the day</span>` : "";
     const tb = document.querySelector("#rank tbody");
     tb.innerHTML = (r.ranking || []).map((x, i) => `<tr class="${i === 0 ? "top" : ""}"><td>${i + 1}</td><td>Ladder · ${esc(x.title_en)}</td><td>${esc(side === x.side ? side : ({long: "Long", short: "Short", both: "Both"}[x.side] || x.side))}</td>
       <td class="num ${x.final >= 0 ? "good" : "bad"}">${pct(x.final)}</td><td class="num">${pct(x.max_dd)}</td><td class="num">${x.n ?? "—"}</td><td class="num">${x.win == null ? "—" : Math.round(x.win * 100) + " %"}</td></tr>`).join("");
@@ -90,17 +91,19 @@ const Site = (() => {
   // Линия одной серии: накопленный % депозита по дням (значения с
   // сервера). Сетка по трём уровням, подписи первого и последнего дня,
   // перекрестие с подсказкой. Цвет — знак итога, одна серия без легенды.
-  function drawLine(svg, tip, days, color) {
+  function drawLine(svg, tip, days, color, dips) {
     // ширина — по контейнеру, не растяжением: иначе на телефоне подписи
     // сжимаются; при смене ширины — перерисовка
     const W = Math.max(320, Math.round(svg.clientWidth || 720)), H = 240, L = 44, R = 10, T = 12, B = 24;
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.removeAttribute("preserveAspectRatio");
-    if (!drawLine._bound) { drawLine._bound = true; let tm; window.addEventListener("resize", () => { clearTimeout(tm); tm = setTimeout(() => drawLine(svg, tip, days, color), 150); }); }
+    drawLine._last = [svg, tip, days, color, dips];
+    if (!drawLine._bound) { drawLine._bound = true; let tm; window.addEventListener("resize", () => { clearTimeout(tm); tm = setTimeout(() => drawLine(...drawLine._last), 150); }); }
     const ns = "http://www.w3.org/2000/svg";
     const el = (n, a) => { const e = document.createElementNS(ns, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
     svg.innerHTML = "";
     if (!days || days.length < 2) { svg.appendChild(Object.assign(el("text", {x: W / 2, y: H / 2, class: "axis-text", "text-anchor": "middle"}), {textContent: "not enough days to draw"})); return; }
-    const ys = days.map((d) => d[1]); const lo = Math.min(0, ...ys), hi = Math.max(0, ...ys); const span = (hi - lo) || 1;
+    const dv = (dips || []).filter((v) => v != null);
+    const ys = days.map((d) => d[1]); const lo = Math.min(0, ...ys, ...dv), hi = Math.max(0, ...ys); const span = (hi - lo) || 1;
     const x = (i) => L + (i / (days.length - 1)) * (W - L - R), y = (v) => T + (1 - (v - lo) / span) * (H - T - B);
     for (const v of [lo, lo + span / 2, hi]) {
       svg.appendChild(el("line", {x1: L, x2: W - R, y1: y(v), y2: y(v), class: "grid-line"}));
@@ -109,6 +112,24 @@ const Site = (() => {
     if (lo < 0 && hi > 0) svg.appendChild(el("line", {x1: L, x2: W - R, y1: y(0), y2: y(0), class: "grid-line", style: "stroke:var(--muted)"}));
     const pts = days.map((d, i) => `${x(i).toFixed(1)},${y(d[1]).toFixed(1)}`);
     svg.appendChild(el("path", {d: `M${pts[0]} L${pts.slice(1).join(" ")} L${x(days.length - 1).toFixed(1)},${y(lo)} L${x(0)},${y(lo)} Z`, class: "area", fill: color}));
+    // Просадка открытых: впадина от линии закрытых вниз до худшей отметки
+    // открытых за день, свой цвет; худшая точка всей записи подписана.
+    if (dips && dips.length === days.length) {
+      let worst = -1;
+      for (let i = 0; i < days.length; i++) {
+        if (dips[i] == null || dips[i] >= days[i][1]) continue;
+        const w = Math.max(2, (W - L - R) / Math.max(1, days.length - 1) * 0.8);
+        svg.appendChild(el("rect", {x: x(i) - w / 2, y: y(days[i][1]), width: w, height: Math.max(1, y(dips[i]) - y(days[i][1])), class: "dip"}));
+        if (worst < 0 || dips[i] - days[i][1] < dips[worst] - days[worst][1]) worst = i;
+      }
+      const dipPts = []; for (let i = 0; i < days.length; i++) if (dips[i] != null) dipPts.push(`${x(i).toFixed(1)},${y(dips[i]).toFixed(1)}`);
+      if (worst >= 0) {
+        svg.appendChild(el("circle", {cx: x(worst), cy: y(dips[worst]), r: 4, class: "dip-dot"}));
+        const right = x(worst) > W * 0.6;
+        svg.appendChild(Object.assign(el("text", {x: x(worst) + (right ? -8 : 8), y: Math.min(H - B - 4, y(dips[worst]) + 4), class: "dip-text", "text-anchor": right ? "end" : "start"}),
+          {textContent: `worst open loss ${pct(dips[worst] - days[worst][1], 1)} · ${days[worst][0]}`}));
+      }
+    }
     svg.appendChild(el("path", {d: "M" + pts.join(" L"), class: "line", stroke: color}));
     for (const [i, anchor] of [[0, "start"], [days.length - 1, "end"]])
       svg.appendChild(Object.assign(el("text", {x: x(i), y: H - 6, class: "axis-text", "text-anchor": anchor}), {textContent: days[i][0]}));
@@ -121,7 +142,7 @@ const Site = (() => {
       const i = Math.max(0, Math.min(days.length - 1, Math.round((px - L) / (W - L - R) * (days.length - 1))));
       cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("visibility", "visible");
       dot.setAttribute("cx", x(i)); dot.setAttribute("cy", y(days[i][1])); dot.setAttribute("visibility", "visible");
-      tip.textContent = `${days[i][0]}  ${pct(days[i][1], 2)}`; tip.classList.remove("hide");
+      tip.textContent = `${days[i][0]}  closed ${pct(days[i][1], 2)}` + (dips && dips[i] != null ? `  ·  with open at worst ${pct(dips[i], 2)}` : ""); tip.classList.remove("hide");
       tip.style.left = (x(i) / W * box.width) + "px"; tip.style.top = (y(days[i][1]) / H * box.height) + "px";
     };
     hit.addEventListener("mousemove", move); hit.addEventListener("touchmove", (e) => { move(e.touches[0]); }, {passive: true});

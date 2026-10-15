@@ -136,3 +136,13 @@ header.top nav a.nav-cta { border:1px solid rgba(139,92,246,.5); border-radius:9
 /* знак в шапке (логотип 15.10) */
 header.top .brand { display:inline-flex; align-items:center; gap:8px }
 header.top .brand img { width:34px; height:34px; display:block }
+
+/* Просадка открытых на графике (владелец 15.10): впадина своим цветом,
+   худшая точка с подписью; легенда из двух знаков */
+.chart-wrap .dip { fill:var(--ask); opacity:.38 }
+.chart-wrap .dip-dot { fill:var(--ask); stroke:var(--bg); stroke-width:2 }
+.chart-wrap .dip-text { fill:var(--ask); font-size:11px; font-family:"JetBrains Mono",ui-monospace,Menlo,monospace }
+.legend { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--muted); margin:2px 0 4px }
+.legend span { display:inline-flex; align-items:center; gap:6px }
+.legend .lg-line { width:16px; height:2px; background:var(--bid); display:inline-block }
+.legend .lg-dip { width:10px; height:10px; background:var(--ask); opacity:.55; display:inline-block; border-radius:2px }
