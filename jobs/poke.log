@@ -2302,3 +2302,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792085448 ==
 [2026-10-15T17:30:50Z] задание na72-instr-refresh запущено: research/a1_universe/instruments_refresh.py
+
+== сигнал 1792085486 ==
+[2026-10-15T17:31:28Z] задание na73-apirestart запущено: tools/app_api/restart.py

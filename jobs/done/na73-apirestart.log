@@ -1,0 +1,6 @@
+== задание na73-apirestart ==
+строка: run tools/app_api/restart.py
+начало: 2026-10-15T17:31:28Z
+запускаю: .venv/bin/python tools/app_api/restart.py 
+порт 443: слушает
+конец: 2026-10-15T17:31:33Z, код 0
