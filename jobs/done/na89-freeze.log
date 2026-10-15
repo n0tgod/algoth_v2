@@ -4,3 +4,15 @@
 запускаю: .venv/bin/python tools/freeze_weights.py 
 заморожено обучение №534 (до 2026-10-15-05): 28 файлов, 1.7 МБ; цикл с этого часа пишет sheets_frozen.jsonl
 конец: 2026-10-15T23:03:42Z, код 0
+публикуется в ветку main:
+ jobs/done/na88-traineffect.log | 7 +++++++
+ jobs/done/na89-freeze.done     | 1 +
+ jobs/done/na89-freeze.log      | 6 ++++++
+ jobs/done/na90-restart.done    | 1 +
+ jobs/done/na90-restart.log     | 6 ++++++
+ jobs/poke.log                  | 4 ++++
+ 6 files changed, 25 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   03cd33d8..739a2475  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
