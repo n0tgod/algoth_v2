@@ -1,0 +1,1 @@
+run tools/loggrep.py --file=watchdog --pattern=DCA|h24|S8 --last=40
