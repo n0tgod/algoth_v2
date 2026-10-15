@@ -9075,7 +9075,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L17 `call(base, path, body=None, token=None, ctx=None)`
 - L26 `main()`
 
-## tools/app_api/server.py · 1600 строк
+## tools/app_api/server.py · 1611 строк
 
 HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 
@@ -9156,35 +9156,36 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
   - L1159 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
   - L1174 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
   - L1191 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
-- L1216 `PUB_ROUTES = {'dca': ('full', 'focus', 'dep', 'ruler…` — Свод для приложения без ключа страниц (спека 16 §8b, L1). Ключ страниц был вшит в сборку и открывал ВСЕ стран…
-- L1220 `PUB_VALUE = re.compile('^[A-Za-z0-9._:\\-]{1,64}$')`
-- L1226 `SITE_DIR = os.path.join(HERE, 'site')` — Сайт (спека 16 L4): главная, документы, кабинет — файлы `site/`, те же ответы API, что у приложения. Настройк…
-- L1227 `SITE_HOST = 'algoth.trade'`
-- L1228 `SITE_PAGES = {'/': ('index.html', 'text/html; charse…`
-- L1234 `SITE_KEYS = ('apple_client_id', 'company', 'ios_url…`
-- L1235 `SITE_ID = re.compile('^[A-Za-z0-9._-]{0,120}$')`
-- L1238 `site_settings(out)`
-- L1247 `site_page(path)` — (тело, тип) страницы сайта или None; файлы читаются с диска каждый раз — их пять, они маленькие, а правка вид…
-- L1260 `pub_query(name, q)` — Параметры публичного запроса: (dict, None) или (None, слова отказа).
-- L1276 `fetch_pub(name, params, gzip_ok=False)` — Ответ сборщика байтами: (код, тело, Content-Encoding или None).
-- L1293 `fetch_dca(full=None)`
-- L1306 `class Handler`
-  - L1313 `Handler.log_message(self, fmt, *a)`
-  - L1317 `Handler._send(self, code, obj)`
-  - L1326 `Handler._send_raw(self, body, encoding=None)`
-  - L1336 `Handler._pub(self, name, q)`
-  - L1351 `Handler._body(self)`
-  - L1361 `Handler._acc(self)`
-  - L1369 `Handler._site(self, u, method)` — Страницы сайта: www → без www, пять файлов, остальное 404.
-  - L1391 `Handler._route(self, method)`
-  - L1504 `Handler.do_GET(self)`
-  - L1507 `Handler.do_POST(self)`
-  - L1510 `Handler.do_DELETE(self)`
-- L1514 `class Server` — TLS-рукопожатие — в ПОТОКЕ соединения и с пределом времени.
-  - L1531 `Server.finish_request(self, request, client_address)`
-- L1545 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
-- L1556 `read_operator_token(path)`
-- L1564 `main(argv=None)`
+- L1216 `computed_at_of(d)` — Момент последнего пересчёта длинных книг для витрины: свод сборщика несёт возраст артефакта в часах (`age_h`)…
+- L1227 `PUB_ROUTES = {'dca': ('full', 'focus', 'dep', 'ruler…`
+- L1231 `PUB_VALUE = re.compile('^[A-Za-z0-9._:\\-]{1,64}$')`
+- L1237 `SITE_DIR = os.path.join(HERE, 'site')` — Сайт (спека 16 L4): главная, документы, кабинет — файлы `site/`, те же ответы API, что у приложения. Настройк…
+- L1238 `SITE_HOST = 'algoth.trade'`
+- L1239 `SITE_PAGES = {'/': ('index.html', 'text/html; charse…`
+- L1245 `SITE_KEYS = ('apple_client_id', 'company', 'ios_url…`
+- L1246 `SITE_ID = re.compile('^[A-Za-z0-9._-]{0,120}$')`
+- L1249 `site_settings(out)`
+- L1258 `site_page(path)` — (тело, тип) страницы сайта или None; файлы читаются с диска каждый раз — их пять, они маленькие, а правка вид…
+- L1271 `pub_query(name, q)` — Параметры публичного запроса: (dict, None) или (None, слова отказа).
+- L1287 `fetch_pub(name, params, gzip_ok=False)` — Ответ сборщика байтами: (код, тело, Content-Encoding или None).
+- L1304 `fetch_dca(full=None)`
+- L1317 `class Handler`
+  - L1324 `Handler.log_message(self, fmt, *a)`
+  - L1328 `Handler._send(self, code, obj)`
+  - L1337 `Handler._send_raw(self, body, encoding=None)`
+  - L1347 `Handler._pub(self, name, q)`
+  - L1362 `Handler._body(self)`
+  - L1372 `Handler._acc(self)`
+  - L1380 `Handler._site(self, u, method)` — Страницы сайта: www → без www, пять файлов, остальное 404.
+  - L1402 `Handler._route(self, method)`
+  - L1515 `Handler.do_GET(self)`
+  - L1518 `Handler.do_POST(self)`
+  - L1521 `Handler.do_DELETE(self)`
+- L1525 `class Server` — TLS-рукопожатие — в ПОТОКЕ соединения и с пределом времени.
+  - L1542 `Server.finish_request(self, request, client_address)`
+- L1556 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
+- L1567 `read_operator_token(path)`
+- L1575 `main(argv=None)`
 
 ## tools/app_api/set_topic.py · 44 строк
 

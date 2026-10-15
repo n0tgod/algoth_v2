@@ -257,7 +257,7 @@ class App:
         return 200, {"rule": f"Ranked by return over the whole record at a ${dep:,.0f} deposit, compound sizing. "
                              "A showcase of past results, not a forecast.",
                      "deposit": dep, "deposits": deposits, "top": top, "ranking": rows, "stale": bool(d.get("stale")),
-                     "window": d.get("window"), "computed_at": d.get("computed_at")}
+                     "window": d.get("window"), "computed_at": computed_at_of(d)}
 
     def site(self):
         d = site_settings(self.out)
@@ -1213,6 +1213,17 @@ class App:
 # латиница; ключ страниц добавляет сервер, наружу он не выходит. Ответ
 # сборщика отдаётся как есть, байтами (свод в фокусе ≈ 2.6 МБ — разбирать
 # и собирать его заново незачем), сжатие — если клиент его принимает.
+def computed_at_of(d):
+    """Момент последнего пересчёта длинных книг для витрины: свод сборщика
+    несёт возраст артефакта в часах (`age_h`), а не метку — метка
+    выводится из него к минуте; нет возраста — None, не «сейчас»."""
+    try:
+        age_h = float(d.get("age_h"))
+    except (TypeError, ValueError):
+        return None
+    return time.strftime("%Y-%m-%d %H:%M", time.gmtime(time.time() - age_h * 3600.0))
+
+
 PUB_ROUTES = {"dca": ("full", "focus", "dep", "ruler", "sizing"),
               "dca_marks": ("dep", "ruler", "sizing"),
               "dca_trades": ("sym", "book"),
