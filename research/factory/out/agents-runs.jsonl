@@ -1024,3 +1024,11 @@
 {"at": 1791950106.467, "role": "declare", "status": "ok", "started": 1791950102.003, "ended": 1791950106.467, "dry": false, "note": "код возврата 0"}
 {"at": 1791950401.731, "role": "task", "status": "start", "started": 1791950401.731, "ended": 1791950401.731, "dry": false, "pid": 1641394}
 {"at": 1791950401.918, "role": "task", "status": "ok", "started": 1791950401.731, "ended": 1791950401.918, "dry": false, "note": "код возврата 0"}
+{"at": 1792029602.071, "role": "scout", "status": "start", "started": 1792029602.0, "ended": 1792029602.071, "dry": false, "pid": 1942507}
+{"at": 1792029602.892, "role": "scout", "status": "no-auth", "started": 1792029602.0, "ended": 1792029602.892, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1792029902.388, "role": "scout", "status": "start", "started": 1792029902.0, "ended": 1792029902.388, "dry": false, "pid": 1943521}
+{"at": 1792029902.905, "role": "scout", "status": "no-auth", "started": 1792029902.0, "ended": 1792029902.905, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1792030201.624, "role": "scout", "status": "start", "started": 1792030201.0, "ended": 1792030201.624, "dry": false, "pid": 1944513}
+{"at": 1792030202.493, "role": "scout", "status": "no-auth", "started": 1792030201.0, "ended": 1792030202.493, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1792030501.477, "role": "brief", "status": "start", "started": 1792030501.0, "ended": 1792030501.477, "dry": false, "pid": 1945528}
+{"at": 1792030501.859, "role": "brief", "status": "no-auth", "started": 1792030501.0, "ended": 1792030501.859, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
