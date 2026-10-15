@@ -51,3 +51,14 @@ sub_b0b417879b985874: статусу 1 с, режим live, позиций 3 (о
     SHOPUSDT long глубина 3/3: средняя 175.18548387096774, цель 181.15, пол 109.08046826327282, стоп биржи 109.08, рунгов лежит 0, закрытие None
   чужое на счёте: нет
 конец: 2026-10-15T17:10:19Z
+публикуется в ветку main:
+ jobs/done/na69-apirestart.done        |  1 +
+ jobs/done/na69-apirestart.log         |  4 +++
+ jobs/done/na70-status.log             | 53 +++++++++++++++++++++++++++++++++++
+ jobs/poke.log                         |  3 ++
+ research/dca_paper/out/DCA-pair.json  |  2 +-
+ research/dca_paper/out/DCA-pair.md    |  6 ++--
+ research/dca_paper/out/DCA-short.json |  2 +-
+ research/dca_paper/out/DCA-short.md   |  8 +++---
+ research/s8_loop/out/day_brake.json   |  2 +-
+ 9 files changed, 71 insertions(+), 10 deletions(-)
