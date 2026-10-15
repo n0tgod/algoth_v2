@@ -9382,6 +9382,14 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L45 `check(paths, pct=PCT, asks_out=ASKS_OUT, statvfs=os.statvfs, no…` — Возвращает список путей над порогом; просьба пишется один раз.
 - L78 `main(argv=None, asks_out=ASKS_OUT, paths=None)`
 
+## tools/instr_fields.py · 47 строк
+
+Зонд: какие поля справочника Bybit отличают перпы на акции от крипты.
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L17 `REF = ('BTCUSDT', 'DOGEUSDT', 'AMZUUSDT', 'ME…`
+- L21 `main()`
+
 ## tools/jobs.sh · 333 строк
 
 Очередь заданий: сессия кладёт задание в git, сервер его выполняет.
