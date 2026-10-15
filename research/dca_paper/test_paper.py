@@ -1797,6 +1797,15 @@ def test_journal_rotates_by_day_and_reader_takes_every_part():
           f"перекрытие снято ({st2['dups']})")
 
 
+def _wd_block(src, marker):
+    """Блок сторожа от своего заголовка до СЛЕДУЮЩЕГО заголовка «# --- »,
+    в каком бы порядке блоки ни стояли (15.10: короткие книги переехали
+    выше длинных, и срез «от длинных до коротких» стал пустым)."""
+    a = src.index(marker)
+    b = src.find("\n# --- ", a + len(marker))
+    return src[a:] if b < 0 else src[a:b + 1]
+
+
 def test_watchdog_runs_the_book_hourly_and_asks_when_it_last_counted():
     """Сторож ведёт книгу САМ, и вопрос он задаёт правильный.
 
@@ -1815,13 +1824,11 @@ def test_watchdog_runs_the_book_hourly_and_asks_when_it_last_counted():
     wd = os.path.join(HERE, os.pardir, os.pardir, "tools",
                       "watchdog_book.sh")
     src = open(os.path.abspath(wd), encoding="utf-8").read()
-    a = src.index("# --- бумажные DCA-книги")
-    # Граница — начало СЛЕДУЮЩЕГО блока сторожа, а не «очередь заданий»:
-    # между ними появились короткие книги, и срез до очереди тащил бы их
-    # прогон в проверку длинных (первый прогон так и упал).
-    b = src.index("# --- короткие книги семейства h24")
-    block = src[a:b]
-    return _run_watchdog_cases(block)
+    # Граница — начало СЛЕДУЮЩЕГО блока сторожа: срез до очереди заданий
+    # тащил бы чужие прогоны в проверку длинных (первый прогон так и упал).
+    block = _wd_block(src, "# --- бумажные DCA-книги")
+    # каденция длинных — 5 минут (14.10): 2 минуты назад — свежо
+    return _run_watchdog_cases(block, fresh_age=120)
 
 
 def test_retired_books_stop_trading_but_keep_their_record():
@@ -1919,9 +1926,9 @@ def test_watchdog_runs_short_books_by_the_same_rule():
     wd = os.path.join(HERE, os.pardir, os.pardir, "tools",
                       "watchdog_book.sh")
     src = open(os.path.abspath(wd), encoding="utf-8").read()
-    a = src.index("# --- короткие книги семейства h24")
-    b = src.index("# --- общий счёт")
-    ok = _run_watchdog_cases(src[a:b], art_name="DCA-short.json")
+    # каденция коротких — 15 минут (14.10): 10 минут назад — свежо
+    ok = _run_watchdog_cases(_wd_block(src, "# --- короткие книги семейства h24"),
+                             art_name="DCA-short.json", fresh_age=600)
     # Общий счёт поднимается НЕ своим таймером, а после книг-источников
     # (2026-09-24): свой час давал ему читать кэш прошлого часа, и
     # страница показывала ноль шортов при двух у коротких книг. Без этой
@@ -1929,7 +1936,7 @@ def test_watchdog_runs_short_books_by_the_same_rule():
     # срабатывает, и страница молча показывала бы вчерашние числа.
     c = src.index("# --- догон рядов funding")
     fns = src[src.index("computed_ts() {"):src.index("# --- сборщик")]
-    ok = _run_pair_cases(fns + src[b:c]) and ok
+    ok = _run_pair_cases(fns + _wd_block(src, "# --- общий счёт")) and ok
     # Догон рядов funding: без него ставка стареет, а для гейта старая
     # ставка есть «неизвестна» — то есть устаревший ряд закрывал бы
     # книгу молча. Проверяется, что строка сторожа существует и зовёт
@@ -1947,7 +1954,7 @@ def test_watchdog_runs_short_books_by_the_same_rule():
     return ok
 
 
-def _run_watchdog_cases(block, art_name="DCA-paper.json"):
+def _run_watchdog_cases(block, art_name="DCA-paper.json", fresh_age=600):
     d = tempfile.mkdtemp()
     out = os.path.join(d, "research", "dca_paper", "out")
     os.makedirs(out)
@@ -2005,7 +2012,7 @@ def _run_watchdog_cases(block, art_name="DCA-paper.json"):
         return os.path.exists(os.path.join(d, "ran.log"))
 
     cases = [
-        ("свежий счёт молчит", ("12", 600), False),
+        ("свежий счёт молчит", ("12", fresh_age), False),
         ("час прошёл — считает", ("12", 7200), True),
         ("час 02 отдан турниру", ("02", 7200), False),
         ("час 06 отдан месячной книге", ("06", 7200), False),
@@ -2015,7 +2022,7 @@ def _run_watchdog_cases(block, art_name="DCA-paper.json"):
         got = run(*args)
         assert got == want, f"{name}: запуск {got}, ожидалось {want}"
     assert run("12", 7200, busy=True) is False, "прогон уже идёт — не второй"
-    assert run("12", 600, stamp=False) is True, \
+    assert run("12", fresh_age, stamp=False) is True, \
         "метки нет — это НЕ «только что считали»"
     # Тот самый случай: `--restat` минуту назад, а счёт был два часа назад.
     assert run("12", 7200, touch=True) is True, \
@@ -3026,9 +3033,7 @@ def _control_watchdog_asks_mtime():
     wd = os.path.join(HERE, os.pardir, os.pardir, "tools",
                       "watchdog_book.sh")
     src = open(os.path.abspath(wd), encoding="utf-8").read()
-    a = src.index("# --- бумажные DCA-книги")
-    b = src.index("# --- очередь заданий")
-    block = src[a:b]
+    block = _wd_block(src, "# --- бумажные DCA-книги")
     lit = 'dca_at=$(grep -o'
     assert lit in block, "подделка НЕ легла: литерала нет"
     broken = block.replace(
