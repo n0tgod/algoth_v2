@@ -63,3 +63,13 @@
        850        1      7   00:00  /usr/lib/systemd/systemd-logind
        870        1      6   00:00  /usr/sbin/rsyslogd -n -iNONE
 конец: 2026-10-15T11:43:58Z, код 0
+публикуется в ветку main:
+ jobs/done/na23-status.done |  1 +
+ jobs/done/na23-status.log  | 13 ++++++++++
+ jobs/done/na24-memtop.done |  1 +
+ jobs/done/na24-memtop.log  | 65 ++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 80 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   72e5e0a7..2fee6f49  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
