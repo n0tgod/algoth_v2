@@ -87,13 +87,13 @@ def test_rule_is_declared_for_short_books_with_versions_and_page_text():
         assert R.wave_guard_of(pk) == 2.0, pk          # короткая сторона общего счёта
     for lk in ("safe", "optimal", "aggr"):
         assert R.wave_guard_of(lk) is None, lk         # длинные не трогаются
-    assert R.FAMILY_RULES == {"pair": 10, "h24": 4, "sit": 2}, R.FAMILY_RULES
-    # день записи вперёд: h24 — касса (2026-10-10); sit и pair — без не-крипто (2026-10-15)
-    assert R.FAMILY_SINCE == {"pair": "2026-10-15", "h24": "2026-10-10",
+    assert R.FAMILY_RULES == {"pair": 11, "h24": 5, "sit": 3}, R.FAMILY_RULES
+    # день записи вперёд у всех — 2026-10-15: не-крипто и шаг объёма площадки
+    assert R.FAMILY_SINCE == {"pair": "2026-10-15", "h24": "2026-10-15",
                               "sit": "2026-10-15"}, R.FAMILY_SINCE
     # строка прежней версии в счёт не идёт, текущей — идёт
-    old = {"rules": R.RULES, "book_rules": 3, "ruler": "safe_h"}
-    new = {"rules": R.RULES, "book_rules": 4, "ruler": "safe_h"}
+    old = {"rules": R.RULES, "book_rules": 4, "ruler": "safe_h"}
+    new = {"rules": R.RULES, "book_rules": 5, "ruler": "safe_h"}
     assert not R.is_current(old) and R.is_current(new)
     assert not R.is_current({"rules": R.RULES, "book_rules": 7, "ruler": "pair_safe"})
     for k in ("safe_h", "pair_optimal"):

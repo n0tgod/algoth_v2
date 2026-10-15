@@ -26,12 +26,20 @@ H = 3600.0
 T0 = TP.T0
 
 
+def _px(r):
+    # Имена фикстур (AUSDT, BUSDT) — настоящие инструменты площадки с шагом
+    # объёма 1 монета; цена фикстуры 100 $ делала бы шаг в 100 $, и касса
+    # законно отказывала бы по шагу (`run_d6.rung_refusal`, 15.10). Цена
+    # живого масштаба — 1 $.
+    return dict(r, entry_px=1.0, exit_px=1.1, avg=1.0)
+
+
 def _long(sym, at, pnl=0.10, hold_h=6.0, lev=4.0):
-    return TP._rec(at, hold_h=hold_h, pnl=pnl, lev=lev, sym=sym)
+    return _px(TP._rec(at, hold_h=hold_h, pnl=pnl, lev=lev, sym=sym))
 
 
 def _short(sym, at, pnl=0.10, hold_h=6.0, lev=4.0):
-    r = TP._rec(at, hold_h=hold_h, pnl=pnl, lev=lev, sym=sym)
+    r = _px(TP._rec(at, hold_h=hold_h, pnl=pnl, lev=lev, sym=sym))
     r["side"] = "short"
     return r
 

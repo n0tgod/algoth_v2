@@ -544,11 +544,14 @@ def decide(sub, st, legs_by_family, book_cell, env, log=print):
                 skips.append(skip_row(sub, rk, sk, g, f"гейт плеча: {pl['lev']:.2f} < {ml:g}", now))
                 continue
             margin, share, base = size_for(rk, sk, dep, sizing, cash)
-            if margin * pl["lev"] * R.RUNG_SHARE < R.MIN_NOTIONAL:
+            # то же правило, что у бумаги (`run_d6.rung_refusal`): доллары и
+            # шаг объёма площадки — вход, которого биржа не примет, не
+            # уходит исполнителю и не будит пушем «Not executed» (15.10)
+            small = c["D6"].rung_refusal(g["sym"], margin * pl["lev"] * R.RUNG_SHARE,
+                                         pl["entry"], R.MIN_NOTIONAL)
+            if small:
                 seen[k] = float(g["at"])
-                skips.append(skip_row(sub, rk, sk, g,
-                                      f"мельче минимума биржи: рунг {margin * pl['lev'] * R.RUNG_SHARE:.2f} $ "
-                                      f"< {R.MIN_NOTIONAL:g}", now))
+                skips.append(skip_row(sub, rk, sk, g, f"мельче минимума биржи: {small}", now))
                 continue
             used = sum(float(v.get("margin_usd") or 0) for v in live.values())
             free = base - used

@@ -67,6 +67,7 @@ D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных 
 import argparse
 import hashlib
 import json
+import math
 import os
 import subprocess
 import sys
@@ -403,7 +404,8 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
             # «мельче минимума»
             no_cash += 1
             continue
-        if notional * RUNG_SHARE < min_notional:
+        if rung_refusal(r.get("sym"), notional * RUNG_SHARE,
+                        r.get("entry_px"), min_notional):
             too_small += 1
             continue
         if margin > free + eps:
@@ -786,6 +788,75 @@ def tradable(sym):
         _NC_REF, _NC_AT = (UF, UF.non_crypto_set()), now
     UF, ref = _NC_REF
     return not UF.is_non_crypto(str(sym), ref)
+
+
+# Шаг объёма площадки (решение владельца 2026-10-15, отказ AKEUSDT на
+# живой подписке Both Depth $100). Проверка «рунг ≥ $5» смотрела только
+# доллары, а биржа принимает объём кратный шагу: у AKE шаг 100 монет =
+# $3.23 при цене 0.0323, и рунг $5…6.46 после округления вниз становится
+# $3.23 — исполнитель отказывает. Одно правило на бумагу (`ration`) и на
+# намерения живого исполнителя: бумага не берёт вход, которого биржа не
+# примет, и живой счёт с ней совпадает. Округление — как у исполнителя
+# (`bot/src/live.rs::floor_step`), цена — цена входа решения.
+INSTRUMENTS_JSON = os.path.join(ROOT, "research", "a1_universe", "out",
+                                "instruments.json")
+_INSTR = None
+_INSTR_AT = 0.0
+
+
+def _instruments():
+    """Символ → (шаг объёма, мин. лот, мин. нотионал); раз в час заново."""
+    global _INSTR, _INSTR_AT
+    now = time.time()
+    if _INSTR is None or now - _INSTR_AT > _NC_TTL:
+        out = {}
+        try:
+            with open(INSTRUMENTS_JSON, encoding="utf-8") as f:
+                d = json.load(f) or {}
+        except (OSError, ValueError):
+            d = {}
+        for sym, v in d.items():
+            try:
+                out[sym] = (float(v.get("qty_step") or 0.0),
+                            float(v.get("min_order_qty") or 0.0),
+                            float(v.get("min_notional_value") or 0.0))
+            except (TypeError, ValueError, AttributeError):
+                continue
+        _INSTR, _INSTR_AT = out, now
+    return _INSTR
+
+
+def floor_step(v, step):
+    """Округление объёма вниз до шага — та же формула, что у исполнителя."""
+    if step <= 0.0:
+        return v
+    return math.floor(v / step + 1e-9) * step
+
+
+def rung_refusal(sym, rung_usd, px, min_notional=MIN_NOTIONAL):
+    """Почему биржа не примет первую часть входа, или None — примет.
+
+    `rung_usd` — доллары первой части (маржа × плечо × доля рунга), `px`
+    — цена входа. Сперва доллары, затем объём по шагу площадки. Нет
+    справочника по имени или цены — судится только доллар (так считалось
+    до 15.10); справочник знает все торгуемые имена.
+    """
+    if rung_usd < min_notional:
+        return f"рунг {rung_usd:.2f} $ < {min_notional:g}"
+    spec = _instruments().get(str(sym)) if sym else None
+    try:
+        px = float(px)
+    except (TypeError, ValueError):
+        px = 0.0
+    if spec is None or not px > 0.0:
+        return None
+    step, mq, mn = spec
+    q = floor_step(rung_usd / px, step)
+    if q < mq - 1e-12 or q * px < max(mn, min_notional) - 1e-9:
+        return (f"рунг {rung_usd:.2f} $ после шага объёма {step:g}: "
+                f"{q:g} × {px:g} = {q * px:.2f} $ — меньше минимума биржи "
+                f"(лот {mq:g}, {max(mn, min_notional):g} $)")
+    return None
 
 
 def _nc_sig():

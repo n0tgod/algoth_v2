@@ -42,12 +42,12 @@ def test_floor_of_safe_stays_and_the_cache_signature_is_untouched_by_the_ticket(
 
 
 def test_versions_day_and_page_text():
-    assert R.FAMILY_RULES == {"pair": 10, "h24": 4, "sit": 2}, R.FAMILY_RULES
-    # h24 — касса (2026-10-10); sit и pair — без не-крипто (2026-10-15)
-    assert R.FAMILY_SINCE == {"pair": "2026-10-15", "h24": "2026-10-10",
+    assert R.FAMILY_RULES == {"pair": 11, "h24": 5, "sit": 3}, R.FAMILY_RULES
+    # у всех — 2026-10-15: не-крипто и шаг объёма площадки
+    assert R.FAMILY_SINCE == {"pair": "2026-10-15", "h24": "2026-10-15",
                               "sit": "2026-10-15"}, R.FAMILY_SINCE
-    assert not R.is_current({"rules": R.RULES, "book_rules": 3, "ruler": "safe_h"})
-    assert R.is_current({"rules": R.RULES, "book_rules": 4, "ruler": "safe_h"})
+    assert not R.is_current({"rules": R.RULES, "book_rules": 4, "ruler": "safe_h"})
+    assert R.is_current({"rules": R.RULES, "book_rules": 5, "ruler": "safe_h"})
     assert not R.is_current({"rules": R.RULES, "book_rules": 7, "ruler": "pair_safe"})
     plain = R.RULERS["safe_h"]["plain"]
     assert "берёт 0.5 своего билета (правило 2026-10-03)" in plain, plain[-400:]
