@@ -1140,6 +1140,13 @@
 - L467 `CONTROLS = [('комиссия выхода снята', _control_exi…`
 - L486 `main()`
 
+## research/dca_paper/test_costs_cache.py · 82 строк
+
+Кэш контекста издержек (`costs.context(cache=…)`, 15.10): второй вызов не читает ряды funding; изменённый кат…
+
+- L16 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L21 `main()`
+
 ## research/dca_paper/test_cut.py · 297 строк
 
 Проверки досчёта оборванных записью позиций (`cut_check.py`).

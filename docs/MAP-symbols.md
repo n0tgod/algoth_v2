@@ -1931,7 +1931,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L290 `publish(name)`
 - L296 `main(argv=None)`
 
-## research/dca_paper/costs.py · 815 строк
+## research/dca_paper/costs.py · 878 строк
 
 Издержки бумажных DCA-книг: комиссия площадки, funding, гейт по знаку ставки.
 
@@ -1965,17 +1965,20 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L319 `book_costs(rows, dep)` — Издержки книги: суммы, медианы на позицию (б.п. маржи), форма нетто.
 - L357 `gate_arm(rows, dep)` — Рука «вход только при благоприятной ставке» против всех — парно.
 - L382 `extra_assets(to_asset, funding_dir=None)` — Символы с рядом funding, которых НЕТ в универсуме.
-- L401 `context(need=None, log=None)` — Справочник комиссий и ряды funding — ОДИН раз на свод книг.
-- L436 `apply_to_rows(rows, ctx, slip_bp=None)` — Издержки — В КАЖДУЮ СДЕЛКУ: деньги строки становятся нетто.
-- L514 `net_view(rows, dep, ctx, stats_fn, slip_bp=None)` — Нетто-свод подмножества строк книги: форма по дням от денег за вычетом комиссии и проскальзывания и с funding…
-- L561 `run(rows=None, funding=None, assets=None, log=print, slip_bp=No…`
-- L623 `verdict(s)` — Из чисел: у каких книг знак держится после комиссии и funding, и помогает ли гейт по ставке (парно, по медиан…
-- L647 `_u(x)`
-- L651 `_p(x, d=2)`
-- L655 `_b(x)`
-- L659 `report(s)`
-- L787 `publish(name)`
-- L793 `main(argv=None)`
+- L406 `CONTEXT_CACHE = os.path.join(OUT, 'costs_context.pkl')` — Кэш контекста на диске (15.10): 1108 рядов funding читались 10.2 с в КАЖДОМ прогоне книг (длинном, коротком,…
+- L409 `_context_sig(funding_dir=None)` — Подпись входов контекста; None, если каталога рядов нет.
+- L434 `context(need=None, log=None, cache=CONTEXT_CACHE)` — Справочник комиссий и ряды funding — ОДИН раз на свод книг.
+- L471 `_build_context(need=None, log=None)`
+- L499 `apply_to_rows(rows, ctx, slip_bp=None)` — Издержки — В КАЖДУЮ СДЕЛКУ: деньги строки становятся нетто.
+- L577 `net_view(rows, dep, ctx, stats_fn, slip_bp=None)` — Нетто-свод подмножества строк книги: форма по дням от денег за вычетом комиссии и проскальзывания и с funding…
+- L624 `run(rows=None, funding=None, assets=None, log=print, slip_bp=No…`
+- L686 `verdict(s)` — Из чисел: у каких книг знак держится после комиссии и funding, и помогает ли гейт по ставке (парно, по медиан…
+- L710 `_u(x)`
+- L714 `_p(x, d=2)`
+- L718 `_b(x)`
+- L722 `report(s)`
+- L850 `publish(name)`
+- L856 `main(argv=None)`
 
 ## research/dca_paper/cut_check.py · 402 строк
 

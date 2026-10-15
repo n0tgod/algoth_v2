@@ -398,14 +398,77 @@ def extra_assets(to_asset, funding_dir=None):
                   and f[:-len(".csv.gz")] not in to_asset)
 
 
-def context(need=None, log=None):
+# Кэш контекста на диске (15.10): 1108 рядов funding читались 10.2 с в
+# КАЖДОМ прогоне книг (длинном, коротком, общем — три раза в пять минут),
+# а меняются они раз в сутки (догон в 04 UTC). Подпись — каталог рядов
+# (число файлов, сумма размеров, самый поздний mtime), справочник и
+# файлы кода, которые строят контекст. В git не идёт.
+CONTEXT_CACHE = os.path.join(OUT, "costs_context.pkl")
+
+
+def _context_sig(funding_dir=None):
+    """Подпись входов контекста; None, если каталога рядов нет."""
+    funding_dir = FUNDING_DIR if funding_dir is None else funding_dir
+    try:
+        n, size, mt = 0, 0, 0
+        with os.scandir(funding_dir) as it:
+            for e in it:
+                if e.name.endswith(".csv.gz"):
+                    st = e.stat()
+                    n += 1
+                    size += st.st_size
+                    mt = max(mt, st.st_mtime_ns)
+    except OSError:
+        return None
+
+    def fst(path):
+        try:
+            st = os.stat(path)
+            return (st.st_mtime_ns, st.st_size)
+        except OSError:
+            return None
+    return {"funding": (n, size, mt), "universe": fst(UNIVERSE),
+            "code": [fst(os.path.abspath(FS.__file__)), fst(os.path.abspath(__file__))]}
+
+
+def context(need=None, log=None, cache=CONTEXT_CACHE):
     """Справочник комиссий и ряды funding — ОДИН раз на свод книг.
 
     Страница книг показывает нетто тем же ядром, что отчёт издержек, и
-    контекст грузится один раз на все книги (580 рядов — секунды).
-    Отказ — словами в поле `error`, не пустым словарём: пустой словарь
-    рядов уже однажды читался как «funding есть».
+    контекст грузится один раз на все книги. Отказ — словами в поле
+    `error`, не пустым словарём: пустой словарь рядов уже однажды
+    читался как «funding есть».
+
+    `cache` — pickle полного контекста на диске (только при `need=None`:
+    частичный контекст в кэш не идёт и из него не берётся); `None` —
+    без кэша. Контекст с ошибкой не кэшируется.
     """
+    import pickle
+    sig = _context_sig() if (cache and need is None) else None
+    if sig is not None:
+        try:
+            with open(cache, "rb") as f:
+                d = pickle.load(f)
+            if d.get("sig") == sig and not d["ctx"].get("error"):
+                if log:
+                    log(f"контекст издержек из кэша: рядов funding {d['ctx'].get('n_funding')}")
+                return d["ctx"]
+        except (OSError, EOFError, ValueError, TypeError, AttributeError,
+                KeyError, pickle.UnpicklingError):
+            pass
+    ctx = _build_context(need=need, log=log)
+    if sig is not None and not ctx.get("error"):
+        try:
+            os.makedirs(os.path.dirname(cache), exist_ok=True)
+            with open(cache + ".tmp", "wb") as f:
+                pickle.dump({"sig": sig, "ctx": ctx}, f, protocol=pickle.HIGHEST_PROTOCOL)
+            os.replace(cache + ".tmp", cache)
+        except OSError:
+            pass
+    return ctx
+
+
+def _build_context(need=None, log=None):
     try:
         assets = universe()
         to_asset, taker = symbol_maps(assets)

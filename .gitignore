@@ -30,3 +30,6 @@ research/s8_loop/out/train_wait.flag
 research/s8_loop/out/train_wait.flag.tmp
 # кэш минутных баров ленты для прогонов книг (sweep.read_bars cache=…, 15.10)
 research/dca_paper/out/bars_cache/
+# кэш контекста издержек (costs.context cache=…, 15.10) — пересоздаётся по подписи каталога funding
+research/dca_paper/out/costs_context.pkl
+research/dca_paper/out/costs_context.pkl.tmp
