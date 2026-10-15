@@ -48,3 +48,19 @@
   Слева общий счёт: депозит один на обе стороны. Справа те же книги, как их показывают собственные вкладки: у каждой свой депозит, то есть капитала вдвое больше. Поэтому сравниваются ДЕНЬГИ и просадка, 
   - Живого исполнения здесь нет: исходы позиций взяты из кэшей реплея обеих книг, посчитанных по барам записи. Очередь в стакане и задержка входа не моделируются.
 конец: 2026-10-15T06:01:36Z, код 0
+публикуется в ветку main:
+ jobs/done/n86-status.done             |    1 +
+ jobs/done/n86-status.log              |   15 +
+ jobs/done/n87-timing.done             |    1 +
+ jobs/done/n87-timing.log              |   50 +
+ jobs/poke.log                         |    4 +
+ research/a2_storage/out/build_1m.json |    4 +-
+ research/dca_paper/out/DCA-pair.json  |    2 +-
+ research/dca_paper/out/DCA-paper.json | 5092 +++++++++++++++++----------------
+ research/dca_paper/out/DCA-paper.md   |   20 +-
+ research/s8_loop/out/day_brake.json   |    2 +-
+ 10 files changed, 2696 insertions(+), 2495 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   3b3b80cb..0797e892  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
