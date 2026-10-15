@@ -74,13 +74,14 @@ const Site = (() => {
     stat("s-trades", t.n != null ? String(t.n) : "—");
     stat("s-win", t.win == null ? "closed trades" : `closed trades · ${Math.round(t.win * 100)} % won`);
     $("f-tiles").innerHTML = [
-      ["max drawdown", pct(t.max_dd), "closed trades, of the deposit"],
-      ["worst open loss", t.open_dd_share == null ? "—" : pct(t.open_dd_share), t.open_dd_at ? "open positions, " + new Date(t.open_dd_at * 1000).toISOString().slice(0, 10) : "open positions"],
+      ["max drawdown", pct(t.max_dd), "closed trades, from the account peak"],
+      ["worst open loss", t.open_dd_share == null ? "—" : pct(t.open_dd_share), t.open_dd_at ? "of the account then, " + new Date(t.open_dd_at * 1000).toISOString().slice(0, 10) : "of the account then"],
       ["trades", t.n ?? "—", `${t.days_n} days of record`],
       ["win rate", t.win == null ? "—" : Math.round(t.win * 100) + " %", "closed trades"],
       ["open now", t.open_n ?? "—", "positions"],
       ["record since", t.days && t.days.length ? t.days[0][0] : "—", "paper book"],
     ].map(([k, v, s]) => `<div class="tile"><small>${esc(k)}</small><b>${esc(v)}</b><small>${esc(s)}</small></div>`).join("");
+    drawLine._meta = {at: t.open_dd_at, share: t.open_dd_share};
     drawLine($("f-chart"), $("f-tip"), t.days, t.final >= 0 ? "var(--bid)" : "var(--ask)", t.open_dips);
     $("f-legend").innerHTML = t.open_dips ? `<span><i class="lg-line"></i>closed trades</span><span><i class="lg-dip"></i>with open positions at their worst hour of the day</span>` : "";
     const tb = document.querySelector("#rank tbody");
@@ -121,14 +122,16 @@ const Site = (() => {
       const lowPts = low.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`);
       svg.appendChild(el("path", {d: "M" + lowPts.join(" L") + " L" + pts.slice().reverse().join(" L") + " Z", class: "dip-area"}));
       svg.appendChild(el("path", {d: "M" + lowPts.join(" L"), class: "dip-line"}));
-      let worst = -1;
-      for (let i = 0; i < days.length; i++)
-        if (low[i] < days[i][1] && (worst < 0 || low[i] - days[i][1] < low[worst] - days[worst][1])) worst = i;
+      // Худшая точка — момент худшей ДОЛИ счёта (сервер, `open_dd_at`),
+      // подпись — та же доля сервера (15.10: от счёта на тот час, не от
+      // стартового депозита); нет момента — точки нет.
+      const wd = (drawLine._meta || {}).at ? new Date(drawLine._meta.at * 1000).toISOString().slice(0, 10) : null;
+      const worst = wd ? days.findIndex((d) => d[0] === wd) : -1;
       if (worst >= 0) {
         svg.appendChild(el("circle", {cx: x(worst), cy: y(low[worst]), r: 4, class: "dip-dot"}));
         const right = x(worst) > W * 0.6;
         svg.appendChild(Object.assign(el("text", {x: x(worst) + (right ? -8 : 8), y: Math.min(H - B - 4, y(low[worst]) + 14), class: "dip-text", "text-anchor": right ? "end" : "start"}),
-          {textContent: `worst open loss ${pct(low[worst] - days[worst][1], 1)} · ${days[worst][0]}`}));
+          {textContent: `worst open loss ${pct(drawLine._meta.share, 1)} of the account · ${wd}`}));
       }
     }
     svg.appendChild(el("path", {d: "M" + pts.join(" L"), class: "line", stroke: color}));

@@ -440,11 +440,23 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
         equity += p[1] * p[2]
     hrs = sorted(dH)
     eq, curve, day = float(deposit), [], {}
+    # Доля просадки открытых — от СЧЁТА НА ЭТОТ ЧАС, а не от стартового
+    # депозита (решение владельца 2026-10-15: книга, выросшая вдвое, с
+    # минусом открытых в 300 $ рискует 15 %, а не 30 %; у съевшейся книги
+    # — наоборот). Счёт на час — кривая `eq` (закрытое + отметки
+    # открытых) минус отметки открытых, то есть закрытое к этому часу.
+    # Худший момент — по ДОЛЕ; доллары берутся из того же часа, чтобы
+    # «$ (%)» в плитке были одним моментом.
+    share_h = {}
     for hr in hrs:
         eq += dH[hr]
         curve.append(eq)
         d = time.strftime("%Y-%m-%d", time.gmtime(hr))
         day[d] = day.get(d, 0.0) + dH[hr]
+        op = openP.get(hr, 0.0)
+        if op < 0.0:
+            real = eq - op
+            share_h[hr] = op / real if real > 0.0 else -1.0
     c = np.array(curve, dtype=float) if curve else np.array([deposit])
     dd = float(np.min(c / np.maximum.accumulate(c) - 1.0)) if len(c) else 0.0
     dv = np.array([day[k] for k in sorted(day)], dtype=float) if day \
@@ -454,7 +466,9 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
     # Худший момент по НЕРЕАЛИЗОВАННОМУ: сколько книга держала под водой
     # одновременно открытыми позициями. Ноль означает «под воду не
     # уходили», и это законный ответ, а не отсутствие меры.
-    op_dd = min([0.0] + [openP.get(h, 0.0) for h in hrs]) if hrs else 0.0
+    op_at = min(share_h, key=share_h.get) if share_h else None
+    op_dd = openP[op_at] if op_at is not None else 0.0
+    op_share = share_h[op_at] if op_at is not None else 0.0
     total = taken + no_cash + too_small
     return {
         "sizing": sizing,
@@ -469,15 +483,17 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
         "open_mean": round(float(np.mean(nn)), 1),
         "open_median": round(float(np.median(nn)), 1),
         "open_max": int(np.max(nn)) if len(nn) else 0,
-        # просадка ОДНОВРЕМЕННО ОТКРЫТЫХ — в деньгах и долей депозита
+        # просадка ОДНОВРЕМЕННО ОТКРЫТЫХ — доля счёта на тот час (15.10)
+        # и доллары того же часа; момент — `open_dd_at`
         "open_dd": round(float(op_dd), 2),
-        "open_dd_share": round(float(op_dd) / float(deposit), 4),
+        "open_dd_share": round(float(op_share), 4),
+        "open_dd_at": op_at,
         # Почасовой ряд «под водой» — только часы с минусом, по ним свод
         # считает ту же просадку для ОКНА «вперёд» (вопрос владельца
         # 2026-10-01: у среза без бэктеста стоял прочерк). Часы в плюсе
         # в ряд не идут: просадка их не видит, а ряд едет в свод.
-        "open_hours": [[int(h), round(float(openP[h]), 2)]
-                       for h in hrs if openP.get(h, 0.0) < 0.0],
+        "open_hours": [[int(h), round(float(openP[h]), 2), round(float(share_h[h]), 5)]
+                       for h in hrs if h in share_h],
         # Мест и билет — величины ОДНОЙ доли. Когда доля своя у каждого
         # источника (общий счёт двух книг), одного числа не существует, и
         # ставить сюда «какое-нибудь» значило бы выдать долю одной стороны

@@ -888,34 +888,47 @@ def attach_open_dd(s):
         b = (s.get("books") or {}).get(k)
         if not isinstance(b, dict) or c.get("open_dd") is None:
             continue
+        dep = float(b.get("deposit") or 0.0)
+
+        def share_of(row):
+            # ряд нового образца несёт долю счёта третьим полем (15.10);
+            # прежний — нет, и доля берётся от депозита, как считалась
+            if len(row) > 2 and row[2] is not None:
+                return float(row[2])
+            return float(row[1]) / dep if dep else 0.0
+        hours = c.get("open_hours")
         if isinstance(b.get("all"), dict):
             b["all"]["open_dd"] = c["open_dd"]
             b["all"]["open_dd_share"] = c.get("open_dd_share")
             # КОГДА была просадка открытых (владелец 15.10: «углубление на
-            # графике другим цветом»): худший час по дням UTC, $ на депозит,
-            # и момент худшего часа всей записи. Ряд — те же почасовые
-            # отметки кассы (`open_hours`, только часы под водой); дня без
-            # них в ряду нет — это «открытые не были в минусе», не ноль.
+            # графике»): по дням UTC — худшие доллары (уровень второй линии
+            # графика) и худшая доля счёта; момент худшей доли всей записи.
+            # Дня без часов под водой в ряду нет — «не были в минусе», не 0.
             days, worst = {}, None
-            for h, v in (c.get("open_hours") or []):
-                d = time.strftime("%Y-%m-%d", time.gmtime(int(h)))
-                v = float(v)
-                if v < days.get(d, 0.0):
-                    days[d] = v
-                if worst is None or v < worst[1]:
-                    worst = (int(h), v)
-            b["all"]["open_days"] = [[d, round(days[d], 2)] for d in sorted(days)]
-            b["all"]["open_dd_at"] = worst[0] if worst else None
+            for row in (hours or []):
+                h, v = int(row[0]), float(row[1])
+                sh = share_of(row)
+                d = time.strftime("%Y-%m-%d", time.gmtime(h))
+                u, q = days.get(d, (0.0, 0.0))
+                days[d] = (min(u, v), min(q, sh))
+                if worst is None or sh < worst[1]:
+                    worst = (h, sh)
+            b["all"]["open_days"] = [[d, round(days[d][0], 2), round(days[d][1], 5)]
+                                     for d in sorted(days)]
+            b["all"]["open_dd_at"] = c.get("open_dd_at") or (worst[0] if worst else None)
         since = b.get("forward_since")
         fw = b.get("forward")
-        hours = c.get("open_hours")
         if since is None or not isinstance(fw, dict) or hours is None:
             continue
         h0 = int(since) - int(since) % D6.HOUR
-        dd = min([0.0] + [float(v) for h, v in hours if int(h) >= h0])
-        dep = float(b.get("deposit") or 0.0)
+        win = [r for r in hours if int(r[0]) >= h0]
+        if win:
+            r = min(win, key=share_of)
+            dd, sh = float(r[1]), share_of(r)
+        else:
+            dd, sh = 0.0, 0.0
         fw["open_dd"] = round(dd, 2)
-        fw["open_dd_share"] = round(dd / dep, 4) if dep else None
+        fw["open_dd_share"] = round(sh, 4) if dep else None
         fw["open_dd_since"] = float(since)
 
 

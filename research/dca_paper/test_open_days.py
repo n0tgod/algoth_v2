@@ -28,8 +28,18 @@ def main():
     import time
     d0 = time.strftime("%Y-%m-%d", time.gmtime(t0))
     d2 = time.strftime("%Y-%m-%d", time.gmtime(t0 + 2 * DAY))
-    assert a["open_days"] == [[d0, -40.0], [d2, -12.0]], a["open_days"]
+    # прежний образец ряда (два поля) — доля от депозита
+    assert a["open_days"] == [[d0, -40.0, -0.04], [d2, -12.0, -0.012]], a["open_days"]
     assert a["open_dd_at"] == t0 + 7200 and a["open_dd"] == -40.0
+    # новый образец (15.10): доля счёта третьим полем; худший момент — по
+    # ДОЛЕ, не по долларам: −12 $ при счёте 200 $ хуже −40 $ при 1000 $
+    s2 = {"cells": {"safe:1000": {"open_dd": -12.0, "open_dd_share": -0.06, "open_dd_at": t0 + 2 * DAY + 3600,
+                                  "open_hours": [[t0 + 7200, -40.0, -0.04], [t0 + 2 * DAY + 3600, -12.0, -0.06]]}},
+          "books": {"safe:1000": {"all": {"n": 3}, "deposit": 1000}}}
+    RP.attach_open_dd(s2)
+    a2 = s2["books"]["safe:1000"]["all"]
+    assert a2["open_days"] == [[d0, -40.0, -0.04], [d2, -12.0, -0.06]], a2["open_days"]
+    assert a2["open_dd_at"] == t0 + 2 * DAY + 3600 and a2["open_dd_share"] == -0.06
     b = s["books"]["aggr:1000"]["all"]
     assert b["open_days"] == [] and b["open_dd_at"] is None
     print("ok  просадка открытых по дням: худший час дня, момент худшего часа, день без отметок пропущен")

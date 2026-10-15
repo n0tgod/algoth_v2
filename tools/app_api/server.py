@@ -1231,7 +1231,7 @@ def top_series(days_rows, open_days, dep):
     for x in days_rows or []:
         if x.get("d"):
             real[x["d"]] = real.get(x["d"], 0.0) + float(x.get("usd") or 0.0)
-    opn = {d: float(v) for d, v in (open_days or [])}
+    opn = {x[0]: float(x[1]) for x in (open_days or []) if len(x) >= 2}
     keys = sorted(set(real) | set(opn))
     if not keys or not dep:
         return [], (None if open_days is None else [])

@@ -613,11 +613,16 @@ def test_open_drawdown_is_not_the_equity_drawdown():
     assert abs(c["max_dd"]) < 1e-9, c["max_dd"]
     # а под водой книга стояла на 30 долларов — это и есть вопрос
     assert abs(c["open_dd"] + 30.0) < 1e-6, c["open_dd"]
-    assert abs(c["open_dd_share"] + 0.03) < 1e-9, c["open_dd_share"]
-    # Почасовой ряд «под водой» — только часы с минусом, и его минимум
-    # есть та же просадка: по нему свод режет окно «вперёд».
-    assert c["open_hours"] == [[t0, -30.0], [t0 + H, -20.0]], c["open_hours"]
-    assert min(v for _h, v in c["open_hours"]) == c["open_dd"]
+    # Доля — от счёта НА ТОТ ЧАС (владелец 15.10), не от депозита: в час
+    # t0 быстрая позиция уже закрылась в +30, счёт по закрытым 1030, и
+    # −30 открытых есть −30/1030, а не −30/1000.
+    assert abs(c["open_dd_share"] + round(30.0 / 1030.0, 4)) < 1e-9, c["open_dd_share"]
+    assert c["open_dd_at"] == t0, c["open_dd_at"]
+    # Почасовой ряд «под водой» — только часы с минусом, доля счёта
+    # третьим полем; его худшая доля есть та же просадка (окно «вперёд»).
+    assert c["open_hours"] == [[t0, -30.0, round(-30.0 / 1030.0, 5)],
+                               [t0 + H, -20.0, round(-20.0 / 1030.0, 5)]], c["open_hours"]
+    assert min(r[2] for r in c["open_hours"]) == round(-30.0 / 1030.0, 5)
     print(f"ok  просадка открытых {c['open_dd']:+.2f} $ "
           f"({c['open_dd_share']*100:+.2f} %) при просадке депозита "
           f"{c['max_dd']*100:+.2f} % — величины разные")

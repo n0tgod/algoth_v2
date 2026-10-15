@@ -850,7 +850,7 @@
 - L467 `CONTROLS = [('нулевая σ пропускается', _control_si…`
 - L476 `main()`
 
-## research/dca_ladder/test_run_d6.py · 701 строк
+## research/dca_ladder/test_run_d6.py · 706 строк
 
 Тесты D6 — нормировка кассы.
 
@@ -886,11 +886,11 @@
 - L561 `_control_no_min_notional()` — Без минимума биржи мелкий ордер проходит, и книга шире, чем можно.
 - L577 `_control_arrival_order()` — Раздача по порядку прихода: узкая книга берёт случайные сигналы.
 - L592 `test_open_drawdown_is_not_the_equity_drawdown()` — Просадка ОДНОВРЕМЕННО ОТКРЫТЫХ — своя величина (вопрос владельца).
-- L626 `_control_open_dd_counts_the_closing_hour()` — Час закрытия попал в открытые — реализованное выдано за отметку.
-- L633 `_poison_d6(lit, sub, fn)` — Подделка строки `run_d6` и прогон проверки.
-- L661 `TESTS = [test_budget_is_respected, test_money_r…`
-- L678 `CONTROLS = [('бюджет не вычитается', _control_no_b…`
-- L691 `main()`
+- L631 `_control_open_dd_counts_the_closing_hour()` — Час закрытия попал в открытые — реализованное выдано за отметку.
+- L638 `_poison_d6(lit, sub, fn)` — Подделка строки `run_d6` и прогон проверки.
+- L666 `TESTS = [test_budget_is_respected, test_money_r…`
+- L683 `CONTROLS = [('бюджет не вычитается', _control_no_b…`
+- L696 `main()`
 
 ## research/dca_ladder/test_run_d7.py · 283 строк
 
@@ -1282,7 +1282,7 @@
 - L211 `CONTROLS = [('загрузка по доле сделок', _control_l…`
 - L217 `main()`
 
-## research/dca_paper/test_open_days.py · 40 строк
+## research/dca_paper/test_open_days.py · 50 строк
 
 Дневной ряд просадки открытых в своде (`run_paper.attach_open_dd`, 15.10): худший час по дням UTC, момент худ…
 
