@@ -52,3 +52,20 @@ sub_3f11698eb30279fa: статусу 373040 с, режим live, позиций 
 sub_b0b417879b985874: статусу 12741 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
   чужое на счёте: нет
 конец: 2026-10-15T22:32:21Z
+публикуется в ветку main:
+ jobs/done/na85-stress.done            |    1 +
+ jobs/done/na85-stress.log             |   67 +
+ jobs/done/na86-status.log             |   54 +
+ jobs/poke.log                         |    5 +
+ research/dca_paper/out/DCA-pair.json  |    2 +-
+ research/dca_paper/out/DCA-pair.md    |   12 +-
+ research/dca_paper/out/DCA-paper.json | 2444 ++++++++++++++++-----------------
+ research/dca_paper/out/DCA-paper.md   |   20 +-
+ research/dca_paper/out/DCA-short.json |    2 +-
+ research/dca_paper/out/DCA-short.md   |   14 +-
+ research/s8_loop/out/day_brake.json   |    2 +-
+ 11 files changed, 1375 insertions(+), 1248 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   4f36601d..4e8006d1  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
