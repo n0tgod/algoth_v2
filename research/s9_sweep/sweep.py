@@ -186,7 +186,11 @@ def _hour_sig(dirpath, hh):
             sym = os.path.basename(dirpath)
             try:
                 st_ = os.stat(os.path.join(cache_dir, sub, sym, f"{hh}.jsonl.gz"))
-                sig.append(("remote", st_.st_mtime_ns, st_.st_size))
+                # БЕЗ mtime: `Remote.get` трогает файл utime при каждом
+                # обращении (давность для вытеснения), и подпись с mtime не
+                # совпадала никогда (проба 13:22 15.10). Час истории в
+                # хранилище неизменен — хватает размера.
+                sig.append(("remote", st_.st_size))
             except OSError:
                 pass
     return tuple(sig) or None

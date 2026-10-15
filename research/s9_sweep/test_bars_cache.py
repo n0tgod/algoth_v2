@@ -105,12 +105,17 @@ def main():
 
             def get(self, dirpath, hour):
                 p = os.path.join(rdir, "trades", os.path.basename(dirpath), f"{hour}.jsonl.gz")
-                return p if os.path.exists(p) else None
+                if os.path.exists(p):
+                    os.utime(p, None)          # как настоящее хранилище: давность обращения
+                    return p
+                return None
         store.REMOTE = FakeRemote()
         try:
             calls.clear()
             r1 = SW.read_bars(d, rsym, t0 + 20 * H, t0 + 20 * H + 30 * 60, cache=cache)
             assert len(r1) == 10 and calls, (len(r1), calls)
+            time.sleep(0.01)
+            os.utime(rpath, None)              # обращение между прогонами меняет mtime
             calls.clear()
             r2 = SW.read_bars(d, rsym, t0 + 20 * H, t0 + 20 * H + 30 * 60, cache=cache)
             assert r2 == r1 and calls == [], ("час из хранилища не закэширован", calls)
