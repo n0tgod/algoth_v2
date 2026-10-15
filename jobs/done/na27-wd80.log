@@ -1,0 +1,17 @@
+== задание na27-wd80 ==
+строка: run tools/loggrep.py --file=watchdog --pattern=NAT --last=5
+начало: 2026-10-15T12:04:53Z
+запускаю: .venv/bin/python tools/loggrep.py --file=watchdog --pattern=NAT --last=5
+== research/b1_book/out/watchdog.log по образцу /NAT/ за 10 сут ==
+  совпадений 1
+  2026-10-15: 1
+  [2026-10-15T12:00:01Z] порт 80: правила NAT не было (перезагрузка?) — поставлено 80 → 8765
+конец: 2026-10-15T12:04:53Z, код 0
+публикуется в ветку main:
+ jobs/done/na27-wd80.done            | 1 +
+ jobs/done/na27-wd80.log             | 9 +++++++++
+ jobs/done/na28-timing.done          | 1 +
+ jobs/done/na28-timing.log           | 4 ++++
+ jobs/poke.log                       | 4 ++++
+ research/s8_loop/out/day_brake.json | 2 +-
+ 6 files changed, 20 insertions(+), 1 deletion(-)
