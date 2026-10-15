@@ -2137,6 +2137,20 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L72 `fmt(v, pct=True)`
 - L78 `main()`
 
+## research/dca_paper/noncrypto_hold.py · 148 строк
+
+Замер: не-крипто в Ladder со сроком ДОЛЬШЕ 72 ч (вопрос владельца 2026-10-15: «дать им отработать, а не среза…
+
+- L28 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L29 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L41 `OUT_MD = os.path.join(R.OUT, 'NONCRYPTO-hold.md')`
+- L42 `OUT_JSON = os.path.join(R.OUT, 'NONCRYPTO-hold.jso…`
+- L43 `GRID = (72, 120, 168)`
+- L46 `kd(sym, at)`
+- L50 `replay(cache, legs, pairs, subset, hold, log)` — Перепроиграть решения `subset` со сроком `hold` и подставить в копию кэша.
+- L66 `exits(recs)`
+- L74 `main()`
+
 ## research/dca_paper/pair_age.py · 363 строк
 
 Возраст имени как фильтр входа короткой стороны общего счёта.
