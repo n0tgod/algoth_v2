@@ -49,3 +49,13 @@ sub_b0b417879b985874: статусу 0 с, режим live, позиций 3 (о
     SHOPUSDT long глубина 3/3: средняя 175.18548387096774, цель 181.15, пол 109.08046826327282, стоп биржи 109.08, рунгов лежит 0, закрытие None
   чужое на счёте: нет
 конец: 2026-10-15T12:50:10Z
+публикуется в ветку main:
+ jobs/done/na40-bprobe.log           | 10 ++++++++
+ jobs/done/na41-status.log           | 51 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  2 ++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 4 files changed, 64 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   1a62255c..a7c76303  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
