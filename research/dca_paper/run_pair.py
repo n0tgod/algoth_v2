@@ -88,7 +88,11 @@ def long_recs(cache=None, log=print):
     for k in R.order_of("sit"):
         want.setdefault(tuple(RP.RULERS[k]), []).append(k)
     out = {}
-    for (pr, _sym, _at), r in cache.items():
+    for (pr, sym, _at), r in cache.items():
+        # не-крипто у длинной стороны общего счёта не торгуется (15.10) —
+        # то же правило, что у длинных книг (`run_d6.tradable`)
+        if not RP.D6.tradable(sym):
+            continue
         for k in want.get(tuple(pr), ()):
             out.setdefault(k, []).append(r)
     log("длинные книги: " + ", ".join(f"{k} {len(v)}"

@@ -87,9 +87,10 @@ def test_rule_is_declared_for_short_books_with_versions_and_page_text():
         assert R.wave_guard_of(pk) == 2.0, pk          # короткая сторона общего счёта
     for lk in ("safe", "optimal", "aggr"):
         assert R.wave_guard_of(lk) is None, lk         # длинные не трогаются
-    assert R.FAMILY_RULES == {"pair": 8, "h24": 4}, R.FAMILY_RULES
-    # день записи вперёд сдвинут общей версией 7 (касса, 2026-10-10)
-    assert R.FAMILY_SINCE == {"pair": "2026-10-10", "h24": "2026-10-10"}, R.FAMILY_SINCE
+    assert R.FAMILY_RULES == {"pair": 9, "h24": 4, "sit": 1}, R.FAMILY_RULES
+    # день записи вперёд: h24 — касса (2026-10-10); sit и pair — без не-крипто (2026-10-15)
+    assert R.FAMILY_SINCE == {"pair": "2026-10-15", "h24": "2026-10-10",
+                              "sit": "2026-10-15"}, R.FAMILY_SINCE
     # строка прежней версии в счёт не идёт, текущей — идёт
     old = {"rules": R.RULES, "book_rules": 3, "ruler": "safe_h"}
     new = {"rules": R.RULES, "book_rules": 4, "ruler": "safe_h"}

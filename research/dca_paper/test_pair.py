@@ -176,8 +176,8 @@ def test_family_rules_retire_the_old_rows_without_touching_other_books():
     """Смена правил СЕМЕЙСТВА не трогает запись остальных книг.
 
     Кусается: строка общего счёта прежней версии (без поля) в счёт не
-    идёт, но остаётся читаемой; строка длинной книги без того же поля —
-    идёт, потому что у её семейства своей версии нет; ключ дедупа
+    идёт, но остаётся читаемой; строка длинной книги судится версией
+    СВОЕГО семейства (`sit`, с 15.10), а не общего счёта; ключ дедупа
     различает версии, иначе решение, пересчитанное по новому правилу, не
     записалось бы никогда.
     """
@@ -186,10 +186,13 @@ def test_family_rules_retire_the_old_rows_without_touching_other_books():
            "margin": 25.0, "pnl_frac": 0.04, "exit": "тейк",
            "written_at": T0 + H, "rules": R.RULES}
     new = dict(old, book_rules=R.FAMILY_RULES["pair"])
-    plain = dict(old, ruler="safe", side="long")
+    plain = dict(old, ruler="safe", side="long",
+                 book_rules=R.FAMILY_RULES["sit"])
     assert not R.is_current(old), "строка прежней версии семейства учтена"
     assert R.is_current(new), "строка нынешней версии не учтена"
-    assert R.is_current(plain), "у длинной книги своей версии нет"
+    # длинная книга судится СВОЕЙ версией (sit), а не версией общего счёта
+    assert R.is_current(plain), "длинную книгу судят чужой версией"
+    assert not R.is_current(dict(plain, book_rules=R.FAMILY_RULES["sit"] - 1))
     assert R.journal_key(old) != R.journal_key(new), "версии не различены"
     # запись не пропала: журнал читается целиком
     rows = [old, new]
@@ -258,7 +261,7 @@ def test_every_family_version_carries_the_day_it_changed():
         assert len(str(day)) == 10 and str(day)[4] == "-", (fam, day)
     assert R.family_since("safe_h") == R.FAMILY_SINCE["h24"]
     assert R.family_since("pair_safe") == R.FAMILY_SINCE["pair"]
-    assert R.family_since("safe") is None, "у длинных книг версии нет"
+    assert R.family_since("safe") == R.FAMILY_SINCE["sit"]  # с 15.10 и у длинных
     snap = RP.rules_snapshot(keys=list(R.PAIR_ORDER))
     assert snap["FAMILY_SINCE"] == R.FAMILY_SINCE, snap.get("FAMILY_SINCE")
     assert snap["FAMILY_RULES"] == R.FAMILY_RULES, snap.get("FAMILY_RULES")

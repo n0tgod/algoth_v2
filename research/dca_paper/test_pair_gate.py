@@ -32,7 +32,7 @@ def _long_row(sym, at, hold_h, dep=10000):
     return {"dep": dep, "ruler": "safe", "at": float(at),
             "exit_ts": float(at) + hold_h * H, "sym": sym, "side": "long",
             "lev": 2.0, "margin": 25.0, "pnl_frac": 0.01, "usd": 0.25,
-            "exit": "тейк", "written_at": at + H, "rules": R.RULES}
+            "exit": "тейк", "written_at": at + H, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"]}
 
 
 def _ctx(rate_by_sym):

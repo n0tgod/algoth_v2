@@ -22,7 +22,7 @@ def _row(at, hold_h, margin, dep=10000, ruler="optimal", pnl=0.01,
     return {"dep": dep, "ruler": ruler, "at": float(at),
             "exit_ts": float(at + hold_h * H), "sym": sym, "lev": lev,
             "margin": float(margin), "pnl_frac": pnl,
-            "usd": pnl * margin, "exit": exit_, "rules": R.RULES}
+            "usd": pnl * margin, "exit": exit_, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"]}
 
 
 def test_load_is_money_weighted_by_time():

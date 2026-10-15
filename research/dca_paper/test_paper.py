@@ -178,10 +178,10 @@ def test_backtest_and_live_share_one_curve_and_stay_labelled():
     """
     t0 = T0
     fresh = {"dep": 1000, "at": t0, "exit_ts": t0 + H, "sym": "A",
-             "usd": 10.0, "written_at": t0 + 3600, "rules": R.RULES}
+             "usd": 10.0, "written_at": t0 + 3600, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"]}
     old = {"dep": 1000, "at": t0, "exit_ts": t0 + H, "sym": "B",
            "usd": 5.0, "written_at": t0 + (R.AHEAD_H + 10) * 3600,
-           "rules": R.RULES}
+           "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"]}
     assert R.ahead(fresh["at"], fresh["written_at"]) is True
     assert R.ahead(old["at"], old["written_at"]) is False
     fwd, back = R.split_rows([fresh, old])
@@ -229,7 +229,7 @@ def test_net_rides_the_summary_with_reasons_not_zeros():
                      "pnl_frac": 0.1, "usd": 5.0, "exit": "тейк",
                      "entry_px": 100.0, "exit_px": 110.0, "avg": 99.0,
                      "depth": 2, "fills": fills, "fav_bp": 500.0,
-                     "written_at": t0 + i * 3600 + 3600, "rules": R.RULES})
+                     "written_at": t0 + i * 3600 + 3600, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"]})
     t = np.array([int((t0 - 3600 * 24 + 3600 * k) * 1000) for k in range(200)],
                  dtype=np.int64)
     rates = np.full(200, 0.0001)
@@ -330,7 +330,7 @@ def test_one_name_one_position_is_checked_on_the_journal_and_screams():
                 "lev": 2.0, "margin": 50.0, "pnl_frac": 0.02, "usd": usd,
                 "exit": "тейк", "entry_px": 100.0, "exit_px": 102.0,
                 "avg": 100.0, "depth": 1, "fills": [[float(at), 100.0, 0.5]],
-                "written_at": at + 3600, "rules": R.RULES}
+                "written_at": at + 3600, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"]}
     clean = [_row("AUSDT", t0, 2), _row("AUSDT", t0 + 2 * H, 2),   # встык
              _row("BUSDT", t0, 1)]
     dirty = clean + [_row("BUSDT", t0 + 1800, 1)]                  # внахлёст
@@ -462,19 +462,19 @@ def test_fav_backfill_adds_a_field_and_nothing_else():
     spec.loader.exec_module(bf)
     rows = [
         {"dep": 1000, "at": 100.0, "sym": "AAA", "usd": 1.0,
-         "rules": R.RULES},
+         "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"]},
         {"dep": 1000, "at": 200.0, "sym": "BBB", "usd": 2.0,
-         "rules": R.RULES},
+         "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"]},
         {"dep": 1000, "at": 300.0, "sym": "CCC", "usd": 3.0,
          "rules": R.RULES - 1},
         {"dep": 1000, "at": 400.0, "sym": "DDD", "usd": 4.0,
-         "rules": R.RULES, "fav_bp": 111.0},
+         "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"], "fav_bp": 111.0},
         # строка общего счёта: поле ЕСТЬ и пусто, сторона в записи
         {"dep": 1000, "at": 500.0, "sym": "EEE", "usd": 5.0,
-         "rules": R.RULES, "side": "short", "fav_bp": None},
+         "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"], "side": "short", "fav_bp": None},
         # короткая строка, у которой в индексе есть только ДЛИННАЯ нога
         {"dep": 1000, "at": 600.0, "sym": "FFF", "usd": 6.0,
-         "rules": R.RULES, "side": "short", "fav_bp": None},
+         "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"], "side": "short", "fav_bp": None},
     ]
     with tempfile.TemporaryDirectory() as td:
         p = os.path.join(td, "j.jsonl")
@@ -722,7 +722,7 @@ def test_journal_appends_only_new():
     """Строка write-ahead не переписывается: момент записи подвинуть нельзя."""
     t0 = T0
     row = {"dep": 1000, "at": t0, "exit_ts": t0 + H, "sym": "A",
-           "usd": 1.0, "written_at": t0 + 60, "rules": R.RULES}
+           "usd": 1.0, "written_at": t0 + 60, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"]}
     with tempfile.TemporaryDirectory() as td:
         jp = os.path.join(td, "j.jsonl")
         a = P.append_journal([row], jp, log=lambda *_: None)
@@ -780,7 +780,7 @@ def test_day_concentration_is_measured_and_not_faked():
     rows = []
     # десять тощих дней по -1 $, каждый своим именем
     for i in range(10):
-        rows.append({"dep": 1000, "rules": R.RULES, "sym": f"T{i}USDT",
+        rows.append({"dep": 1000, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"], "sym": f"T{i}USDT",
                      "at": t0 + i * D, "exit_ts": t0 + i * D + 60,
                      "usd": -1.0, "written_at": t0 + i * D + 120,
                      "lev": 1.0, "margin": 25.0, "pnl_frac": -0.04,
@@ -788,7 +788,7 @@ def test_day_concentration_is_measured_and_not_faked():
     # три жирных дня, деньги размазаны по РАЗНЫМ именам — по 20 $ на день
     for j in range(3):
         for k in range(4):
-            rows.append({"dep": 1000, "rules": R.RULES,
+            rows.append({"dep": 1000, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"],
                          "sym": f"F{j}{k}USDT",
                          "at": t0 + (20 + j) * D, "exit_ts": t0 + (20 + j) * D + 60,
                          "usd": 5.0, "written_at": t0 + (20 + j) * D + 120,
@@ -830,7 +830,7 @@ def test_day_says_what_each_side_brought():
     t0 = 1_767_225_600
 
     def _row(sym, at, usd, side):
-        return {"dep": 1000, "rules": R.RULES, "sym": sym, "at": at,
+        return {"dep": 1000, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"], "sym": sym, "at": at,
                 "exit_ts": at + 60, "usd": float(usd), "side": side,
                 "written_at": at + 120, "lev": 2.0, "margin": 25.0,
                 "pnl_frac": usd / 25.0, "exit": "срок"}
@@ -880,7 +880,7 @@ def test_drawdown_says_whether_one_day_made_it():
     def _rows(daily):
         out = []
         for i, usd in enumerate(daily):
-            out.append({"dep": 1000, "rules": R.RULES, "sym": f"X{i}USDT",
+            out.append({"dep": 1000, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"], "sym": f"X{i}USDT",
                         "at": t0 + i * D, "exit_ts": t0 + i * D + 60,
                         "usd": float(usd), "written_at": t0 + i * D + 120,
                         "lev": 1.0, "margin": 25.0, "pnl_frac": 0.0,
@@ -913,7 +913,7 @@ def test_short_record_says_not_measured_not_zero():
     """Три дня из трёх вычитать нечем: прочерк, а не ноль."""
     D = 86400
     t0 = 1_767_225_600
-    rows = [{"dep": 1000, "rules": R.RULES, "sym": f"S{i}USDT",
+    rows = [{"dep": 1000, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"], "sym": f"S{i}USDT",
              "at": t0 + i * D, "exit_ts": t0 + i * D + 60, "usd": 3.0,
              "written_at": t0 + i * D + 120, "lev": 1.0, "margin": 25.0,
              "pnl_frac": 0.12, "exit": "тейк"} for i in range(3)]
@@ -1062,7 +1062,7 @@ def test_legacy_row_reads_as_the_ruler_it_was_written_with():
     """
     t0 = T0
     legacy = {"dep": 1000, "at": t0, "exit_ts": t0 + H, "sym": "A",
-              "usd": 7.0, "written_at": t0 + 3600, "rules": R.RULES}
+              "usd": 7.0, "written_at": t0 + 3600, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"]}
     assert R.ruler_of(legacy) == "optimal", R.ruler_of(legacy)
     with tempfile.TemporaryDirectory() as td:
         jp = os.path.join(td, "j.jsonl")
@@ -1118,7 +1118,7 @@ def test_cash_refusals_reach_the_report_and_survive_restat():
                 f.write(json.dumps({
                     "dep": 1000, "ruler": R.DEFAULT_RULER, "at": t0,
                     "exit_ts": t0 + 3600, "sym": "AAAUSDT", "usd": 2.0,
-                    "written_at": t0 + 600, "rules": R.RULES}) + "\n")
+                    "written_at": t0 + 600, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"]}) + "\n")
             with open(R.ARTIFACT, "w", encoding="utf-8") as f:
                 json.dump({"cells": {P._cell(R.DEFAULT_RULER, 1000): {
                     "slots": 40, "taken": 594, "no_cash": 1689,
@@ -1210,7 +1210,7 @@ def test_journal_path_is_resolved_at_call_time():
         t0 = T0
         rows = [{"dep": 1000, "ruler": R.DEFAULT_RULER, "at": t0,
                  "exit_ts": t0 + 3600, "sym": "AAAUSDT", "usd": 1.0,
-                 "written_at": t0 + 60, "rules": R.RULES}]
+                 "written_at": t0 + 60, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"]}]
         before = (os.path.getsize(real) if os.path.exists(real) else None)
         try:
             R.JOURNAL = mine
@@ -1310,7 +1310,8 @@ def test_rules_change_starts_a_fresh_record():
     t0 = T0
     was = {"dep": 1000, "ruler": R.DEFAULT_RULER, "at": t0,
            "exit_ts": t0 + 3600, "sym": "AAAUSDT", "usd": 5.0,
-           "margin": 25.0, "written_at": t0 + 600, "rules": R.RULES - 1}
+           "margin": 25.0, "written_at": t0 + 600, "rules": R.RULES - 1,
+           "book_rules": R.FAMILY_RULES["sit"]}
     now = dict(was)
     now["rules"] = R.RULES
     now["margin"] = 145.0
@@ -1674,26 +1675,26 @@ def test_shape_counts_positions_not_days():
     t0 = 1_767_225_600
     # три сделки одного дня: две в плюс, одна в минус — день зелёный,
     # а доля прибыльных сделок 2/3
-    rows = [{"dep": 1000, "rules": R.RULES, "sym": "AUSDT",
+    rows = [{"dep": 1000, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"], "sym": "AUSDT",
              "at": t0, "exit_ts": t0 + 3600 * 2, "usd": 5.0,
              "written_at": t0 + 3600 * 3, "lev": 1.0, "margin": 25.0,
              "pnl_frac": 0.2, "exit": "тейк"},
-            {"dep": 1000, "rules": R.RULES, "sym": "BUSDT",
+            {"dep": 1000, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"], "sym": "BUSDT",
              "at": t0, "exit_ts": t0 + 3600 * 4, "usd": 3.0,
              "written_at": t0 + 3600 * 5, "lev": 1.0, "margin": 25.0,
              "pnl_frac": 0.12, "exit": "тейк"},
-            {"dep": 1000, "rules": R.RULES, "sym": "CUSDT",
+            {"dep": 1000, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"], "sym": "CUSDT",
              "at": t0, "exit_ts": t0 + 3600 * 6, "usd": -2.0,
              "written_at": t0 + 3600 * 7, "lev": 1.0, "margin": 25.0,
              "pnl_frac": -0.08, "exit": "стоп"},
             # второй день, ДВЕ убыточные сделки по 12 часов: доли
             # нарочно РАЗНЫЕ (0.4 против 0.5) — совпади они, подмена
             # одной меры другой прошла бы мимо проверки
-            {"dep": 1000, "rules": R.RULES, "sym": "DUSDT",
+            {"dep": 1000, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"], "sym": "DUSDT",
              "at": t0 + D, "exit_ts": t0 + D + 3600 * 12, "usd": -1.0,
              "written_at": t0 + D + 3600 * 13, "lev": 1.0, "margin": 25.0,
              "pnl_frac": -0.04, "exit": "стоп"},
-            {"dep": 1000, "rules": R.RULES, "sym": "EUSDT",
+            {"dep": 1000, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"], "sym": "EUSDT",
              "at": t0 + D, "exit_ts": t0 + D + 3600 * 12, "usd": -1.0,
              "written_at": t0 + D + 3600 * 13, "lev": 1.0, "margin": 25.0,
              "pnl_frac": -0.04, "exit": "стоп"}]
@@ -1750,7 +1751,7 @@ def test_journal_rotates_by_day_and_reader_takes_every_part():
 
     def row(at, sym):
         return {"dep": 1000, "at": at, "exit_ts": at + 3600, "sym": sym,
-                "usd": 1.0, "written_at": at + 600, "rules": R.RULES,
+                "usd": 1.0, "written_at": at + 600, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"],
                 "ruler": "safe", "lev": 2.0, "margin": 25.0,
                 "pnl_frac": 0.04, "exit": "тейк", "entry_px": 2.0,
                 "exit_px": 2.1, "avg": 2.0, "depth": 1,
@@ -1848,7 +1849,7 @@ def test_retired_books_stop_trading_but_keep_their_record():
              "exit_ts": t0 + i * H + 3600.0, "sym": f"S{i}USDT",
              "side": R.side_of(rk), "lev": 2.0, "margin": 25.0,
              "pnl_frac": 0.04, "usd": 1.0, "exit": "тейк",
-             "written_at": t0 + i * H + 600, "rules": R.RULES}
+             "written_at": t0 + i * H + 600, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"]}
             for i, rk in enumerate(("optimal", "optimal_s"))]
     with tempfile.TemporaryDirectory() as td:
         jp = os.path.join(td, "j.jsonl")
@@ -2536,7 +2537,7 @@ def _smooth_rows(pairs, mode="optimal", dep=10000.0):
     for i, (a, b) in enumerate(pairs):
         t = T0 + i * 24 * H
         for rk, usd in ((mode, a), (mode + "_s", b)):
-            rows.append({"dep": int(dep), "ruler": rk, "rules": R.RULES,
+            rows.append({"dep": int(dep), "ruler": rk, "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"],
                          "at": float(t), "exit_ts": float(t + H),
                          "sym": f"S{i}USDT", "usd": float(usd),
                          "written_at": float(t + H) + 1.0,
@@ -2586,7 +2587,7 @@ def test_journal_shard_rolls_over_by_size():
     """
     d = tempfile.mkdtemp(prefix="shard-")
     path = os.path.join(d, "journal.jsonl")
-    rows = [{"dep": 10000, "ruler": "optimal", "rules": R.RULES,
+    rows = [{"dep": 10000, "ruler": "optimal", "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"],
              "at": float(T0), "exit_ts": float(T0 + H), "sym": f"S{i}USDT",
              "usd": 1.0, "written_at": float(T0 + H) + 1.0,
              "pad": "x" * 200} for i in range(50)]
@@ -2632,6 +2633,7 @@ def test_journal_reader_parses_only_changed_parts():
         return {"dep": 1000, "at": at, "exit_ts": at + 3600, "sym": sym,
                 "usd": 1.0, "written_at": at + 600,
                 "rules": R.RULES if rules is None else rules,
+                "book_rules": R.FAMILY_RULES["sit"],
                 "ruler": "safe", "lev": 2.0, "margin": 25.0,
                 "pnl_frac": 0.04, "exit": "тейк", "entry_px": 2.0,
                 "exit_px": 2.1, "avg": 2.0, "depth": 1,
@@ -2716,7 +2718,7 @@ def test_repack_splits_an_oversized_day():
     d = tempfile.mkdtemp(prefix="repack-")
     path = os.path.join(d, "journal.jsonl")
     day = R.shard_day(T0)
-    rows = [{"dep": 10000, "ruler": "optimal", "rules": R.RULES,
+    rows = [{"dep": 10000, "ruler": "optimal", "rules": R.RULES, "book_rules": R.FAMILY_RULES["sit"],
              "at": float(T0), "exit_ts": float(T0 + H), "sym": f"S{i}USDT",
              "usd": 1.0, "written_at": float(T0 + H) + 1.0,
              "pad": "x" * 200} for i in range(60)]

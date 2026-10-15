@@ -705,7 +705,7 @@ def _legs_sig():
             return (x.st_mtime_ns, x.st_size)
         except OSError:
             return None
-    return {"sheets": st(D2.SHEETS), "code": [st(p) for p in _LEGS_CODE],
+    return {"sheets": st(D2.SHEETS), "code": [st(p) for p in _LEGS_CODE + _nc_files()],
             "gate": (float(D2.MIN_EDGE_BP), float(D2.MIN_RR))}
 
 
@@ -757,8 +757,36 @@ def gated_legs(limit=None, log=print, side="long", cache=LEGS_CACHE):
     return longs[:limit] if limit else longs
 
 
+# Не-крипто Ladder не торгует (решение владельца 2026-10-15): у книги
+# срок 72 ч, а базовый актив акции стоит вне часов биржи и в выходные —
+# выход по сроку приходится на мёртвые часы. Замеры кассой
+# (`research/dca_paper/noncrypto_cut.py`, `noncrypto_window.py`): на
+# депозитах от $1k итог меняется в пределах ±4 п.п.; 80 % сигналов по
+# акциям приходят при закрытой бирже. Список — общий фильтр проекта
+# (`research/common/universe_filter`), тот же, что у часового цикла.
+_NC_REF = None
+
+
+def tradable(sym):
+    """Имя, которым Ladder вправе торговать: не перп на не-криптоактив."""
+    global _NC_REF
+    if _NC_REF is None:
+        sys.path.insert(0, os.path.join(ROOT, "research"))
+        from common import universe_filter as UF
+        _NC_REF = (UF, UF.non_crypto_set())
+    UF, ref = _NC_REF
+    return not UF.is_non_crypto(str(sym), ref)
+
+
+def _nc_files():
+    """Файлы, от которых зависит `tradable`: справочник и сам фильтр."""
+    p = os.path.join(ROOT, "research", "common", "universe_filter.py")
+    u = os.path.join(ROOT, "research", "a1_universe", "out", "universe.json")
+    return (p, u)
+
+
 def leg_gated(g, side="long"):
-    """Проходит ли нога листа гейты книги: сторона, край, отношение.
+    """Проходит ли нога листа гейты книги: сторона, край, отношение, имя.
 
     Одно правило на реплей (`gated_legs`) и на намерения живого
     исполнителя (спека 15 §10a): вторая копия двух неравенств однажды
@@ -767,7 +795,8 @@ def leg_gated(g, side="long"):
     """
     return bool((side is None or g.get("side") == side)
                 and abs(float(g["fwd"])) >= D2.MIN_EDGE_BP
-                and (g.get("rr") or 0) >= D2.MIN_RR)
+                and (g.get("rr") or 0) >= D2.MIN_RR
+                and tradable(g.get("sym")))
 
 
 def collect_recs(limit=None, src=None, log=print, rulers=None,

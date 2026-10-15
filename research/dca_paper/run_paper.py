@@ -1814,8 +1814,10 @@ def main():
         write_cache(cache)
         ph.mark("запись кэша")
         by_pair = {tuple(pr): [] for pr in pairs}
-        for (pr, _sym, _at), r in cache.items():
-            if pr in by_pair:
+        # не-крипто в кассу не идёт (15.10): кэш хранит и прежние исходы
+        # по акциям — их держит не гейт ног, а это место; правило одно
+        for (pr, sym, _at), r in cache.items():
+            if pr in by_pair and D6.tradable(sym):
                 by_pair[pr].append(r)
         rows, cells, one, live = build_rows(
             {k: by_pair[tuple(RULERS[k])] for k in keys})

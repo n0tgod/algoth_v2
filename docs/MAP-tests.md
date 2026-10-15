@@ -1034,7 +1034,7 @@
 - L126 `test_memory_guard_stops_the_run_itself()`
 - L142 `test_unusable_cache_says_why(monkey=None)`
 
-## research/dca_paper/test_arm_split.py · 152 строк
+## research/dca_paper/test_arm_split.py · 153 строк
 
 Проверки разреза DCA-книг по руке модели.
 
@@ -1043,11 +1043,11 @@
 - L18 `H = 3600.0`
 - L21 `_leg(sym, arm, at, fwd, side='long')`
 - L25 `_row(sym, at, usd, ruler='optimal', dep=10000, side='long', rul…`
-- L34 `test_dispute_is_resolved_by_the_cache_or_stays_without_an_arm()`
-- L64 `test_money_of_arms_sums_to_the_book_and_orphans_are_named()`
-- L101 `test_without_the_sheets_journal_nothing_pretends_to_have_an_arm…`
-- L116 `test_halves_split_by_decision_time()`
-- L128 `test_report_names_the_backtest_and_the_daily_activity()`
+- L35 `test_dispute_is_resolved_by_the_cache_or_stays_without_an_arm()`
+- L65 `test_money_of_arms_sums_to_the_book_and_orphans_are_named()`
+- L102 `test_without_the_sheets_journal_nothing_pretends_to_have_an_arm…`
+- L117 `test_halves_split_by_decision_time()`
+- L129 `test_report_names_the_backtest_and_the_daily_activity()`
 
 ## research/dca_paper/test_backfill_exit_px.py · 80 строк
 
@@ -1097,7 +1097,7 @@
 - L108 `test_rows_without_costs_are_not_mixed_in()`
 - L116 `test_verdict_names_largest_axis_and_report_has_no_holes()`
 
-## research/dca_paper/test_costs.py · 496 строк
+## research/dca_paper/test_costs.py · 497 строк
 
 Проверки замера издержек DCA-книг (`costs.py`).
 
@@ -1106,39 +1106,39 @@
 - L28 `T0 = 1790000000.0`
 - L29 `FILLS4 = [(T0 + 60, 100.0, 0.25), (T0 + 5 * H, 1…`
 - L33 `_row(sym='SSSUSDT', side='short', at=T0, fills=None, exit_ts=No…`
-- L48 `_series(start, hours, rate_fn)` — Ряд начислений раз в час: (времена мс, ставки), как у загрузчика.
-- L56 `test_commission_charges_every_rung_and_the_exit()`
-- L73 `test_funding_sign_follows_the_side()`
-- L83 `test_funding_follows_the_open_notional_over_time()` — До долива платит четверть, после — половина: нотионал по времени.
-- L98 `test_funding_uncovered_is_not_measured()`
-- L110 `test_rate_at_entry_is_the_last_known_and_the_gate_is_by_side()`
-- L131 `_fixture()`
-- L164 `test_slippage_on_base_entry_and_market_exits_only()` — Проскальзывание X3 берётся с базового входа (первый рунг — рыночный) и с рыночного выхода (пол/срок/трейл/сто…
-- L191 `test_run_end_to_end_synthetic()`
-- L254 `test_gate_is_judged_only_with_both_arms_of_size()` — Медиана девяти отсечённых — шум: рука судится при ≥ MIN_ARM_N позиций в ОБЕИХ руках, иначе книга не попадает…
-- L272 `test_main_writes_the_artifact_and_publishes_by_default()`
-- L304 `_drop_pyc(path)` — Байткод модуля — где бы он ни лежал: рядом в `__pycache__` или в каталоге `PYTHONPYCACHEPREFIX` (свой каталог…
-- L323 `_poison(path, lit, sub, fn, mod)`
-- L345 `P = os.path.join(HERE, 'costs.py')`
-- L348 `_control_exit_fee_dropped()`
-- L353 `_control_funding_sign_flipped()`
-- L359 `_control_open_notional_ignores_time()`
-- L365 `_control_uncovered_counted_as_zero()`
-- L371 `_control_gate_ignores_side()`
-- L377 `_control_rate_at_entry_looks_ahead()`
-- L382 `_control_stale_rate_counts_as_known()`
-- L388 `_control_gate_medians_in_dollars()`
-- L394 `_control_missing_series_reads_as_present()`
-- L400 `_control_old_rules_rows_counted()`
-- L405 `_control_no_fills_in_cover_denominator()`
-- L410 `_control_thin_rest_arm_judged()`
-- L415 `_control_slip_on_take_exit()`
-- L420 `_control_slip_on_every_rung()`
-- L426 `_control_net_ignores_slippage()`
-- L432 `test_symbols_outside_the_universe_still_get_their_series()` — Имя, торгуемое после снимка универсума, не теряет ряд funding.
-- L454 `TESTS = [test_commission_charges_every_rung_and…`
-- L467 `CONTROLS = [('комиссия выхода снята', _control_exi…`
-- L486 `main()`
+- L49 `_series(start, hours, rate_fn)` — Ряд начислений раз в час: (времена мс, ставки), как у загрузчика.
+- L57 `test_commission_charges_every_rung_and_the_exit()`
+- L74 `test_funding_sign_follows_the_side()`
+- L84 `test_funding_follows_the_open_notional_over_time()` — До долива платит четверть, после — половина: нотионал по времени.
+- L99 `test_funding_uncovered_is_not_measured()`
+- L111 `test_rate_at_entry_is_the_last_known_and_the_gate_is_by_side()`
+- L132 `_fixture()`
+- L165 `test_slippage_on_base_entry_and_market_exits_only()` — Проскальзывание X3 берётся с базового входа (первый рунг — рыночный) и с рыночного выхода (пол/срок/трейл/сто…
+- L192 `test_run_end_to_end_synthetic()`
+- L255 `test_gate_is_judged_only_with_both_arms_of_size()` — Медиана девяти отсечённых — шум: рука судится при ≥ MIN_ARM_N позиций в ОБЕИХ руках, иначе книга не попадает…
+- L273 `test_main_writes_the_artifact_and_publishes_by_default()`
+- L305 `_drop_pyc(path)` — Байткод модуля — где бы он ни лежал: рядом в `__pycache__` или в каталоге `PYTHONPYCACHEPREFIX` (свой каталог…
+- L324 `_poison(path, lit, sub, fn, mod)`
+- L346 `P = os.path.join(HERE, 'costs.py')`
+- L349 `_control_exit_fee_dropped()`
+- L354 `_control_funding_sign_flipped()`
+- L360 `_control_open_notional_ignores_time()`
+- L366 `_control_uncovered_counted_as_zero()`
+- L372 `_control_gate_ignores_side()`
+- L378 `_control_rate_at_entry_looks_ahead()`
+- L383 `_control_stale_rate_counts_as_known()`
+- L389 `_control_gate_medians_in_dollars()`
+- L395 `_control_missing_series_reads_as_present()`
+- L401 `_control_old_rules_rows_counted()`
+- L406 `_control_no_fills_in_cover_denominator()`
+- L411 `_control_thin_rest_arm_judged()`
+- L416 `_control_slip_on_take_exit()`
+- L421 `_control_slip_on_every_rung()`
+- L427 `_control_net_ignores_slippage()`
+- L433 `test_symbols_outside_the_universe_still_get_their_series()` — Имя, торгуемое после снимка универсума, не теряет ряд funding.
+- L455 `TESTS = [test_commission_charges_every_rung_and…`
+- L468 `CONTROLS = [('комиссия выхода снята', _control_exi…`
+- L487 `main()`
 
 ## research/dca_paper/test_costs_cache.py · 82 строк
 
@@ -1224,7 +1224,7 @@
 - L66 `test_an_extra_point_of_ours_breaks_the_match()`
 - L77 `test_venue_silence_is_a_reason_not_a_match()`
 
-## research/dca_paper/test_guard.py · 213 строк
+## research/dca_paper/test_guard.py · 214 строк
 
 Проверки охраны рынком — правила выхода коротких книг (спека 14 §13).
 
@@ -1237,9 +1237,9 @@
 - L45 `_rec(marks, state='closed', sym='AAAUSDT', exit='срок', lev=20.…`
 - L52 `test_guard_closes_strictly_before_the_exit_and_only_in_lived_ho…`
 - L83 `test_rule_is_declared_for_short_books_with_versions_and_page_te…`
-- L118 `test_guard_shorts_reads_the_summaries_end_to_end()`
-- L150 `test_cache_signature_does_not_carry_the_guard_on_purpose()`
-- L159 `test_guard_exit_price_comes_from_the_fills_not_from_the_whole_m…` — Цена выхода охраны — из заполненных ступеней, а не «вся маржа на плече».
+- L119 `test_guard_shorts_reads_the_summaries_end_to_end()`
+- L151 `test_cache_signature_does_not_carry_the_guard_on_purpose()`
+- L160 `test_guard_exit_price_comes_from_the_fills_not_from_the_whole_m…` — Цена выхода охраны — из заполненных ступеней, а не «вся маржа на плече».
 
 ## research/dca_paper/test_guard_fill.py · 75 строк
 
@@ -1299,7 +1299,7 @@
 - L15 `DAY = 86400`
 - L18 `main()`
 
-## research/dca_paper/test_pair.py · 571 строк
+## research/dca_paper/test_pair.py · 574 строк
 
 Проверки общего счёта: длинная книга и короткая на ОДНОМ депозите.
 
@@ -1316,16 +1316,16 @@
 - L117 `test_short_side_enters_with_the_declared_share()` — Билет короткой стороны в общем счёте — объявленная доля своего.
 - L150 `test_the_share_never_dives_under_the_exchange_floor()` — Доля не вправе опустить билет под биржевой минимум.
 - L175 `test_family_rules_retire_the_old_rows_without_touching_other_bo…` — Смена правил СЕМЕЙСТВА не трогает запись остальных книг.
-- L202 `test_rate_gate_machinery_works_and_the_rule_is_off_now()` — Гейт по ставке — правило входа КОРОТКОЙ стороны общего счёта.
-- L247 `test_every_family_version_carries_the_day_it_changed()` — Смена версии семейства обнуляет «записанное вперёд».
-- L270 `test_age_rule_refuses_young_names_and_counts_the_unknown_apart()` — Возраст имени — объявленное правило входа КОРОТКОЙ стороны.
-- L309 `test_collisions_and_link_live_inside_the_book()` — Совпадение имён и связь сторон считаются по строкам самой книги.
-- L336 `test_books_sharing_one_geometry_both_get_their_positions()` — Одна пара линейки кормит НЕСКОЛЬКО книг, и обе обязаны их получить.
-- L359 `test_memory_guard_stops_the_run_itself()` — Прогон останавливается САМ и с числом: OOM выбирает не его.
-- L377 `test_missing_caches_are_a_reason_not_empty_books()`
-- L386 `test_end_to_end_writes_its_own_journal_and_compares_with_two_ac…` — Прогон целиком: свой журнал, свой свод, сравнение с раздельными.
-- L480 `test_report_shows_what_the_money_is_made_of()` — Концентрация обязана стоять и в отчёте общего счёта.
-- L521 `test_short_recs_count_the_records_without_a_promise()` — Короткая запись без обещания модели считается ВСЛУХ, а не молчит.
+- L205 `test_rate_gate_machinery_works_and_the_rule_is_off_now()` — Гейт по ставке — правило входа КОРОТКОЙ стороны общего счёта.
+- L250 `test_every_family_version_carries_the_day_it_changed()` — Смена версии семейства обнуляет «записанное вперёд».
+- L273 `test_age_rule_refuses_young_names_and_counts_the_unknown_apart()` — Возраст имени — объявленное правило входа КОРОТКОЙ стороны.
+- L312 `test_collisions_and_link_live_inside_the_book()` — Совпадение имён и связь сторон считаются по строкам самой книги.
+- L339 `test_books_sharing_one_geometry_both_get_their_positions()` — Одна пара линейки кормит НЕСКОЛЬКО книг, и обе обязаны их получить.
+- L362 `test_memory_guard_stops_the_run_itself()` — Прогон останавливается САМ и с числом: OOM выбирает не его.
+- L380 `test_missing_caches_are_a_reason_not_empty_books()`
+- L389 `test_end_to_end_writes_its_own_journal_and_compares_with_two_ac…` — Прогон целиком: свой журнал, свой свод, сравнение с раздельными.
+- L483 `test_report_shows_what_the_money_is_made_of()` — Концентрация обязана стоять и в отчёте общего счёта.
+- L524 `test_short_recs_count_the_records_without_a_promise()` — Короткая запись без обещания модели считается ВСЛУХ, а не молчит.
 
 ## research/dca_paper/test_pair_age.py · 158 строк
 
@@ -1361,7 +1361,7 @@
 - L119 `test_ratio_is_per_sample_not_a_ratio_of_medians()` — Доход на просадку считается НА КАЖДОЙ выборке.
 - L141 `test_probe_writes_nothing_into_the_book_journal()` — Замер — проба: журнал книг он не трогает ни строкой.
 
-## research/dca_paper/test_paper.py · 3350 строк
+## research/dca_paper/test_paper.py · 3352 строк
 
 Проверки бумажных DCA-книг. Прогон: .venv/bin/python …/test_paper.py
 
@@ -1404,74 +1404,74 @@
 - L1229 `test_cache_replays_new_and_open_but_not_closed()` — Кэш реплея законен ровно для ЗАКРЫТЫХ позиций.
 - L1270 `test_cache_of_other_rules_is_refused_out_loud()` — Кэш чужих правил не чинится молча.
 - L1303 `test_rules_change_starts_a_fresh_record()` — Смена правил (билета) начинает запись заново, а не дописывает.
-- L1332 `test_open_dd_forward_is_the_window_not_the_whole_book()` — Просадка открытых у среза «вперёд» — по часам с начала записи.
-- L1373 `_control_open_dd_forward_copies_the_whole_book()` — Свод, отдающий срезу число всей книги, — то, от чего защищаемся.
-- L1394 `_control_no_split()` — Свод, складывающий наблюдение с пересчётом, — то, ради чего split.
-- L1408 `_control_ticket_below_floor()` — Билет ниже пола биржи — часть сигналов физически неисполнима.
-- L1422 `_control_one_per_name_off()` — Без правила биржи повтор по имени попадает в книгу.
-- L1436 `_control_journal_overwrites()` — Журнал, переписывающий строку, позволяет подвинуть момент записи.
-- L1457 `_control_day_concentration_by_one_day()` — Контроль: вычесть ОДИН лучший день вместо трёх — проверка обязана пасть.
-- L1482 `_control_dedup_without_ruler()` — Контроль: дедуп без линейки — вторая книга не пишется вовсе.
-- L1496 `_control_legacy_reads_as_safe()` — Контроль: прежняя строка объявлена безопасной — книга подменена.
-- L1510 `_control_restat_drops_the_counts()` — Контроль: пересборка молча выбрасывает числа счётного прогона.
-- L1528 `_control_dedup_without_rules_version()` — Контроль: дедуп БЕЗ версии правил — прежнее поведение дословно.
-- L1558 `_control_contracts_are_money_not_coins()` — Контроль: контракты посчитаны ДЕНЬГАМИ рунга, а не монетами.
-- L1589 `_control_walk_ignores_side()` — Контроль: ступени цели считаются без стороны (длинная геометрия).
-- L1612 `_control_row_side_ignores_book()` — Контроль: сторона артефактной записи берётся умолчанием `ruler_of`, а не переданной книгой — короткая книга ч…
-- L1631 `_control_gate_is_gone()` — Гейта нет вовсе: третий режим молча становится копией второй книги.
-- L1651 `_control_gate_on_every_ruler()` — Порог назначен всем режимам: книга без поля теряет свои входы.
-- L1665 `test_shape_counts_positions_not_days()` — Доля прибыльных СДЕЛОК и среднее время в сделке — свои меры.
-- L1710 `test_worst_open_is_measured_and_missing_is_not_zero()` — Худшая ОТКРЫТАЯ позиция считается сервером, а пустое — прочерк.
-- L1735 `test_journal_rotates_by_day_and_reader_takes_every_part()` — Ротация: запись идёт в СУТОЧНЫЙ файл по метке решения, а чтение берёт все куски и снимает перекрытие.
-- L1800 `_wd_block(src, marker)` — Блок сторожа от своего заголовка до СЛЕДУЮЩЕГО заголовка «# --- », в каком бы порядке блоки ни стояли (15.10:…
-- L1809 `test_watchdog_runs_the_book_hourly_and_asks_when_it_last_counte…` — Сторож ведёт книгу САМ, и вопрос он задаёт правильный.
-- L1834 `test_retired_books_stop_trading_but_keep_their_record()` — Снятая книга не торгует и не показывается, но её ЗАПИСЬ цела.
-- L1867 `test_replay_signature_ignores_books_that_do_not_replay()` — Подпись кэша реплея описывает то, что реплей СЧИТАЕТ.
-- L1898 `test_rules_snapshot_carries_only_living_books()` — Свод несёт ДЕЙСТВУЮЩИЙ список книг — тем же кодом, что и прогон.
-- L1922 `test_watchdog_runs_short_books_by_the_same_rule()` — Короткие книги семейства h24 поднимаются тем же правилом: по метке «когда считали», раз в час, кроме часов об…
-- L1957 `_run_watchdog_cases(block, art_name='DCA-paper.json', fresh_age…`
-- L2069 `_run_pair_cases(block)` — Блок общего счёта: считает, когда ОБА источника свежее его самого.
-- L2142 `test_tail_marks_outcomes_and_refuses_an_entry_from_a_quote()` — Правило хвоста держит ОБЕ границы, и они про разное.
-- L2185 `test_tail_reaches_the_core_and_the_replay_signature()` — Дорога правила до ядра и до кэша — отдельный предмет.
-- L2218 `test_cut_position_gets_a_named_reason()` — Оборванная позиция получает ПРИЧИНУ, и причин три разных.
-- L2264 `test_contracts_walk_matches_the_simulation()` — Контракты позиции = то, что купила симуляция, а не второй счёт.
-- L2306 `test_short_books_are_declared_as_a_mirror()` — Реестр несёт шесть книг, и у коротких сторона объявлена полем.
-- L2333 `test_take_rule_mirrors_the_promise_side()` — Цель шорта берётся у обещания ВНИЗ; лонг считается прежним числом.
-- L2348 `test_short_legs_go_only_into_short_books()` — Нога идёт в книгу СВОЕЙ стороны, и обе стороны считаются одним проходом.
-- L2388 `test_record_end_comes_from_the_source_not_from_the_replayed_sub…` — Позиция, чьи бары кончились давно, не «открыта» из-за тихой книги.
-- L2451 `test_venue_cap_is_in_the_replay_signature()` — Предел плеча площадки входит в ПОДПИСЬ реплея.
-- L2463 `test_venue_leverage_cap_reaches_the_fence()` — Предел плеча ПЛОЩАДКИ доезжает до забора, а не остаётся правилом.
-- L2512 `test_replay_cache_asks_only_for_its_own_side()` — Кэш спрашивают парой СВОЕЙ стороны — иначе пересчёт вечен.
-- L2533 `_smooth_rows(pairs, mode='optimal', dep=10000.0)` — Журнал из пар «(деньги лонга, деньги шорта)» по суткам.
-- L2547 `test_smoothing_finds_it_and_stays_silent_without_it()` — Калибровка меры: находит сглаживание и молчит на его отсутствии.
-- L2575 `test_journal_shard_rolls_over_by_size()` — Часть суточного файла ограничена по РАЗМЕРУ, и читатель видит все.
-- L2611 `test_journal_reader_parses_only_changed_parts()` — Читатель журнала разбирает кусок ОДИН раз, пока кусок не менялся.
-- L2707 `test_repack_splits_an_oversized_day()` — Перепаковка режет переросшие сутки и не теряет ни одного решения.
-- L2746 `test_smoothing_reads_the_journal_pair()` — Дорога замера до журнала, а не только его формула.
-- L2772 `test_smoothing_splits_the_capital_of_two_books()` — У пары книг капитал ВДВОЕ: их проценты не складываются в один.
-- L2790 `TESTS = [test_net_rides_the_summary_with_reason…`
-- L2848 `_control_journal_path_frozen()` — Путь журнала снова берётся значением по умолчанию: прогон с подменённым журналом пишет в настоящую запись кни…
-- L2871 `_control_cache_reuses_open()` — Состояние в кэше не читается: открытая позиция берётся вчерашней.
-- L2899 `_control_cache_sig_ignored()` — Подпись правил не сверяется: кэш чужой геометрии молча идёт в дело, и книга новых правил считалась бы наполов…
-- L2931 `_control_floor_one_for_everyone()` — Пол назначен один на всех: режим с гейтом не может взять мелкий билет, и на $1k у него остаётся вчетверо мень…
-- L2947 `_control_peak_from_the_pool()` — Пик берётся общий (прежнее поведение): режим с гейтом снова стоит недогруженным — ровно тот дефект, ради кото…
-- L2962 `_control_state_ignored()` — Состояние позиции не читается: живая попадает в журнал закрытой — ровно тот дефект, ради которого состояние и…
-- L2987 `_control_win_counts_days()` — Доля прибыльных считается по ДНЯМ, а не по сделкам: день с двумя плюсами и одним минусом объявляется целиком…
-- L3008 `_control_missing_mark_reads_as_zero()` — Позиция без отметки читается ровной: «не измерено» подменяется нулём — ровно тот класс, от которого защищает…
-- L3029 `_control_watchdog_asks_mtime()` — Сторож снова смотрит на mtime файла вместо метки счёта.
-- L3052 `_poison_run_paper(lit, repl, probe)` — Прогнать `probe` на ИСПОРЧЕННОМ `run_paper.py` и вернуть файл.
-- L3087 `_control_shard_ignores_size()` — Ротация только суточная — часть перерастает порог.
-- L3105 `_control_repack_drops_the_tail()` — Перепаковка пишет только первую часть — решения теряются.
-- L3128 `_control_smoothing_takes_the_pair_as_rows()` — Пара взята целиком за строки — дорога обязана упасть.
-- L3153 `_control_tail_never_reaches_the_core()` — Хвост построен, но в дорогой проход не подан.
-- L3165 `_control_tail_out_of_the_replay_signature()` — Подпись реплея не знает хвоста: кэш прежних правил взялся бы молча.
-- L3172 `_control_venue_cap_out_of_the_replay_signature()` — Подпись реплея не знает предела площадки: кэш, посчитанный забором без предела, взялся бы молча — и книга ост…
-- L3181 `_control_tail_entry_from_a_quote_allowed()` — Граница входа снята: хвост заводит сделки, которых у книги не было.
-- L3205 `_control_cut_reason_is_one_for_all()` — Причина обрыва одна на всех: «книги нет вовсе» приписывается и тому имени, у которого книга дотянулась дальше…
-- L3221 `_control_cut_reason_by_symbol_not_position()` — Причина берётся ПО ИМЕНИ: книга, дотянувшаяся у соседнего окна, объявляется дотянувшейся и здесь. Тогда «книг…
-- L3243 `_control_venue_cap_not_passed()` — Забор зовут без предела площадки — дорога обязана упасть.
-- L3287 `CONTROLS = [('хвост не доезжает до ядра', _control…`
-- L3340 `main()`
+- L1333 `test_open_dd_forward_is_the_window_not_the_whole_book()` — Просадка открытых у среза «вперёд» — по часам с начала записи.
+- L1374 `_control_open_dd_forward_copies_the_whole_book()` — Свод, отдающий срезу число всей книги, — то, от чего защищаемся.
+- L1395 `_control_no_split()` — Свод, складывающий наблюдение с пересчётом, — то, ради чего split.
+- L1409 `_control_ticket_below_floor()` — Билет ниже пола биржи — часть сигналов физически неисполнима.
+- L1423 `_control_one_per_name_off()` — Без правила биржи повтор по имени попадает в книгу.
+- L1437 `_control_journal_overwrites()` — Журнал, переписывающий строку, позволяет подвинуть момент записи.
+- L1458 `_control_day_concentration_by_one_day()` — Контроль: вычесть ОДИН лучший день вместо трёх — проверка обязана пасть.
+- L1483 `_control_dedup_without_ruler()` — Контроль: дедуп без линейки — вторая книга не пишется вовсе.
+- L1497 `_control_legacy_reads_as_safe()` — Контроль: прежняя строка объявлена безопасной — книга подменена.
+- L1511 `_control_restat_drops_the_counts()` — Контроль: пересборка молча выбрасывает числа счётного прогона.
+- L1529 `_control_dedup_without_rules_version()` — Контроль: дедуп БЕЗ версии правил — прежнее поведение дословно.
+- L1559 `_control_contracts_are_money_not_coins()` — Контроль: контракты посчитаны ДЕНЬГАМИ рунга, а не монетами.
+- L1590 `_control_walk_ignores_side()` — Контроль: ступени цели считаются без стороны (длинная геометрия).
+- L1613 `_control_row_side_ignores_book()` — Контроль: сторона артефактной записи берётся умолчанием `ruler_of`, а не переданной книгой — короткая книга ч…
+- L1632 `_control_gate_is_gone()` — Гейта нет вовсе: третий режим молча становится копией второй книги.
+- L1652 `_control_gate_on_every_ruler()` — Порог назначен всем режимам: книга без поля теряет свои входы.
+- L1666 `test_shape_counts_positions_not_days()` — Доля прибыльных СДЕЛОК и среднее время в сделке — свои меры.
+- L1711 `test_worst_open_is_measured_and_missing_is_not_zero()` — Худшая ОТКРЫТАЯ позиция считается сервером, а пустое — прочерк.
+- L1736 `test_journal_rotates_by_day_and_reader_takes_every_part()` — Ротация: запись идёт в СУТОЧНЫЙ файл по метке решения, а чтение берёт все куски и снимает перекрытие.
+- L1801 `_wd_block(src, marker)` — Блок сторожа от своего заголовка до СЛЕДУЮЩЕГО заголовка «# --- », в каком бы порядке блоки ни стояли (15.10:…
+- L1810 `test_watchdog_runs_the_book_hourly_and_asks_when_it_last_counte…` — Сторож ведёт книгу САМ, и вопрос он задаёт правильный.
+- L1835 `test_retired_books_stop_trading_but_keep_their_record()` — Снятая книга не торгует и не показывается, но её ЗАПИСЬ цела.
+- L1868 `test_replay_signature_ignores_books_that_do_not_replay()` — Подпись кэша реплея описывает то, что реплей СЧИТАЕТ.
+- L1899 `test_rules_snapshot_carries_only_living_books()` — Свод несёт ДЕЙСТВУЮЩИЙ список книг — тем же кодом, что и прогон.
+- L1923 `test_watchdog_runs_short_books_by_the_same_rule()` — Короткие книги семейства h24 поднимаются тем же правилом: по метке «когда считали», раз в час, кроме часов об…
+- L1958 `_run_watchdog_cases(block, art_name='DCA-paper.json', fresh_age…`
+- L2070 `_run_pair_cases(block)` — Блок общего счёта: считает, когда ОБА источника свежее его самого.
+- L2143 `test_tail_marks_outcomes_and_refuses_an_entry_from_a_quote()` — Правило хвоста держит ОБЕ границы, и они про разное.
+- L2186 `test_tail_reaches_the_core_and_the_replay_signature()` — Дорога правила до ядра и до кэша — отдельный предмет.
+- L2219 `test_cut_position_gets_a_named_reason()` — Оборванная позиция получает ПРИЧИНУ, и причин три разных.
+- L2265 `test_contracts_walk_matches_the_simulation()` — Контракты позиции = то, что купила симуляция, а не второй счёт.
+- L2307 `test_short_books_are_declared_as_a_mirror()` — Реестр несёт шесть книг, и у коротких сторона объявлена полем.
+- L2334 `test_take_rule_mirrors_the_promise_side()` — Цель шорта берётся у обещания ВНИЗ; лонг считается прежним числом.
+- L2349 `test_short_legs_go_only_into_short_books()` — Нога идёт в книгу СВОЕЙ стороны, и обе стороны считаются одним проходом.
+- L2389 `test_record_end_comes_from_the_source_not_from_the_replayed_sub…` — Позиция, чьи бары кончились давно, не «открыта» из-за тихой книги.
+- L2452 `test_venue_cap_is_in_the_replay_signature()` — Предел плеча площадки входит в ПОДПИСЬ реплея.
+- L2464 `test_venue_leverage_cap_reaches_the_fence()` — Предел плеча ПЛОЩАДКИ доезжает до забора, а не остаётся правилом.
+- L2513 `test_replay_cache_asks_only_for_its_own_side()` — Кэш спрашивают парой СВОЕЙ стороны — иначе пересчёт вечен.
+- L2534 `_smooth_rows(pairs, mode='optimal', dep=10000.0)` — Журнал из пар «(деньги лонга, деньги шорта)» по суткам.
+- L2548 `test_smoothing_finds_it_and_stays_silent_without_it()` — Калибровка меры: находит сглаживание и молчит на его отсутствии.
+- L2576 `test_journal_shard_rolls_over_by_size()` — Часть суточного файла ограничена по РАЗМЕРУ, и читатель видит все.
+- L2612 `test_journal_reader_parses_only_changed_parts()` — Читатель журнала разбирает кусок ОДИН раз, пока кусок не менялся.
+- L2709 `test_repack_splits_an_oversized_day()` — Перепаковка режет переросшие сутки и не теряет ни одного решения.
+- L2748 `test_smoothing_reads_the_journal_pair()` — Дорога замера до журнала, а не только его формула.
+- L2774 `test_smoothing_splits_the_capital_of_two_books()` — У пары книг капитал ВДВОЕ: их проценты не складываются в один.
+- L2792 `TESTS = [test_net_rides_the_summary_with_reason…`
+- L2850 `_control_journal_path_frozen()` — Путь журнала снова берётся значением по умолчанию: прогон с подменённым журналом пишет в настоящую запись кни…
+- L2873 `_control_cache_reuses_open()` — Состояние в кэше не читается: открытая позиция берётся вчерашней.
+- L2901 `_control_cache_sig_ignored()` — Подпись правил не сверяется: кэш чужой геометрии молча идёт в дело, и книга новых правил считалась бы наполов…
+- L2933 `_control_floor_one_for_everyone()` — Пол назначен один на всех: режим с гейтом не может взять мелкий билет, и на $1k у него остаётся вчетверо мень…
+- L2949 `_control_peak_from_the_pool()` — Пик берётся общий (прежнее поведение): режим с гейтом снова стоит недогруженным — ровно тот дефект, ради кото…
+- L2964 `_control_state_ignored()` — Состояние позиции не читается: живая попадает в журнал закрытой — ровно тот дефект, ради которого состояние и…
+- L2989 `_control_win_counts_days()` — Доля прибыльных считается по ДНЯМ, а не по сделкам: день с двумя плюсами и одним минусом объявляется целиком…
+- L3010 `_control_missing_mark_reads_as_zero()` — Позиция без отметки читается ровной: «не измерено» подменяется нулём — ровно тот класс, от которого защищает…
+- L3031 `_control_watchdog_asks_mtime()` — Сторож снова смотрит на mtime файла вместо метки счёта.
+- L3054 `_poison_run_paper(lit, repl, probe)` — Прогнать `probe` на ИСПОРЧЕННОМ `run_paper.py` и вернуть файл.
+- L3089 `_control_shard_ignores_size()` — Ротация только суточная — часть перерастает порог.
+- L3107 `_control_repack_drops_the_tail()` — Перепаковка пишет только первую часть — решения теряются.
+- L3130 `_control_smoothing_takes_the_pair_as_rows()` — Пара взята целиком за строки — дорога обязана упасть.
+- L3155 `_control_tail_never_reaches_the_core()` — Хвост построен, но в дорогой проход не подан.
+- L3167 `_control_tail_out_of_the_replay_signature()` — Подпись реплея не знает хвоста: кэш прежних правил взялся бы молча.
+- L3174 `_control_venue_cap_out_of_the_replay_signature()` — Подпись реплея не знает предела площадки: кэш, посчитанный забором без предела, взялся бы молча — и книга ост…
+- L3183 `_control_tail_entry_from_a_quote_allowed()` — Граница входа снята: хвост заводит сделки, которых у книги не было.
+- L3207 `_control_cut_reason_is_one_for_all()` — Причина обрыва одна на всех: «книги нет вовсе» приписывается и тому имени, у которого книга дотянулась дальше…
+- L3223 `_control_cut_reason_by_symbol_not_position()` — Причина берётся ПО ИМЕНИ: книга, дотянувшаяся у соседнего окна, объявляется дотянувшейся и здесь. Тогда «книг…
+- L3245 `_control_venue_cap_not_passed()` — Забор зовут без предела площадки — дорога обязана упасть.
+- L3289 `CONTROLS = [('хвост не доезжает до ядра', _control…`
+- L3342 `main()`
 
 ## research/dca_paper/test_path_screen.py · 247 строк
 
@@ -1620,7 +1620,7 @@
 - L112 `test_run_wiring_with_stub_cash_and_report_without_none()`
 - L177 `test_halves_split_and_hold_run_report_without_none()`
 
-## research/dca_paper/test_short_rules_1003.py · 63 строк
+## research/dca_paper/test_short_rules_1003.py · 64 строк
 
 Правила 03.10 у безопасной короткой книги: билет 0.5.
 

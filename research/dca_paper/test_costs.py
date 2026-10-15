@@ -42,7 +42,8 @@ def _row(sym="SSSUSDT", side="short", at=T0, fills=None, exit_ts=None,
             "exit": "тейк", "tail": None, "entry_px": fills[0][1],
             "exit_px": exit_px, "avg": fills[0][1], "depth": len(fills),
             "fills": [list(f) for f in fills], "fav_bp": -500.0,
-            "written_at": at + 60, "rules": R.RULES, "side": side}
+            "written_at": at + 60, "rules": R.RULES, "side": side,
+            "book_rules": R.FAMILY_RULES["sit"]}
 
 
 def _series(start, hours, rate_fn):

@@ -26,6 +26,7 @@ def _row(sym, at, usd, ruler="optimal", dep=10000, side="long",
          rules=None, pnl=None):
     return {"sym": sym, "at": at, "usd": usd, "ruler": ruler, "dep": dep,
             "side": side, "rules": R.RULES if rules is None else rules,
+            "book_rules": R.family_rules(ruler),
             "pnl_frac": (usd / 25.0) if pnl is None else pnl,
             "written_at": at + 4 * H, "exit_ts": at + 72 * H,
             "margin": 25.0, "lev": 3.0, "exit": "тейк"}
