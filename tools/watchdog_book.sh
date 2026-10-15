@@ -440,6 +440,44 @@ if ! pgrep -f "a2_storage/refresh.py|paper_monthly/book.py" >/dev/null; then
     fi
 fi
 
+# Порядок блоков (15.10): короткие книги СТОЯТ ПЕРЕД длинными. Прогоны идут
+# по одному в такт, а длинные должны каждый такт — короткие (раз в 15 мин)
+# иначе никогда не доходили до запуска (23:50–00:00 14.10: три такта
+# подряд «отложен — по одному»). Общий счёт — следом за прогоном-
+# источником в том же отцепленном shell, а не отдельным претендентом.
+# --- короткие книги семейства h24 (решение владельца 2026-09-07) -------
+# Три коротких режима рядом с длинными, срок сигнала 24 ч. Прогон свой:
+# другой лист, другой журнал, другой артефакт. Каденция та же часовая и
+# по той же причине — «когда считали», а не «когда трогали файл»; часы
+# обучения (02 и 06 UTC) пропускаются, чтобы не толкаться памятью с
+# циклом. Прогон инкрементальный: закрытые позиции берутся из кэша.
+DCAS=research/dca_paper/out/DCA-short.json
+DCAS_LOG=research/dca_paper/out/short.log
+if ! pgrep -f "dca_paper/run_short.py" >/dev/null; then
+    dcs_age=999999999
+    if [ -f "$DCAS" ]; then
+        dcs_at=$(grep -o '"computed_at": *"[^"]*"' "$DCAS" \
+                 | head -1 | cut -d'"' -f4)
+        if [ -n "$dcs_at" ]; then
+            dcs_ts=$(date -u -d "$dcs_at UTC" +%s 2>/dev/null || true)
+            if [ -n "$dcs_ts" ]; then
+                dcs_age=$(( $(date -u +%s) - dcs_ts ))
+            fi
+        fi
+    fi
+    dcs_hh=$(date -u +%H)
+    if [ "$dcs_hh" != "02" ] && [ "$dcs_hh" != "06" ] \
+       && [ "$dcs_age" -gt "$SHORT_EVERY_S" ] && books_mem_ok; then
+        echo "[$(now)] короткие книги h24: последний счёт ${dcs_age} с назад — прогон $(publish_flag)"
+        setsid nohup bash -c "
+            nice -n 10 .venv/bin/python research/dca_paper/run_short.py $(publish_flag) \
+                >> $DCAS_LOG 2>&1
+            nice -n 10 .venv/bin/python research/dca_paper/run_pair.py $(publish_flag) \
+                >> research/dca_paper/out/pair.log 2>&1" &
+        BOOKS_LAUNCHED="короткие книги"
+    fi
+fi
+
 # --- бумажные DCA-книги: живой ход записи ------------------------------
 # Владелец 2026-09-04: «запустить книги в live, подтянуть бэктест и
 # продолжить его живыми данными, не разделяя». Показ это делает (кривая
@@ -485,39 +523,10 @@ if ! pgrep -f "dca_paper/run_paper.py" >/dev/null; then
         echo "[$(now)] DCA-книги: последний счёт ${dca_age} с назад — прогон $(publish_flag)"
         setsid nohup bash -c "
             nice -n 10 .venv/bin/python research/dca_paper/run_paper.py $(publish_flag) \
-                >> $DCAP_LOG 2>&1" &
+                >> $DCAP_LOG 2>&1
+            nice -n 10 .venv/bin/python research/dca_paper/run_pair.py $(publish_flag) \
+                >> research/dca_paper/out/pair.log 2>&1" &
         BOOKS_LAUNCHED="длинные книги"
-    fi
-fi
-
-# --- короткие книги семейства h24 (решение владельца 2026-09-07) -------
-# Три коротких режима рядом с длинными, срок сигнала 24 ч. Прогон свой:
-# другой лист, другой журнал, другой артефакт. Каденция та же часовая и
-# по той же причине — «когда считали», а не «когда трогали файл»; часы
-# обучения (02 и 06 UTC) пропускаются, чтобы не толкаться памятью с
-# циклом. Прогон инкрементальный: закрытые позиции берутся из кэша.
-DCAS=research/dca_paper/out/DCA-short.json
-DCAS_LOG=research/dca_paper/out/short.log
-if ! pgrep -f "dca_paper/run_short.py" >/dev/null; then
-    dcs_age=999999999
-    if [ -f "$DCAS" ]; then
-        dcs_at=$(grep -o '"computed_at": *"[^"]*"' "$DCAS" \
-                 | head -1 | cut -d'"' -f4)
-        if [ -n "$dcs_at" ]; then
-            dcs_ts=$(date -u -d "$dcs_at UTC" +%s 2>/dev/null || true)
-            if [ -n "$dcs_ts" ]; then
-                dcs_age=$(( $(date -u +%s) - dcs_ts ))
-            fi
-        fi
-    fi
-    dcs_hh=$(date -u +%H)
-    if [ "$dcs_hh" != "02" ] && [ "$dcs_hh" != "06" ] \
-       && [ "$dcs_age" -gt "$SHORT_EVERY_S" ] && books_mem_ok; then
-        echo "[$(now)] короткие книги h24: последний счёт ${dcs_age} с назад — прогон $(publish_flag)"
-        setsid nohup bash -c "
-            nice -n 10 .venv/bin/python research/dca_paper/run_short.py $(publish_flag) \
-                >> $DCAS_LOG 2>&1" &
-        BOOKS_LAUNCHED="короткие книги"
     fi
 fi
 

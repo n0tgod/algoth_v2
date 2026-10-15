@@ -4855,7 +4855,7 @@ X1: исполнитель против подставной биржи.
 - L16 `check()`
 - L18 `tick()`
 
-## tools/test_watchdog_books.sh · 69 строк
+## tools/test_watchdog_books.sh · 78 строк
 
 Проверка гейта прогонов книг в стороже (`books_mem_ok`): один прогон
 

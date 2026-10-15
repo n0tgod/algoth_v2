@@ -9531,7 +9531,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 651 строк
+## tools/watchdog_book.sh · 660 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 
