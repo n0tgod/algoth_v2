@@ -51,3 +51,13 @@
      1632    1.187    0.001   55.506    0.034 /root/algoth_v2/research/b1_book/store.py:233(read_hour)
   8616547    1.155    0.000    1.155    0.000 {method 'get' of 'dict' objects}
 конец: 2026-10-15T13:28:12Z, код 0
+публикуется в ветку main:
+ jobs/done/na50-sprof.log  | 15 ++++++++++++++
+ jobs/done/na51-sprof.done |  1 +
+ jobs/done/na51-sprof.log  | 53 +++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log             |  3 +++
+ 4 files changed, 72 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   ce4f7cc0..a87ba8da  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
