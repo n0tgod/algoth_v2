@@ -72,3 +72,17 @@
 | 2026-10-12 | +0.0754 | 85 | +0.0601 | 85 |
 
 Прогон 2 с, 2026-10-15 23:02 UTC.
+публикуется в ветку main:
+ jobs/done/na85-stress.log              |    7 +
+ jobs/done/na88-traineffect.done        |    1 +
+ jobs/done/na88-traineffect.log         |   74 +
+ jobs/poke.log                          |    3 +
+ research/s8_loop/out/TRAIN-effect.json | 2870 ++-----------------------
+ research/s8_loop/out/TRAIN-effect.md   | 3645 +-------------------------------
+ research/s8_loop/out/day_brake.json    |    2 +-
+ 7 files changed, 318 insertions(+), 6284 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   01975ee0..bf7a5144  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-15T23:02:31Z, код 0
