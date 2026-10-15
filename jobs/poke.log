@@ -2345,3 +2345,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792104621 ==
 [2026-10-15T22:50:23Z] задание na87-traineffect запущено: research/s8_loop/train_effect.py
+
+== сигнал 1792105342 ==
+[2026-10-15T23:02:24Z] задание na88-traineffect запущено: research/s8_loop/train_effect.py
