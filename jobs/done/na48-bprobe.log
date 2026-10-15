@@ -35,3 +35,16 @@ SQDUSDT проход 2: 0.48 с, баров 1601, read_hour 29 (pickle был: T
   в кэше хранилища: True (/root/algoth_v2/research/b1_book/out/cache/trades/SQDUSDT/2026-08-22-18.jsonl.gz); промахов 9, попаданий 306
   pickle: часов 49, ['2026-08-21-17', '2026-08-21-18'] … ['2026-08-23-16', '2026-08-23-17']; 2026-08-22-18 в pickle: True; подпись там: (('remote', 1792070538363212218, 30489),)
 конец: 2026-10-15T13:22:19Z, код 0
+публикуется в ветку main:
+ jobs/done/na42-timing.log  | 13 +++++++++++++
+ jobs/done/na43-sizes.log   |  4 ++++
+ jobs/done/na48-bprobe.done |  1 +
+ jobs/done/na48-bprobe.log  | 37 +++++++++++++++++++++++++++++++++++++
+ jobs/done/na49-sprof.done  |  1 +
+ jobs/done/na49-sprof.log   |  4 ++++
+ jobs/poke.log              |  4 ++++
+ 7 files changed, 64 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   5c62affb..43c3dad8  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
