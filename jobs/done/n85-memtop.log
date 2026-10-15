@@ -398,3 +398,25 @@
    2329858        1      4  330:05  /usr/lib/systemd/systemd-networkd
        922        1      3 1906:44  /usr/lib/systemd/systemd-logind
 конец: 2026-10-15T00:28:46Z, код 0
+публикуется в ветку main:
+ jobs/done/n84-status.done                          |    1 +
+ jobs/done/n84-status.log                           |    9 +
+ jobs/done/n85-memtop.done                          |    1 +
+ jobs/done/n85-memtop.log                           |  400 ++++
+ jobs/poke.log                                      |    4 +
+ research/dca_paper/out/DCA-pair.json               |    2 +-
+ research/dca_paper/out/DCA-pair.md                 |   60 +-
+ research/dca_paper/out/DCA-paper.json              | 2360 ++++++++++++++------
+ research/dca_paper/out/DCA-paper.md                |   42 +-
+ research/dca_paper/out/DCA-short.json              |    2 +-
+ research/dca_paper/out/DCA-short.md                |   30 +-
+ research/dca_paper/out/fixed_pair-2026-10-14.jsonl |    7 +
+ .../dca_paper/out/fixed_short-2026-10-14.jsonl     |    8 +
+ research/dca_paper/out/pair-2026-10-14.jsonl       |    7 +
+ research/dca_paper/out/short-2026-10-14.jsonl      |    8 +
+ research/s8_loop/out/day_brake.json                |    2 +-
+ 16 files changed, 2234 insertions(+), 709 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   35cdae3f..58181bbc  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
