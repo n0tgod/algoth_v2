@@ -1,0 +1,723 @@
+{
+ "decisions": 8018,
+ "noncrypto": 833,
+ "names": [
+  "AALUSDT",
+  "AAPLUSDT",
+  "ADBEUSDT",
+  "ALABUSDT",
+  "AMATUSDT",
+  "AMCUSDT",
+  "AMDSTOCKUSDT",
+  "AMGNUSDT",
+  "AMZNUSDT",
+  "APLDUSDT",
+  "APPSTOCKUSDT",
+  "ARKKUSDT",
+  "ARMUSDT",
+  "ASMLUSDT",
+  "ASTSUSDT",
+  "AVGOUSDT",
+  "AXTIUSDT",
+  "BABAUSDT",
+  "BACUSDT",
+  "BBXUSDT",
+  "BEUSDT",
+  "BIIBUSDT",
+  "BITOUSDT",
+  "BMNRUSDT",
+  "BNCUSDT",
+  "BRKBUSDT",
+  "BXUSDT",
+  "BZUSDT",
+  "CATSTOCKUSDT",
+  "CIENUSDT",
+  "CIFRUSDT",
+  "CLSKUSDT",
+  "COHRUSDT",
+  "COINUSDT",
+  "COSTUSDT",
+  "CRCLUSDT",
+  "CRDOUSDT",
+  "CRMUSDT",
+  "CRWDUSDT",
+  "CRWVUSDT",
+  "CSCOUSDT",
+  "CSOPSAMSUNG2LUSDT",
+  "CSOPSKHYNIX2LUSDT",
+  "CVXSTOCKUSDT",
+  "CXMTUSDT",
+  "DELLUSDT",
+  "DKNGUSDT",
+  "EBAYUSDT",
+  "EWJUSDT",
+  "EWTUSDT",
+  "EWYUSDT",
+  "FLEXUSDT",
+  "FLNCUSDT",
+  "FLYUSDT",
+  "FORMSTOCKUSDT",
+  "FWDIUSDT",
+  "GDXUSDT",
+  "GEUSDT",
+  "GEVUSDT",
+  "GIGADEVICEUSDT",
+  "GILDUSDT",
+  "GLWUSDT",
+  "GMESTOCKUSDT",
+  "GOOGLUSDT",
+  "GSUSDT",
+  "HIMSUSDT",
+  "HOODUSDT",
+  "HPEUSDT",
+  "HYUNDAIUSDT",
+  "IBMUSDT",
+  "INTCUSDT",
+  "INTWUSDT",
+  "IRENUSDT",
+  "IWMUSDT",
+  "JNJUSDT",
+  "JPMUSDT",
+  "KLACUSDT",
+  "KOUSDT",
+  "KSTRUSDT",
+  "LITEUSDT",
+  "LLYUSDT",
+  "MARAUSDT",
+  "MAUSDT",
+  "MEITUANUSDT",
+  "METAUSDT",
+  "MINIMAXUSDT",
+  "MOUSDT",
+  "MSFTUSDT",
+  "MSTRUSDT",
+  "MUUSDT",
+  "MVLLUSDT",
+  "NBISUSDT",
+  "NFLXUSDT",
+  "NOKIAUSDT",
+  "NOWUSDT",
+  "NVDAUSDT",
+  "NVDLUSDT",
+  "NVOUSDT",
+  "ONDSUSDT",
+  "ONUSDT",
+  "ORCLUSDT",
+  "PANWUSDT",
+  "PENGSTOCKUSDT",
+  "PEPUSDT",
+  "PLTRUSDT",
+  "POPMARTUSDT",
+  "PYPLUSDT",
+  "QCOMUSDT",
+  "QNTXUSDT",
+  "QQQUSDT",
+  "RDDTUSDT",
+  "RDWUSDT",
+  "REGNUSDT",
+  "RIVNUSDT",
+  "RKLBUSDT",
+  "SAMSUNGUSDT",
+  "SHAZUSDT",
+  "SHOPUSDT",
+  "SKHYUSDT",
+  "SMHUSDT",
+  "SMICUSDT",
+  "SNDKUSDT",
+  "SNOWUSDT",
+  "SOFIUSDT",
+  "SONYUSDT",
+  "SOXSUSDT",
+  "SOXXUSDT",
+  "SPOTUSDT",
+  "SPYUSDT",
+  "SQQQUSDT",
+  "SSPCUSDT",
+  "STXXUSDT",
+  "TBTUSDT",
+  "TENCENTUSDT",
+  "TMFUSDT",
+  "TQQQUSDT",
+  "TSEMUSDT",
+  "TSLAUSDT",
+  "TSLLUSDT",
+  "TSMUSDT",
+  "TTWOUSDT",
+  "TXNUSDT",
+  "TZAUSDT",
+  "UBERUSDT",
+  "UNHUSDT",
+  "USARUSDT",
+  "UVXYUSDT",
+  "VRTXSTOCKUSDT",
+  "VUSDT",
+  "WDCUSDT",
+  "WENSTOCKUSDT",
+  "WMTUSDT",
+  "XAUUSDT",
+  "XBIUSDT",
+  "XIAOMIUSDT",
+  "XLEUSDT",
+  "XLFUSDT",
+  "XLKUSDT",
+  "XLVUSDT",
+  "XOMUSDT",
+  "ZHIPUUSDT",
+  "ZMUSDT"
+ ],
+ "seeds": 30,
+ "cells": {
+  "safe:100": {
+   "base": {
+    "final": 0.2801,
+    "max_dd": -0.0747,
+    "open_dd_share": -0.0451,
+    "taken": 102
+   },
+   "cut": {
+    "final": 0.1283,
+    "max_dd": -0.0619,
+    "open_dd_share": -0.0341,
+    "taken": 93
+   },
+   "null_median_final": 0.2228,
+   "null_below": 0.1,
+   "halves": {
+    "первая": {
+     "base": {
+      "final": 0.0358,
+      "max_dd": -0.0308,
+      "open_dd_share": -0.0229,
+      "taken": 23
+     },
+     "cut": {
+      "final": 0.0136,
+      "max_dd": -0.0413,
+      "open_dd_share": -0.0229,
+      "taken": 20
+     }
+    },
+    "вторая": {
+     "base": {
+      "final": 0.185,
+      "max_dd": -0.082,
+      "open_dd_share": -0.0595,
+      "taken": 76
+     },
+     "cut": {
+      "final": 0.2767,
+      "max_dd": -0.0953,
+      "open_dd_share": -0.0843,
+      "taken": 75
+     }
+    }
+   }
+  },
+  "safe:1000": {
+   "base": {
+    "final": 0.1446,
+    "max_dd": -0.0997,
+    "open_dd_share": -0.092,
+    "taken": 603
+   },
+   "cut": {
+    "final": 0.1663,
+    "max_dd": -0.1132,
+    "open_dd_share": -0.1053,
+    "taken": 488
+   },
+   "null_median_final": 0.1489,
+   "null_below": 1.0,
+   "halves": {
+    "первая": {
+     "base": {
+      "final": 0.0279,
+      "max_dd": -0.0338,
+      "open_dd_share": -0.033,
+      "taken": 228
+     },
+     "cut": {
+      "final": 0.0336,
+      "max_dd": -0.0338,
+      "open_dd_share": -0.033,
+      "taken": 178
+     }
+    },
+    "вторая": {
+     "base": {
+      "final": 0.1347,
+      "max_dd": -0.1008,
+      "open_dd_share": -0.0935,
+      "taken": 413
+     },
+     "cut": {
+      "final": 0.1415,
+      "max_dd": -0.1152,
+      "open_dd_share": -0.1074,
+      "taken": 346
+     }
+    }
+   }
+  },
+  "safe:10000": {
+   "base": {
+    "final": 0.0915,
+    "max_dd": -0.0375,
+    "open_dd_share": -0.0352,
+    "taken": 1867
+   },
+   "cut": {
+    "final": 0.0919,
+    "max_dd": -0.0377,
+    "open_dd_share": -0.0352,
+    "taken": 1598
+   },
+   "null_median_final": 0.0887,
+   "null_below": 1.0,
+   "halves": {
+    "первая": {
+     "base": {
+      "final": 0.0422,
+      "max_dd": -0.0055,
+      "open_dd_share": -0.0033,
+      "taken": 809
+     },
+     "cut": {
+      "final": 0.0428,
+      "max_dd": -0.0056,
+      "open_dd_share": -0.0033,
+      "taken": 645
+     }
+    },
+    "вторая": {
+     "base": {
+      "final": 0.0527,
+      "max_dd": -0.0367,
+      "open_dd_share": -0.0346,
+      "taken": 1163
+     },
+     "cut": {
+      "final": 0.0526,
+      "max_dd": -0.0367,
+      "open_dd_share": -0.0346,
+      "taken": 1047
+     }
+    }
+   }
+  },
+  "safe:100000": {
+   "base": {
+    "final": 0.0556,
+    "max_dd": -0.0223,
+    "open_dd_share": -0.0209,
+    "taken": 1932
+   },
+   "cut": {
+    "final": 0.0548,
+    "max_dd": -0.0223,
+    "open_dd_share": -0.0209,
+    "taken": 1635
+   },
+   "null_median_final": 0.054,
+   "null_below": 0.867,
+   "halves": {
+    "первая": {
+     "base": {
+      "final": 0.0275,
+      "max_dd": -0.0035,
+      "open_dd_share": -0.0019,
+      "taken": 874
+     },
+     "cut": {
+      "final": 0.0269,
+      "max_dd": -0.0034,
+      "open_dd_share": -0.0019,
+      "taken": 682
+     }
+    },
+    "вторая": {
+     "base": {
+      "final": 0.0304,
+      "max_dd": -0.0214,
+      "open_dd_share": -0.0202,
+      "taken": 1163
+     },
+     "cut": {
+      "final": 0.0304,
+      "max_dd": -0.0214,
+      "open_dd_share": -0.0202,
+      "taken": 1047
+     }
+    }
+   }
+  },
+  "optimal:100": {
+   "base": {
+    "final": 3.7167,
+    "max_dd": -0.2789,
+    "open_dd_share": -0.2115,
+    "taken": 100
+   },
+   "cut": {
+    "final": 2.0877,
+    "max_dd": -0.2723,
+    "open_dd_share": -0.1733,
+    "taken": 94
+   },
+   "null_median_final": 2.5394,
+   "null_below": 0.4,
+   "halves": {
+    "первая": {
+     "base": {
+      "final": 0.1288,
+      "max_dd": -0.0347,
+      "open_dd_share": -0.0229,
+      "taken": 23
+     },
+     "cut": {
+      "final": 0.0259,
+      "max_dd": -0.0507,
+      "open_dd_share": -0.0229,
+      "taken": 20
+     }
+    },
+    "вторая": {
+     "base": {
+      "final": 2.3914,
+      "max_dd": -0.2789,
+      "open_dd_share": -0.2115,
+      "taken": 77
+     },
+     "cut": {
+      "final": 0.8632,
+      "max_dd": -0.6438,
+      "open_dd_share": -0.2406,
+      "taken": 67
+     }
+    }
+   }
+  },
+  "optimal:1000": {
+   "base": {
+    "final": 0.2598,
+    "max_dd": -0.2996,
+    "open_dd_share": -0.212,
+    "taken": 611
+   },
+   "cut": {
+    "final": 0.2997,
+    "max_dd": -0.3444,
+    "open_dd_share": -0.2585,
+    "taken": 497
+   },
+   "null_median_final": 0.2616,
+   "null_below": 0.867,
+   "halves": {
+    "первая": {
+     "base": {
+      "final": 0.0365,
+      "max_dd": -0.0787,
+      "open_dd_share": -0.0615,
+      "taken": 228
+     },
+     "cut": {
+      "final": 0.0487,
+      "max_dd": -0.0787,
+      "open_dd_share": -0.0615,
+      "taken": 178
+     }
+    },
+    "вторая": {
+     "base": {
+      "final": 0.2443,
+      "max_dd": -0.3028,
+      "open_dd_share": -0.2156,
+      "taken": 418
+     },
+     "cut": {
+      "final": 0.2526,
+      "max_dd": -0.3382,
+      "open_dd_share": -0.2547,
+      "taken": 353
+     }
+    }
+   }
+  },
+  "optimal:10000": {
+   "base": {
+    "final": 0.1986,
+    "max_dd": -0.0965,
+    "open_dd_share": -0.0793,
+    "taken": 1880
+   },
+   "cut": {
+    "final": 0.1988,
+    "max_dd": -0.0968,
+    "open_dd_share": -0.0791,
+    "taken": 1611
+   },
+   "null_median_final": 0.1917,
+   "null_below": 0.967,
+   "halves": {
+    "первая": {
+     "base": {
+      "final": 0.082,
+      "max_dd": -0.0108,
+      "open_dd_share": -0.006,
+      "taken": 811
+     },
+     "cut": {
+      "final": 0.0836,
+      "max_dd": -0.011,
+      "open_dd_share": -0.006,
+      "taken": 647
+     }
+    },
+    "вторая": {
+     "base": {
+      "final": 0.1178,
+      "max_dd": -0.0957,
+      "open_dd_share": -0.0771,
+      "taken": 1174
+     },
+     "cut": {
+      "final": 0.1167,
+      "max_dd": -0.0958,
+      "open_dd_share": -0.0767,
+      "taken": 1058
+     }
+    }
+   }
+  },
+  "optimal:100000": {
+   "base": {
+    "final": 0.1189,
+    "max_dd": -0.0575,
+    "open_dd_share": -0.0469,
+    "taken": 1944
+   },
+   "cut": {
+    "final": 0.1169,
+    "max_dd": -0.0575,
+    "open_dd_share": -0.0467,
+    "taken": 1647
+   },
+   "null_median_final": 0.1145,
+   "null_below": 0.733,
+   "halves": {
+    "первая": {
+     "base": {
+      "final": 0.0537,
+      "max_dd": -0.0068,
+      "open_dd_share": -0.0035,
+      "taken": 875
+     },
+     "cut": {
+      "final": 0.0525,
+      "max_dd": -0.0067,
+      "open_dd_share": -0.0035,
+      "taken": 683
+     }
+    },
+    "вторая": {
+     "base": {
+      "final": 0.0675,
+      "max_dd": -0.0564,
+      "open_dd_share": -0.045,
+      "taken": 1174
+     },
+     "cut": {
+      "final": 0.0669,
+      "max_dd": -0.0564,
+      "open_dd_share": -0.0448,
+      "taken": 1058
+     }
+    }
+   }
+  },
+  "aggr:100": {
+   "base": {
+    "final": 0.1937,
+    "max_dd": -0.5776,
+    "open_dd_share": -0.472,
+    "taken": 127
+   },
+   "cut": {
+    "final": 0.1188,
+    "max_dd": -0.5776,
+    "open_dd_share": -0.472,
+    "taken": 119
+   },
+   "null_median_final": 0.2393,
+   "null_below": 0.167,
+   "halves": {
+    "первая": {
+     "base": {
+      "final": 0.0757,
+      "max_dd": -0.1922,
+      "open_dd_share": -0.0696,
+      "taken": 43
+     },
+     "cut": {
+      "final": 0.0655,
+      "max_dd": -0.1922,
+      "open_dd_share": -0.0696,
+      "taken": 41
+     }
+    },
+    "вторая": {
+     "base": {
+      "final": 0.2233,
+      "max_dd": -0.5684,
+      "open_dd_share": -0.4827,
+      "taken": 91
+     },
+     "cut": {
+      "final": 0.1575,
+      "max_dd": -0.5684,
+      "open_dd_share": -0.4827,
+      "taken": 85
+     }
+    }
+   }
+  },
+  "aggr:1000": {
+   "base": {
+    "final": 0.3247,
+    "max_dd": -0.2038,
+    "open_dd_share": -0.1509,
+    "taken": 516
+   },
+   "cut": {
+    "final": 0.322,
+    "max_dd": -0.2028,
+    "open_dd_share": -0.1498,
+    "taken": 508
+   },
+   "null_median_final": 0.3241,
+   "null_below": 0.5,
+   "halves": {
+    "первая": {
+     "base": {
+      "final": 0.1467,
+      "max_dd": -0.0196,
+      "open_dd_share": -0.0062,
+      "taken": 214
+     },
+     "cut": {
+      "final": 0.1456,
+      "max_dd": -0.0197,
+      "open_dd_share": -0.0062,
+      "taken": 212
+     }
+    },
+    "вторая": {
+     "base": {
+      "final": 0.1661,
+      "max_dd": -0.2018,
+      "open_dd_share": -0.1486,
+      "taken": 310
+     },
+     "cut": {
+      "final": 0.1637,
+      "max_dd": -0.2017,
+      "open_dd_share": -0.1477,
+      "taken": 304
+     }
+    }
+   }
+  },
+  "aggr:10000": {
+   "base": {
+    "final": 0.2118,
+    "max_dd": -0.1049,
+    "open_dd_share": -0.0755,
+    "taken": 655
+   },
+   "cut": {
+    "final": 0.2083,
+    "max_dd": -0.105,
+    "open_dd_share": -0.0751,
+    "taken": 644
+   },
+   "null_median_final": 0.2012,
+   "null_below": 0.767,
+   "halves": {
+    "первая": {
+     "base": {
+      "final": 0.1065,
+      "max_dd": -0.0144,
+      "open_dd_share": -0.0028,
+      "taken": 298
+     },
+     "cut": {
+      "final": 0.1052,
+      "max_dd": -0.0144,
+      "open_dd_share": -0.0028,
+      "taken": 295
+     }
+    },
+    "вторая": {
+     "base": {
+      "final": 0.0986,
+      "max_dd": -0.104,
+      "open_dd_share": -0.0743,
+      "taken": 363
+     },
+     "cut": {
+      "final": 0.0966,
+      "max_dd": -0.1041,
+      "open_dd_share": -0.0739,
+      "taken": 355
+     }
+    }
+   }
+  },
+  "aggr:100000": {
+   "base": {
+    "final": 0.2126,
+    "max_dd": -0.1053,
+    "open_dd_share": -0.0758,
+    "taken": 655
+   },
+   "cut": {
+    "final": 0.2091,
+    "max_dd": -0.1054,
+    "open_dd_share": -0.0754,
+    "taken": 644
+   },
+   "null_median_final": 0.2019,
+   "null_below": 0.767,
+   "halves": {
+    "первая": {
+     "base": {
+      "final": 0.1068,
+      "max_dd": -0.0145,
+      "open_dd_share": -0.0028,
+      "taken": 298
+     },
+     "cut": {
+      "final": 0.1056,
+      "max_dd": -0.0144,
+      "open_dd_share": -0.0028,
+      "taken": 295
+     }
+    },
+    "вторая": {
+     "base": {
+      "final": 0.0989,
+      "max_dd": -0.1044,
+      "open_dd_share": -0.0746,
+      "taken": 363
+     },
+     "cut": {
+      "final": 0.097,
+      "max_dd": -0.1044,
+      "open_dd_share": -0.0742,
+      "taken": 355
+     }
+    }
+   }
+  }
+ }
+}
