@@ -12,3 +12,18 @@ context: 10.21 с; ключи ['assets', 'extra_symbols', 'funding', 'n_funding'
 журнал (текущие, с диска): 10763 строк за 0.07 с
 apply_to_rows: 0.21 с; applied 10763 из 10763; no_funding 31
 конец: 2026-10-15T12:06:05Z, код 0
+публикуется в ветку main:
+ jobs/done/na27-wd80.log               |    4 +
+ jobs/done/na28-timing.log             |    9 +
+ jobs/done/na29-costs.done             |    1 +
+ jobs/done/na29-costs.log              |   14 +
+ jobs/poke.log                         |    3 +
+ research/dca_paper/out/DCA-pair.json  |    2 +-
+ research/dca_paper/out/DCA-pair.md    |    6 +-
+ research/dca_paper/out/DCA-paper.json | 5138 +++++++++++++++++----------------
+ research/dca_paper/out/DCA-paper.md   |   20 +-
+ 9 files changed, 2616 insertions(+), 2581 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   2a455e3c..c9e1f1bc  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
