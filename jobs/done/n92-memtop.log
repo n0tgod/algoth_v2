@@ -1,0 +1,65 @@
+== задание n92-memtop ==
+строка: run tools/memtop.py --tail=0
+начало: 2026-10-15T06:19:09Z
+запускаю: .venv/bin/python tools/memtop.py --tail=0
+(хвосты логов — первыми, таблицы памяти — в конце: очередь заданий хранит последние 400 строк)
+
+== research/s8_loop/out/train.log (хвост 0) ==
+  строк всего 86947
+
+== research/dca_paper/out/short.log (хвост 0) ==
+  строк всего 82201
+
+== research/dca_paper/out/daily.log (хвост 0) ==
+  строк всего 233424
+
+== research/dca_paper/out/pair.log (хвост 0) ==
+  строк всего 116946
+
+== research/b1_book/out/collect.log (хвост 0) ==
+  строк всего 1361236
+
+== research/b1_book/out/watchdog.log (хвост 0) ==
+  строк всего 11238
+
+== research/b1_book/out/ship.log (хвост 0) ==
+  строк всего 505
+
+== research/a1_universe/out/refresh.log (хвост 0) ==
+  строк всего 22522
+
+== research/a1_universe/out/instruments.log (хвост 0) ==
+  строк всего 721
+
+== research/s8_loop/out/model/train_log.jsonl (хвост 0) ==
+  строк всего 795
+
+== убийства ядра с 2026-10-15 00:00 UTC ==
+  строк 0, убийств 0
+
+== free -m (2026-10-15 06:19:10 UTC) ==
+                 total        used        free      shared  buff/cache   available
+  Mem:            7745        4144         618           4        3297        3601
+  Swap:              0           0           0
+
+== процессы по памяти (RSS, МБ; возраст чч:мм; первые 18) ==
+  всего памяти у первых 18: 3696 МБ
+   1898347        1   1706   07:08  .venv/bin/python research/b1_book/collect.py --http 8765
+   1898563        1   1274   07:04  .venv/bin/python research/s8_loop/train.py
+     21675    14604    301 1903:41  claude --continue
+   1906282        1    229   06:42  /root/algoth_v2/.venv/bin/python /root/algoth_v2/tools/app_api/server.py
+   2329852        1     50  335:55  /usr/lib/systemd/systemd-journald
+   2007176  2007172     35   00:00  .venv/bin/python tools/memtop.py --tail=0
+   2637243        1     26  791:30  /sbin/multipathd -d -s
+       961        1      9 1912:34  /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+   1259830        1      9   57:58  /root/algoth_v2/bot/target/release/bot ladder --dir /root/algoth_v2/bot/out/dca/sub_b0b417879b985874 --base https://api.bybit.com --keys-stdin --inter
+         1        0      8 1912:35  /usr/lib/systemd/systemd --system --deserialize=89
+   2005591  2329848      8   00:01  sshd: [accepted]
+   2006622  2329848      8   00:00  sshd: [accepted]
+   2007184  2329848      8   00:00  sshd: [accepted]
+   2007366  2007184      6   00:00  sshd: [net]
+    691277        1      5  527:33  /usr/sbin/rsyslogd -n -iNONE
+   2005595  2005591      5   00:01  sshd: [net]
+   2329846        1      5  335:55  /usr/lib/systemd/systemd-resolved
+   1496656        1      4  432:16  /usr/lib/polkit-1/polkitd --no-debug
+конец: 2026-10-15T06:19:10Z, код 0

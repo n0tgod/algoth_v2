@@ -398,3 +398,14 @@
    1496656        1      4  432:15  /usr/lib/polkit-1/polkitd --no-debug
    2006483  2006196      4   00:00  ps -eo pid,ppid,rss,etimes,args --no-headers
 конец: 2026-10-15T06:18:07Z, код 0
+публикуется в ветку main:
+ jobs/done/n90-status.done |   1 +
+ jobs/done/n90-status.log  |  10 ++
+ jobs/done/n91-memtop.done |   1 +
+ jobs/done/n91-memtop.log  | 400 ++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log             |   4 +
+ 5 files changed, 416 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   1fca9d26..a420e6f0  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
