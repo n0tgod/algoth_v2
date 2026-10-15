@@ -2214,3 +2214,5 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792068469 ==
 [2026-10-15T12:47:51Z] задание na40-bprobe запущено: tools/bars_cache_probe.py
+
+== сигнал 1792068608 ==
