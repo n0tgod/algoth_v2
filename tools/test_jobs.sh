@@ -170,6 +170,23 @@ left=$( (cd "$pub" && git rev-list --count origin/main..HEAD 2>/dev/null) )
 check "непубликованных коммитов не осталось" 0 "${left:-нет}"
 dirty=$( (cd "$pub" && git status --porcelain research/x/out/run.log | wc -l) )
 check "лог идущего задания вернулся в дерево" 1 "${dirty:-нет}"
+# 7b. Файл больше 5 МБ не роняет публикацию (16.10: свод коротких книг с
+# ветвями ~17 МБ остановил всю публикацию и очередь на часы): он не
+# уходит, остальное уходит, а причина — строкой в `jobs/queue-state.md`.
+(
+  cd "$pub" || exit 1
+  head -c 6000000 /dev/zero | tr '\0' 'x' > research/x/out/BIG.json
+  echo "задание" > jobs/done/q1.log
+  echo "свежий отчёт" > research/x/out/X-report.md
+  bash tools/publish.sh "тест: большой файл" > "$pub/big.txt" 2>&1
+)
+has "публикация с большим файлом прошла" "$pub/big.txt" "опубликовано"
+has "большой файл назван словами" "$pub/big.txt" "BIG.json"
+inb=$( (cd "$pub" && git ls-tree -r --name-only origin/main | grep -c "BIG.json") )
+check "большой файл в ветку не ушёл" 0 "${inb:-нет}"
+inq=$( (cd "$pub" && git ls-tree -r --name-only origin/main | grep -c "jobs/done/q1.log") )
+check "лог задания ушёл вместе с остальным" 1 "${inq:-нет}"
+has "причина в состоянии очереди" "$pub/jobs/queue-state.md" "НЕ опубликованы"
 rm -rf "$pub"
 
 # 8b. Роль автономной системы: объявленная запускается, выдуманная

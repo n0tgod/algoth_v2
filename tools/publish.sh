@@ -36,6 +36,32 @@ fi
 # research/t4_structure/out/run.log.
 git reset -q -- 'research/*/out/*.log' 2>/dev/null || true
 
+# Файл больше 5 МБ защита коммита отвергает (`safety_check.sh`) — и
+# вместе с ним падала ВСЯ публикация: логи заданий, остальные своды,
+# очередь замирала. 16.10 с 19:00 UTC так стояло всё: свод коротких книг
+# с ветвями (спека 18) вырос с 4.4 до ~17 МБ, сервер считал книги, а в
+# git не уходило ничего, и ответ «задание не выполнено» был неотличим от
+# «сервер стоит». Теперь такой файл не публикуется, а причина словами
+# уходит в `jobs/queue-state.md` — git-копия файла устарела, и это видно.
+big=""
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  [ -f "$f" ] || continue
+  sz="$(stat -c %s "$f" 2>/dev/null || echo 0)"
+  if [ "$sz" -gt 5242880 ]; then
+    git reset -q -- "$f" || true
+    big="$big $f ($((sz / 1048576)) МБ)"
+  fi
+done < <(git diff --cached --name-only --diff-filter=AM 2>/dev/null || true)
+if [ -n "$big" ]; then
+  line="$(date -u +%FT%TZ) · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере:$big"
+  echo "ВНИМАНИЕ: $line"
+  mkdir -p jobs
+  printf '%s\n' "$line" >> jobs/queue-state.md
+  tail -n 20 jobs/queue-state.md > jobs/queue-state.tmp && mv jobs/queue-state.tmp jobs/queue-state.md
+  git add -- jobs/queue-state.md
+fi
+
 # Конфликт на артефакте разрешается в пользу того, что лежит на диске
 # ЗДЕСЬ, то есть в пользу прогона. Так уже вышло однажды: в удалённой
 # ветке имя отчёта было удалено из индекса, на сервере тот же файл
