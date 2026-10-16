@@ -1111,20 +1111,22 @@
 - L139 `test_report_names_the_unmeasured_full_share_cell()` — Строка «1 сделка» без причины — молчаливая ложь ячейки.
 - L158 `main()`
 
-## research/dca_paper/test_branches.py · 239 строк
+## research/dca_paper/test_branches.py · 261 строк
 
 Ветви правил (спека 18): сестры в реестре, карты по наследству, подпись кэша без сестёр, дерево и адрес, пере…
 
 - L8 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L16 `H = 3600.0`
 - L17 `T0 = float(R.RULES_SINCE or 0) + 3 * 86400.0`
-- L20 `test_sisters_in_registry_inherit_maps_and_differ_only_by_guard()`
-- L51 `test_birthdays_versions_and_tree()`
-- L79 `test_short_cache_signature_ignores_sisters_and_books_map_feeds_…`
-- L104 `_row(ruler, at, book_rules, sym='AUSDT', written=None, book=Non…`
-- L116 `test_inherit_copies_old_guard_rows_into_branch_two_and_is_idemp…`
-- L162 `test_inherit_runs_once_before_first_write_and_leaves_a_marker()`
-- L181 `test_inverse_branch_four_plus_two_registry_text_and_end_to_end()` — Ветвь «4+2» (владелец 16.10): у трёх коротких книг, прямая 4 %, обратная 2 %, запись вперёд с 17.10; основная…
+- L19 `T15 = R.ruler_since_ts('safe_h_g2') + H` — день ветви 2 % (15.10) + час: решения ветви раньше её дня — пересчёт
+- L22 `test_sisters_in_registry_inherit_maps_and_differ_only_by_guard()`
+- L53 `test_birthdays_versions_and_tree()`
+- L81 `test_short_cache_signature_ignores_sisters_and_books_map_feeds_…`
+- L106 `_row(ruler, at, book_rules, sym='AUSDT', written=None, book=Non…`
+- L118 `test_inherit_copies_old_guard_rows_into_branch_two_and_is_idemp…`
+- L164 `test_inherit_runs_once_before_first_write_and_leaves_a_marker()`
+- L183 `test_branch_forward_starts_on_its_own_day_not_inside_the_120h_w…` — Ветвь пишет в первом прогоне всю историю: решение раньше её дня — пересчёт, даже если строка записана в преде…
+- L202 `test_inverse_branch_four_plus_two_registry_text_and_end_to_end()` — Ветвь «4+2» (владелец 16.10): у трёх коротких книг, прямая 4 %, обратная 2 %, запись вперёд с 17.10; основная…
 
 ## research/dca_paper/test_cost_gap.py · 141 строк
 

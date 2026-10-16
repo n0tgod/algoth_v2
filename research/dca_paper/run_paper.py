@@ -863,7 +863,7 @@ def _stats(rows, deposit):
         # Сколько строк дня — пересчёт по прошлому. Предикат ТОТ ЖЕ, что
         # делит книгу (`R.ahead`), а не его копия: разойдись они, день
         # в таблице был бы помечен не тем, чем помечен в своде.
-        if R.ahead(r.get("at"), r.get("written_at")) is not True:
+        if R.row_ahead(r) is not True:
             bt[d] = bt.get(d, 0) + 1
     ks = sorted(day)
     v = np.array([day[k] for k in ks], dtype=float)

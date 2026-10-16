@@ -15,6 +15,8 @@ import branch_inherit as BI                                   # noqa: E402
 
 H = 3600.0
 T0 = float(R.RULES_SINCE or 0) + 3 * 86400.0
+# день ветви 2 % (15.10) + час: решения ветви раньше её дня — пересчёт
+T15 = R.ruler_since_ts("safe_h_g2") + H
 
 
 def test_sisters_in_registry_inherit_maps_and_differ_only_by_guard():
@@ -119,11 +121,11 @@ def test_inherit_copies_old_guard_rows_into_branch_two_and_is_idempotent():
         path = os.path.join(d, "short.jsonl")
         import run_paper as RP
         old_ver = R.FAMILY_RULES["h24"] - 2                  # версия охраны 2 % — 5
-        rows = [_row("safe_h", T0, old_ver),                            # вперёд: писана через час
-                _row("safe_h", T0 + 2 * H, old_ver, sym="BUSDT", written=T0 + 40 * 86400),  # пересчёт
-                _row("optimal_h", T0, old_ver, sym="CUSDT", sizing=R.SIZING_FIXED),
-                _row("safe_h", T0 + 3 * H, old_ver + 1, sym="DUSDT"),  # не та версия
-                _row("safe_h_g6", T0 + 4 * H, old_ver, sym="EUSDT")]   # не основная книга
+        rows = [_row("safe_h", T15, old_ver),                            # вперёд: писана через час
+                _row("safe_h", T15 + 2 * H, old_ver, sym="BUSDT", written=T15 + 40 * 86400),  # пересчёт
+                _row("optimal_h", T15, old_ver, sym="CUSDT", sizing=R.SIZING_FIXED),
+                _row("safe_h", T15 + 3 * H, old_ver + 1, sym="DUSDT"),  # не та версия
+                _row("safe_h_g6", T15 + 4 * H, old_ver, sym="EUSDT")]   # не основная книга
         # подделка легла: пишем всем журналом (дедуп полный, версии разные)
         RP.append_journal(rows, path=path, log=said.append)
         got, _ = R.read_journal(path)
@@ -147,8 +149,8 @@ def test_inherit_copies_old_guard_rows_into_branch_two_and_is_idempotent():
         # общий счёт: метка стороны `book` переводится на сестру
         ppath = os.path.join(d, "pair.jsonl")
         pold = R.FAMILY_RULES["pair"] - 2
-        RP.append_journal([_row("pair_safe", T0, pold, book="safe_h"),
-                           dict(_row("pair_safe", T0 + H, pold, sym="LUSDT", book="safe"), side="long")],
+        RP.append_journal([_row("pair_safe", T15, pold, book="safe_h"),
+                           dict(_row("pair_safe", T15 + H, pold, sym="LUSDT", book="safe"), side="long")],
                           path=ppath, log=said.append)
         pres = BI.inherit(ppath, "pair", pold, log=said.append)
         assert pres["added"] == 2
@@ -176,6 +178,25 @@ def test_inherit_runs_once_before_first_write_and_leaves_a_marker():
         rows, _ = R.read_journal(path)
         assert sorted(r["ruler"] for r in rows) == ["safe_h", "safe_h_g2"]
     print("ok  перенос из прогона: один раз, до первой записи сестры, с отметкой рядом с журналом")
+
+
+def test_branch_forward_starts_on_its_own_day_not_inside_the_120h_window():
+    """Ветвь пишет в первом прогоне всю историю: решение раньше её дня —
+    пересчёт, даже если строка записана в пределах окна `AHEAD_H`.
+    Книга без своего дня (основная) живёт прежним правилом бит в бит."""
+    d17 = R.ruler_since_ts("safe_h_g4i2")
+    assert d17 == 1792195200.0, d17                      # 2026-10-17 00:00 UTC
+    def row(ruler, at, written):
+        return {"ruler": ruler, "at": at, "written_at": written}
+    early = row("safe_h_g4i2", d17 - 6 * H, d17 - 5 * H)  # писана «вовремя», но до дня ветви
+    late = row("safe_h_g4i2", d17 + H, d17 + 2 * H)
+    base = row("safe_h", d17 - 6 * H, d17 - 5 * H)
+    assert R.ahead(early["at"], early["written_at"]) is True, "подделка: без границы она «вперёд»"
+    fwd, back = R.split_rows([early, late, base])
+    assert fwd == [late, base] and back == [early], (fwd, back)
+    assert R.row_ahead(base) == R.ahead(base["at"], base["written_at"])
+    assert R.ruler_since_ts("safe_h") is None and R.ruler_since_ts("safe_h_g0") == d17 - 86400.0
+    print("ok  запись вперёд ветви — с её дня (4+2 — с 17.10), основная книга — прежним правилом")
 
 
 def test_inverse_branch_four_plus_two_registry_text_and_end_to_end():
@@ -234,6 +255,7 @@ if __name__ == "__main__":
               test_short_cache_signature_ignores_sisters_and_books_map_feeds_them,
               test_inherit_copies_old_guard_rows_into_branch_two_and_is_idempotent,
               test_inherit_runs_once_before_first_write_and_leaves_a_marker,
+              test_branch_forward_starts_on_its_own_day_not_inside_the_120h_window,
               test_inverse_branch_four_plus_two_registry_text_and_end_to_end):
         t()
-    print("\nвсе 6 проверок прошли")
+    print("\nвсе 7 проверок прошли")

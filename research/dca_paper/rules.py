@@ -1826,10 +1826,35 @@ def _disk_sweep(disk, path, parts, keep_sig):
             pass
 
 
+_SINCE_TS = {}
+
+
+def ruler_since_ts(key):
+    """Начало суток СВОЕГО дня книги (`RULER_SINCE`, есть у ветвей) в
+    секундах UTC; у книги без своего дня — None."""
+    if key not in _SINCE_TS:
+        d = RULER_SINCE.get(key)
+        _SINCE_TS[key] = (None if not d else
+                          dt.datetime.strptime(d, "%Y-%m-%d")
+                          .replace(tzinfo=dt.timezone.utc).timestamp())
+    return _SINCE_TS[key]
+
+
+def row_ahead(r, hours=AHEAD_H):
+    """`ahead` строки журнала с границей её книги. Новая ветвь пишет в
+    первом прогоне ВСЮ историю, и окно `AHEAD_H` (120 ч) перекрасило бы
+    последние пять суток пересчёта в «вперёд» (ветвь «4+2», 16.10: 104
+    позиции «вперёд» до своего дня). Решение раньше дня ветви — пересчёт."""
+    lim = ruler_since_ts(ruler_of(r))
+    if lim is not None:
+        lim = max(lim, float(RULES_SINCE or 0))
+    return ahead(r.get("at"), r.get("written_at"), hours, since=lim)
+
+
 def split_rows(rows, hours=AHEAD_H):
     """Наблюдение и пересчёт — ДВА списка, и складывать их нельзя."""
     fwd, back = [], []
     for r in rows:
-        a = ahead(r.get("at"), r.get("written_at"), hours)
+        a = row_ahead(r, hours)
         (fwd if a else back).append(r)
     return fwd, back

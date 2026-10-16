@@ -3972,7 +3972,7 @@ class Collector:
                 "pnl": r.get("usd"), "size": r.get("margin"),
                 "lev": r.get("lev"), "state": "закрыта",
                 "exit": r.get("exit"), "depth": r.get("depth"),
-                "bt": DR.ahead(r.get("at"), r.get("written_at")) is not True,
+                "bt": DR.row_ahead(r) is not True,
             })
         # Открытые и оборванные записью — ИЗ АРТЕФАКТА, а не из журнала:
         # в журнал они не идут вовсе (их отметка меняется каждый час), а
