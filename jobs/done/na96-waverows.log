@@ -1,0 +1,38 @@
+== задание na96-waverows ==
+строка: run tools/wave_rows_probe.py --hour=2026-10-16-11 --from=2026-10-15-18
+начало: 2026-10-16T12:10:33Z
+запускаю: .venv/bin/python tools/wave_rows_probe.py --hour=2026-10-16-11 --from=2026-10-15-18
+BTC    ход  +0.27 %  файл mtime 12:02:28  {'mid_close': 82597.65}
+   поля строки: ['basis_bp', 'best_a', 'best_b', 'big_max', 'big_med', 'bq_a0.0005', 'bq_a0.001', 'bq_a0.0025', 'bq_a0.005', 'bq_b0.0005', 'bq_b0.001', 'bq_b0.0025', 'bq_b0.005', 'buy', 'cov_a0.0005', 'cov_a0.001', 'cov_a0.0025', 'cov_a0.005', 'cov_b0.0005', 'cov_b0.001', 'cov_b0.0025', 'cov_b0.005', 'depth_eat_a', 'depth_eat_b', 'fr', 'hour', 'liq_long', 'liq_short', 'mid_close', 'mid_high', 'mid_low', 'mins_fund', 'n_snap', 'n_trades', 'oi_usd', 'reach_bp', 'sell', 'snap_gap_max_sec', 'snap_span_sec', 'spread_bp', 'traded_secs', 'upd', 'vol_max_1s']
+ETH    ход  +1.04 %  файл mtime 12:02:47  {'mid_close': 2475.865}
+SOL    ход  +0.56 %  файл mtime 12:03:59  {'mid_close': 106.515}
+XRP    ход  +0.25 %  файл mtime 12:04:24  {'mid_close': 1.34575}
+BNB    ход  -0.26 %  файл mtime 12:02:25  {'mid_close': 731.905}
+DOGE   ход  +1.34 %  файл mtime 12:02:41  {'mid_close': 0.082385}
+ADA    ход  +0.39 %  файл mtime 12:02:05  {'mid_close': 0.23145}
+AVAX   ход  +2.90 %  файл mtime 12:02:16  {'mid_close': 10.2945}
+LINK   ход  +1.12 %  файл mtime 12:03:15  {'mid_close': 12.6965}
+DOT    ход  +3.66 %  файл mtime 12:02:42  {'mid_close': 1.1727}
+TRX    ход  +0.99 %  файл mtime 12:04:11  {'mid_close': 0.33545}
+TON    ход        —  файл mtime —  {}
+SUI    ход  +1.54 %  файл mtime 12:04:05  {'mid_close': 1.0519500000000002}
+LTC    ход  +1.39 %  файл mtime 12:03:17  {'mid_close': 61.254999999999995}
+BCH    ход  +1.46 %  файл mtime 12:02:21  {'mid_close': 282.305}
+NEAR   ход  -0.78 %  файл mtime 12:03:31  {'mid_close': 5.3095}
+APT    ход  +6.50 %  файл mtime 12:02:12  {'mid_close': 0.87985}
+UNI    ход  +0.73 %  файл mtime 12:04:14  {'mid_close': 7.471500000000001}
+ARB    ход  +4.49 %  файл mtime 12:02:12  {'mid_close': 0.201105}
+OP     ход  +0.14 %  файл mtime 12:03:37  {'mid_close': 0.14008500000000002}
+волна по всем 19 именам: +1.46 %
+  5 сильнейших имён дают +3.82 %: APT, ARB, DOT, AVAX, SUI
+  6 сильнейших имён дают +3.43 %: APT, ARB, DOT, AVAX, SUI, BCH
+  7 сильнейших имён дают +3.14 %: APT, ARB, DOT, AVAX, SUI, BCH, LTC
+  8 сильнейших имён дают +2.91 %: APT, ARB, DOT, AVAX, SUI, BCH, LTC, DOGE
+  9 сильнейших имён дают +2.71 %: APT, ARB, DOT, AVAX, SUI, BCH, LTC, DOGE, LINK
+  10 сильнейших имён дают +2.55 %: APT, ARB, DOT, AVAX, SUI, BCH, LTC, DOGE, LINK, ETH
+  11 сильнейших имён дают +2.40 %: APT, ARB, DOT, AVAX, SUI, BCH, LTC, DOGE, LINK, ETH, TRX
+  12 сильнейших имён дают +2.26 %: APT, ARB, DOT, AVAX, SUI, BCH, LTC, DOGE, LINK, ETH, TRX, UNI
+  13 сильнейших имён дают +2.13 %: APT, ARB, DOT, AVAX, SUI, BCH, LTC, DOGE, LINK, ETH, TRX, UNI, SOL
+  14 сильнейших имён дают +2.01 %: APT, ARB, DOT, AVAX, SUI, BCH, LTC, DOGE, LINK, ETH, TRX, UNI, SOL, ADA
+  15 сильнейших — +1.89 % (ниже порога), дальше только ниже
+конец: 2026-10-16T12:10:33Z, код 0
