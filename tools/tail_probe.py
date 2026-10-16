@@ -14,8 +14,11 @@ LOGS = ["research/dca_paper/out/daily.log", "research/dca_paper/out/short.log",
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=60)
+    ap.add_argument("--only", default="")
     a = ap.parse_args()
     for rel in LOGS:
+        if a.only and a.only not in rel:
+            continue
         p = os.path.join(ROOT, rel)
         print(f"===== {rel}", "(нет файла)" if not os.path.exists(p) else
               f"{os.path.getsize(p)} байт")
