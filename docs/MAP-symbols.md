@@ -9804,3 +9804,11 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L132 `publish_flag()`
 - L135 `books_running()`
 - L138 `books_mem_ok()`
+
+## tools/wave_rows_probe.py · 59 строк
+
+Зонд: строки часовых сводок прокси-имён за данный час — какие поля, когда записаны, и какая волна выходит по…
+
+- L15 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L20 `ts(h)`
+- L24 `main()`
