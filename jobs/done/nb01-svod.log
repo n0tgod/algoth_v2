@@ -1,0 +1,26 @@
+== задание nb01-svod ==
+строка: run tools/svod_probe.py
+начало: 2026-10-16T13:19:08Z
+запускаю: .venv/bin/python tools/svod_probe.py 
+DCA-short.json 2026-10-16 12:00 FAMILY_RULES None FAMILY_SINCE None охрана {'safe_h': True, 'optimal_h': True, 'aggr_h': True}
+  aggr_h:1000: итог 0.1875, n 1071, рынок None, вперёд n 69
+  aggr_h:10000: итог 0.1946, n 1074, рынок None, вперёд n 70
+  optimal_h:1000: итог 0.8968, n 1393, рынок None, вперёд n 96
+  optimal_h:10000: итог 0.1504, n 1395, рынок None, вперёд n 96
+  safe_h:1000: итог 0.5908, n 1280, рынок None, вперёд n 93
+  safe_h:10000: итог 0.2282, n 1287, рынок None, вперёд n 93
+DCA-pair.json 2026-10-16 12:05 FAMILY_RULES {'pair': 11, 'h24': 5, 'sit': 3} FAMILY_SINCE {'pair': '2026-10-15', 'h24': '2026-10-15', 'sit': '2026-10-15'} охрана {'pair_safe': True, 'pair_optimal': True, 'pair_aggr': True}
+  pair_aggr:1000: итог 0.5561, n 1565, рынок None, вперёд n 72
+  pair_aggr:10000: итог 0.4431, n 1718, рынок None, вперёд n 72
+  pair_optimal:1000: итог 1.3594, n 1650, рынок None, вперёд n 117
+  pair_optimal:10000: итог 0.3686, n 2904, рынок None, вперёд n 117
+  pair_safe:1000: итог 0.7231, n 1535, рынок None, вперёд n 114
+  pair_safe:10000: итог 0.3284, n 2708, рынок None, вперёд n 114
+DCA-paper.json 2026-10-16 12:05 FAMILY_RULES {'pair': 11, 'h24': 5, 'sit': 3} FAMILY_SINCE {'pair': '2026-10-15', 'h24': '2026-10-15', 'sit': '2026-10-15'} охрана {}
+  aggr:1000: итог 0.3019, n 507, рынок None, вперёд n 1
+  aggr:10000: итог 0.1971, n 643, рынок None, вперёд n 1
+  optimal:1000: итог 0.2969, n 441, рынок None, вперёд n 19
+  optimal:10000: итог 0.1896, n 1540, рынок None, вперёд n 19
+  safe:1000: итог 0.1603, n 431, рынок None, вперёд n 19
+  safe:10000: итог 0.0871, n 1524, рынок None, вперёд n 19
+конец: 2026-10-16T13:19:08Z, код 0
