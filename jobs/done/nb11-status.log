@@ -49,3 +49,14 @@ sub_3f11698eb30279fa: статусу 444778 с, режим live, позиций 
 sub_b0b417879b985874: статусу 84479 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
   чужое на счёте: нет
 конец: 2026-10-16T18:27:59Z
+публикуется в ветку main:
+ jobs/done/nb10-status.done          |  1 +
+ jobs/done/nb10-status.log           | 10 ++++++++
+ jobs/done/nb11-status.log           | 51 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 66 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   701a292b..43d43392  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
