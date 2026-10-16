@@ -9765,6 +9765,13 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L75 `stop(pids, log=print)`
 - L96 `main(argv=None)`
 
+## tools/svod_probe.py · 25 строк
+
+Зонд: свод книг НА ДИСКЕ сервера (не в git) — версии, охрана, время.
+
+- L6 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L7 `OUT = os.path.join(os.path.dirname(HERE), 're…`
+
 ## tools/swap_on.py · 104 строк
 
 Файл подкачки на корневом диске — одной строкой очереди, по решению владельца.
