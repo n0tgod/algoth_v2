@@ -1315,6 +1315,20 @@
 - L30 `write(path, rows)`
 - L36 `main()`
 
+## research/dca_paper/test_long_guard.py · 65 строк
+
+Охрана вниз для длинных книг: ядро `wave.k_star/apply_guard(down=True)` и нуль замера `long_guard` (те же час…
+
+- L7 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L12 `H = 3600.0`
+- L13 `AT = 1790000000.0`
+- L16 `class FakeMarket` — Волна задана рядом по часам от входа: {k: доля}.
+  - L19 `FakeMarket.__init__(self, path)`
+  - L23 `FakeMarket.wave(self, t0, t1)`
+- L27 `_rec(at, n=10, d=0.01, state='closed')`
+- L34 `test_down_trigger_mirrors_up_and_default_is_unchanged()`
+- L48 `test_null_uses_the_same_hours_and_other_positions()`
+
 ## research/dca_paper/test_names.py · 227 строк
 
 Проверки замера соответствия имён режимов.

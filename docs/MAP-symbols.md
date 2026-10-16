@@ -2170,6 +2170,36 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L135 `report(res)`
 - L195 `main(argv=None)`
 
+## research/dca_paper/long_guard.py · 284 строк
+
+Замер: охрана рынком на ДЛИННЫХ книгах (вопрос владельца 2026-10-16).
+
+- L34 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L35 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L43 `OUT_MD = os.path.join(R.OUT, 'DCA-long-guard.md')`
+- L44 `OUT_JSON = os.path.join(R.OUT, 'DCA-long-guard.jso…`
+- L45 `AXIS = (1.0, 1.5, 2.0, 3.0, 4.0, 6.0)`
+- L46 `NULL_AT = (2.0, 4.0)`
+- L47 `DEPS = (1000.0, 10000.0)`
+- L48 `SINCE = '2026-09-13'`
+- L49 `HOUR = 3600.0`
+- L50 `WHY = 'рынок'`
+- L51 `MEM_LIMIT_MB = 3000`
+- L54 `kmax_of(book)`
+- L58 `guard_book(recs, pct, mkt, book)` — Записи книги под охраной порога pct (вниз) и сводка срабатываний.
+- L70 `cash(by, keys, now)` — Касса длинных книг: {книга: {депозит: stats}} по строкам `build_rows`.
+- L84 `open_index(recs, book)` — Часы, в которые позиция открыта и может быть закрыта: {час: [(i, k)]}.
+- L99 `null_book(recs, hits, idx, rng)` — Те же часы закрытия, случайные позиции из открытых в этот час.
+- L115 `pos_stats(hits)` — Что охрана сделала с ПОЗИЦИЯМИ (в долях маржи, без кассы).
+- L127 `window(by, lo=None, hi=None)`
+- L132 `run(seeds, log)`
+- L192 `_pp(x)`
+- L196 `_usd(x)`
+- L200 `TITLE = {'off': 'без охраны'}`
+- L201 `WIN_TITLE = {'all': 'Вся запись', 'half1': 'Первая …`
+- L205 `report(res)`
+- L261 `main(argv=None)`
+
 ## research/dca_paper/name_check.py · 242 строк
 
 Соответствуют ли режимы DCA своим именам (вопрос владельца 2026-09-04).
@@ -3316,7 +3346,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L472 `publish(name)`
 - L478 `main(argv=None)`
 
-## research/dca_paper/wave.py · 307 строк
+## research/dca_paper/wave.py · 309 строк
 
 Волна рынка и охрана рынком — ОДНА библиотека для книг и замеров.
 
@@ -3338,11 +3368,11 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
   - L118 `Market.move(self, sym, t0, t1)`
   - L122 `Market.wave(self, t0, t1)` — Средний ход прокси-имён за [t0, t1]; меньше MIN_PROXY цен — нет.
   - L145 `Market.beta_pre(self, sym, at, n=72, min_n=48)` — β и ρ имени к волне по часовым доходностям ДО входа.
-  - L166 `Market.k_star(self, at, pct, kmax)` — Первый час k ≤ kmax, к концу которого волна с входа ≥ pct %.
-- L191 `path_of(rec)` — Путь позиции по часам из отметок ядра: {k: pnl долей маржи}.
-- L220 `exit_px_of(rec, pnl, end_ts)` — Цена, при которой позиция стоит `pnl` долей маржи, — из ЗАПОЛНЕНИЙ.
-- L253 `guard_record(rec, k, why=GUARD_EXIT)` — Та же запись, закрытая на отметке часа k: pnl ядра, срез отметок.
-- L275 `apply_guard(recs, pct, mkt, kmax, why=GUARD_EXIT)` — Охрана рынком над записями ОДНОЙ книги.
+  - L166 `Market.k_star(self, at, pct, kmax, down=False)` — Первый час k ≤ kmax, к концу которого волна с входа ≥ pct % (`down` — зеркало для длинной стороны: волна ≤ −p…
+- L193 `path_of(rec)` — Путь позиции по часам из отметок ядра: {k: pnl долей маржи}.
+- L222 `exit_px_of(rec, pnl, end_ts)` — Цена, при которой позиция стоит `pnl` долей маржи, — из ЗАПОЛНЕНИЙ.
+- L255 `guard_record(rec, k, why=GUARD_EXIT)` — Та же запись, закрытая на отметке часа k: pnl ядра, срез отметок.
+- L277 `apply_guard(recs, pct, mkt, kmax, why=GUARD_EXIT, down=False)` — Охрана рынком над записями ОДНОЙ книги.
 
 ## research/dca_paper/wave_guard.py · 488 строк
 

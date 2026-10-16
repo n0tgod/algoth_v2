@@ -163,13 +163,15 @@ class Market:
         rho = float(np.corrcoef(x, y)[0, 1])
         return b, rho, len(xs)
 
-    def k_star(self, at, pct, kmax):
-        """Первый час k ≤ kmax, к концу которого волна с входа ≥ pct %.
+    def k_star(self, at, pct, kmax, down=False):
+        """Первый час k ≤ kmax, к концу которого волна с входа ≥ pct %
+        (`down` — зеркало для длинной стороны: волна ≤ −pct %, замер
+        `long_guard.py` 16.10; умолчание — прежний счёт шортов бит в бит).
 
         Возвращает (k или None, число часов без волны до срабатывания).
         Час без волны триггером быть не может — он посчитан отдельно.
         """
-        key = (int(round(float(at))), float(pct), int(kmax))
+        key = (int(round(float(at))), float(pct), int(kmax), bool(down))
         if key not in self._kstar:
             t_in = float(at) - 1.0
             hit, missing = None, 0
@@ -179,7 +181,7 @@ class Market:
                 if w is None:
                     missing += 1
                     continue
-                if w >= float(pct) / 100.0:
+                if (w <= -float(pct) / 100.0) if down else (w >= float(pct) / 100.0):
                     hit = k
                     break
             if self.wave_partial != partial0 and hit is None:
@@ -272,7 +274,7 @@ def guard_record(rec, k, why=GUARD_EXIT):
     return new
 
 
-def apply_guard(recs, pct, mkt, kmax, why=GUARD_EXIT):
+def apply_guard(recs, pct, mkt, kmax, why=GUARD_EXIT, down=False):
     """Охрана рынком над записями ОДНОЙ книги.
 
     Закрытая запись меняется, если триггер пришёл СТРОГО до её выхода;
@@ -294,7 +296,7 @@ def apply_guard(recs, pct, mkt, kmax, why=GUARD_EXIT):
         if last < 1:
             out.append(r)
             continue
-        k, miss = mkt.k_star(float(r["at"]), pct, last)
+        k, miss = mkt.k_star(float(r["at"]), pct, last, down=down)
         st["hours_no_wave"] += miss
         st["checked"] += 1
         if k is None:
