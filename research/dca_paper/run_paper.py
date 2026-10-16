@@ -562,21 +562,24 @@ def inherit_branch(path, family, old_ver, value, log=print, dry=False):
     bases = [k for k in R.order_of(family) if not R.is_branch(k)]
     short_bases = ({sk for pk in bases for sk in R.parts_of(pk)[1:]}
                    if family == "pair" else set())
+    def _old(r):
+        """Строка прежней версии основной книги — только их и читаем: весь
+        журнал общего счёта в памяти стоил прогону 2186 МБ при пределе 1800
+        (16.10 18:41), и он остановил сам себя до записи свода."""
+        try:
+            return (int(r.get("rules", 0)) == R.RULES
+                    and int(r.get("book_rules") or 0) == int(old_ver))
+        except (TypeError, ValueError):
+            return False
     rows = []
     for p in (path, R.fixed_twin(path)):
-        got, bad = R.read_journal(p)
+        got, bad = R.read_journal(p, keep=_old)
         if bad:
             log(f"{os.path.basename(p)}: битых строк {bad}")
         rows.extend(got)
     want = int(R.FAMILY_RULES[family])
     picked, out = {}, []
     for r in rows:
-        try:
-            if (int(r.get("rules", 0)) != R.RULES
-                    or int(r.get("book_rules") or 0) != int(old_ver)):
-                continue
-        except (TypeError, ValueError):
-            continue
         base = R.ruler_of(r)
         if base not in bases:
             continue
