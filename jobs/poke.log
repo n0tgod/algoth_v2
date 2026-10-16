@@ -2358,3 +2358,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792106751 ==
 [2026-10-15T23:25:53Z] задание na92-frozenprobe запущено: tools/frozen_probe.py
+
+== сигнал 1792152461 ==
+[2026-10-16T12:07:43Z] задание na93-guard запущено: tools/guard_probe.py
