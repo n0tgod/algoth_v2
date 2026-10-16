@@ -48,3 +48,12 @@ sub_3f11698eb30279fa: статусу 426286 с, режим live, позиций 
 sub_b0b417879b985874: статусу 65987 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
   чужое на счёте: нет
 конец: 2026-10-16T13:19:47Z
+публикуется в ветку main:
+ jobs/done/nb01-svod.log   | 11 +++++++++++
+ jobs/done/nb02-status.log | 50 +++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log             |  2 ++
+ 3 files changed, 63 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   a1399730..87f43df5  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
