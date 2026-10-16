@@ -28,7 +28,8 @@ import os
 import time
 
 EXIT_KINDS = {"тейк": "take", "пол": "floor", "срок": "term",
-              "рынок": "market", "ликвидация": "liq", "команда": "cmd_close"}
+              "рынок": "market", "рынок за нас": "market",
+              "ликвидация": "liq", "команда": "cmd_close"}
 
 
 def cell_key(book, deposit, sizing):

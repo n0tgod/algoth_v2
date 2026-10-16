@@ -101,7 +101,9 @@ class StubMkt:
         self.hour_of = hour_of or (lambda _at: None)
         self.wave_none = 0
 
-    def k_star(self, at, _pct, kmax):
+    def k_star(self, at, _pct, kmax, down=False):
+        if down:                                  # обратной охраны у заглушки нет
+            return None, 0
         k = self.hour_of(float(at))
         if k is None or k > int(kmax):
             return None, 0

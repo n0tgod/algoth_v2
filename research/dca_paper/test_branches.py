@@ -40,7 +40,7 @@ def test_sisters_in_registry_inherit_maps_and_differ_only_by_guard():
             assert R.wave_guard_of(k) == (v or None), k
             assert R.family_of(k) == "pair" and R.side_of(k) == "both" and R.mode_of(k) == R.mode_of(pk)
             assert R.SHORT_SHARE[k] == R.SHORT_SHARE[pk] and R.MIN_AGE_DAYS[k] == R.MIN_AGE_DAYS[pk]
-    assert len(R.H24_ORDER) == 12 and len(R.PAIR_ORDER) == 12 and len(R.order_of("sit")) == 3
+    assert len(R.H24_ORDER) == 15 and len(R.PAIR_ORDER) == 12 and len(R.order_of("sit")) == 3
     # длинные книги ветви не несут
     for lk in ("safe", "optimal", "aggr"):
         assert "branch" not in R.RULERS[lk] and R.wave_guard_of(lk) is None
@@ -63,15 +63,17 @@ def test_birthdays_versions_and_tree():
         assert len(sides["long"]["branches"]) == 1 and sides["long"]["branches"][0]["branch"] == []
         for side in ("short", "both"):
             br = sides[side]["branches"]
-            assert len(br) == 4 and sides[side]["default"] == br[0]["key"] and not R.is_branch(br[0]["key"])
-            vals = sorted(x["branch"][0]["value"] for x in br)
-            assert vals == [0.0, 2.0, 4.0, 6.0], vals
+            n = 5 if side == "short" else 4               # у шортов — ещё ветвь 4+2
+            assert len(br) == n and sides[side]["default"] == br[0]["key"] and not R.is_branch(br[0]["key"])
+            vals = sorted((x["branch"][0]["value"], x["branch"][0].get("inv", 0.0)) for x in br)
+            want = [(0.0, 0.0), (2.0, 0.0), (4.0, 0.0), (6.0, 0.0)] + ([(4.0, 2.0)] if side == "short" else [])
+            assert vals == sorted(want), vals
             assert sum(1 for x in br if x["branch"][0]["default"]) == 1
     a = R.address_of("pair_optimal_g6")
     assert a == {"key": "pair_optimal_g6", "mode": "optimal", "mode_en": "Depth", "side": "both",
                  "base": "pair_optimal", "branch": [{"rule": "guard", "value": 6.0, "default": False,
                                                      "title": "охрана 6 %", "title_en": "guard 6 %"}]}, a
-    print("ok  дни рождения ветвей (2 % — с 15.10), версия семейная, дерево 3 × (1 + 4 + 4)")
+    print("ok  дни рождения ветвей (2 % — с 15.10), версия семейная, дерево 3 × (1 + 5 + 4)")
 
 
 def test_short_cache_signature_ignores_sisters_and_books_map_feeds_them():
@@ -86,7 +88,8 @@ def test_short_cache_signature_ignores_sisters_and_books_map_feeds_them():
     assert sorted(sig["floor"]) == ["aggr_h", "optimal_h", "safe_h"], sig["floor"]
     assert sorted(sig["books"]) == ["optimal_s", "safe_s"]
     assert S.BOOKS["safe_h_g2"] == S.BOOKS["safe_h"] and S.BOOKS["aggr_h_g0"] == S.BOOKS["aggr_h"]
-    assert len(S.BOOKS) == 12 and len(S.BASE_BOOKS) == 3
+    assert len(S.BOOKS) == 15 and len(S.BASE_BOOKS) == 3
+    assert S.BOOKS["optimal_h_g4i2"] == S.BOOKS["optimal_h"]
     S.floor_groups()                       # сестры с полом основной книги не ломают группы
     # общий счёт: сестра собирает длинную книгу и СВОЮ короткую сторону
     longs = {"safe": [{"sym": "AUSDT", "at": T0, "exit_ts": T0 + H, "pnl": 0.01, "lev": 2.0, "marks": []}]}
@@ -175,11 +178,62 @@ def test_inherit_runs_once_before_first_write_and_leaves_a_marker():
     print("ok  перенос из прогона: один раз, до первой записи сестры, с отметкой рядом с журналом")
 
 
+def test_inverse_branch_four_plus_two_registry_text_and_end_to_end():
+    """Ветвь «4+2» (владелец 16.10): у трёх коротких книг, прямая 4 %,
+    обратная 2 %, запись вперёд с 17.10; основная книга обратной не
+    несёт; сквозной проход через сводки: падение рынка на 3 % закрывает
+    шорт ветви словом обратной охраны, основную книгу — нет; рост на 5 %
+    закрывает обе прямой охраной."""
+    import run_paper as RP
+    import wave as WV
+    import test_guard as TG
+    import test_tail_screen as TT
+    for base in ("safe_h", "optimal_h", "aggr_h"):
+        k = R.branch_key(base, 4.0, 2.0)
+        assert k == base + "_g4i2" and k in R.H24_ORDER and R.is_branch(k) and R.base_of(k) == base
+        assert R.wave_guard_of(k) == 4.0 and R.inv_guard_of(k) == 2.0 and R.inv_guard_of(base) is None
+        assert R.mode_of(k) == R.mode_of(base) and R.side_of(k) == "short" and R.family_of(k) == "h24"
+        assert R.family_since(k) == "2026-10-17"
+        for m in (R.PEAKS, R.SHORT_SHARE, R.MIN_AGE_DAYS, R.FLOOR_FRAC_BY_BOOK):
+            if base in m:
+                assert m[k] == m[base], k
+        assert "УПАЛ на ≥ 2 %" in R.RULERS[k]["plain"] and "FALLEN by ≥ 2 %" in R.RULERS[k]["plain_en"]
+        assert "УПАЛ" not in R.RULERS[base]["plain"]
+        b = R.address_of(k)["branch"][0]
+        assert b["title_en"] == "guard 4 % + inverse 2 %" and b["inv"] == 2.0 and not b["default"]
+    for pk in R.PAIR_ORDER:
+        assert R.inv_guard_of(pk) is None, "у общих книг ветви 4+2 нет"
+    proxies = list(WV.PROXY[:6])
+    start = TG.AT - H
+    marks = [(TG.AT + i * H, 0.02) for i in range(5)]
+    def run(bump, book):
+        td = tempfile.mkdtemp()
+        for p in proxies:
+            TT._write_hours(td, p, start, 6, lambda i: {"mid_close": 100.0 if i < 2 else 100.0 * (1 + bump)})
+        RP.reset_market()
+        try:
+            return RP.guard_shorts([TG._rec(marks)], book, log=lambda *a: None, mkt=RP.market(root=td))
+        finally:
+            RP.reset_market()
+    out, st = run(-0.03, "safe_h_g4i2")
+    assert out[0]["exit"] == R.INV_GUARD_EXIT and len(out[0]["marks"]) == 2, out[0]
+    assert st["closed_by_inv"] == 1 and st["closed_by_market"] == 0 and st["inv_pct"] == 2.0, st
+    out, st = run(-0.03, "safe_h")
+    assert out[0]["exit"] == "срок" and "closed_by_inv" not in st, st
+    for book in ("safe_h", "safe_h_g4i2"):
+        out, st = run(0.05, book)
+        assert out[0]["exit"] == R.GUARD_EXIT and st["closed_by_market"] == 1, (book, st)
+        assert st.get("closed_by_inv", 0) == 0
+    print("ok  ветвь 4+2 у трёх коротких книг: прямая 4 %, обратная 2 %, вперёд с 17.10; "
+          "падение −3 % закрывает только ветвь, рост +5 % — обе")
+
+
 if __name__ == "__main__":
     for t in (test_sisters_in_registry_inherit_maps_and_differ_only_by_guard,
               test_birthdays_versions_and_tree,
               test_short_cache_signature_ignores_sisters_and_books_map_feeds_them,
               test_inherit_copies_old_guard_rows_into_branch_two_and_is_idempotent,
-              test_inherit_runs_once_before_first_write_and_leaves_a_marker):
+              test_inherit_runs_once_before_first_write_and_leaves_a_marker,
+              test_inverse_branch_four_plus_two_registry_text_and_end_to_end):
         t()
-    print("\nвсе 5 проверок прошли")
+    print("\nвсе 6 проверок прошли")

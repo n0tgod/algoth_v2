@@ -132,7 +132,9 @@ class HotMkt:
         self.k, self.every = int(k), int(every)
         self.wave_none = 0
 
-    def k_star(self, at, _pct, last):
+    def k_star(self, at, _pct, last, down=False):
+        if down:                                  # обратной охраны у заглушки нет
+            return None, 0
         if int(float(at) // H) % self.every:
             self.wave_none += 1
             return None, 1

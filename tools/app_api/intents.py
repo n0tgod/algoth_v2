@@ -589,7 +589,12 @@ def guard_exits(sub, ex, it, env, log=print):
     позиция закрывается по закрытию часа, к концу которого средний ход
     прокси-имён с входа достиг порога книги. Сводка часа есть только
     после его закрытия, поэтому будущий час триггером не бывает. Выход
-    по позиции пишется один раз (`it["exits"]`)."""
+    по позиции пишется один раз (`it["exits"]`).
+
+    Обратная охрана ветви (`rules.inv_guard_of`, 16.10) — тем же ядром с
+    `down=True`; позицию закрывает триггер, пришедший раньше. Причина у
+    исполнителя та же `market` (других он не знает), направление — поле
+    `wave_dir`."""
     c = core()
     R = c["R"]
     sent = dict(it.get("exits") or {})
@@ -597,12 +602,13 @@ def guard_exits(sub, ex, it, env, log=print):
     for q in ex.get("positions") or []:
         book = q.get("book")
         pct = R.wave_guard_of(book) if book else None
-        if not pct or (q.get("side") or "") != "short":
+        ipct = R.inv_guard_of(book) if book else None
+        if not (pct or ipct) or (q.get("side") or "") != "short":
             continue
         key = f"{q.get('sym')}:{int(float(q.get('pos_at') or 0))}"
         if key in sent:
             continue
-        todo.append((key, q, float(pct)))
+        todo.append((key, q, pct, ipct))
     out = []
     if todo:
         mkt = env.get("market")
@@ -611,14 +617,22 @@ def guard_exits(sub, ex, it, env, log=print):
             # живой читатель: час, который ещё пишется по именам, не
             # судится (16.10 — ложная охрана по 10 именам из 19)
             mkt = WV.Market(WV.Hours(), require_full=True)
-        for key, q, pct in todo:
-            k, _miss = mkt.k_star(float(q["pos_at"]), pct, R.H24_HOLD_H - 1)
-            if k is None:
+        for key, q, pct, ipct in todo:
+            hits = []
+            for p, down in ((pct, False), (ipct, True)):
+                if p:
+                    k, _miss = mkt.k_star(float(q["pos_at"]), float(p), R.H24_HOLD_H - 1,
+                                          **({"down": True} if down else {}))
+                    if k is not None:
+                        hits.append((int(k), float(p), down))
+            if not hits:
                 continue
+            k, p, down = min(hits)
             sent[key] = float(env.get("now") or time.time())
             out.append({"kind": "exit", "sub": sub["id"], "sym": q.get("sym"), "book": q.get("book"),
                         "side": q.get("side"), "decided_at": float(q["pos_at"]), "reason": "market",
-                        "wave_k": int(k), "wave_pct": pct, "computed_at": float(env.get("now") or time.time())})
+                        "wave_k": k, "wave_pct": p, "wave_dir": "down" if down else "up",
+                        "computed_at": float(env.get("now") or time.time())})
     it["exits"] = {k: v for k, v in sent.items() if v > float(env.get("now") or time.time()) - SEEN_KEEP_S}
     return out
 

@@ -649,7 +649,7 @@ class NoMarket:
     def __init__(self):
         self.wave_none = 0
 
-    def k_star(self, _at, _pct, _last):
+    def k_star(self, _at, _pct, _last, down=False):
         self.wave_none += 1
         return None, 1
 

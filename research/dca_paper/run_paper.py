@@ -287,16 +287,31 @@ def guard_shorts(shorts, pk, log=print, now=None, mkt=None):
     бывает и считается отдельным числом: «не измерено» ≠ «рынок не рос».
     """
     pct = R.wave_guard_of(pk)
-    if not pct:
+    ipct = R.inv_guard_of(pk)
+    if not pct and not ipct:
         return list(shorts), {"guard": False, "offered": len(shorts)}
     mkt = mkt if mkt is not None else market()
-    out, st = WV.apply_guard(shorts, pct, mkt, kmax=R.H24_HOLD_H - 1,
-                             why=R.GUARD_EXIT)
-    st.update({"guard": True, "pct": float(pct)})
-    log(f"{pk}: охрана рынком ≥ {pct:g} % закрыла {st['closed_by_market']} из "
-        f"{len(shorts)} позиций (из них открытых {st['open_closed']}); "
-        f"часов без волны {st['hours_no_wave']}, записей без отметок "
-        f"{st['no_marks']}")
+    out, st = list(shorts), {"offered": len(shorts), "closed_by_market": 0,
+                             "open_closed": 0, "no_marks": 0, "hours_no_wave": 0}
+    if pct:
+        out, st = WV.apply_guard(out, pct, mkt, kmax=R.H24_HOLD_H - 1,
+                                 why=R.GUARD_EXIT)
+        st.update({"guard": True, "pct": float(pct)})
+        log(f"{pk}: охрана рынком ≥ {pct:g} % закрыла {st['closed_by_market']} из "
+            f"{len(shorts)} позиций (из них открытых {st['open_closed']}); "
+            f"часов без волны {st['hours_no_wave']}, записей без отметок "
+            f"{st['no_marks']}")
+    if ipct:
+        # обратная — ПОСЛЕ прямой и над её результатом (как в замере
+        # `inverse_guard.py`): позицию закрывает то, что пришло раньше
+        out, si = WV.apply_guard(out, ipct, mkt, kmax=R.H24_HOLD_H - 1,
+                                 why=R.INV_GUARD_EXIT, down=True)
+        st.update({"guard": True, "inv_pct": float(ipct),
+                   "closed_by_inv": si["closed_by_market"],
+                   "open_closed_inv": si["open_closed"]})
+        log(f"{pk}: обратная охрана (падение ≥ {ipct:g} %) закрыла "
+            f"{si['closed_by_market']} из {len(shorts)} позиций (из них "
+            f"открытых {si['open_closed']}); часов без волны {si['hours_no_wave']}")
     return out, st
 
 

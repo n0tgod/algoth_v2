@@ -262,8 +262,9 @@ MODE_EN_PLAIN = {"safe": "leverage from the name’s volatility, 6σ reserve",
 
 def mode_of(key):
     """Режим по ключу книги: без приставки общего счёта, хвоста короткой
-    и суффикса ветви правил (`_g<порог>`, спека 18)."""
-    k = re.sub(r"_g\d+$", "", str(key))
+    и суффикса ветви правил (`_g<порог>` или `_g<порог>i<обратный>`,
+    спека 18)."""
+    k = re.sub(r"_g\d+(?:i\d+)?$", "", str(key))
     if k.startswith("pair_"):
         k = k[5:]
     for suf in ("_h", "_s"):
@@ -656,6 +657,29 @@ def wave_guard_of(key):
     return None if v is None else float(v)
 
 
+# ОБРАТНАЯ охрана рынком (решение владельца 2026-10-16, ветвь «4+2»):
+# короткая позиция закрывается по закрытию часа, когда средний ход
+# крупных имён с входа УПАЛ на ≥ порога — рынок ушёл в сторону шорта.
+# Замер `inverse_guard.py` (DCA-inverse-guard.md): касса шортов растёт
+# (Depth $10k +28.5 → +35.5 %, Gated +46.1 → +55.1 % к действующей 4 %),
+# нуль 2 % пройден у Gated (0.00) и Depth (0.10), у Sigma — шум; Δ на
+# позицию ≈ 0 и во второй половине отрицательна — рост от оборота кассы,
+# не от исхода. Поэтому НЕ правило по умолчанию, а ветвь с записью вперёд
+# с 17.10. Ядро то же (`wave.apply_guard(..., down=True)`). У живого
+# исполнителя выход идёт с причиной `market` (исполнитель других не
+# знает), направление — полем `wave_dir` намерения.
+WAVE_INV_GUARD_PCT = {}
+INV_GUARD_EXIT = "рынок за нас"
+
+
+def inv_guard_of(key):
+    """Порог обратной охраны у книги (у общего счёта — у короткой
+    стороны), в процентах падения волны. Нет порога — нет и правила."""
+    k = PAIR_PARTS[key][1] if key in PAIR_PARTS else key
+    v = WAVE_INV_GUARD_PCT.get(k)
+    return None if v is None else float(v)
+
+
 # --- ВЕТВИ ПРАВИЛ (спека 18, решение владельца 2026-10-16) ---------------
 # Дерево книг: режим → сторона → ветви правил. Ветвь — книга-сестра с тем
 # же ядром, листом и кассой, у которой ОДНО правило стороны другое.
@@ -685,22 +709,31 @@ BRANCH_INHERIT = {"h24": {"from_version": 5, "to": 2.0},
                   "pair": {"from_version": 11, "to": 2.0}}
 
 
-def branch_key(base, value):
-    """Ключ ветви: `safe_h` + 2 % → `safe_h_g2`; 0 — `_g0`."""
-    return f"{base}_g{int(round(float(value)))}"
+def branch_key(base, value, inv=None):
+    """Ключ ветви: `safe_h` + 2 % → `safe_h_g2`; 0 — `_g0`; с обратной
+    охраной 2 % — `safe_h_g4i2`."""
+    k = f"{base}_g{int(round(float(value)))}"
+    return k + (f"i{int(round(float(inv)))}" if inv else "")
 
 
-def branch_title(value, en=False):
+def branch_title(value, en=False, inv=None):
     if not value:
-        return "no guard" if en else "без охраны"
-    return f"guard {float(value):g} %" if en else f"охрана {float(value):g} %"
+        t = "no guard" if en else "без охраны"
+    else:
+        t = f"guard {float(value):g} %" if en else f"охрана {float(value):g} %"
+    if inv:
+        t += (f" + inverse {float(inv):g} %" if en else f" + обратная {float(inv):g} %")
+    return t
 
 
-def _branch_meta(base, value, default):
-    return {"base": base, "rule": "guard", "value": float(value),
-            "default": bool(default),
-            "title": branch_title(value) + (" · default" if default else ""),
-            "title_en": branch_title(value, en=True) + (" · default" if default else "")}
+def _branch_meta(base, value, default, inv=None):
+    m = {"base": base, "rule": "guard", "value": float(value),
+         "default": bool(default),
+         "title": branch_title(value, inv=inv) + (" · default" if default else ""),
+         "title_en": branch_title(value, en=True, inv=inv) + (" · default" if default else "")}
+    if inv:
+        m["inv"] = float(inv)
+    return m
 
 
 _AX = BRANCH_AXES["guard"]
@@ -746,6 +779,27 @@ for _pk, (_lk, _sk) in list(PAIR_PARTS.items()):
                 _m[_k] = _m[_pk]
 PAIR_ORDER[:] = list(PAIR_PARTS)
 del _AX
+# Ветви с обратной охраной (владелец 16.10: «давай сделаем новую ветку
+# 4+2»): только отдельные короткие книги — замер был на них. Значение
+# прямой охраны, обратной и день записи вперёд объявлены здесь одним
+# местом; день — первые полные сутки после выкатки (17.10 UTC), всё
+# раньше — пересчёт.
+INV_BRANCHES = {"h24": ((4.0, 2.0, "2026-10-17"),)}
+for _base in [k for k in H24_ORDER if k not in BRANCHES]:
+    for _val, _inv, _since in INV_BRANCHES["h24"]:
+        _k = branch_key(_base, _val, _inv)
+        BRANCHES[_k] = {"base": _base, "rule": "guard", "value": float(_val),
+                        "inv": float(_inv), "default": False}
+        RULERS[_k] = dict(RULERS[_base])
+        RULERS[_k]["title"] = RULERS[_base]["title"] + " · " + branch_title(_val, inv=_inv)
+        RULERS[_k]["branch"] = _branch_meta(_base, _val, False, inv=_inv)
+        WAVE_GUARD_PCT[_k] = float(_val)
+        WAVE_INV_GUARD_PCT[_k] = float(_inv)
+        RULER_SINCE[_k] = _since
+        for _m in (PEAKS, SHORT_SHARE, SHARE_SINCE, MIN_AGE_DAYS, FLOOR_FRAC_BY_BOOK):
+            if _base in _m:
+                _m[_k] = _m[_base]
+        H24_ORDER.append(_k)
 
 
 def base_of(key):
@@ -805,6 +859,17 @@ for _pk in list(PAIR_PARTS) + list(H24_ORDER):
         + " is closed at the end of the hour when the average move of the "
         f"market’s large names since entry is ≥ {_wg:g} % — the market guard: "
         "the short book’s tail is a squeeze in an hour of general rise.")
+    _iv = inv_guard_of(_pk)
+    RULERS[_pk]["plain"] += (
+        "" if _iv is None else
+        " Обратная охрана (ветвь с 2026-10-17): позиция закрывается и тогда, "
+        f"когда тот же ход рынка с входа УПАЛ на ≥ {_iv:g} % — позиция "
+        "закрывается на общем падении, не дожидаясь цели.")
+    RULERS[_pk]["plain_en"] += (
+        "" if _iv is None else
+        " Inverse guard: the position is also closed when that market move "
+        f"since entry has FALLEN by ≥ {_iv:g} % — the short is closed on a "
+        "general drop instead of waiting for its target.")
 # Версия правил СЕМЕЙСТВА. Общая версия `RULES` тут не годится: её смена
 # обнулила бы запись длинных и коротких книг, которые к решению
 # отношения не имеют.
@@ -857,9 +922,10 @@ def address_of(key):
     br = (RULERS.get(key) or {}).get("branch")
     return {"key": str(key), "mode": mode_of(key), "mode_en": title_en(key),
             "side": side_of(key), "base": base_of(key),
-            "branch": ([{"rule": br["rule"], "value": br["value"],
-                         "default": bool(br.get("default")),
-                         "title": br.get("title"), "title_en": br.get("title_en")}]
+            "branch": ([dict({"rule": br["rule"], "value": br["value"],
+                              "default": bool(br.get("default")),
+                              "title": br.get("title"), "title_en": br.get("title_en")},
+                             **({"inv": br["inv"]} if br.get("inv") else {}))]
                        if br else [])}
 
 

@@ -1262,6 +1262,23 @@ def test_intents_for_live_sub_use_executor_cash_names_levels_and_guard_exits():
     finally:
         R.WAVE_GUARD_PCT.clear()
         R.WAVE_GUARD_PCT.update(saved_g)
+    # ветвь 4+2: обратная охрана тем же ядром с down=True, раньше пришедший
+    # триггер закрывает; причина у исполнителя та же `market`
+    class Mkt2:
+        def __init__(self, up, down):
+            self.up, self.down, self.calls = up, down, []
+
+        def k_star(self, at, pct, kmax, down=False):
+            self.calls.append((pct, down))
+            return ((self.down if down else self.up), 0)
+    exb = {"positions": [{"sym": "UUUUSDT", "side": "short", "book": "aggr_h_g4i2", "pos_at": 300.0}]}
+    for up, down, want in ((None, 2, (2, 2.0, "down")), (5, 2, (2, 2.0, "down")),
+                           (1, 4, (1, 4.0, "up")), (None, None, None)):
+        m2 = Mkt2(up, down)
+        o = I.guard_exits({"id": "s"}, exb, {}, {"market": m2, "now": 1000.0})
+        assert sorted(m2.calls) == [(2.0, True), (4.0, False)], m2.calls
+        got = (o[0]["wave_k"], o[0]["wave_pct"], o[0]["wave_dir"]) if o else None
+        assert got == want and (not o or o[0]["reason"] == "market"), (up, down, o)
     print("ok  намерения живой подписки: уровни по глубинам, касса и имена исполнителя, охрана рынком")
 
 
