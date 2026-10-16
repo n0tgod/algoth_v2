@@ -2371,3 +2371,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792152835 ==
 [2026-10-16T12:13:57Z] задание na97-apirestart запущено: tools/app_api/restart.py
+
+== сигнал 1792153711 ==
+[2026-10-16T12:28:34Z] задание na98-guardsweep запущено: research/dca_paper/guard_sweep.py

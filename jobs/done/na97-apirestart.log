@@ -4,3 +4,14 @@
 запускаю: .venv/bin/python tools/app_api/restart.py 
 порт 443: слушает
 конец: 2026-10-16T12:14:02Z, код 0
+публикуется в ветку main:
+ jobs/done/na96-waverows.log         | 11 +++++++++++
+ jobs/done/na97-apirestart.done      |  1 +
+ jobs/done/na97-apirestart.log       |  6 ++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 22 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   6cf9c73e..84d8bdc7  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
