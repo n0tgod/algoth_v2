@@ -115,8 +115,10 @@ const Site = (() => {
       tb.innerHTML = ""; show("best-more-wrap", false); return;
     }
     const lossShare = b.n ? b.n_loss / b.n : null;
-    $("best-sum").textContent = `The best ${b.top.length} of ${Number(b.n).toLocaleString("en-US")} closed trades of all strategies at ${depLabel}` +
-      (lossShare == null ? "." : ` — and ${Math.round(lossShare * 100)} % of those ${Number(b.n).toLocaleString("en-US")} closed at a loss.`) +
+    const N = Number(b.n).toLocaleString("en-US");
+    $("best-sum").textContent = `The best ${b.top.length} of ${N} closed trades of all strategies at ${depLabel}` +
+      " (a position held by several strategies counts once in each)" +
+      (lossShare == null ? "." : `; ${Math.round(lossShare * 100)} % of those ${N} closed at a loss.`) +
       " This is the top of the record, not a typical trade.";
     const rows = bestAll ? b.top : b.top.slice(0, 20);
     tb.innerHTML = rows.map((x, i) => {
