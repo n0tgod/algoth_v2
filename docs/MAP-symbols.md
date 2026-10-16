@@ -692,7 +692,7 @@ A3 — кандидаты в пары на момент окна.
   - L169 `Book._sample(self, ladder=LADDER, bands=BANDS)`
 - L202 `parse_trades(msg)` — Сделки темы `publicTrade` в компактный вид.
 
-## research/b1_book/collect.py · 8053 строк
+## research/b1_book/collect.py · 8060 строк
 
 Сбор стакана и ленты площадки исполнения живьём.
 
@@ -819,66 +819,66 @@ A3 — кандидаты в пары на момент окна.
   - L3873 `Collector.dca_trades(self, sym, book)` — Позиции DCA-книги по одной монете — В ФОРМЕ, ЖДАННОЙ ГРАФИКОМ.
   - L4061 `Collector.dca_marks(self, dep=None, ruler=None, sizing=None)` — Живая переоценка открытых позиций DCA-книги — частый опрос.
   - L4144 `Collector.dca_paper(self, dep=None, ruler=None, full=None, sizing=None, w…` — Бумажные DCA-книги: свод из артефакта, сделки из журнала.
-  - L4430 `Collector._dca_rebuild_bg(self, dep, ruler, full, sizing, key)` — Пересборка свода в фоне, одна на ключ.
-  - L4449 `Collector._dca_family(self, DR, now, art_attr, journal_attr, family, what)` — Свод СЕМЕЙСТВА книг из его артефакта — одним кодом на все.
-  - L4489 `Collector.paper_book(self, at=None)` — Бумажная месячная книга: свод из артефакта, транши из журнала.
-  - L4576 `Collector.learning(self)` — Умнеет ли модель и переходит ли это в деньги — по дням.
-  - L4674 `Collector.book_days(self, hz)` — Дневная статистика ОДНОЙ книги — по просьбе владельца.
-  - L4791 `Collector._day_cell(rows)` — Числа одной клетки «день × рука». Одно определение на день, на итог и на обе руки: три реализации одного счёт…
-  - L4823 `Collector.market_vol(self)` — Волатильность рынка по часам — из наших же почасовых сводок.
-  - L4916 `Collector.vol_vs_models(self)` — Влияет ли волатильность рынка на результат книг.
-  - L5071 `Collector.model_glossary(self)` — Справочник: какие ситуации модель вообще способна читать.
-  - L5176 `Collector.model_tournament(self)` — Полный лист турнира политик: все 72 ветки и селектор.
-  - L5250 `Collector._run_row(r, now)` — Строка прогона для показа: заметка урезается, не выбрасывается.
-  - L5267 `Collector._produced(root, rel, now)` — Файл, который роль обязана была оставить.
-  - L5289 `Collector.owner_asks(self)` — Чего система ждёт ОТ ВЛАДЕЛЬЦА, и чем это подтверждено.
-  - L5331 `Collector.agents_state(self)` — Автономная система: конвейер, границы и что уже построено.
-  - L5519 `Collector._cand_live(self, cid)` — Живая книга кандидата: закрытые сделки и деньги по рукам.
-  - L5560 `Collector.factory_built(self)` — Что автономная система объявила: механика в корне, книги ветками.
-  - L5736 `Collector._cand_decisions(self, cid, rec)` — Множество РЕШЕНИЙ живой книги кандидата.
-  - L5757 `Collector.factory_strategy(self, cid)` — Полная карточка ОДНОЙ стратегии автономной системы.
-  - L5897 `Collector.model_tree(self)` — Дерево моделей: две руки и их книги, с логикой каждой ветки.
-  - L6077 `Collector.entry_px(self, picks)` — Цены входа для выборов, которые их не несут.
-  - L6094 `Collector.paths(self, trades, hold_h=None)` — Просадка по каждой сделке — из тех же почасовых сводок.
-  - L6115 `Collector.dd_money(trades)` — Просадку в деньги и в доли депозита — ПОСЛЕ расчёта счёта.
-  - L6126 `Collector.marks(self, trades)` — Текущая середина по символам открытых сделок.
-  - L6144 `Collector.model_marks(self, hz=None)` — Только переоценка открытых сделок — для частого опроса.
-  - L6201 `Collector.trade_by_id(self, tid)` — Сделка по короткому id — поиск по всем книгам разом.
-  - L6302 `Collector._jsonl_file_stat(path, what, who=None)`
-  - L6312 `Collector._jsonl_who(depth=2)` — Имена двух вызывающих выше `_jsonl`: читатель и его заказчик.
-  - L6323 `Collector._jsonl_cost(entry)` — Сколько памяти держит запись кеша — байты объектов.
-  - L6328 `Collector._jsonl(path, pin=False)` — Строки файла из кеша. `pin` — файл читается периодическим сторожем: закрепляется и из кеша не выбрасывается (…
-  - L6398 `Collector._jsonl_trim()`
-  - L6420 `Collector.trades(self, sym=None)` — История бумажных сделок и сводка — по требованию, не в опросе.
-  - L6448 `Collector.disk_view(self)` — Диск в человеческих единицах, с запасом хода в сутках.
-  - L6471 `Collector.diskstat(self)` — Сколько занято, с какой скоростью растёт и надолго ли хватит.
-  - L6503 `Collector.statuser(self)`
-  - L6523 `Collector.reporter(self)` — Строка в журнал раз в минуту: прогон, который молчит, неотличим от повисшего.
-  - L6551 `Collector.metrics_poll(self)` — Funding, открытый интерес и базис — раз в 5 минут, один запрос на все символы. Ставка и интерес доказали ценн…
-  - L6575 `Collector.sit_load_positions(self, books)` — Открытые позиции КАЖДОЙ книги сканера, без исключений.
-  - L6595 `Collector.sit_watch(self)` — Живой сторож выходов ситуационной книги.
-  - L6763 `Collector.sit_noise(self, sym, now)` — Живой шум монеты: минутный размах середины, б.п. (v12).
-  - L6830 `Collector.sit_absorb_now(self, mdir)` — Живое поглощение событий книги: pnl сразу после закрытия.
-  - L6874 `Collector._sit_scan(self, root, sheet, want, books, now, armed)` — Один тик сканера входов: лист сечения против живых цен.
-  - L7205 `Collector._brake_books(self)` — Книги, которые тормоз СЧИТАЕТ: торгуемые без эхо. Эхо-книги (`ECHO_BOOKS`) в сумму не входят — читать их журн…
-  - L7214 `Collector._brake_sig_book(self, name)`
-  - L7226 `Collector._brake_sig(self, now)` — Подпись входов тормоза: журналы торгуемых книг и день UTC.
-  - L7242 `Collector._brake_rows(self, mem)` — Закрытые сделки считаемых книг — из кеша ПО КНИГЕ: перечитывается только книга, чьи файлы изменились (починка…
-  - L7262 `Collector._brake_step(self, TR, path, limit, mem, now=None)` — Один шаг тормоза: счёт при изменившихся входах, иначе прежнее состояние со свежей меткой. Ошибка счёта не зап…
-  - L7298 `Collector.brake_watch(self)` — Дневной тормоз: реализованный день торгуемых книг против порога −1 % суммарного капитала (`trades.DAY_BRAKE_S…
-  - L7341 `Collector.run(self, hours)`
-- L7377 `sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc, n…` — Живой вход по ситуации: якорим прогноз листа к живой цене.
-- L7522 `sit_cross(side, entry_px, adv, mid, fav=None, hi=None, lo=None)` — Дошёл ли живой ход цены до обещанного уровня.
-- L7578 `take_limit_fill(side, entry_px, fav, hi, lo)` — Цена исполнения тейка-лимитки, если принты прошли уровень.
-- L7614 `sit_exit_event(pos, mid, hi, lo, now)` — Событие живого выхода по уровню — или None.
-- L7647 `sit_watched(want, root)` — Каталоги книг, у которых 5-секундный сторож ведёт УРОВНИ.
-- L7665 `sit_open_levels(picks, reviews, entries=None)` — Открытые позиции ситуационной книги с уровнями против.
-- L7715 `_unfinished(rows)` — Записи об открытии, у которых нет парного закрытия.
-- L7727 `warm_start(root, symbols, collector, log, hours=4, trade_hours=…` — Поднять историю из собственных файлов сборщика.
-- L7828 `stable_token(root)` — Ключ доступа, переживающий перезапуск.
-- L7856 `selftest(root)` — Прогнать поддельный поток через путь записи и показать итог.
-- L7896 `dropped_symbols(root, syms, days=3)` — Символы, по которым на диске есть свежие ряды, а в запуске их нет.
-- L7939 `main()`
+  - L4436 `Collector._dca_rebuild_bg(self, dep, ruler, full, sizing, key)` — Пересборка свода в фоне, одна на ключ.
+  - L4455 `Collector._dca_family(self, DR, now, art_attr, journal_attr, family, what)` — Свод СЕМЕЙСТВА книг из его артефакта — одним кодом на все.
+  - L4496 `Collector.paper_book(self, at=None)` — Бумажная месячная книга: свод из артефакта, транши из журнала.
+  - L4583 `Collector.learning(self)` — Умнеет ли модель и переходит ли это в деньги — по дням.
+  - L4681 `Collector.book_days(self, hz)` — Дневная статистика ОДНОЙ книги — по просьбе владельца.
+  - L4798 `Collector._day_cell(rows)` — Числа одной клетки «день × рука». Одно определение на день, на итог и на обе руки: три реализации одного счёт…
+  - L4830 `Collector.market_vol(self)` — Волатильность рынка по часам — из наших же почасовых сводок.
+  - L4923 `Collector.vol_vs_models(self)` — Влияет ли волатильность рынка на результат книг.
+  - L5078 `Collector.model_glossary(self)` — Справочник: какие ситуации модель вообще способна читать.
+  - L5183 `Collector.model_tournament(self)` — Полный лист турнира политик: все 72 ветки и селектор.
+  - L5257 `Collector._run_row(r, now)` — Строка прогона для показа: заметка урезается, не выбрасывается.
+  - L5274 `Collector._produced(root, rel, now)` — Файл, который роль обязана была оставить.
+  - L5296 `Collector.owner_asks(self)` — Чего система ждёт ОТ ВЛАДЕЛЬЦА, и чем это подтверждено.
+  - L5338 `Collector.agents_state(self)` — Автономная система: конвейер, границы и что уже построено.
+  - L5526 `Collector._cand_live(self, cid)` — Живая книга кандидата: закрытые сделки и деньги по рукам.
+  - L5567 `Collector.factory_built(self)` — Что автономная система объявила: механика в корне, книги ветками.
+  - L5743 `Collector._cand_decisions(self, cid, rec)` — Множество РЕШЕНИЙ живой книги кандидата.
+  - L5764 `Collector.factory_strategy(self, cid)` — Полная карточка ОДНОЙ стратегии автономной системы.
+  - L5904 `Collector.model_tree(self)` — Дерево моделей: две руки и их книги, с логикой каждой ветки.
+  - L6084 `Collector.entry_px(self, picks)` — Цены входа для выборов, которые их не несут.
+  - L6101 `Collector.paths(self, trades, hold_h=None)` — Просадка по каждой сделке — из тех же почасовых сводок.
+  - L6122 `Collector.dd_money(trades)` — Просадку в деньги и в доли депозита — ПОСЛЕ расчёта счёта.
+  - L6133 `Collector.marks(self, trades)` — Текущая середина по символам открытых сделок.
+  - L6151 `Collector.model_marks(self, hz=None)` — Только переоценка открытых сделок — для частого опроса.
+  - L6208 `Collector.trade_by_id(self, tid)` — Сделка по короткому id — поиск по всем книгам разом.
+  - L6309 `Collector._jsonl_file_stat(path, what, who=None)`
+  - L6319 `Collector._jsonl_who(depth=2)` — Имена двух вызывающих выше `_jsonl`: читатель и его заказчик.
+  - L6330 `Collector._jsonl_cost(entry)` — Сколько памяти держит запись кеша — байты объектов.
+  - L6335 `Collector._jsonl(path, pin=False)` — Строки файла из кеша. `pin` — файл читается периодическим сторожем: закрепляется и из кеша не выбрасывается (…
+  - L6405 `Collector._jsonl_trim()`
+  - L6427 `Collector.trades(self, sym=None)` — История бумажных сделок и сводка — по требованию, не в опросе.
+  - L6455 `Collector.disk_view(self)` — Диск в человеческих единицах, с запасом хода в сутках.
+  - L6478 `Collector.diskstat(self)` — Сколько занято, с какой скоростью растёт и надолго ли хватит.
+  - L6510 `Collector.statuser(self)`
+  - L6530 `Collector.reporter(self)` — Строка в журнал раз в минуту: прогон, который молчит, неотличим от повисшего.
+  - L6558 `Collector.metrics_poll(self)` — Funding, открытый интерес и базис — раз в 5 минут, один запрос на все символы. Ставка и интерес доказали ценн…
+  - L6582 `Collector.sit_load_positions(self, books)` — Открытые позиции КАЖДОЙ книги сканера, без исключений.
+  - L6602 `Collector.sit_watch(self)` — Живой сторож выходов ситуационной книги.
+  - L6770 `Collector.sit_noise(self, sym, now)` — Живой шум монеты: минутный размах середины, б.п. (v12).
+  - L6837 `Collector.sit_absorb_now(self, mdir)` — Живое поглощение событий книги: pnl сразу после закрытия.
+  - L6881 `Collector._sit_scan(self, root, sheet, want, books, now, armed)` — Один тик сканера входов: лист сечения против живых цен.
+  - L7212 `Collector._brake_books(self)` — Книги, которые тормоз СЧИТАЕТ: торгуемые без эхо. Эхо-книги (`ECHO_BOOKS`) в сумму не входят — читать их журн…
+  - L7221 `Collector._brake_sig_book(self, name)`
+  - L7233 `Collector._brake_sig(self, now)` — Подпись входов тормоза: журналы торгуемых книг и день UTC.
+  - L7249 `Collector._brake_rows(self, mem)` — Закрытые сделки считаемых книг — из кеша ПО КНИГЕ: перечитывается только книга, чьи файлы изменились (починка…
+  - L7269 `Collector._brake_step(self, TR, path, limit, mem, now=None)` — Один шаг тормоза: счёт при изменившихся входах, иначе прежнее состояние со свежей меткой. Ошибка счёта не зап…
+  - L7305 `Collector.brake_watch(self)` — Дневной тормоз: реализованный день торгуемых книг против порога −1 % суммарного капитала (`trades.DAY_BRAKE_S…
+  - L7348 `Collector.run(self, hours)`
+- L7384 `sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc, n…` — Живой вход по ситуации: якорим прогноз листа к живой цене.
+- L7529 `sit_cross(side, entry_px, adv, mid, fav=None, hi=None, lo=None)` — Дошёл ли живой ход цены до обещанного уровня.
+- L7585 `take_limit_fill(side, entry_px, fav, hi, lo)` — Цена исполнения тейка-лимитки, если принты прошли уровень.
+- L7621 `sit_exit_event(pos, mid, hi, lo, now)` — Событие живого выхода по уровню — или None.
+- L7654 `sit_watched(want, root)` — Каталоги книг, у которых 5-секундный сторож ведёт УРОВНИ.
+- L7672 `sit_open_levels(picks, reviews, entries=None)` — Открытые позиции ситуационной книги с уровнями против.
+- L7722 `_unfinished(rows)` — Записи об открытии, у которых нет парного закрытия.
+- L7734 `warm_start(root, symbols, collector, log, hours=4, trade_hours=…` — Поднять историю из собственных файлов сборщика.
+- L7835 `stable_token(root)` — Ключ доступа, переживающий перезапуск.
+- L7863 `selftest(root)` — Прогнать поддельный поток через путь записи и показать итог.
+- L7903 `dropped_symbols(root, syms, days=3)` — Символы, по которым на диске есть свежие ряды, а в запуске их нет.
+- L7946 `main()`
 
 ## research/b1_book/layout_check.py · 148 строк
 
@@ -1975,7 +1975,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L290 `publish(name)`
 - L296 `main(argv=None)`
 
-## research/dca_paper/costs.py · 878 строк
+## research/dca_paper/costs.py · 883 строк
 
 Издержки бумажных DCA-книг: комиссия площадки, funding, гейт по знаку ставки.
 
@@ -1991,38 +1991,38 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L73 `MIN_ARM_N = 30` — меньше стольких позиций в ЛЮБОЙ из рук гейта — рука не судится: медиана девяти отсечённых есть шум, а не мера
 - L84 `SLIP_BP = 4.4` — Проскальзывание — по ЖИВОМУ замеру X3 (книга sit_lo, 300 $ cross 1×, 2026-08-22…25): медиана входа 4.4 б.п. п…
 - L85 `SLIP_SOURCE = 'X3: медиана входа 22 заполнений, 2026-…`
-- L86 `MARKET_EXITS = ('пол', 'срок', 'трейл', 'стоп')`
-- L89 `universe()`
-- L95 `symbol_maps(assets)` — Символ Bybit → актив; символ → тейкер б.п. (None — ставки нет).
-- L107 `fills_of(row)` — Рунги записи: (момент, цена, доля нотионала). Пусто — записи нет.
-- L120 `commission_usd(row, taker_bp)` — Комиссия позиции в долларах: каждый рунг и выход, тейкером.
-- L144 `slippage_usd(row, slip_bp)` — Проскальзывание позиции в $: базовый вход (первый рунг, рыночный) и рыночный выход — по ставке `slip_bp`; лим…
-- L166 `funding_usd(row, series, side, detail=False)` — Funding позиции как ВКЛАД в pnl (минус — платим). None — не измерено.
-- L208 `rate_at_entry(series, at, max_age_s=RATE_MAX_AGE_S)` — Последняя ИЗВЕСТНАЯ на момент входа ставка; None — ряда нет, рано или последняя точка старше `max_age_s` (ряд…
-- L221 `favourable(side, rate)` — Гейт входа по знаку ставки: лонгу ставка ≤ 0, шорту ≥ 0.
-- L228 `_day(ts)`
-- L232 `enrich(rows, funding, to_asset, taker, log=print, slip_bp=None)` — Строка журнала → строка с издержками. Пропуски считаются числом.
-- L287 `_sum(rows, k)`
-- L292 `_bp_median(rows, k)`
-- L298 `_stats_net(rows, dep)` — Форма книги нетто: те же `_stats`, деньги = брутто − комиссия + funding.
-- L312 `_stats_gross(rows, dep)`
-- L319 `book_costs(rows, dep)` — Издержки книги: суммы, медианы на позицию (б.п. маржи), форма нетто.
-- L357 `gate_arm(rows, dep)` — Рука «вход только при благоприятной ставке» против всех — парно.
-- L382 `extra_assets(to_asset, funding_dir=None)` — Символы с рядом funding, которых НЕТ в универсуме.
-- L406 `CONTEXT_CACHE = os.path.join(OUT, 'costs_context.pkl')` — Кэш контекста на диске (15.10): 1108 рядов funding читались 10.2 с в КАЖДОМ прогоне книг (длинном, коротком,…
-- L409 `_context_sig(funding_dir=None)` — Подпись входов контекста; None, если каталога рядов нет.
-- L434 `context(need=None, log=None, cache=CONTEXT_CACHE)` — Справочник комиссий и ряды funding — ОДИН раз на свод книг.
-- L471 `_build_context(need=None, log=None)`
-- L499 `apply_to_rows(rows, ctx, slip_bp=None)` — Издержки — В КАЖДУЮ СДЕЛКУ: деньги строки становятся нетто.
-- L577 `net_view(rows, dep, ctx, stats_fn, slip_bp=None)` — Нетто-свод подмножества строк книги: форма по дням от денег за вычетом комиссии и проскальзывания и с funding…
-- L624 `run(rows=None, funding=None, assets=None, log=print, slip_bp=No…`
-- L686 `verdict(s)` — Из чисел: у каких книг знак держится после комиссии и funding, и помогает ли гейт по ставке (парно, по медиан…
-- L710 `_u(x)`
-- L714 `_p(x, d=2)`
-- L718 `_b(x)`
-- L722 `report(s)`
-- L850 `publish(name)`
-- L856 `main(argv=None)`
+- L91 `MARKET_EXITS = ('пол', 'срок', 'трейл', 'стоп', R.GUAR…` — Охрана рынком и обратная охрана закрывают позицию рыночной заявкой по закрытию часа (исполнитель — reduceOnly…
+- L94 `universe()`
+- L100 `symbol_maps(assets)` — Символ Bybit → актив; символ → тейкер б.п. (None — ставки нет).
+- L112 `fills_of(row)` — Рунги записи: (момент, цена, доля нотионала). Пусто — записи нет.
+- L125 `commission_usd(row, taker_bp)` — Комиссия позиции в долларах: каждый рунг и выход, тейкером.
+- L149 `slippage_usd(row, slip_bp)` — Проскальзывание позиции в $: базовый вход (первый рунг, рыночный) и рыночный выход — по ставке `slip_bp`; лим…
+- L171 `funding_usd(row, series, side, detail=False)` — Funding позиции как ВКЛАД в pnl (минус — платим). None — не измерено.
+- L213 `rate_at_entry(series, at, max_age_s=RATE_MAX_AGE_S)` — Последняя ИЗВЕСТНАЯ на момент входа ставка; None — ряда нет, рано или последняя точка старше `max_age_s` (ряд…
+- L226 `favourable(side, rate)` — Гейт входа по знаку ставки: лонгу ставка ≤ 0, шорту ≥ 0.
+- L233 `_day(ts)`
+- L237 `enrich(rows, funding, to_asset, taker, log=print, slip_bp=None)` — Строка журнала → строка с издержками. Пропуски считаются числом.
+- L292 `_sum(rows, k)`
+- L297 `_bp_median(rows, k)`
+- L303 `_stats_net(rows, dep)` — Форма книги нетто: те же `_stats`, деньги = брутто − комиссия + funding.
+- L317 `_stats_gross(rows, dep)`
+- L324 `book_costs(rows, dep)` — Издержки книги: суммы, медианы на позицию (б.п. маржи), форма нетто.
+- L362 `gate_arm(rows, dep)` — Рука «вход только при благоприятной ставке» против всех — парно.
+- L387 `extra_assets(to_asset, funding_dir=None)` — Символы с рядом funding, которых НЕТ в универсуме.
+- L411 `CONTEXT_CACHE = os.path.join(OUT, 'costs_context.pkl')` — Кэш контекста на диске (15.10): 1108 рядов funding читались 10.2 с в КАЖДОМ прогоне книг (длинном, коротком,…
+- L414 `_context_sig(funding_dir=None)` — Подпись входов контекста; None, если каталога рядов нет.
+- L439 `context(need=None, log=None, cache=CONTEXT_CACHE)` — Справочник комиссий и ряды funding — ОДИН раз на свод книг.
+- L476 `_build_context(need=None, log=None)`
+- L504 `apply_to_rows(rows, ctx, slip_bp=None)` — Издержки — В КАЖДУЮ СДЕЛКУ: деньги строки становятся нетто.
+- L582 `net_view(rows, dep, ctx, stats_fn, slip_bp=None)` — Нетто-свод подмножества строк книги: форма по дням от денег за вычетом комиссии и проскальзывания и с funding…
+- L629 `run(rows=None, funding=None, assets=None, log=print, slip_bp=No…`
+- L691 `verdict(s)` — Из чисел: у каких книг знак держится после комиссии и funding, и помогает ли гейт по ставке (парно, по медиан…
+- L715 `_u(x)`
+- L719 `_p(x, d=2)`
+- L723 `_b(x)`
+- L727 `report(s)`
+- L855 `publish(name)`
+- L861 `main(argv=None)`
 
 ## research/dca_paper/cut_check.py · 402 строк
 
@@ -2509,7 +2509,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L427 `publish(name)`
 - L433 `main(argv=None)`
 
-## research/dca_paper/rules.py · 1860 строк
+## research/dca_paper/rules.py · 1938 строк
 
 Правила бумажных DCA-книг: три депозита, одни правила.
 
@@ -2657,7 +2657,12 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L1829 `_SINCE_TS = {}`
 - L1832 `ruler_since_ts(key)` — Начало суток СВОЕГО дня книги (`RULER_SINCE`, есть у ветвей) в секундах UTC; у книги без своего дня — None.
 - L1843 `row_ahead(r, hours=AHEAD_H)` — `ahead` строки журнала с границей её книги. Новая ветвь пишет в первом прогоне ВСЮ историю, и окно `AHEAD_H`…
-- L1854 `split_rows(rows, hours=AHEAD_H)` — Наблюдение и пересчёт — ДВА списка, и складывать их нельзя.
+- L1863 `BEST_N = 100` — Лучшие сделки для главной сайта (владелец 16.10: «блок с топ-100 лучшими сделками»). Отбор — в прогоне книги,…
+- L1864 `BEST_KEEP = 200`
+- L1867 `_best_key(r)`
+- L1871 `best_trades(rows, keys=None, keep=BEST_KEEP)` — Лучшие закрытые сделки семейства по депозитам: {депозит: {n, n_loss, top}}. `rows` — строки журнала с деньгам…
+- L1913 `merge_best(parts, n=BEST_N)` — Свести лучшие сделки семейств: объём и убыточные — суммой, позиция — один раз (лучшая копия), первые `n`.
+- L1932 `split_rows(rows, hours=AHEAD_H)` — Наблюдение и пересчёт — ДВА списка, и складывать их нельзя.
 
 ## research/dca_paper/run_pair.py · 588 строк
 
@@ -2682,7 +2687,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L559 `publish(name)`
 - L564 `main(argv=None)`
 
-## research/dca_paper/run_paper.py · 1972 строк
+## research/dca_paper/run_paper.py · 1974 строк
 
 Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
 
@@ -2719,20 +2724,20 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L958 `_book_costs(rows)` — Что вычтено у книги: суммы издержек и число неизмеренных сделок.
 - L1003 `attach_open_dd(s)` — Просадка ОДНОВРЕМЕННО ОТКРЫТЫХ — в группы «всего» и «вперёд».
 - L1065 `summarize(path=None, live=None, keys=None, ctx=None)` — Свод по книгам: ОДНА кривая, и в ней помечено, что бэктест.
-- L1199 `_pct(x, d=2)`
-- L1203 `_tail_words(s)` — Числа хвоста словами. Нет чисел — так и сказано, а не ноль.
-- L1238 `costs_block(s)` — Раздел «издержки» — ОДИН на весь отчёт: деньги ниже уже нетто.
-- L1324 `sizing_block(s)` — Два формата размера рядом, ячейка к ячейке (решение владельца 2026-10-09). Книги фиксированного билета нет —…
-- L1370 `report(s)`
-- L1729 `rules_snapshot(keys=None)` — Правила прогона в свод: страница описывает ИМИ то, что видит.
-- L1766 `publish(name)`
-- L1776 `RUN_MEM_LIMIT_MB = 2400` — Предел памяти длинного прогона, МБ. Короткий прогон держит 1200 (`arm_book.MEM_LIMIT_MB`), общий счёт 1800; д…
-- L1779 `class Phases` — Секунды по фазам прогона — печатаются строкой и кладутся в артефакт (`timing`): куда уходят 47–100 с тёплого…
-  - L1784 `Phases.__init__(self)`
-  - L1788 `Phases.mark(self, name)`
-  - L1793 `Phases.line(self)`
-  - L1798 `Phases.peak_rss_mb()` — Пик памяти прогона (ru_maxrss), МБ: ядро 06:36 15.10 убило прогон книг с 2.86 ГБ, а сколько прогон занимает о…
-- L1808 `main()`
+- L1201 `_pct(x, d=2)`
+- L1205 `_tail_words(s)` — Числа хвоста словами. Нет чисел — так и сказано, а не ноль.
+- L1240 `costs_block(s)` — Раздел «издержки» — ОДИН на весь отчёт: деньги ниже уже нетто.
+- L1326 `sizing_block(s)` — Два формата размера рядом, ячейка к ячейке (решение владельца 2026-10-09). Книги фиксированного билета нет —…
+- L1372 `report(s)`
+- L1731 `rules_snapshot(keys=None)` — Правила прогона в свод: страница описывает ИМИ то, что видит.
+- L1768 `publish(name)`
+- L1778 `RUN_MEM_LIMIT_MB = 2400` — Предел памяти длинного прогона, МБ. Короткий прогон держит 1200 (`arm_book.MEM_LIMIT_MB`), общий счёт 1800; д…
+- L1781 `class Phases` — Секунды по фазам прогона — печатаются строкой и кладутся в артефакт (`timing`): куда уходят 47–100 с тёплого…
+  - L1786 `Phases.__init__(self)`
+  - L1790 `Phases.mark(self, name)`
+  - L1795 `Phases.line(self)`
+  - L1800 `Phases.peak_rss_mb()` — Пик памяти прогона (ru_maxrss), МБ: ядро 06:36 15.10 убило прогон книг с 2.86 ГБ, а сколько прогон занимает о…
+- L1810 `main()`
 
 ## research/dca_paper/run_short.py · 482 строк
 
@@ -9307,7 +9312,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L17 `call(base, path, body=None, token=None, ctx=None)`
 - L26 `main()`
 
-## tools/app_api/server.py · 1659 строк
+## tools/app_api/server.py · 1682 строк
 
 HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 
@@ -9331,94 +9336,95 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L75 `class RateLimiter`
   - L76 `RateLimiter.__init__(self)`
   - L80 `RateLimiter.allow(self, who, kind)`
-- L93 `class App` — Логика API без HTTP: её гоняют проверки напрямую.
-  - L96 `App.__init__(self, dbpath, pub, operator_token=None, venue=bybit, d…`
-  - L121 `App.auth_operator(self, token, device=None)` — ------------------------------------------------------------ вход
-  - L134 `App.auth_apple(self, identity_token, device=None, current=None)`
-  - L167 `App.logout(self, token)`
-  - L171 `App.me(self, acc)`
-  - L178 `App.max_accounts(self)` — Предел аккаунтов: файл оператора, иначе число из конструктора.
-  - L186 `App.set_limits(self, acc, max_accounts)`
-  - L202 `App.limits(self, acc)`
-  - L210 `App.top(self, deposit=None)` — Главная сайта: лучшая стратегия и рейтинг на одном депозите.
-  - L268 `App.site(self)`
-  - L274 `App.set_site(self, acc, body)`
-  - L294 `App.overview(self, acc)` — Оператору: аккаунты с числом ключей и подписок, согласие; ёмкость по ячейкам (спека 15 §7a.5 — измеритель ёмк…
-  - L314 `App.consent_state(self, acc)`
-  - L322 `App.accept(self, acc, version, ip=None, device=None)`
-  - L334 `App.need_consent(self, acc)` — Отказ словами, если клиент не принял ТЕКУЩИЕ документы. Оператор — владелец сервиса, а не клиент: гейт к нему…
-  - L345 `App.add_key(self, acc, venue, key, secret)` — ------------------------------------------------------------ ключи
-  - L391 `App._key_view(self, r)`
-  - L398 `App.list_keys(self, acc)`
-  - L401 `App.delete_key(self, acc, kid)`
-  - L414 `App.dca(self)` — ------------------------------------------------------------ книги и ячейки
-  - L420 `App.strategies(self)`
-  - L459 `App.cell_key(book, deposit, sizing=None)` — Ключ книги в своде `/dca`: та же схема, что у `rules.cell_key` — `книга:депозит`, у фиксированного билета с х…
-  - L466 `App.paper_cash(book, deposit)` — Касса БУМАЖНОЙ книги сейчас: депозит плюс её накопленный нетто.
-  - L476 `App.ticket_of(book, deposit)` — Билет ячейки (маржа одной позиции на стартовом депозите), $.
-  - L487 `App.sub_cash(s, st)` — Касса ПОДПИСКИ: стартовый депозит плюс реализованный нетто её собственных живых позиций (`realized_usd` в сос…
-  - L495 `App.add_subscription(self, acc, key_id, book, deposit, sizing=None)` — ------------------------------------------------------------ подписки
-  - L538 `App.venue_modes(self, k)` — Режим позиций по ключу. Секрет открыть этот процесс НЕ может: режим читается ключом только при добавлении (см…
-  - L545 `App._sub_view(self, s)`
-  - L553 `App.list_subscriptions(self, acc)`
-  - L556 `App.delete_subscription(self, acc, sid)`
-  - L583 `App.live_enabled(self)` — ------------------------------------------------------------ живой режим
-  - L586 `App.set_live_enabled(self, acc, on)` — Рубильник оператора (§7a.5): без него ни одна подписка в live не переводится. Выключение НЕ останавливает раб…
-  - L601 `App.sub_dir(self, sid)`
-  - L604 `App.exec_status(self, sid)`
-  - L611 `App.arm(self, acc, sid, confirm)`
-  - L660 `App.disarm(self, acc, sid)` — Входы выключены, открытые позиции исполнитель ведёт дальше (цель, пол, срок, охрана рынком). Режим остаётся l…
-  - L675 `App.to_dry(self, acc, sid)` — Обратно в сухой режим — только без открытых позиций.
-  - L687 `App.close_position(self, acc, sid, sym, pos_at)` — Ручное закрытие ОДНОЙ позиции кнопкой владельца (11.10).
-  - L725 `App.kill(self, acc, sid, on)` — KILL подписки: исполнитель не делает НИЧЕГО (ни заявок, ни отмен).
-  - L743 `App.check_account(self, acc, sid, runner=None)` — Предполётная проверка счёта по кнопке владельца: ключ открывает отдельный процесс (`preflight.py`), сюда прих…
-  - L761 `App.state(self, acc)` — ------------------------------------------------------------ состояние
-  - L845 `App.events(self, acc, since)`
-  - L848 `App.books(self, full=None)`
-  - L856 `App.add_device(self, acc, token, env='prod', build=None)` — ------------------------------------------------------------ устройства и пуши (§7.5)
-  - L864 `App.list_devices(self, acc)`
-  - L870 `App.delete_device(self, acc, token)`
-  - L874 `App.push_config(self, acc, team_id, key_id, p8, topic=None)`
-  - L885 `App.push_test(self, acc)` — Пробный пуш на устройства аккаунта — без записи сделки.
-  - L903 `App.list_trades(self, acc, since=0, limit=200, mode='live')` — Записи журнала исполнителя. По умолчанию — только ЖИВЫЕ (решение владельца 10.10: «на вкладке Trades — реальн…
-  - L933 `App.live_positions(self, acc)` — Живые позиции — в ФОРМЕ строки бумажной книги (`sym, side, at, lev, margin, entry_px, avg, fills, walk, exit,…
-  - L1031 `App.attach_paper(self, rows, subs)` — Та же сделка в бумажной книге — СЫРОЙ сигнал (журнал книги без издержек): строка ячейки подписки с тем же име…
-  - L1108 `App.live_pnl(rows, subs)` — Общий результат живых сделок (владелец 10.10: «на странице trades общий пнл по всем сделкам»): реализованное…
-  - L1161 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
-  - L1171 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
-  - L1186 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
-  - L1203 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
-- L1228 `top_series(days_rows, open_days, dep)` — Кривая витрины и просадка открытых на ОДНОЙ оси дней.
-- L1257 `computed_at_of(d)` — Момент последнего пересчёта длинных книг для витрины: свод сборщика несёт возраст артефакта в часах (`age_h`)…
-- L1268 `PUB_ROUTES = {'dca': ('full', 'focus', 'dep', 'ruler…`
-- L1272 `PUB_VALUE = re.compile('^[A-Za-z0-9._:\\-]{1,64}$')`
-- L1278 `SITE_DIR = os.path.join(HERE, 'site')` — Сайт (спека 16 L4): главная, документы, кабинет — файлы `site/`, те же ответы API, что у приложения. Настройк…
-- L1279 `SITE_HOST = 'algoth.trade'`
-- L1280 `SITE_PAGES = {'/': ('index.html', 'text/html; charse…`
-- L1293 `SITE_KEYS = ('apple_client_id', 'company', 'ios_url…`
-- L1294 `SITE_ID = re.compile('^[A-Za-z0-9._-]{0,120}$')`
-- L1297 `site_settings(out)`
-- L1306 `site_page(path)` — (тело, тип) страницы сайта или None; файлы читаются с диска каждый раз — их пять, они маленькие, а правка вид…
-- L1319 `pub_query(name, q)` — Параметры публичного запроса: (dict, None) или (None, слова отказа).
-- L1335 `fetch_pub(name, params, gzip_ok=False)` — Ответ сборщика байтами: (код, тело, Content-Encoding или None).
-- L1352 `fetch_dca(full=None)`
-- L1365 `class Handler`
-  - L1372 `Handler.log_message(self, fmt, *a)`
-  - L1376 `Handler._send(self, code, obj)`
-  - L1385 `Handler._send_raw(self, body, encoding=None)`
-  - L1395 `Handler._pub(self, name, q)`
-  - L1410 `Handler._body(self)`
-  - L1420 `Handler._acc(self)`
-  - L1428 `Handler._site(self, u, method)` — Страницы сайта: www → без www, пять файлов, остальное 404.
-  - L1450 `Handler._route(self, method)`
-  - L1563 `Handler.do_GET(self)`
-  - L1566 `Handler.do_POST(self)`
-  - L1569 `Handler.do_DELETE(self)`
-- L1573 `class Server` — TLS-рукопожатие — в ПОТОКЕ соединения и с пределом времени.
-  - L1590 `Server.finish_request(self, request, client_address)`
-- L1604 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
-- L1615 `read_operator_token(path)`
-- L1623 `main(argv=None)`
+- L93 `best_of(d, dep)` — Лучшие сделки на депозите для главной сайта (владелец 16.10): список отобран прогонами книг по деньгам НЕТТО…
+- L115 `class App` — Логика API без HTTP: её гоняют проверки напрямую.
+  - L118 `App.__init__(self, dbpath, pub, operator_token=None, venue=bybit, d…`
+  - L143 `App.auth_operator(self, token, device=None)` — ------------------------------------------------------------ вход
+  - L156 `App.auth_apple(self, identity_token, device=None, current=None)`
+  - L189 `App.logout(self, token)`
+  - L193 `App.me(self, acc)`
+  - L200 `App.max_accounts(self)` — Предел аккаунтов: файл оператора, иначе число из конструктора.
+  - L208 `App.set_limits(self, acc, max_accounts)`
+  - L224 `App.limits(self, acc)`
+  - L232 `App.top(self, deposit=None)` — Главная сайта: лучшая стратегия и рейтинг на одном депозите.
+  - L291 `App.site(self)`
+  - L297 `App.set_site(self, acc, body)`
+  - L317 `App.overview(self, acc)` — Оператору: аккаунты с числом ключей и подписок, согласие; ёмкость по ячейкам (спека 15 §7a.5 — измеритель ёмк…
+  - L337 `App.consent_state(self, acc)`
+  - L345 `App.accept(self, acc, version, ip=None, device=None)`
+  - L357 `App.need_consent(self, acc)` — Отказ словами, если клиент не принял ТЕКУЩИЕ документы. Оператор — владелец сервиса, а не клиент: гейт к нему…
+  - L368 `App.add_key(self, acc, venue, key, secret)` — ------------------------------------------------------------ ключи
+  - L414 `App._key_view(self, r)`
+  - L421 `App.list_keys(self, acc)`
+  - L424 `App.delete_key(self, acc, kid)`
+  - L437 `App.dca(self)` — ------------------------------------------------------------ книги и ячейки
+  - L443 `App.strategies(self)`
+  - L482 `App.cell_key(book, deposit, sizing=None)` — Ключ книги в своде `/dca`: та же схема, что у `rules.cell_key` — `книга:депозит`, у фиксированного билета с х…
+  - L489 `App.paper_cash(book, deposit)` — Касса БУМАЖНОЙ книги сейчас: депозит плюс её накопленный нетто.
+  - L499 `App.ticket_of(book, deposit)` — Билет ячейки (маржа одной позиции на стартовом депозите), $.
+  - L510 `App.sub_cash(s, st)` — Касса ПОДПИСКИ: стартовый депозит плюс реализованный нетто её собственных живых позиций (`realized_usd` в сос…
+  - L518 `App.add_subscription(self, acc, key_id, book, deposit, sizing=None)` — ------------------------------------------------------------ подписки
+  - L561 `App.venue_modes(self, k)` — Режим позиций по ключу. Секрет открыть этот процесс НЕ может: режим читается ключом только при добавлении (см…
+  - L568 `App._sub_view(self, s)`
+  - L576 `App.list_subscriptions(self, acc)`
+  - L579 `App.delete_subscription(self, acc, sid)`
+  - L606 `App.live_enabled(self)` — ------------------------------------------------------------ живой режим
+  - L609 `App.set_live_enabled(self, acc, on)` — Рубильник оператора (§7a.5): без него ни одна подписка в live не переводится. Выключение НЕ останавливает раб…
+  - L624 `App.sub_dir(self, sid)`
+  - L627 `App.exec_status(self, sid)`
+  - L634 `App.arm(self, acc, sid, confirm)`
+  - L683 `App.disarm(self, acc, sid)` — Входы выключены, открытые позиции исполнитель ведёт дальше (цель, пол, срок, охрана рынком). Режим остаётся l…
+  - L698 `App.to_dry(self, acc, sid)` — Обратно в сухой режим — только без открытых позиций.
+  - L710 `App.close_position(self, acc, sid, sym, pos_at)` — Ручное закрытие ОДНОЙ позиции кнопкой владельца (11.10).
+  - L748 `App.kill(self, acc, sid, on)` — KILL подписки: исполнитель не делает НИЧЕГО (ни заявок, ни отмен).
+  - L766 `App.check_account(self, acc, sid, runner=None)` — Предполётная проверка счёта по кнопке владельца: ключ открывает отдельный процесс (`preflight.py`), сюда прих…
+  - L784 `App.state(self, acc)` — ------------------------------------------------------------ состояние
+  - L868 `App.events(self, acc, since)`
+  - L871 `App.books(self, full=None)`
+  - L879 `App.add_device(self, acc, token, env='prod', build=None)` — ------------------------------------------------------------ устройства и пуши (§7.5)
+  - L887 `App.list_devices(self, acc)`
+  - L893 `App.delete_device(self, acc, token)`
+  - L897 `App.push_config(self, acc, team_id, key_id, p8, topic=None)`
+  - L908 `App.push_test(self, acc)` — Пробный пуш на устройства аккаунта — без записи сделки.
+  - L926 `App.list_trades(self, acc, since=0, limit=200, mode='live')` — Записи журнала исполнителя. По умолчанию — только ЖИВЫЕ (решение владельца 10.10: «на вкладке Trades — реальн…
+  - L956 `App.live_positions(self, acc)` — Живые позиции — в ФОРМЕ строки бумажной книги (`sym, side, at, lev, margin, entry_px, avg, fills, walk, exit,…
+  - L1054 `App.attach_paper(self, rows, subs)` — Та же сделка в бумажной книге — СЫРОЙ сигнал (журнал книги без издержек): строка ячейки подписки с тем же име…
+  - L1131 `App.live_pnl(rows, subs)` — Общий результат живых сделок (владелец 10.10: «на странице trades общий пнл по всем сделкам»): реализованное…
+  - L1184 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
+  - L1194 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
+  - L1209 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
+  - L1226 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
+- L1251 `top_series(days_rows, open_days, dep)` — Кривая витрины и просадка открытых на ОДНОЙ оси дней.
+- L1280 `computed_at_of(d)` — Момент последнего пересчёта длинных книг для витрины: свод сборщика несёт возраст артефакта в часах (`age_h`)…
+- L1291 `PUB_ROUTES = {'dca': ('full', 'focus', 'dep', 'ruler…`
+- L1295 `PUB_VALUE = re.compile('^[A-Za-z0-9._:\\-]{1,64}$')`
+- L1301 `SITE_DIR = os.path.join(HERE, 'site')` — Сайт (спека 16 L4): главная, документы, кабинет — файлы `site/`, те же ответы API, что у приложения. Настройк…
+- L1302 `SITE_HOST = 'algoth.trade'`
+- L1303 `SITE_PAGES = {'/': ('index.html', 'text/html; charse…`
+- L1316 `SITE_KEYS = ('apple_client_id', 'company', 'ios_url…`
+- L1317 `SITE_ID = re.compile('^[A-Za-z0-9._-]{0,120}$')`
+- L1320 `site_settings(out)`
+- L1329 `site_page(path)` — (тело, тип) страницы сайта или None; файлы читаются с диска каждый раз — их пять, они маленькие, а правка вид…
+- L1342 `pub_query(name, q)` — Параметры публичного запроса: (dict, None) или (None, слова отказа).
+- L1358 `fetch_pub(name, params, gzip_ok=False)` — Ответ сборщика байтами: (код, тело, Content-Encoding или None).
+- L1375 `fetch_dca(full=None)`
+- L1388 `class Handler`
+  - L1395 `Handler.log_message(self, fmt, *a)`
+  - L1399 `Handler._send(self, code, obj)`
+  - L1408 `Handler._send_raw(self, body, encoding=None)`
+  - L1418 `Handler._pub(self, name, q)`
+  - L1433 `Handler._body(self)`
+  - L1443 `Handler._acc(self)`
+  - L1451 `Handler._site(self, u, method)` — Страницы сайта: www → без www, пять файлов, остальное 404.
+  - L1473 `Handler._route(self, method)`
+  - L1586 `Handler.do_GET(self)`
+  - L1589 `Handler.do_POST(self)`
+  - L1592 `Handler.do_DELETE(self)`
+- L1596 `class Server` — TLS-рукопожатие — в ПОТОКЕ соединения и с пределом времени.
+  - L1613 `Server.finish_request(self, request, client_address)`
+- L1627 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
+- L1638 `read_operator_token(path)`
+- L1646 `main(argv=None)`
 
 ## tools/app_api/set_site.py · 45 строк
 
@@ -9436,7 +9442,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L19 `OK = re.compile('^[A-Za-z0-9._-]{1,120}$')`
 - L22 `main(argv)`
 
-## tools/app_api/site/site.js · 375 строк
+## tools/app_api/site/site.js · 410 строк
 
 Кабинет Algoth (спека 16 L4). Все числа и слова — ответы API; страница
 

@@ -4272,6 +4272,12 @@ class Collector:
                                        "PAIR_JOURNAL", "pair",
                                        "общего счёта")
         sh, pr = out["short"] or {}, out["pair"] or {}
+        # Лучшие сделки всех семейств (главная сайта): отобраны прогонами
+        # по деньгам нетто, здесь только сводятся — позиция один раз.
+        # Сведённое не дублируется во вкладках семейств.
+        mb = getattr(DR, "merge_best", None)
+        out["best"] = (mb([art.get("best"), sh.pop("best", None), pr.pop("best", None)])
+                       if mb else None)
         fams = [(list(out["rulers"]), art_books, rows, frows)]
         # Порядок вкладок: ОБЩИЙ СЧЁТ первым. Владелец дважды не нашёл
         # общую статистику, стоявшую последней, — место на странице есть
@@ -4484,6 +4490,7 @@ class Collector:
                 "one_name": art.get("one_name"), "parts": art.get("parts"),
                 "costs": art.get("costs"), "error": art.get("error"),
                 "computed_at": art.get("computed_at"),
+                "best": art.get("best"),
                 "age_h": age, "stale": bool(age is not None and age > 3)}
 
     def paper_book(self, at=None):

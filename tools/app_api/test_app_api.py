@@ -443,6 +443,23 @@ def test_top_strategy_for_the_landing_is_ranked_by_declared_rule():
         st, r2 = app.top("100")
         assert st == 200 and r2["deposit"] == 100.0 and [x["book"] for x in r2["ranking"]] == ["optimal"] and r2["top"]["final"] == 9.0
         assert app.top("5000")[0] == 400 and app.top("x")[0] == 400
+        # лучшие сделки: без поля в своде — None («не измерено»), не пустой топ
+        assert r["best"] is None
+        dca["rulers"].append({"key": "aggr_h_g4i2", "title_en": "Gated", "side": "short",
+                              "branch": {"default": False, "title_en": "guard 4 % + inverse 2 %"}})
+        dca["rulers"][2]["branch"] = {"default": True, "title_en": "guard 4 % · default"}
+        dca["best"] = {"1000": {"n": 30, "n_loss": 12, "top": [
+            {"book": "aggr_h_g4i2", "sym": "XUSDT", "side": "short", "usd": 40.0, "ret": 0.8, "bt": False},
+            {"book": "aggr_h", "sym": "YUSDT", "side": "short", "usd": 30.0, "ret": 0.6, "bt": True},
+            {"book": "gone", "sym": "ZUSDT", "side": "long", "usd": 5.0, "ret": 0.1, "bt": True}]}}
+        app._dca = {"at": 0.0, "data": None}
+        st, r3 = app.top()
+        b = r3["best"]
+        assert st == 200 and b["n"] == 30 and b["n_loss"] == 12 and [x["sym"] for x in b["top"]] == ["XUSDT", "YUSDT", "ZUSDT"]
+        assert b["top"][0]["title_en"] == "Gated" and b["top"][0]["branch_en"] == "guard 4 % + inverse 2 %"
+        assert b["top"][0]["book_side"] == "short" and b["top"][1]["branch_en"] is None, "умолчание ветвью не подписывается"
+        assert b["top"][2]["title_en"] == "gone", "книга без линейки — ключом, а не пропуском"
+        assert app.top("100")[1]["best"] is None, "другого депозита в своде нет — None"
         srv = SV.make_server(app, host="127.0.0.1", port=0, tls_dir=None)
         port = srv.server_address[1]
         threading.Thread(target=srv.serve_forever, daemon=True).start()

@@ -1193,6 +1193,8 @@ def summarize(path=None, live=None, keys=None, ctx=None):
             if op is not None:
                 b["open"] = op
             out["books"][key] = b
+    # лучшие сделки семейства — из тех же строк НЕТТО, что и книги
+    out["best"] = R.best_trades(rows, keys=keys)
     return out
 
 

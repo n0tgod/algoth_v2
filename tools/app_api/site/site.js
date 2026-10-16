@@ -66,6 +66,7 @@ const Site = (() => {
     $("deps").innerHTML = (r.deposits || []).map((d) => `<button role="tab" aria-selected="${d === r.deposit}" data-dep="${d}">$${d >= 1000 ? (d / 1000) + "k" : d}</button>`).join("");
     for (const b of document.querySelectorAll("#deps button")) b.onclick = () => { try { localStorage.setItem("algoth.dep", b.dataset.dep); } catch (e) {} featured(b.dataset.dep); };
     $("rank-title").textContent = "All strategies at " + depLabel;
+    renderBest(r, depLabel);
     // плитки шапки — только числа сервера: число стратегий, окно записи,
     // сделки лучшей, момент пересчёта; нет числа — прочерк, не ноль
     const stat = (id, v) => { const e = $(id); if (e) e.textContent = v; };
@@ -97,6 +98,40 @@ const Site = (() => {
     const tb = document.querySelector("#rank tbody");
     tb.innerHTML = (r.ranking || []).map((x, i) => `<tr class="${i === 0 ? "top" : ""}"><td>${i + 1}</td><td>Ladder · ${esc(x.title_en)}</td><td>${esc(side === x.side ? side : ({long: "Long", short: "Short", both: "Both"}[x.side] || x.side))}</td>
       <td class="num ${x.final >= 0 ? "good" : "bad"}">${pct(x.final)}<small class="usd">${both(x.usd, null)}</small></td><td class="num">${pct(x.max_dd)}<small class="usd">${both(x.max_dd_usd, null)}</small></td><td class="num">${x.n ?? "—"}</td><td class="num">${x.win == null ? "—" : Math.round(x.win * 100) + " %"}</td></tr>`).join("");
+  }
+
+  // Лучшие сделки (владелец 16.10): список и объём выборки — с сервера,
+  // отобраны прогонами книг по деньгам нетто. Страница только печатает:
+  // 20 строк, остальные — кнопкой. Нет поля — прочерк словами, не пустота.
+  const EXIT_EN = {"тейк": "target", "пол": "floor", "срок": "term", "рынок": "market guard",
+                   "рынок за нас": "inverse guard", "ликвидация": "liquidation", "трейл": "trail", "стоп": "stop"};
+  const SIDE_EN = {long: "Long", short: "Short", both: "Both"};
+  let bestAll = false;
+  function renderBest(r, depLabel) {
+    $("best-title").textContent = "Top 100 trades at " + depLabel;
+    const b = r.best, tb = document.querySelector("#best tbody");
+    if (!b || !(b.top || []).length) {
+      $("best-sum").textContent = b ? "No closed trades at this deposit yet." : "The best-trades list has not arrived from the books yet.";
+      tb.innerHTML = ""; show("best-more-wrap", false); return;
+    }
+    const lossShare = b.n ? b.n_loss / b.n : null;
+    $("best-sum").textContent = `The best ${b.top.length} of ${Number(b.n).toLocaleString("en-US")} closed trades of all strategies at ${depLabel}` +
+      (lossShare == null ? "." : ` — and ${Math.round(lossShare * 100)} % of those ${Number(b.n).toLocaleString("en-US")} closed at a loss.`) +
+      " This is the top of the record, not a typical trade.";
+    const rows = bestAll ? b.top : b.top.slice(0, 20);
+    tb.innerHTML = rows.map((x, i) => {
+      const strat = ["Ladder · " + (x.title_en || x.book), SIDE_EN[x.book_side] || "", x.branch_en || ""].filter(Boolean).join(" · ");
+      const held = (x.exit_ts && x.at) ? Math.max(1, Math.round((x.exit_ts - x.at) / 3600)) + " h" : "—";
+      const lev = x.lev == null ? "—" : "×" + Number(x.lev).toFixed(1);
+      const tag = x.bt ? `<span class="pill">backtest</span>` : `<span class="pill fw">forward</span>`;
+      return `<tr><td>${i + 1}</td><td><b>${esc(x.sym)}</b> <span class="pill">${esc(SIDE_EN[x.side] || x.side || "")}</span><small class="usd strat-m">${esc(strat.replace("Ladder · ", ""))}</small></td><td>${esc(strat)}</td>` +
+        `<td class="num ${x.usd >= 0 ? "good" : "bad"}">${pct(x.ret)}<small class="usd">${both(x.usd, null)}</small></td>` +
+        `<td class="num">${lev}</td><td class="num">${held}</td><td>${esc(EXIT_EN[x.exit] || x.exit || "—")}</td>` +
+        `<td>${esc(day(x.at) || "—")} ${tag}</td></tr>`;
+    }).join("");
+    show("best-more-wrap", b.top.length > 20);
+    $("best-more").textContent = bestAll ? "Show the first 20" : `Show all ${b.top.length}`;
+    $("best-more").onclick = () => { bestAll = !bestAll; renderBest(r, depLabel); };
   }
 
   // Линия одной серии: накопленный % депозита по дням (значения с

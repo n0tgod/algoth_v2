@@ -1090,6 +1090,17 @@
 - L23 `_row(**kw)`
 - L32 `main()`
 
+## research/dca_paper/test_best.py · 74 строк
+
+Лучшие сделки для главной сайта (`rules.best_trades`/`merge_best`).
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L17 `H = 3600.0`
+- L18 `T = float(R.RULES_SINCE) + 5 * 86400.0`
+- L21 `_row(ruler, sym, usd, at=T, dep=1000, side='short', fam='h24', …`
+- L30 `test_best_trades_one_position_once_with_denominator()`
+- L55 `test_merge_best_sums_denominator_and_keeps_position_once()`
+
 ## research/dca_paper/test_boost.py · 174 строк
 
 Тесты разгонного профиля ($100, крупный билет): касса, путь, подмена.
@@ -1144,7 +1155,7 @@
 - L108 `test_rows_without_costs_are_not_mixed_in()`
 - L116 `test_verdict_names_largest_axis_and_report_has_no_holes()`
 
-## research/dca_paper/test_costs.py · 497 строк
+## research/dca_paper/test_costs.py · 500 строк
 
 Проверки замера издержек DCA-книг (`costs.py`).
 
@@ -1161,31 +1172,31 @@
 - L111 `test_rate_at_entry_is_the_last_known_and_the_gate_is_by_side()`
 - L132 `_fixture()`
 - L165 `test_slippage_on_base_entry_and_market_exits_only()` — Проскальзывание X3 берётся с базового входа (первый рунг — рыночный) и с рыночного выхода (пол/срок/трейл/сто…
-- L192 `test_run_end_to_end_synthetic()`
-- L255 `test_gate_is_judged_only_with_both_arms_of_size()` — Медиана девяти отсечённых — шум: рука судится при ≥ MIN_ARM_N позиций в ОБЕИХ руках, иначе книга не попадает…
-- L273 `test_main_writes_the_artifact_and_publishes_by_default()`
-- L305 `_drop_pyc(path)` — Байткод модуля — где бы он ни лежал: рядом в `__pycache__` или в каталоге `PYTHONPYCACHEPREFIX` (свой каталог…
-- L324 `_poison(path, lit, sub, fn, mod)`
-- L346 `P = os.path.join(HERE, 'costs.py')`
-- L349 `_control_exit_fee_dropped()`
-- L354 `_control_funding_sign_flipped()`
-- L360 `_control_open_notional_ignores_time()`
-- L366 `_control_uncovered_counted_as_zero()`
-- L372 `_control_gate_ignores_side()`
-- L378 `_control_rate_at_entry_looks_ahead()`
-- L383 `_control_stale_rate_counts_as_known()`
-- L389 `_control_gate_medians_in_dollars()`
-- L395 `_control_missing_series_reads_as_present()`
-- L401 `_control_old_rules_rows_counted()`
-- L406 `_control_no_fills_in_cover_denominator()`
-- L411 `_control_thin_rest_arm_judged()`
-- L416 `_control_slip_on_take_exit()`
-- L421 `_control_slip_on_every_rung()`
-- L427 `_control_net_ignores_slippage()`
-- L433 `test_symbols_outside_the_universe_still_get_their_series()` — Имя, торгуемое после снимка универсума, не теряет ряд funding.
-- L455 `TESTS = [test_commission_charges_every_rung_and…`
-- L468 `CONTROLS = [('комиссия выхода снята', _control_exi…`
-- L487 `main()`
+- L195 `test_run_end_to_end_synthetic()`
+- L258 `test_gate_is_judged_only_with_both_arms_of_size()` — Медиана девяти отсечённых — шум: рука судится при ≥ MIN_ARM_N позиций в ОБЕИХ руках, иначе книга не попадает…
+- L276 `test_main_writes_the_artifact_and_publishes_by_default()`
+- L308 `_drop_pyc(path)` — Байткод модуля — где бы он ни лежал: рядом в `__pycache__` или в каталоге `PYTHONPYCACHEPREFIX` (свой каталог…
+- L327 `_poison(path, lit, sub, fn, mod)`
+- L349 `P = os.path.join(HERE, 'costs.py')`
+- L352 `_control_exit_fee_dropped()`
+- L357 `_control_funding_sign_flipped()`
+- L363 `_control_open_notional_ignores_time()`
+- L369 `_control_uncovered_counted_as_zero()`
+- L375 `_control_gate_ignores_side()`
+- L381 `_control_rate_at_entry_looks_ahead()`
+- L386 `_control_stale_rate_counts_as_known()`
+- L392 `_control_gate_medians_in_dollars()`
+- L398 `_control_missing_series_reads_as_present()`
+- L404 `_control_old_rules_rows_counted()`
+- L409 `_control_no_fills_in_cover_denominator()`
+- L414 `_control_thin_rest_arm_judged()`
+- L419 `_control_slip_on_take_exit()`
+- L424 `_control_slip_on_every_rung()`
+- L430 `_control_net_ignores_slippage()`
+- L436 `test_symbols_outside_the_universe_still_get_their_series()` — Имя, торгуемое после снимка универсума, не теряет ряд funding.
+- L458 `TESTS = [test_commission_charges_every_rung_and…`
+- L471 `CONTROLS = [('комиссия выхода снята', _control_exi…`
+- L490 `main()`
 
 ## research/dca_paper/test_costs_cache.py · 82 строк
 
@@ -4801,7 +4812,7 @@ X1: исполнитель против подставной биржи.
 - L291 `такт_демона_пишет_статус_и_не_молчит_об_ошибке`
 - L375 `which_python`
 
-## tools/app_api/test_app_api.py · 1608 строк
+## tools/app_api/test_app_api.py · 1625 строк
 
 Проверки API приложения (спека 15 Y0): конверт открывается только приватной половиной и ломается от подмены;…
 
@@ -4827,29 +4838,29 @@ X1: исполнитель против подставной биржи.
 - L357 `test_executor_words_are_shown_in_english_journal_untouched()` — L5: исполнитель пишет по-русски, показ (журнал сделок, пуш, состояние) — по-английски; переменная часть (ошиб…
 - L397 `test_top_series_calendar_axis_and_open_dips()` — Кривая витрины на календарной оси и просадка открытых (15.10): день без закрытий переносит итог; впадина = за…
 - L417 `test_top_strategy_for_the_landing_is_ranked_by_declared_rule()` — Главная сайта: лучшая книга на 1 000 $ по доходу за всю запись, кривая — накопленная сумма дневного ряда на д…
-- L457 `test_site_pages_settings_overview_and_apple_web_audience()` — L4 спеки 16: сайт отдаётся с API (главная, кабинет, документы, стиль, скрипт), www → без www, чужой путь — 40…
-- L513 `test_public_summary_without_page_key_whitelist_and_collector_fa…` — L1 спеки 16: свод для приложения без сессии и без ключа страниц — четыре ответа сборщика, только названные па…
-- L566 `test_silent_connection_does_not_block_tls_api()` — Соединение, открытое и замолчавшее, не держит API (11.10, ночь).
-- L608 `test_init_is_idempotent_and_prints_pin()`
-- L618 `test_apple_verify_names_the_audience_and_accepts_listed_ones()`
-- L641 `_ec_pem()`
-- L652 `test_push_key_is_checked_by_signing_and_words_come_from_the_rec…` — Ключ APNs принимается только если им можно подписать; слова пуша — из записи сделки, деньги печатаются, а не…
-- L706 `test_devices_trades_ingest_and_push_chain()` — Журнал исполнителя → запись → пуш на устройства; повтор чтения не дублирует; мёртвый токен выключается; пробн…
-- L809 `_pos(sym, at, fills, side='long', closed=None, lev=4.0, margin=…`
-- L826 `test_follower_turns_cell_positions_into_executor_events_once()` — Сухой исполнитель: позиции ячейки подписки → события §7.6 — первый рунг вход, следующие доливы с переездом це…
-- L870 `test_follower_tick_feeds_trades_and_pushes_for_the_subscribed_c…` — Такт сервера: следователь → журнал подписки → записи `trades` с mode dry → пуш на устройство; чужие ячейки не…
-- L918 `_flat_bars(t0, n=1440, px=100.0, jitter=0.0)`
-- L926 `_bars_fn(bars)`
-- L932 `_sheet_line(hour, written_at, rows, arm='nn')`
-- L936 `_pick_line(hour, shorts, arm='nn')`
-- L940 `test_intents_plan_entry_like_paper_and_size_from_subscription_c…` — Намерение входа считается теми же функциями, что бумага: вход, плечо, рунги, цель, пол и ликвидация совпадают…
-- L1056 `test_intents_sources_are_read_as_tail_once_and_tick_feeds_state…` — Такт сервера: источники читаются хвостом от смещения (первое чтение — хвост, неполная строка остаётся), ноги…
-- L1177 `test_intents_for_live_sub_use_executor_cash_names_levels_and_gu…` — Живая подписка: уровни на КАЖДОЙ глубине — `levels_of` по плановым ценам рунгов; касса — депозит + реализован…
-- L1287 `test_arm_needs_word_switch_fresh_equity_and_one_live_per_key()` — Перевод в живые сделки — только кнопкой владельца с подтверждением словом `книга:депозит`; рубильник оператор…
-- L1367 `test_manual_close_appends_exit_intent_for_the_executor()` — Кнопка Close (владелец 11.10): намерение выхода с причиной «manual» дописывается в журнал намерений подписки…
-- L1419 `test_live_positions_are_built_from_executor_journal_in_paper_ro…` — Живые позиции — строками той же формы, что бумажные: вход и доливы из журнала исполнителя (`fills`, `walk` с…
-- L1529 `test_supervisor_starts_armed_subs_with_key_on_stdin_and_stops_u…` — Супервизор: подписке в live — ровно один процесс, ключ ТОЛЬКО трубой; первый подъём не читает сухие намерения…
-- L1595 `TESTS = [v for k, v in sorted(globals().items()…`
+- L474 `test_site_pages_settings_overview_and_apple_web_audience()` — L4 спеки 16: сайт отдаётся с API (главная, кабинет, документы, стиль, скрипт), www → без www, чужой путь — 40…
+- L530 `test_public_summary_without_page_key_whitelist_and_collector_fa…` — L1 спеки 16: свод для приложения без сессии и без ключа страниц — четыре ответа сборщика, только названные па…
+- L583 `test_silent_connection_does_not_block_tls_api()` — Соединение, открытое и замолчавшее, не держит API (11.10, ночь).
+- L625 `test_init_is_idempotent_and_prints_pin()`
+- L635 `test_apple_verify_names_the_audience_and_accepts_listed_ones()`
+- L658 `_ec_pem()`
+- L669 `test_push_key_is_checked_by_signing_and_words_come_from_the_rec…` — Ключ APNs принимается только если им можно подписать; слова пуша — из записи сделки, деньги печатаются, а не…
+- L723 `test_devices_trades_ingest_and_push_chain()` — Журнал исполнителя → запись → пуш на устройства; повтор чтения не дублирует; мёртвый токен выключается; пробн…
+- L826 `_pos(sym, at, fills, side='long', closed=None, lev=4.0, margin=…`
+- L843 `test_follower_turns_cell_positions_into_executor_events_once()` — Сухой исполнитель: позиции ячейки подписки → события §7.6 — первый рунг вход, следующие доливы с переездом це…
+- L887 `test_follower_tick_feeds_trades_and_pushes_for_the_subscribed_c…` — Такт сервера: следователь → журнал подписки → записи `trades` с mode dry → пуш на устройство; чужие ячейки не…
+- L935 `_flat_bars(t0, n=1440, px=100.0, jitter=0.0)`
+- L943 `_bars_fn(bars)`
+- L949 `_sheet_line(hour, written_at, rows, arm='nn')`
+- L953 `_pick_line(hour, shorts, arm='nn')`
+- L957 `test_intents_plan_entry_like_paper_and_size_from_subscription_c…` — Намерение входа считается теми же функциями, что бумага: вход, плечо, рунги, цель, пол и ликвидация совпадают…
+- L1073 `test_intents_sources_are_read_as_tail_once_and_tick_feeds_state…` — Такт сервера: источники читаются хвостом от смещения (первое чтение — хвост, неполная строка остаётся), ноги…
+- L1194 `test_intents_for_live_sub_use_executor_cash_names_levels_and_gu…` — Живая подписка: уровни на КАЖДОЙ глубине — `levels_of` по плановым ценам рунгов; касса — депозит + реализован…
+- L1304 `test_arm_needs_word_switch_fresh_equity_and_one_live_per_key()` — Перевод в живые сделки — только кнопкой владельца с подтверждением словом `книга:депозит`; рубильник оператор…
+- L1384 `test_manual_close_appends_exit_intent_for_the_executor()` — Кнопка Close (владелец 11.10): намерение выхода с причиной «manual» дописывается в журнал намерений подписки…
+- L1436 `test_live_positions_are_built_from_executor_journal_in_paper_ro…` — Живые позиции — строками той же формы, что бумажные: вход и доливы из журнала исполнителя (`fills`, `walk` с…
+- L1546 `test_supervisor_starts_armed_subs_with_key_on_stdin_and_stops_u…` — Супервизор: подписке в live — ровно один процесс, ключ ТОЛЬКО трубой; первый подъём не читает сухие намерения…
+- L1612 `TESTS = [v for k, v in sorted(globals().items()…`
 
 ## tools/test_disk_alarm.py · 64 строк
 

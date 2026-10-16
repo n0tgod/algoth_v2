@@ -1851,6 +1851,84 @@ def row_ahead(r, hours=AHEAD_H):
     return ahead(r.get("at"), r.get("written_at"), hours, since=lim)
 
 
+# Лучшие сделки для главной сайта (владелец 16.10: «блок с топ-100
+# лучшими сделками»). Отбор — в прогоне книги, где деньги уже НЕТТО
+# (`costs.apply_to_rows`), а не в сборщике по журналу (там брутто).
+# Мера — доллары нетто на депозите ячейки, формат размера — сложный
+# процент, правила — нынешние. Одна позиция (имя, сторона, момент
+# решения) — одна строка: её держат и сестры-ветви, и общий счёт, и сто
+# копий одного входа вытеснили бы остальные; остаётся лучшая копия.
+# Рядом всегда объём выборки и доля убыточных: топ без знаменателя —
+# отбор лучшего, выдаваемый за типичное.
+BEST_N = 100
+BEST_KEEP = 200            # с запасом на пересечение семейств при сведении
+
+
+def _best_key(r):
+    return (r.get("sym"), r.get("side"), int(round(float(r.get("at") or 0))))
+
+
+def best_trades(rows, keys=None, keep=BEST_KEEP):
+    """Лучшие закрытые сделки семейства по депозитам: {депозит: {n,
+    n_loss, top}}. `rows` — строки журнала с деньгами нетто; берутся
+    нынешние правила, сложный процент и книги из `keys`."""
+    want = set(keys) if keys is not None else None
+    by_dep = {}
+    for r in rows:
+        if r.get("exit_ts") is None or r.get("usd") is None or not is_current(r):
+            continue
+        if sizing_of(r) != SIZING_COMPOUND:
+            continue
+        rk = ruler_of(r)
+        if want is not None and rk not in want:
+            continue
+        d = by_dep.setdefault(str(int(r.get("dep") or 0)), {"n": 0, "n_loss": 0, "pos": {}})
+        usd = float(r["usd"])
+        d["n"] += 1
+        d["n_loss"] += usd < 0
+        side = row_side(r, rk)
+        try:
+            margin = float(r.get("margin"))
+        except (TypeError, ValueError):
+            margin = None
+        x = {"book": rk, "sym": r.get("sym"), "side": side,
+             "at": float(r["at"]), "exit_ts": float(r["exit_ts"]),
+             "lev": r.get("lev"), "margin": r.get("margin"),
+             "usd": round(usd, 2),
+             "usd_gross": (None if r.get("usd_gross") is None else round(float(r["usd_gross"]), 2)),
+             "ret": (round(usd / margin, 4) if margin else None),
+             "exit": r.get("exit"), "bt": row_ahead(r) is not True,
+             "tail": bool(r.get("tail"))}
+        k = _best_key(x)
+        cur = d["pos"].get(k)
+        if cur is None or x["usd"] > cur["usd"]:
+            d["pos"][k] = x
+    out = {}
+    for dep, d in by_dep.items():
+        top = sorted(d["pos"].values(), key=lambda x: -x["usd"])[:keep]
+        out[dep] = {"n": d["n"], "n_loss": d["n_loss"], "top": top}
+    return out
+
+
+def merge_best(parts, n=BEST_N):
+    """Свести лучшие сделки семейств: объём и убыточные — суммой,
+    позиция — один раз (лучшая копия), первые `n`."""
+    out = {}
+    for part in parts:
+        for dep, d in (part or {}).items():
+            o = out.setdefault(str(dep), {"n": 0, "n_loss": 0, "pos": {}})
+            o["n"] += int(d.get("n") or 0)
+            o["n_loss"] += int(d.get("n_loss") or 0)
+            for x in d.get("top") or []:
+                k = _best_key(x)
+                cur = o["pos"].get(k)
+                if cur is None or float(x["usd"]) > float(cur["usd"]):
+                    o["pos"][k] = x
+    return {dep: {"n": o["n"], "n_loss": o["n_loss"],
+                  "top": sorted(o["pos"].values(), key=lambda x: -float(x["usd"]))[:n]}
+            for dep, o in out.items()}
+
+
 def split_rows(rows, hours=AHEAD_H):
     """Наблюдение и пересчёт — ДВА списка, и складывать их нельзя."""
     fwd, back = [], []

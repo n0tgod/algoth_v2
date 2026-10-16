@@ -90,6 +90,28 @@ class RateLimiter:
             return True
 
 
+def best_of(d, dep):
+    """Лучшие сделки на депозите для главной сайта (владелец 16.10): список
+    отобран прогонами книг по деньгам НЕТТО и сведён сборщиком
+    (`rules.best_trades`/`merge_best`); здесь только подписи книги из
+    линеек свода. Нет поля в своде — None («не измерено», не пустой топ).
+    Рядом объём выборки и число убыточных: топ без знаменателя был бы
+    отбором лучшего, выданным за типичное."""
+    blk = (d.get("best") or {}).get(str(int(float(dep))))
+    if not isinstance(blk, dict):
+        return None
+    names = {}
+    for r in d.get("rulers") or []:
+        if isinstance(r, dict) and r.get("key"):
+            br = r.get("branch") or {}
+            names[r["key"]] = {"title_en": r.get("title_en") or r["key"],
+                               "book_side": r.get("side") or "long",
+                               "branch_en": (None if br.get("default") is not False else br.get("title_en"))}
+    top = [dict(x, **names.get(x.get("book"), {"title_en": x.get("book"), "book_side": None, "branch_en": None}))
+           for x in blk.get("top") or []]
+    return {"n": blk.get("n"), "n_loss": blk.get("n_loss"), "top": top}
+
+
 class App:
     """Логика API без HTTP: её гоняют проверки напрямую."""
 
@@ -263,6 +285,7 @@ class App:
         return 200, {"rule": f"Ranked by return over the whole record at a ${dep:,.0f} deposit, compound sizing. "
                              "A showcase of past results, not a forecast.",
                      "deposit": dep, "deposits": deposits, "top": top, "ranking": rows, "stale": bool(d.get("stale")),
+                     "best": best_of(d, dep),
                      "window": d.get("window"), "computed_at": computed_at_of(d)}
 
     def site(self):
