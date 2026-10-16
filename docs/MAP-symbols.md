@@ -9484,6 +9484,14 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L16 `main()`
 
+## tools/guard_probe.py · 50 строк
+
+Зонд: что видела охрана рынком — волна прокси-имён с момента входа коротких позиций по часам. Печатает порог,…
+
+- L14 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L20 `ts(h)`
+- L24 `main()`
+
 ## tools/instr_fields.py · 47 строк
 
 Зонд: какие поля справочника Bybit отличают перпы на акции от крипты.
