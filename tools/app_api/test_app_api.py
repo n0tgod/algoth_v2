@@ -1225,10 +1225,17 @@ def test_intents_for_live_sub_use_executor_cash_names_levels_and_guard_exits():
                         {"sym": "TTTUSDT", "side": "short", "book": "aggr_h", "pos_at": 200.0},
                         {"sym": "LLLUSDT", "side": "long", "book": "aggr", "pos_at": 100.0}]}
     it = {}
-    # охрана снята 16.10 (карта порогов пуста): без порога выходов нет и рынок не спрашивается
-    assert I.guard_exits({"id": "s"}, ex, it, {"market": mkt, "now": 1000.0}) == [] and mkt.calls == []
     saved_g = dict(R.WAVE_GUARD_PCT)
-    R.WAVE_GUARD_PCT.update({"aggr_h": 2.0})          # механизм — с порогом на время проверки
+    # без порога (пустая карта) выходов нет и рынок не спрашивается
+    R.WAVE_GUARD_PCT.clear()
+    try:
+        assert I.guard_exits({"id": "s"}, ex, it, {"market": mkt, "now": 1000.0}) == [] and mkt.calls == []
+    finally:
+        R.WAVE_GUARD_PCT.update(saved_g)
+    # механизм — с порогом 2 % на время проверки (действующий — 4 %, числа
+    # фикстуры писались под 2)
+    R.WAVE_GUARD_PCT.clear()
+    R.WAVE_GUARD_PCT.update({"aggr_h": 2.0})
     try:
         out = I.guard_exits({"id": "s"}, ex, it, {"market": mkt, "now": 1000.0})
         assert [(o["kind"], o["sym"], o["reason"], o["wave_k"]) for o in out] == [("exit", "SSSUSDT", "market", 3)], out

@@ -227,7 +227,7 @@ def правила_берутся_у_книги():
         R.WAVE_GUARD_PCT.update(was_guard)
         importlib.reload(FS)
     assert abs(FS.FLOOR - 0.75) < 1e-12, FS.FLOOR
-    assert FS.GUARD is None, FS.GUARD              # охрана снята 16.10
+    assert FS.GUARD == R.wave_guard_of(FS.BOOK) == 4.0, FS.GUARD   # охрана 4 % с 16.10
     assert abs(FS.BASE_FLOOR - R.floor_frac_of(FS.BOOK, D2.FLOOR_FRAC)) < 1e-12
     assert FS.AGE_D == R.min_age_days(FS.BOOK), FS.AGE_D
     assert FS.SEEDS == P.SEEDS and FS.TAIL_EXITS == FS.T.TAIL_EXITS

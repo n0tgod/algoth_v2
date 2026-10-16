@@ -82,23 +82,27 @@ def test_guard_closes_strictly_before_the_exit_and_only_in_lived_hours():
 
 def test_rule_is_declared_for_short_books_with_versions_and_page_text():
     for bk in ("safe_h", "optimal_h", "aggr_h"):
-        assert R.wave_guard_of(bk) is None, bk        # снята 16.10
+        assert R.wave_guard_of(bk) == 4.0, bk         # снята и возвращена 16.10 с 4 %
     for pk in R.PAIR_ORDER:
-        assert R.wave_guard_of(pk) is None, pk         # и у короткой стороны общего счёта
+        assert R.wave_guard_of(pk) == 4.0, pk          # и у короткой стороны общего счёта
     for lk in ("safe", "optimal", "aggr"):
         assert R.wave_guard_of(lk) is None, lk         # длинные не трогаются
-    assert R.FAMILY_RULES == {"pair": 12, "h24": 6, "sit": 3}, R.FAMILY_RULES
+    assert R.FAMILY_RULES == {"pair": 13, "h24": 7, "sit": 3}, R.FAMILY_RULES
     # день записи вперёд у всех — 2026-10-15: не-крипто и шаг объёма площадки
     assert R.FAMILY_SINCE == {"pair": "2026-10-16", "h24": "2026-10-16",
                               "sit": "2026-10-15"}, R.FAMILY_SINCE
     # строка прежней версии в счёт не идёт, текущей — идёт
-    old = {"rules": R.RULES, "book_rules": 5, "ruler": "safe_h"}
-    new = {"rules": R.RULES, "book_rules": 6, "ruler": "safe_h"}
+    old = {"rules": R.RULES, "book_rules": 6, "ruler": "safe_h"}
+    new = {"rules": R.RULES, "book_rules": 7, "ruler": "safe_h"}
     assert not R.is_current(old) and R.is_current(new)
-    assert not R.is_current({"rules": R.RULES, "book_rules": 7, "ruler": "pair_safe"})
-    # охрана снята 16.10 — текст вкладки её больше не обещает ни у кого
+    assert not R.is_current({"rules": R.RULES, "book_rules": 12, "ruler": "pair_safe"})
+    # охрана 4 % — текст вкладки называет её с порогом у коротких и общих
+    # книг и молчит у длинных
     for k in R.RULERS:
-        assert "охрана рынком" not in R.RULERS[k]["plain"], k
+        short_side = k in R.H24_ORDER or k in R.PAIR_PARTS
+        assert ("охрана рынком" in R.RULERS[k]["plain"]) == short_side, k
+        if short_side:
+            assert "≥ 4 %" in R.RULERS[k]["plain"], (k, R.RULERS[k]["plain"])
     # английский текст для приложения (спека 16): у КАЖДОЙ линейки, одним
     # ядром с русским — охрана и пол названы там же, где по-русски
     for k, v in R.RULERS.items():
@@ -110,13 +114,13 @@ def test_rule_is_declared_for_short_books_with_versions_and_page_text():
         assert ("market guard" in v["plain_en"]) == ("охрана рынком" in v["plain"]), k
         assert ("Capitulation floor" in v["plain_en"]) == ("Пол капитуляции" in v["plain"]), k
     assert R.title_en("pair_aggr") == "Gated" and R.title_en("safe_h") == "Sigma" and R.title_en("x") == "x"
-    print("ok  охрана снята у всех книг (16.10), версии h24 6 / pair 12, запись вперёд "
-          "с 2026-10-16, прежние строки не в счёт, текст вкладки без охраны")
+    print("ok  охрана 4 % у коротких и общих книг (16.10), версии h24 7 / pair 13, запись "
+          "вперёд с 2026-10-16, прежние строки не в счёт, текст вкладки с порогом")
 
 
 def test_guard_shorts_reads_the_summaries_end_to_end():
-    # Механизм остаётся в коде (замеры, возможный возврат): проверяется
-    # с порогом, выставленным НА ВРЕМЯ проверки — по умолчанию карта пуста.
+    # Механизм проверяется с порогом 2 %, выставленным НА ВРЕМЯ проверки:
+    # числа фикстуры писались под него (действующий порог — 4 %).
     saved = dict(R.WAVE_GUARD_PCT)
     R.WAVE_GUARD_PCT.update({"safe_h": 2.0})
     try:
@@ -124,8 +128,12 @@ def test_guard_shorts_reads_the_summaries_end_to_end():
     finally:
         R.WAVE_GUARD_PCT.clear()
         R.WAVE_GUARD_PCT.update(saved)
-    # и без порога — сквозь без слов, у любой книги
-    out0, st0 = RP.guard_shorts([_rec([(AT, -0.02)])], "safe_h", log=lambda *a: None)
+    # без порога (пустая карта) — сквозь без слов, у любой книги
+    R.WAVE_GUARD_PCT.clear()
+    try:
+        out0, st0 = RP.guard_shorts([_rec([(AT, -0.02)])], "safe_h", log=lambda *a: None)
+    finally:
+        R.WAVE_GUARD_PCT.update(saved)
     assert out0[0]["exit"] == "срок" and st0 == {"guard": False, "offered": 1}, st0
 
 
