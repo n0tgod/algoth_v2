@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 615, строк: 256812, каталогов: 86.
+Модулей кода: 615, строк: 256875, каталогов: 86.
 
 
 ## корень — память проекта, идеи, README
@@ -207,7 +207,7 @@
 - `probe_live_hour2.py` · 66 строк — Зонд 10.10 (второй): почему общий счёт `pair_aggr` не взял короткие решения 20:00 UTC (STRK, RLC, APR), котор…
 - `probe_live_hour3.py` · 105 строк — Зонд 10.10 (третий): касса общего счёта `pair_aggr` 100 $ в моменты решений, которые взял живой исполнитель и…
 - `repeat_entry.py` · 449 строк — Пропустить первый вход: насколько «ювелирны» второй, третий, четвёртый выбор имени моделью — и что это даёт к…
-- `rules.py` · 1618 строк — Правила бумажных DCA-книг: три депозита, одни правила.
+- `rules.py` · 1626 строк — Правила бумажных DCA-книг: три депозита, одни правила.
 - `run_pair.py` · 583 строк — Общий счёт: длинная книга и короткая на ОДНОМ депозите.
 - `run_paper.py` · 1867 строк — Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
 - `run_short.py` · 470 строк — Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
@@ -234,7 +234,7 @@
 - `tail_screen.py` · 495 строк — Портрет хвоста коротких книг: что общего у минусовых сделок.
 - `wave.py` · 307 строк — Волна рынка и охрана рынком — ОДНА библиотека для книг и замеров.
 - `wave_guard.py` · 488 строк — Охрана рынком для коротких книг h24: концентрация, состав выходов, депозиты, равенство ядру.
-- тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (153), `test_backfill_exit_px.py` (80), `test_boost.py` (174), `test_cost_gap.py` (141), `test_costs.py` (497), `test_costs_cache.py` (82), `test_cut.py` (297), `test_day_shares.py` (45), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_guard.py` (214), `test_guard_fill.py` (75), `test_guard_forward.py` (67), `test_journal_cache.py` (120), `test_names.py` (227), `test_open_days.py` (50), `test_pair.py` (582), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (3352), `test_path_screen.py` (247), `test_pick_rule.py` (121), `test_repeat_entry.py` (234), `test_short.py` (491), `test_short_adds.py` (189), `test_short_age.py` (148), `test_short_floor.py` (125), `test_short_levcap.py` (193), `test_short_levers.py` (225), `test_short_rules_1003.py` (64), `test_short_rung.py` (237), `test_short_rung_axes.py` (143), `test_short_rung_time.py` (144), `test_short_select.py` (143), `test_short_size.py` (66), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_weeks.py` (230), `test_short_why.py` (158), `test_slip_x3.py` (76), `test_tail_screen.py` (198), `test_wave_full.py` (67), `test_wave_guard.py` (166)
+- тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (153), `test_backfill_exit_px.py` (80), `test_boost.py` (174), `test_cost_gap.py` (141), `test_costs.py` (497), `test_costs_cache.py` (82), `test_cut.py` (297), `test_day_shares.py` (45), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_guard.py` (227), `test_guard_fill.py` (75), `test_guard_forward.py` (67), `test_journal_cache.py` (120), `test_names.py` (227), `test_open_days.py` (50), `test_pair.py` (582), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (3352), `test_path_screen.py` (247), `test_pick_rule.py` (121), `test_repeat_entry.py` (234), `test_short.py` (491), `test_short_adds.py` (189), `test_short_age.py` (148), `test_short_floor.py` (125), `test_short_levcap.py` (193), `test_short_levers.py` (225), `test_short_rules_1003.py` (64), `test_short_rung.py` (237), `test_short_rung_axes.py` (143), `test_short_rung_time.py` (144), `test_short_select.py` (143), `test_short_size.py` (66), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_weeks.py` (230), `test_short_why.py` (158), `test_slip_x3.py` (76), `test_tail_screen.py` (198), `test_wave_full.py` (67), `test_wave_guard.py` (166)
 - отчёты в `out/` (52): DCA-agree-book.md, DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-boost-100.md, DCA-cash-fix.md, DCA-cost-gap.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-entry-gate.md, DCA-fund-check.md, DCA-fund-probe.md, DCA-guard-fill.md, DCA-guard-forward.md, DCA-guard-sweep.md, DCA-names.md, DCA-pair-age-why.md, DCA-pair-age.md, DCA-pair-gate.md, DCA-pair.md, DCA-paper.md, DCA-path-screen.md, DCA-pick-rule.md, DCA-repeat-entry.md, DCA-short-adds.md, DCA-short-age.md, DCA-short-floor.md, DCA-short-levcap.md, DCA-short-levers-hold.md, DCA-short-levers.md, DCA-short-rung-axes.md, DCA-short-rung-time.md, DCA-short-rung.md, DCA-short-select.md, DCA-short-size.md, DCA-short-stop.md, DCA-short-supply-1m.md, DCA-short-supply.md, DCA-short-take.md, DCA-short-weeks.md, DCA-short-why.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md, DCA-tail-screen.md, DCA-wave-guard-faith.md, DCA-wave-guard.md, NONCRYPTO-cut.md, NONCRYPTO-hold.md, NONCRYPTO-pair.md, NONCRYPTO-window.md
 
 ## research/f1_carry — F1 — carry на funding: разложение брутто (гипотеза 3)
@@ -393,8 +393,8 @@
 ## research/mech_374e2591 — (по докстрингу) Машина негативных контролей механики 374e2591: подделка — сюита падает.
 
 - `controls_check.py` · 95 строк — Машина негативных контролей механики 374e2591: подделка — сюита падает.
-- `floor_sister.py` · 1220 строк — Механика 374e2591 — пол капитуляции 0.75 у безопасной короткой книги h24.
-- тесты: `test_floor_sister.py` (604)
+- `floor_sister.py` · 1222 строк — Механика 374e2591 — пол капитуляции 0.75 у безопасной короткой книги h24.
+- тесты: `test_floor_sister.py` (626)
 - документы: `RUNBOOK.md` — Механика 374e2591 — как её прогнать
 - отчёты в `out/` (2): FLOOR-sister-smoke.md, FLOOR-sister.md
 
@@ -456,7 +456,7 @@
 - `controls_check.py` · 47 строк — Негативные контроли механики bb7c3581 — СУДИТ САМА ПРИЁМКА.
 - `run_storm.py` · 363 строк — Прогон механики bb7c3581 — буря выкупа шортов по рынку.
 - `storm.py` · 953 строк — Механика bb7c3581 — буря выкупа шортов ПО РЫНКУ.
-- тесты: `test_storm.py` (1152)
+- тесты: `test_storm.py` (1162)
 - документы: `RUNBOOK.md` — Механика bb7c3581 — как прогнать
 - отчёты в `out/` (1): MECH-storm-smoke.md
 
@@ -824,7 +824,7 @@
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
 - документы: `README.md` — Очередь заданий, `queue-state.md` — 
-- заданий `.job`: 900, логов `done/*.log`: 901 (в карту не перечисляются — их читают по имени)
+- заданий `.job`: 901, логов `done/*.log`: 901 (в карту не перечисляются — их читают по имени)
 
 ## tools — команды сервера, защита коммитов, хуки
 
@@ -897,4 +897,4 @@
 - `venv_add.py` · 75 строк — Установка пакетов в окружение сервера через очередь заданий.
 - `watchdog_book.sh` · 704 строк — Сторож сбора: поднимает умершее и перезапускает зависшее.
 - `wave_rows_probe.py` · 59 строк — Зонд: строки часовых сводок прокси-имён за данный час — какие поля, когда записаны, и какая волна выходит по…
-- тесты: `app_api/test_app_api.py` (1559), `test_disk_alarm.py` (64), `test_jobs.sh` (240), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_api.sh` (47), `test_watchdog_books.sh` (114), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (59), `test_watchdog_ship.sh` (49)
+- тесты: `app_api/test_app_api.py` (1567), `test_disk_alarm.py` (64), `test_jobs.sh` (240), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_api.sh` (47), `test_watchdog_books.sh` (114), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (59), `test_watchdog_ship.sh` (49)

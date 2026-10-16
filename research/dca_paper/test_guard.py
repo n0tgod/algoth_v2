@@ -82,24 +82,23 @@ def test_guard_closes_strictly_before_the_exit_and_only_in_lived_hours():
 
 def test_rule_is_declared_for_short_books_with_versions_and_page_text():
     for bk in ("safe_h", "optimal_h", "aggr_h"):
-        assert R.wave_guard_of(bk) == 2.0, bk
+        assert R.wave_guard_of(bk) is None, bk        # снята 16.10
     for pk in R.PAIR_ORDER:
-        assert R.wave_guard_of(pk) == 2.0, pk          # короткая сторона общего счёта
+        assert R.wave_guard_of(pk) is None, pk         # и у короткой стороны общего счёта
     for lk in ("safe", "optimal", "aggr"):
         assert R.wave_guard_of(lk) is None, lk         # длинные не трогаются
-    assert R.FAMILY_RULES == {"pair": 11, "h24": 5, "sit": 3}, R.FAMILY_RULES
+    assert R.FAMILY_RULES == {"pair": 12, "h24": 6, "sit": 3}, R.FAMILY_RULES
     # день записи вперёд у всех — 2026-10-15: не-крипто и шаг объёма площадки
-    assert R.FAMILY_SINCE == {"pair": "2026-10-15", "h24": "2026-10-15",
+    assert R.FAMILY_SINCE == {"pair": "2026-10-16", "h24": "2026-10-16",
                               "sit": "2026-10-15"}, R.FAMILY_SINCE
     # строка прежней версии в счёт не идёт, текущей — идёт
-    old = {"rules": R.RULES, "book_rules": 4, "ruler": "safe_h"}
-    new = {"rules": R.RULES, "book_rules": 5, "ruler": "safe_h"}
+    old = {"rules": R.RULES, "book_rules": 5, "ruler": "safe_h"}
+    new = {"rules": R.RULES, "book_rules": 6, "ruler": "safe_h"}
     assert not R.is_current(old) and R.is_current(new)
     assert not R.is_current({"rules": R.RULES, "book_rules": 7, "ruler": "pair_safe"})
-    for k in ("safe_h", "pair_optimal"):
-        plain = R.RULERS[k]["plain"]
-        assert "охрана рынком" in plain and "≥ 2 %" in plain, (k, plain[-200:])
-    assert "охрана рынком" not in R.RULERS["safe"]["plain"]
+    # охрана снята 16.10 — текст вкладки её больше не обещает ни у кого
+    for k in R.RULERS:
+        assert "охрана рынком" not in R.RULERS[k]["plain"], k
     # английский текст для приложения (спека 16): у КАЖДОЙ линейки, одним
     # ядром с русским — охрана и пол названы там же, где по-русски
     for k, v in R.RULERS.items():
@@ -111,12 +110,26 @@ def test_rule_is_declared_for_short_books_with_versions_and_page_text():
         assert ("market guard" in v["plain_en"]) == ("охрана рынком" in v["plain"]), k
         assert ("Capitulation floor" in v["plain_en"]) == ("Пол капитуляции" in v["plain"]), k
     assert R.title_en("pair_aggr") == "Gated" and R.title_en("safe_h") == "Sigma" and R.title_en("x") == "x"
-    print("ok  правило объявлено: порог 2 % у трёх коротких книг и короткой стороны "
-          "общего счёта, версии h24 4 / pair 8, запись вперёд с 2026-10-10, прежние строки не в счёт, "
-          "текст на вкладке")
+    print("ok  охрана снята у всех книг (16.10), версии h24 6 / pair 12, запись вперёд "
+          "с 2026-10-16, прежние строки не в счёт, текст вкладки без охраны")
 
 
 def test_guard_shorts_reads_the_summaries_end_to_end():
+    # Механизм остаётся в коде (замеры, возможный возврат): проверяется
+    # с порогом, выставленным НА ВРЕМЯ проверки — по умолчанию карта пуста.
+    saved = dict(R.WAVE_GUARD_PCT)
+    R.WAVE_GUARD_PCT.update({"safe_h": 2.0})
+    try:
+        _guard_shorts_end_to_end()
+    finally:
+        R.WAVE_GUARD_PCT.clear()
+        R.WAVE_GUARD_PCT.update(saved)
+    # и без порога — сквозь без слов, у любой книги
+    out0, st0 = RP.guard_shorts([_rec([(AT, -0.02)])], "safe_h", log=lambda *a: None)
+    assert out0[0]["exit"] == "срок" and st0 == {"guard": False, "offered": 1}, st0
+
+
+def _guard_shorts_end_to_end():
     td = tempfile.mkdtemp()
     proxies = list(WV.PROXY[:6])
     start = AT - H                            # час решения — первый файл

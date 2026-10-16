@@ -573,7 +573,7 @@ def test_no_storm_reproduces_the_base_bit_for_bit():
     got = {bk: (v.get("exits") or {}) for bk, v in base.items()}
     check("тишина: охрана рынком в тесте молчит",
           all("рынок" not in e for e in got.values())
-          and all(not g["guard"]["closed_by_market"] for g in guards.values()),
+          and all(not (g["guard"] or {}).get("closed_by_market") for g in guards.values()),
           f"{got}")
 
 
@@ -660,12 +660,22 @@ def guard_market(views, pct=3.0):
 
 
 def test_base_is_the_book_with_the_market_guard():
-    """База — книги КАК СЕЙЧАС, то есть С охраной рынком.
+    """База — книги с охраной рынком, КОГДА она объявлена.
 
-    Кэш реплея хранит исход БЕЗ охраны (правило книг с 13.09). Забудь её
-    применить — и буря «спасала» бы то, что охрана уже закрыла, а
-    изменённых позиций насчиталось бы больше, чем их есть.
+    Кэш реплея хранит исход БЕЗ охраны. Забудь её применить — и буря
+    «спасала» бы то, что охрана уже закрыла. Охрана снята 16.10 (карта
+    порогов пуста), поэтому проверка ставит порог на время прогона.
     """
+    saved_g = dict(R.WAVE_GUARD_PCT)
+    R.WAVE_GUARD_PCT.update({bk: 2.0 for bk in STM.BOOK_KEYS})
+    try:
+        _base_with_guard()
+    finally:
+        R.WAVE_GUARD_PCT.clear()
+        R.WAVE_GUARD_PCT.update(saved_g)
+
+
+def _base_with_guard():
     cache, launch = journal(n_tail=4, n_rest=4, seed=68, stagger=False,
                             hold=12)
     _gc0, views0, _g0 = books_of(cache, launch)          # рынок пустой

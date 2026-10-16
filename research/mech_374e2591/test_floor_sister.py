@@ -35,6 +35,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import floor_sister as FS                                     # noqa: E402
 from floor_sister import AG, D2, G, L, P, R, RP, S, SS, WV     # noqa: E402
+# Имена фикстур (AUSDT, BUSDT…) — настоящие инструменты площадки с шагом
+# объёма 1 монета, а цена фикстуры $100: правило шага объёма (15.10,
+# `run_d6.rung_refusal`) законно отказало бы им «мельче минимума». Здесь
+# судится пол и охрана, не шаг — справочник на время сюиты пуст.
+RP.D6._INSTR, RP.D6._INSTR_AT = {}, float("inf")
 
 TESTS = []
 H = FS.HOUR
@@ -222,7 +227,7 @@ def правила_берутся_у_книги():
         R.WAVE_GUARD_PCT.update(was_guard)
         importlib.reload(FS)
     assert abs(FS.FLOOR - 0.75) < 1e-12, FS.FLOOR
-    assert abs(FS.GUARD - 2.0) < 1e-12, FS.GUARD
+    assert FS.GUARD is None, FS.GUARD              # охрана снята 16.10
     assert abs(FS.BASE_FLOOR - R.floor_frac_of(FS.BOOK, D2.FLOOR_FRAC)) < 1e-12
     assert FS.AGE_D == R.min_age_days(FS.BOOK), FS.AGE_D
     assert FS.SEEDS == P.SEEDS and FS.TAIL_EXITS == FS.T.TAIL_EXITS
@@ -305,17 +310,25 @@ def калибровочная_пара():
 
 @test
 def форма_равна_кассе():
-    """Своей кассы нет: форма совпадает с ячейкой семейства, охрана в ней."""
+    """Своей кассы нет: форма совпадает с ячейкой семейства, охрана в ней.
+
+    Охрана снята 16.10 (карта пуста) — порог ставится на время проверки,
+    чтобы форма и ячейка сверялись и с выходами «рынком».
+    """
     cache = deep_cache()
     mkt = StubMkt(lambda at: 2 if int((at - T0) / H) % 24 == 0 else None)
     was = RP._MARKET
+    was_guard = dict(R.WAVE_GUARD_PCT)
     try:
         RP._MARKET = mkt
+        R.WAVE_GUARD_PCT[FS.BOOK] = 2.0
         mine = FS.book_form(cache, CTX, launch_of(cache), now=NOW, log=quiet)
         cell = G.cell_stats(AG.packed_short(cache), CTX, launch_of(cache),
                             now=NOW, log=quiet, keys=[FS.BOOK], deps=[DEP])
     finally:
         RP._MARKET = was
+        R.WAVE_GUARD_PCT.clear()
+        R.WAVE_GUARD_PCT.update(was_guard)
     c = cell.get(f"{FS.BOOK}:{int(DEP)}") or {}
     for f in ("n", "usd", "final", "max_dd", "win", "day_median", "taken"):
         assert mine.get(f) == c.get(f), (f, mine.get(f), c.get(f))
@@ -335,10 +348,19 @@ def порядок_пола_и_охраны():
     lv, _d = FS.levels_of(vs)
     mod = FS.apply_floor(cache, FS.hits(vs, lv), lv)
     mkt = StubMkt(lambda at: plan.get(at))
-    st = FS.book_form(mod, CTX, launch_of(cache), now=NOW, log=quiet, mkt=mkt)
+    was_guard = dict(R.WAVE_GUARD_PCT)
+    try:
+        R.WAVE_GUARD_PCT[FS.BOOK] = 2.0                # охрана снята 16.10 — порог на время проверки
+        st = FS.book_form(mod, CTX, launch_of(cache), now=NOW, log=quiet, mkt=mkt)
+    finally:
+        R.WAVE_GUARD_PCT.clear()
+        R.WAVE_GUARD_PCT.update(was_guard)
     ex = st["exits"]
-    assert (ex.get(FS.EXIT) or {}).get("n") == 2, ex     # A и C — полом
-    assert (ex.get("рынок") or {}).get("n") == 1, ex     # B — охраной раньше
+    # с 10.10 касса даёт строку на каждый формат размера (compound и fixed):
+    # состав выходов удваивается, отношение — нет
+    n_floor = (ex.get(FS.EXIT) or {}).get("n") or 0
+    n_mkt = (ex.get("рынок") or {}).get("n") or 0
+    assert n_mkt >= 1 and n_floor == 2 * n_mkt, ex       # A и C — полом, B — охраной раньше
 
 
 @test

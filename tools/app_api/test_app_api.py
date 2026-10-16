@@ -1225,11 +1225,19 @@ def test_intents_for_live_sub_use_executor_cash_names_levels_and_guard_exits():
                         {"sym": "TTTUSDT", "side": "short", "book": "aggr_h", "pos_at": 200.0},
                         {"sym": "LLLUSDT", "side": "long", "book": "aggr", "pos_at": 100.0}]}
     it = {}
-    out = I.guard_exits({"id": "s"}, ex, it, {"market": mkt, "now": 1000.0})
-    assert [(o["kind"], o["sym"], o["reason"], o["wave_k"]) for o in out] == [("exit", "SSSUSDT", "market", 3)], out
-    assert mkt.calls[0] == (100.0, R.wave_guard_of("aggr_h"), R.H24_HOLD_H - 1)
-    assert len(mkt.calls) == 2, "длинная книга охраны не имеет"
-    assert I.guard_exits({"id": "s"}, ex, it, {"market": mkt, "now": 1001.0}) == [], "выход пишется один раз"
+    # охрана снята 16.10 (карта порогов пуста): без порога выходов нет и рынок не спрашивается
+    assert I.guard_exits({"id": "s"}, ex, it, {"market": mkt, "now": 1000.0}) == [] and mkt.calls == []
+    saved_g = dict(R.WAVE_GUARD_PCT)
+    R.WAVE_GUARD_PCT.update({"aggr_h": 2.0})          # механизм — с порогом на время проверки
+    try:
+        out = I.guard_exits({"id": "s"}, ex, it, {"market": mkt, "now": 1000.0})
+        assert [(o["kind"], o["sym"], o["reason"], o["wave_k"]) for o in out] == [("exit", "SSSUSDT", "market", 3)], out
+        assert mkt.calls[0] == (100.0, 2.0, R.H24_HOLD_H - 1)
+        assert len(mkt.calls) == 2, "длинная книга охраны не имеет"
+        assert I.guard_exits({"id": "s"}, ex, it, {"market": mkt, "now": 1001.0}) == [], "выход пишется один раз"
+    finally:
+        R.WAVE_GUARD_PCT.clear()
+        R.WAVE_GUARD_PCT.update(saved_g)
     print("ok  намерения живой подписки: уровни по глубинам, касса и имена исполнителя, охрана рынком")
 
 
