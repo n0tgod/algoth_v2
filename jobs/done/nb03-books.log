@@ -27,3 +27,14 @@
   [2026-10-16T13:15:01Z] прогон книг отложен: обучение S8 ждёт памяти или идёт (флаг research/s8_loop/out/train_wait.flag)
   [2026-10-16T13:15:02Z] прогон книг отложен: обучение S8 ждёт памяти или идёт (флаг research/s8_loop/out/train_wait.flag)
 конец: 2026-10-16T13:19:52Z, код 0
+публикуется в ветку main:
+ jobs/done/nb02-status.done |  1 +
+ jobs/done/nb02-status.log  |  9 +++++++++
+ jobs/done/nb03-books.done  |  1 +
+ jobs/done/nb03-books.log   | 29 +++++++++++++++++++++++++++++
+ jobs/poke.log              |  2 ++
+ 5 files changed, 42 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   87f43df5..70f042f1  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
