@@ -2151,6 +2151,25 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L146 `publish(name)`
 - L152 `main(argv=None)`
 
+## research/dca_paper/guard_sweep.py · 220 строк
+
+Насколько важна охрана рынком: без неё и с другими порогами.
+
+- L29 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L30 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L47 `OUT_MD = os.path.join(R.OUT, 'DCA-guard-sweep.md…`
+- L48 `OUT_JSON = os.path.join(R.OUT, 'DCA-guard-sweep.js…`
+- L49 `AXIS = (1.0, 1.5, 2.0, 3.0, 4.0, 6.0)`
+- L50 `SINCE = '2026-09-13'`
+- L51 `DEPS = (1000, 10000)`
+- L54 `short_sweep(cache, views, ctx, launch, seeds, log)` — Короткие книги: база без охраны и ось порогов с контролем.
+- L67 `pair_sweep(lcache, scache, ctx, launch, since_ts, log)` — Общий счёт: касса по порогам (брутто), короткая сторона под охраной.
+- L94 `run(seeds, log)`
+- L127 `_pp(x, d=1)`
+- L131 `_usd(x)`
+- L135 `report(res)`
+- L195 `main(argv=None)`
+
 ## research/dca_paper/name_check.py · 242 строк
 
 Соответствуют ли режимы DCA своим именам (вопрос владельца 2026-09-04).
