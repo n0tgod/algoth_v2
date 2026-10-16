@@ -1,0 +1,54 @@
+== задание na94-exit ==
+строка: run tools/exit_probe.py --sym=NXPCUSDT --sym=SIRENUSDT --sym=AKEUSDT
+начало: 2026-10-16T12:09:09Z
+запускаю: .venv/bin/python tools/exit_probe.py --sym=NXPCUSDT --sym=SIRENUSDT --sym=AKEUSDT
+== bot/out/dca/sub_0a1d813d9612bc11/events.jsonl: 14
+   {"book": "optimal_h", "mode": "live", "pos_at": "15 19:00:00", "px": 0.2385, "seq": 1, "side": "short", "sym": "NXPCUSDT", "ts": "15 19:09:46"}
+   {"book": "optimal_h", "mode": "live", "pos_at": "15 19:00:00", "px": 0.1779, "seq": 2, "side": "short", "sym": "NXPCUSDT", "ts": "15 19:09:46"}
+   {"book": "optimal_h", "mode": "live", "pos_at": "15 19:00:00", "reason": "база мельче минимума биржи: 100 × 0.036623 при мин. лоте 100 и мин. нотионале 5 $", "seq": 3, "side": "short", "sym": "AKEUSDT", "ts": "15 19:09:46"}
+   {"book": "optimal_h", "mode": "live", "pos_at": "15 19:00:00", "px": 0.03078, "seq": 4, "side": "short", "sym": "SIRENUSDT", "ts": "15 19:09:46"}
+   {"book": "optimal_h", "mode": "live", "pos_at": "15 19:00:00", "px": 0.022770000000000002, "seq": 5, "side": "short", "sym": "SIRENUSDT", "ts": "15 19:09:46"}
+   {"mode": "live", "pos_at": "15 19:00:00", "reason": "пол стоит стоп-заявкой на бирже (последняя цена, на всю позицию)", "seq": 6, "side": "short", "sym": "NXPCUSDT", "ts": "15 19:09:46"}
+   {"mode": "live", "pos_at": "15 19:00:00", "reason": "пол стоит стоп-заявкой на бирже (последняя цена, на всю позицию)", "seq": 7, "side": "short", "sym": "SIRENUSDT", "ts": "15 19:09:46"}
+   {"book": "optimal_h", "mode": "live", "pos_at": "15 20:00:00", "reason": "база мельче минимума биржи: 100 × 0.0323215 при мин. лоте 100 и мин. нотионале 5 $", "seq": 8, "side": "short", "sym": "AKEUSDT", "ts": "15 20:08:56"}
+   {"book": "optimal_h", "mode": "live", "pos_at": "15 21:00:00", "px": 0.03165584, "seq": 12, "side": "short", "sym": "AKEUSDT", "ts": "15 21:09:32"}
+   {"book": "optimal_h", "mode": "live", "pos_at": "15 21:00:00", "px": 0.026687, "seq": 13, "side": "short", "sym": "AKEUSDT", "ts": "15 21:09:32"}
+   {"mode": "live", "pos_at": "15 21:00:00", "reason": "пол стоит стоп-заявкой на бирже (последняя цена, на всю позицию)", "seq": 14, "side": "short", "sym": "AKEUSDT", "ts": "15 21:09:32"}
+   {"book": "optimal_h", "mode": "live", "pos_at": "15 21:00:00", "px": 0.02959027, "seq": 15, "side": "short", "sym": "AKEUSDT", "ts": "16 12:03:00"}
+   {"book": "optimal_h", "mode": "live", "pos_at": "15 19:00:00", "px": 0.1978, "seq": 16, "side": "short", "sym": "NXPCUSDT", "ts": "16 12:03:00"}
+   {"book": "optimal_h", "mode": "live", "pos_at": "15 19:00:00", "px": 0.02827, "seq": 17, "side": "short", "sym": "SIRENUSDT", "ts": "16 12:03:00"}
+== bot/out/dca/sub_0a1d813d9612bc11/intents.jsonl: 8
+   {"kind": "entry", "mode": "dry", "book": "optimal_h", "sym": "NXPCUSDT", "side": "short", "decided_at": "15 19:00:00", "computed_at": "15 19:09:42", "seq": 1}
+   {"kind": "entry", "mode": "dry", "book": "optimal_h", "sym": "AKEUSDT", "side": "short", "decided_at": "15 19:00:00", "computed_at": "15 19:09:42", "seq": 2}
+   {"kind": "entry", "mode": "dry", "book": "optimal_h", "sym": "SIRENUSDT", "side": "short", "decided_at": "15 19:00:00", "computed_at": "15 19:09:42", "seq": 3}
+   {"kind": "entry", "mode": "dry", "book": "optimal_h", "sym": "AKEUSDT", "side": "short", "decided_at": "15 20:00:00", "computed_at": "15 20:08:53", "seq": 4}
+   {"kind": "entry", "mode": "dry", "book": "optimal_h", "sym": "AKEUSDT", "side": "short", "decided_at": "15 21:00:00", "computed_at": "15 21:09:28", "seq": 6}
+   {"kind": "exit", "sym": "AKEUSDT", "book": "optimal_h", "side": "short", "decided_at": "15 21:00:00", "reason": "market", "wave_k": 15, "wave_pct": 2.0, "computed_at": "16 12:03:00", "seq": 7}
+   {"kind": "exit", "sym": "NXPCUSDT", "book": "optimal_h", "side": "short", "decided_at": "15 19:00:00", "reason": "market", "wave_k": 17, "wave_pct": 2.0, "computed_at": "16 12:03:00", "seq": 8}
+   {"kind": "exit", "sym": "SIRENUSDT", "book": "optimal_h", "side": "short", "decided_at": "15 19:00:00", "reason": "market", "wave_k": 17, "wave_pct": 2.0, "computed_at": "16 12:03:00", "seq": 9}
+== bot/out/dca/sub_0a1d813d9612bc11/skips.jsonl: 15
+   {"kind": "skip", "book": "optimal_h", "sym": "NXPCUSDT", "side": "short", "decided_at": "15 20:00:00", "computed_at": "15 20:08:53", "why": "одна позиция на имя: намерение держит", "seq": 5}
+   {"kind": "skip", "book": "optimal_h", "sym": "AKEUSDT", "side": "short", "decided_at": "15 21:00:00", "computed_at": "15 21:09:28", "why": "одна позиция на имя: намерение держит", "seq": 12}
+   {"kind": "skip", "book": "optimal_h", "sym": "AKEUSDT", "side": "short", "decided_at": "15 22:00:00", "computed_at": "15 22:10:11", "why": "одна позиция на имя: намерение держит", "seq": 16}
+   {"kind": "skip", "book": "optimal_h", "sym": "AKEUSDT", "side": "short", "decided_at": "15 22:00:00", "computed_at": "15 22:10:11", "why": "одна позиция на имя: намерение держит", "seq": 17}
+   {"kind": "skip", "book": "optimal_h", "sym": "AKEUSDT", "side": "short", "decided_at": "15 23:00:00", "computed_at": "15 23:11:25", "why": "одна позиция на имя: намерение держит", "seq": 24}
+   {"kind": "skip", "book": "optimal_h", "sym": "SIRENUSDT", "side": "short", "decided_at": "16 00:00:00", "computed_at": "16 00:11:21", "why": "одна позиция на имя: намерение держит", "seq": 29}
+   {"kind": "skip", "book": "optimal_h", "sym": "SIRENUSDT", "side": "short", "decided_at": "16 05:00:00", "computed_at": "16 05:10:24", "why": "одна позиция на имя: намерение держит", "seq": 56}
+   {"kind": "skip", "book": "optimal_h", "sym": "SIRENUSDT", "side": "short", "decided_at": "16 06:00:00", "computed_at": "16 06:10:28", "why": "одна позиция на имя: намерение держит", "seq": 61}
+   {"kind": "skip", "book": "optimal_h", "sym": "SIRENUSDT", "side": "short", "decided_at": "16 07:00:00", "computed_at": "16 07:09:46", "why": "одна позиция на имя: намерение держит", "seq": 67}
+   {"kind": "skip", "book": "optimal_h", "sym": "SIRENUSDT", "side": "short", "decided_at": "16 08:00:00", "computed_at": "16 08:09:45", "why": "одна позиция на имя: намерение держит", "seq": 78}
+   {"kind": "skip", "book": "optimal_h", "sym": "SIRENUSDT", "side": "short", "decided_at": "16 09:00:00", "computed_at": "16 09:09:14", "why": "одна позиция на имя: намерение держит", "seq": 82}
+   {"kind": "skip", "book": "optimal_h", "sym": "SIRENUSDT", "side": "short", "decided_at": "16 10:00:00", "computed_at": "16 10:09:24", "why": "одна позиция на имя: намерение держит", "seq": 86}
+   {"kind": "skip", "book": "optimal_h", "sym": "SIRENUSDT", "side": "short", "decided_at": "16 10:00:00", "computed_at": "16 10:09:24", "why": "одна позиция на имя: намерение держит", "seq": 89}
+   {"kind": "skip", "book": "optimal_h", "sym": "SIRENUSDT", "side": "short", "decided_at": "16 11:00:00", "computed_at": "16 11:08:09", "why": "одна позиция на имя: намерение держит", "seq": 93}
+   {"kind": "skip", "book": "optimal", "sym": "NXPCUSDT", "side": "long", "decided_at": "16 11:09:20", "computed_at": "16 11:10:18", "why": "одна позиция на имя: исполнитель держит (односторонний счёт)", "seq": 97}
+конец: 2026-10-16T12:09:09Z, код 0
+публикуется в ветку main:
+ jobs/done/na93-guard.log            | 16 +++++++++++++
+ jobs/done/na94-exit.done            |  1 +
+ jobs/done/na94-exit.log             | 45 +++++++++++++++++++++++++++++++++++++
+ jobs/done/na95-guard2.done          |  1 +
+ jobs/done/na95-guard2.log           |  4 ++++
+ jobs/poke.log                       |  4 ++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 7 files changed, 72 insertions(+), 1 deletion(-)

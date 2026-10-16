@@ -50,3 +50,19 @@
   k=20 до 16 17:59: волна —  []
   k_star(порог 2 %) = None, часов без волны 9
 конец: 2026-10-16T12:07:44Z, код 0
+публикуется в ветку main:
+ jobs/done/na93-guard.done                          |    1 +
+ jobs/done/na93-guard.log                           |   52 +
+ jobs/poke.log                                      |    3 +
+ research/dca_paper/out/DCA-pair.json               |    2 +-
+ research/dca_paper/out/DCA-pair.md                 |   74 +-
+ research/dca_paper/out/DCA-paper.json              | 2104 ++++++++++----------
+ research/dca_paper/out/DCA-paper.md                |   20 +-
+ research/dca_paper/out/fixed_pair-2026-10-15.jsonl |   11 +
+ research/dca_paper/out/pair-2026-10-15.jsonl       |   10 +
+ research/s8_loop/out/day_brake.json                |    2 +-
+ 10 files changed, 1178 insertions(+), 1101 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   ae058ea0..e725d191  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
