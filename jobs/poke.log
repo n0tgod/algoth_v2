@@ -2436,3 +2436,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792188502 ==
 [2026-10-16T22:08:24Z] задание nb21-inverse-guard запущено: research/dca_paper/inverse_guard.py
+
+== сигнал 1792189539 ==
+[2026-10-16T22:25:41Z] задание nb22-api-restart запущено: tools/app_api/restart.py
