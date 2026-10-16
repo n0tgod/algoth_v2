@@ -1,0 +1,51 @@
+== задание nb10-status ==
+строка: status
+начало: 2026-10-16T18:15:16Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   75G   70G  52% /
+/dev/sdb        147G   77G   63G  56% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 172751   83714 /root/algoth_v2/bot/target/release/bot ladder --dir /root/algoth_v2/bot/out/dca/sub_0a1d813d9612bc11 --base https://api.bybit.com --keys-stdin -
+ 248130   69080 .venv/bin/python research/b1_book/collect.py --http 8765
+ 248351   69015 .venv/bin/python research/s8_loop/train.py
+--- убийства ядра по памяти за сутки ---
+0 (подробно: run tools/memtop.py)
+--- обучение S8 ---
+обучение S8: веса от 2026-10-16 13:39 UTC, 4.6 ч назад (каденция 24, тревога с 36 ч); последний цикл 18:08 UTC: весам 4.5 ч при каденции 24
+--- идущие прогоны ---
+554722 bash -c              nice -n 10 .venv/bin/python research/dca_paper/run_paper.py --no-publish                 >> research/dca_paper/out/daily.log 2>&1             nice -n 10 .venv/bin/python research/dca_paper/run_pair.py --no-publish                 >> research/dca_paper/out/pair.log 2>&1
+554732 .venv/bin/python research/dca_paper/run_paper.py --no-publish
+--- статус сбора ---
+{"t": 1792174515.9, "uptime_sec": 69079.0, "rss_mb": 1580, "mem_guard": {"drops": 757, "dies": 0, "max_rss_mb": 1642}, "messages": 187029813, "trades": 14772079, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 26591618, "snapshot_errors": 6, "last_snap_age_sec": 0.3, "snap_pass_sec": 0.554, "writes": {"book": 26591618, "trades": 14772068, "raw": 1020875, "liq": 3112, "metrics": 180130}, "write_age_sec": {"book": 0.3, "trades": 30.6, "raw": 0.2, "liq": 116.1, "metrics": 9.3}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.2444, "ask": 0.2445, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0003632, "ask": 0.0003635, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.101
+--- живой исполнитель ---
+{
+  "at_ms": 1792064189590,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 268.11562509,
+    "equity": 264.97302509
+  }
+}
+--- исполнитель Ladder ---
+
+sub_0a1d813d9612bc11: статусу 2 с, режим live, позиций 1 (отметка у 1), пауза None, без входов False, ошибка None, стоп пола на бирже у 1 из 1, цель лимиткой у 1 из 1
+    BATUSDT short глубина 1/1: средняя 0.2139, цель 0.15335000000000001, пол 0.631214705882353, стоп биржи 0.63122, рунгов лежит 0, закрытие None
+  чужое на счёте: нет
+sub_3f11698eb30279fa: статусу 444016 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+sub_b0b417879b985874: статусу 83717 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+конец: 2026-10-16T18:15:16Z
