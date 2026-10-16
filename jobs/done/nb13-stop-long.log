@@ -6,3 +6,13 @@
 TERM → 554732
 остановлено: 554732
 конец: 2026-10-16T18:28:51Z, код 0
+публикуется в ветку main:
+ jobs/done/nb12-tails.log            | 11 +++++++++
+ jobs/done/nb13-stop-long.done       |  1 +
+ jobs/done/nb13-stop-long.log        |  8 +++++++
+ jobs/done/nb14-daily-tail.done      |  1 +
+ jobs/done/nb14-daily-tail.log       | 45 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  4 ++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 7 files changed, 71 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at e52ed3218a164b57be5e4f9f34ceea56dbbce5da but expected 1bebcac40cd71ac944f03e02b678b70fe637ba88

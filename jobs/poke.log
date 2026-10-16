@@ -2411,3 +2411,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 == сигнал 1792175327 ==
 [2026-10-16T18:28:49Z] задание nb13-stop-long запущено: tools/stop_run.py
 [2026-10-16T18:28:49Z] задание nb14-daily-tail запущено: tools/tail_probe.py
+
+== сигнал 1792176091 ==
+[2026-10-16T18:41:33Z] задание nb15-pair-tail запущено: tools/tail_probe.py
