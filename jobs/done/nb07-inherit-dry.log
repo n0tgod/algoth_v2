@@ -12,3 +12,11 @@ pair pair_safe → pair_safe_g2: строк 14821, из них вперёд 716,
 pair: сухой прогон, к переносу 43575 строк
 итог: {'h24': {'added': 0, 'would': 26699}, 'pair': {'added': 0, 'would': 43575}}
 конец: 2026-10-16T18:08:26Z, код 0
+публикуется в ветку main:
+ jobs/done/nb06-api.log         | 16 ++++++++++++++++
+ jobs/done/nb07-inherit-dry.log | 10 ++++++++++
+ 2 files changed, 26 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   1eded5d5..6179df28  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

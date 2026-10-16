@@ -2394,3 +2394,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 == сигнал 1792174088 ==
 [2026-10-16T18:08:11Z] задание nb06-api запущено: tools/app_api/restart.py
 [2026-10-16T18:08:11Z] задание nb07-inherit-dry запущено: tools/branch_inherit.py
+
+== сигнал 1792174243 ==
+[2026-10-16T18:10:45Z] задание nb08-api запущено: tools/app_api/restart.py
