@@ -9831,6 +9831,22 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L135 `books_running()`
 - L138 `books_mem_ok()`
 
+## tools/wave_episodes.py · 108 строк
+
+Зонд: как часто рынок даёт волну, на которую смотрит охрана.
+
+- L18 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L19 `ROOT = os.path.dirname(HERE)`
+- L23 `HOUR = 3600`
+- L24 `START = '2026-08-04-00'`
+- L25 `FWD = '2026-09-13-00'`
+- L26 `THR = [1.0, 1.5, 2.0, 3.0, 4.0, 6.0]`
+- L27 `OUT = os.path.join(ROOT, 'research', 'dca_pap…`
+- L30 `ts(h)`
+- L34 `hh(t)`
+- L38 `episodes(hours, gap=24 * HOUR)` — Часы → эпизоды (начало, конец, пик, час пика).
+- L50 `main()`
+
 ## tools/wave_rows_probe.py · 59 строк
 
 Зонд: строки часовых сводок прокси-имён за данный час — какие поля, когда записаны, и какая волна выходит по…
