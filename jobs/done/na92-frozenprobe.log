@@ -8,3 +8,18 @@ sheets_frozen.jsonl: 1 строк, 0.4 МБ
 архив: пуст (первое обучение после деплоя ещё не прошло)
 живой лист, последний час: {"hour": "2026-10-15-22", "written_at": 1792105934.6, "train_seq": 534, "scan_rank": "fwd_4h_z", "min_edge_bp": 33.0, "m
 конец: 2026-10-15T23:25:53Z, код 0
+публикуется в ветку main:
+ jobs/done/na91-status.done            |    1 +
+ jobs/done/na91-status.log             |   16 +
+ jobs/done/na92-frozenprobe.done       |    1 +
+ jobs/done/na92-frozenprobe.log        |   10 +
+ jobs/poke.log                         |    4 +
+ research/dca_paper/out/DCA-pair.json  |    2 +-
+ research/dca_paper/out/DCA-pair.md    |    6 +-
+ research/dca_paper/out/DCA-paper.json | 2444 ++++++++++++++++-----------------
+ research/dca_paper/out/DCA-paper.md   |   20 +-
+ 9 files changed, 1268 insertions(+), 1236 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   cccfb6d2..932a0a0f  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
