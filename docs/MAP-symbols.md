@@ -9810,6 +9810,15 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L52 `plan(st, size_gb, persist)` — Шаги, которые нужны; пустой список — делать нечего.
 - L72 `main(argv=None)`
 
+## tools/tail_probe.py · 30 строк
+
+Зонд: хвосты логов прогонов книг на сервере (ничего не меняет).
+
+- L8 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L9 `ROOT = os.path.dirname(HERE)`
+- L10 `LOGS = ['research/dca_paper/out/daily.log', 'r…`
+- L14 `main()`
+
 ## tools/train_alarm.py · 73 строк
 
 Тревога «обучение S8 стоит» — сторожу, `status` и журналу «нужно от вас».
