@@ -36,3 +36,14 @@ OP     ход  +0.14 %  файл mtime 12:03:37  {'mid_close': 0.140085000000000
   14 сильнейших имён дают +2.01 %: APT, ARB, DOT, AVAX, SUI, BCH, LTC, DOGE, LINK, ETH, TRX, UNI, SOL, ADA
   15 сильнейших — +1.89 % (ниже порога), дальше только ниже
 конец: 2026-10-16T12:10:33Z, код 0
+публикуется в ветку main:
+ jobs/done/na94-exit.log      |  4 ++++
+ jobs/done/na95-guard2.log    | 17 +++++++++++++++++
+ jobs/done/na96-waverows.done |  1 +
+ jobs/done/na96-waverows.log  | 38 ++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                |  3 +++
+ 5 files changed, 63 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   b859b771..ef831e6e  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
