@@ -4,3 +4,27 @@
 запускаю: .venv/bin/python tools/app_api/restart.py 
 порт 443: слушает
 конец: 2026-10-16T17:31:59Z, код 0
+публикуется в ветку main:
+ jobs/done/nb05-api.done                            |    1 +
+ jobs/done/nb05-api.log                             |    6 +
+ jobs/poke.log                                      |    3 +
+ research/dca_paper/out/DCA-pair.json               |    2 +-
+ research/dca_paper/out/DCA-pair.md                 |   78 +-
+ research/dca_paper/out/DCA-paper.json              | 2128 ++++++++++----------
+ research/dca_paper/out/DCA-paper.md                |   20 +-
+ research/dca_paper/out/DCA-short.json              |    2 +-
+ research/dca_paper/out/DCA-short.md                |   36 +-
+ research/dca_paper/out/fixed_pair-2026-10-15.jsonl |   10 +
+ research/dca_paper/out/fixed_pair-2026-10-16.jsonl |    4 +
+ .../dca_paper/out/fixed_short-2026-10-15.jsonl     |   12 +
+ .../dca_paper/out/fixed_short-2026-10-16.jsonl     |    4 +
+ research/dca_paper/out/pair-2026-10-15.jsonl       |   10 +
+ research/dca_paper/out/pair-2026-10-16.jsonl       |    4 +
+ research/dca_paper/out/short-2026-10-15.jsonl      |   11 +
+ research/dca_paper/out/short-2026-10-16.jsonl      |    4 +
+ research/s8_loop/out/day_brake.json                |    2 +-
+ 18 files changed, 1203 insertions(+), 1134 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   3ff82eb3..4ef99666  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
