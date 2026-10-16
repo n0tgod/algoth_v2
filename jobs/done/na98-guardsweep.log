@@ -138,3 +138,17 @@
 | ≥ 6 % | +37.0 % (-8 %) / +13.5 % (-4 %) | +77.4 % (-11 %) / +12.4 % (-2 %) | +13.7 % (-5 %) / +14.6 % (-4 %) |
 
 Прогон 464.8 с, 2026-10-16 12:36 UTC.
+публикуется в ветку main:
+ jobs/done/na97-apirestart.log               |     11 +
+ jobs/done/na98-guardsweep.done              |      1 +
+ jobs/done/na98-guardsweep.log               |    140 +
+ jobs/poke.log                               |      3 +
+ research/dca_paper/out/DCA-guard-sweep.json | 104616 +++++++++++++++++++++++++
+ research/dca_paper/out/DCA-guard-sweep.md   |    105 +
+ research/s8_loop/out/day_brake.json         |      2 +-
+ 7 files changed, 104877 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   8c7b8167..ec3e627c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-16T12:36:26Z, код 0
