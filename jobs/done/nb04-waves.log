@@ -83,3 +83,24 @@
 Прогон 2026-10-16 15:45 UTC; часов без меры 807.
 отчёт: /root/algoth_v2/research/dca_paper/out/WAVE-episodes.md
 конец: 2026-10-16T15:45:56Z, код 0
+публикуется в ветку main:
+ jobs/done/nb04-waves.done                          |    1 +
+ jobs/done/nb04-waves.log                           |   85 +
+ jobs/poke.log                                      |    3 +
+ research/dca_paper/out/DCA-pair.json               |    2 +-
+ research/dca_paper/out/DCA-pair.md                 |   58 +-
+ research/dca_paper/out/DCA-paper.json              | 2560 ++++++++++----------
+ research/dca_paper/out/DCA-paper.md                |   20 +-
+ research/dca_paper/out/DCA-short.json              |    2 +-
+ research/dca_paper/out/DCA-short.md                |   26 +-
+ research/dca_paper/out/WAVE-episodes.md            |   71 +
+ research/dca_paper/out/fixed_pair-2026-10-15.jsonl |    4 +
+ .../dca_paper/out/fixed_short-2026-10-15.jsonl     |    4 +
+ research/dca_paper/out/pair-2026-10-15.jsonl       |    7 +
+ research/dca_paper/out/short-2026-10-15.jsonl      |    6 +
+ research/s8_loop/out/day_brake.json                |    2 +-
+ 15 files changed, 1581 insertions(+), 1270 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   9564ed25..a540dddf  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
