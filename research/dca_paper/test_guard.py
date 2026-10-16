@@ -84,6 +84,8 @@ def test_rule_is_declared_for_short_books_with_versions_and_page_text():
     for bk in ("safe_h", "optimal_h", "aggr_h"):
         assert R.wave_guard_of(bk) == 4.0, bk         # снята и возвращена 16.10 с 4 %
     for pk in R.PAIR_ORDER:
+        if R.is_branch(pk):
+            continue                                   # ветви — свой порог (test_branches)
         assert R.wave_guard_of(pk) == 4.0, pk          # и у короткой стороны общего счёта
     for lk in ("safe", "optimal", "aggr"):
         assert R.wave_guard_of(lk) is None, lk         # длинные не трогаются
@@ -99,10 +101,11 @@ def test_rule_is_declared_for_short_books_with_versions_and_page_text():
     # охрана 4 % — текст вкладки называет её с порогом у коротких и общих
     # книг и молчит у длинных
     for k in R.RULERS:
-        short_side = k in R.H24_ORDER or k in R.PAIR_PARTS
-        assert ("охрана рынком" in R.RULERS[k]["plain"]) == short_side, k
-        if short_side:
-            assert "≥ 4 %" in R.RULERS[k]["plain"], (k, R.RULERS[k]["plain"])
+        pct = R.wave_guard_of(k)
+        assert ("охрана рынком" in R.RULERS[k]["plain"]) == (pct is not None), k
+        if pct is not None:
+            assert f"≥ {pct:g} %" in R.RULERS[k]["plain"], (k, R.RULERS[k]["plain"])
+    assert R.wave_guard_of("safe_h") == 4.0 and R.wave_guard_of("pair_safe") == 4.0
     # английский текст для приложения (спека 16): у КАЖДОЙ линейки, одним
     # ядром с русским — охрана и пол названы там же, где по-русски
     for k, v in R.RULERS.items():

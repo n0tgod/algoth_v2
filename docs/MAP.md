@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 617, строк: 257035, каталогов: 86.
+Модулей кода: 619, строк: 257484, каталогов: 86.
 
 
 ## корень — память проекта, идеи, README
@@ -208,10 +208,10 @@
 - `probe_live_hour2.py` · 66 строк — Зонд 10.10 (второй): почему общий счёт `pair_aggr` не взял короткие решения 20:00 UTC (STRK, RLC, APR), котор…
 - `probe_live_hour3.py` · 105 строк — Зонд 10.10 (третий): касса общего счёта `pair_aggr` 100 $ в моменты решений, которые взял живой исполнитель и…
 - `repeat_entry.py` · 449 строк — Пропустить первый вход: насколько «ювелирны» второй, третий, четвёртый выбор имени моделью — и что это даёт к…
-- `rules.py` · 1638 строк — Правила бумажных DCA-книг: три депозита, одни правила.
-- `run_pair.py` · 583 строк — Общий счёт: длинная книга и короткая на ОДНОМ депозите.
-- `run_paper.py` · 1867 строк — Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
-- `run_short.py` · 470 строк — Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
+- `rules.py` · 1769 строк — Правила бумажных DCA-книг: три депозита, одни правила.
+- `run_pair.py` · 584 строк — Общий счёт: длинная книга и короткая на ОДНОМ депозите.
+- `run_paper.py` · 1950 строк — Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
+- `run_short.py` · 482 строк — Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
 - `short_adds.py` · 560 строк — Доливы в прибыльный шорт: заполнить зарезервированные ступени по триггеру.
 - `short_age.py` · 411 строк — Правила общего счёта на ОТДЕЛЬНЫХ коротких книгах: возраст и билет.
 - `short_floor.py` · 371 строк — Пол капитуляции коротких книг как ОСЬ — ядро лестницы, один проход на группу пола, записи на диск.
@@ -235,7 +235,7 @@
 - `tail_screen.py` · 495 строк — Портрет хвоста коротких книг: что общего у минусовых сделок.
 - `wave.py` · 307 строк — Волна рынка и охрана рынком — ОДНА библиотека для книг и замеров.
 - `wave_guard.py` · 488 строк — Охрана рынком для коротких книг h24: концентрация, состав выходов, депозиты, равенство ядру.
-- тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (153), `test_backfill_exit_px.py` (80), `test_boost.py` (174), `test_cost_gap.py` (141), `test_costs.py` (497), `test_costs_cache.py` (82), `test_cut.py` (297), `test_day_shares.py` (45), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_guard.py` (235), `test_guard_fill.py` (75), `test_guard_forward.py` (67), `test_journal_cache.py` (120), `test_names.py` (227), `test_open_days.py` (50), `test_pair.py` (582), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (3352), `test_path_screen.py` (247), `test_pick_rule.py` (121), `test_repeat_entry.py` (234), `test_short.py` (491), `test_short_adds.py` (189), `test_short_age.py` (148), `test_short_floor.py` (125), `test_short_levcap.py` (193), `test_short_levers.py` (225), `test_short_rules_1003.py` (64), `test_short_rung.py` (237), `test_short_rung_axes.py` (143), `test_short_rung_time.py` (144), `test_short_select.py` (143), `test_short_size.py` (66), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_weeks.py` (230), `test_short_why.py` (158), `test_slip_x3.py` (76), `test_tail_screen.py` (198), `test_wave_full.py` (67), `test_wave_guard.py` (166)
+- тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (153), `test_backfill_exit_px.py` (80), `test_boost.py` (174), `test_branches.py` (178), `test_cost_gap.py` (141), `test_costs.py` (497), `test_costs_cache.py` (82), `test_cut.py` (297), `test_day_shares.py` (45), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_guard.py` (238), `test_guard_fill.py` (75), `test_guard_forward.py` (67), `test_journal_cache.py` (120), `test_names.py` (227), `test_open_days.py` (50), `test_pair.py` (582), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (3352), `test_path_screen.py` (247), `test_pick_rule.py` (121), `test_repeat_entry.py` (234), `test_short.py` (491), `test_short_adds.py` (189), `test_short_age.py` (148), `test_short_floor.py` (125), `test_short_levcap.py` (193), `test_short_levers.py` (225), `test_short_rules_1003.py` (64), `test_short_rung.py` (237), `test_short_rung_axes.py` (143), `test_short_rung_time.py` (144), `test_short_select.py` (143), `test_short_size.py` (66), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_weeks.py` (230), `test_short_why.py` (158), `test_slip_x3.py` (76), `test_tail_screen.py` (198), `test_wave_full.py` (67), `test_wave_guard.py` (166)
 - отчёты в `out/` (53): DCA-agree-book.md, DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-boost-100.md, DCA-cash-fix.md, DCA-cost-gap.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-entry-gate.md, DCA-fund-check.md, DCA-fund-probe.md, DCA-guard-fill.md, DCA-guard-forward.md, DCA-guard-sweep.md, DCA-names.md, DCA-pair-age-why.md, DCA-pair-age.md, DCA-pair-gate.md, DCA-pair.md, DCA-paper.md, DCA-path-screen.md, DCA-pick-rule.md, DCA-repeat-entry.md, DCA-short-adds.md, DCA-short-age.md, DCA-short-floor.md, DCA-short-levcap.md, DCA-short-levers-hold.md, DCA-short-levers.md, DCA-short-rung-axes.md, DCA-short-rung-time.md, DCA-short-rung.md, DCA-short-select.md, DCA-short-size.md, DCA-short-stop.md, DCA-short-supply-1m.md, DCA-short-supply.md, DCA-short-take.md, DCA-short-weeks.md, DCA-short-why.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md, DCA-tail-screen.md, DCA-wave-guard-faith.md, DCA-wave-guard.md, NONCRYPTO-cut.md, NONCRYPTO-hold.md, NONCRYPTO-pair.md, NONCRYPTO-window.md, WAVE-episodes.md
 
 ## research/f1_carry — F1 — carry на funding: разложение брутто (гипотеза 3)
@@ -858,6 +858,7 @@
 - `app_api/tradelog.py` · 277 строк — Журнал событий живого исполнителя → записи `trades` → пуши (спека 15 §7.6).
 - `bars_cache_probe.py` · 79 строк — Почему кэш баров не попадает в коротком реплее (15.10, профиль: 3964 read_hour на 68 чтений). Берёт первые ре…
 - `book_timing.py` · 33 строк — Сколько длится прогон книг на тёплом кэше — из логов прогонов (спека 17, путь 1: каденция 5 минут возможна, т…
+- `branch_inherit.py` · 41 строк — Перенос записи ветви 2 % (спека 18 §3, решение владельца 2026-10-16).
 - `cache_sizes.py` · 44 строк — Размеры кэшей прогонов книг на диске (15.10): ноги листа, куски журнала, бары, контекст издержек, кэши реплея…
 - `costs_timing.py` · 43 строк — Сколько стоит контекст издержек и их наложение на строки книги — по частям (спека 17 §0: «свод» 11.7 с на сер…
 - `diag_cycle.py` · 302 строк — Почему молчит цикл обучения: хвост журнала и состояние манифеста.

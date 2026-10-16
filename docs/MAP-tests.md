@@ -1111,6 +1111,20 @@
 - L139 `test_report_names_the_unmeasured_full_share_cell()` — Строка «1 сделка» без причины — молчаливая ложь ячейки.
 - L158 `main()`
 
+## research/dca_paper/test_branches.py · 178 строк
+
+Ветви правил (спека 18): сестры в реестре, карты по наследству, подпись кэша без сестёр, дерево и адрес, пере…
+
+- L8 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `H = 3600.0`
+- L17 `T0 = float(R.RULES_SINCE or 0) + 3 * 86400.0`
+- L20 `test_sisters_in_registry_inherit_maps_and_differ_only_by_guard()`
+- L51 `test_birthdays_versions_and_tree()`
+- L77 `test_short_cache_signature_ignores_sisters_and_books_map_feeds_…`
+- L94 `_row(ruler, at, book_rules, sym='AUSDT', written=None, book=Non…`
+- L106 `test_inherit_copies_old_guard_rows_into_branch_two_and_is_idemp…`
+- L152 `test_inherit_runs_once_before_first_write_and_leaves_a_marker()`
+
 ## research/dca_paper/test_cost_gap.py · 141 строк
 
 Проверки разложения разрыва издержек: полосы, стыковка строк с записями, тождество цепочки, вес долларами про…
@@ -1254,7 +1268,7 @@
 - L66 `test_an_extra_point_of_ours_breaks_the_match()`
 - L77 `test_venue_silence_is_a_reason_not_a_match()`
 
-## research/dca_paper/test_guard.py · 235 строк
+## research/dca_paper/test_guard.py · 238 строк
 
 Проверки охраны рынком — правила выхода коротких книг (спека 14 §13).
 
@@ -1267,10 +1281,10 @@
 - L45 `_rec(marks, state='closed', sym='AAAUSDT', exit='срок', lev=20.…`
 - L52 `test_guard_closes_strictly_before_the_exit_and_only_in_lived_ho…`
 - L83 `test_rule_is_declared_for_short_books_with_versions_and_page_te…`
-- L121 `test_guard_shorts_reads_the_summaries_end_to_end()`
-- L140 `_guard_shorts_end_to_end()`
-- L172 `test_cache_signature_does_not_carry_the_guard_on_purpose()`
-- L181 `test_guard_exit_price_comes_from_the_fills_not_from_the_whole_m…` — Цена выхода охраны — из заполненных ступеней, а не «вся маржа на плече».
+- L124 `test_guard_shorts_reads_the_summaries_end_to_end()`
+- L143 `_guard_shorts_end_to_end()`
+- L175 `test_cache_signature_does_not_carry_the_guard_on_purpose()`
+- L184 `test_guard_exit_price_comes_from_the_fills_not_from_the_whole_m…` — Цена выхода охраны — из заполненных ступеней, а не «вся маржа на плече».
 
 ## research/dca_paper/test_guard_fill.py · 75 строк
 

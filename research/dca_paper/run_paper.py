@@ -548,6 +548,86 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
     return out, cells, one, live
 
 
+def inherit_branch(path, family, old_ver, value, log=print, dry=False):
+    """Перенести строки версии `old_ver` основных книг семейства в их
+    ветви `_g<value>` (спека 18 §3). Копия под ключом сестры и текущей
+    версией семейства, `written_at` сохранён: «вперёд» остаётся «вперёд».
+    Исходные строки не трогаются; повтор ничего не добавляет (дедуп по
+    ключу решения). У общего счёта метка `book` короткой стороны
+    переводится на сестру — по ней читатели делят стороны."""
+    bases = [k for k in R.order_of(family) if not R.is_branch(k)]
+    short_bases = ({sk for pk in bases for sk in R.parts_of(pk)[1:]}
+                   if family == "pair" else set())
+    rows = []
+    for p in (path, R.fixed_twin(path)):
+        got, bad = R.read_journal(p)
+        if bad:
+            log(f"{os.path.basename(p)}: битых строк {bad}")
+        rows.extend(got)
+    want = int(R.FAMILY_RULES[family])
+    picked, out = {}, []
+    for r in rows:
+        try:
+            if (int(r.get("rules", 0)) != R.RULES
+                    or int(r.get("book_rules") or 0) != int(old_ver)):
+                continue
+        except (TypeError, ValueError):
+            continue
+        base = R.ruler_of(r)
+        if base not in bases:
+            continue
+        n = dict(r, ruler=R.branch_key(base, value), book_rules=want)
+        if n.get("book") in short_bases:
+            n["book"] = R.branch_key(n["book"], value)
+        out.append(n)
+        st = picked.setdefault(base, {"rows": 0, "forward": 0, "at_min": None, "at_max": None})
+        st["rows"] += 1
+        if R.ahead(r.get("at"), r.get("written_at")) is True:
+            st["forward"] += 1
+        a = float(r.get("at") or 0)
+        st["at_min"] = a if st["at_min"] is None else min(st["at_min"], a)
+        st["at_max"] = a if st["at_max"] is None else max(st["at_max"], a)
+    day = lambda t: time.strftime("%Y-%m-%d %H:%M", time.gmtime(float(t or 0)))  # noqa: E731
+    for base, st in sorted(picked.items()):
+        log(f"{family} {base} → {R.branch_key(base, value)}: строк {st['rows']}, "
+            f"из них вперёд {st['forward']}, решения {day(st['at_min'])} … {day(st['at_max'])} UTC")
+    if not out:
+        log(f"{family}: строк версии {old_ver} у основных книг нет — переносить нечего")
+        return {"picked": picked, "added": 0}
+    if dry:
+        log(f"{family}: сухой прогон, к переносу {len(out)} строк")
+        return {"picked": picked, "added": 0, "would": len(out)}
+    st = append_journal(out, path=path, log=log)
+    return {"picked": picked, "added": st.get("added", 0), "had": st.get("had")}
+
+
+def inherit_marker(path, value):
+    """Файл-отметка «перенос в ветвь сделан» рядом с журналом; имя не
+    попадает под глоб кусков журнала (`<имя>-*.jsonl`)."""
+    return f"{path}.branch_g{int(round(float(value)))}.done"
+
+
+def inherit_branches(path, family, log=print):
+    """Перенос записи в ветви семейства по карте `rules.BRANCH_INHERIT`
+    — один раз, ДО первой записи сестры (отметка рядом с журналом).
+    Без карты или с отметкой — ничего не делает."""
+    spec = R.BRANCH_INHERIT.get(family)
+    if not spec:
+        return None
+    mk = inherit_marker(path, spec["to"])
+    if os.path.exists(mk):
+        return None
+    res = inherit_branch(path, family, spec["from_version"], spec["to"], log=log)
+    os.makedirs(os.path.dirname(mk) or ".", exist_ok=True)
+    with open(mk, "w", encoding="utf-8") as f:
+        f.write(json.dumps({"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                            "added": res.get("added"), "from_version": spec["from_version"],
+                            "to": spec["to"]}, ensure_ascii=False))
+    log(f"{family}: перенос записи в ветвь {spec['to']:g} % выполнен, "
+        f"дописано {res.get('added')} строк, отметка {os.path.basename(mk)}")
+    return res
+
+
 def append_journal(rows, path=None, log=print):
     """Дописывает только НОВЫЕ решения. Запись write-ahead: строка,
     однажды попавшая в журнал, не переписывается — иначе момент записи
@@ -1655,6 +1735,9 @@ def rules_snapshot(keys=None):
             # книги, иначе смена правил читается как остановка.
             "FAMILY_RULES": dict(R.FAMILY_RULES),
             "FAMILY_SINCE": dict(R.FAMILY_SINCE),
+            # ветви правил (спека 18): свой день у сестры, оси и дерево
+            "RULER_SINCE": dict(R.RULER_SINCE),
+            "BRANCH_AXES": R.BRANCH_AXES, "TREE": R.tree(),
             "RULER_ORDER": keys}
 
 

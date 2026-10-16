@@ -59,6 +59,12 @@ CELL = ("fence:none:t2", "fence", "none", "t2")
 # считается на той же линейке, что «оптимальная», и отличается ГЕЙТОМ
 # плеча (`rules.min_lev_of`), как у длинных книг.
 BOOKS = {"safe_h": "safe_s", "optimal_h": "optimal_s", "aggr_h": "optimal_s"}
+# Ветви (спека 18): сестра кормится ТОЙ ЖЕ линейкой кэша, что основная
+# книга, — охрана считается поверх записи, а не в симуляции.
+BOOKS.update({k: BOOKS[b["base"]] for k, b in R.BRANCHES.items() if b["base"] in BOOKS})
+# Подпись кэша — по ОСНОВНЫМ книгам: сестра ничего не считает и подпись
+# менять не вправе (урок: иначе один новый ключ пересчитал бы всю запись).
+BASE_BOOKS = {k: v for k, v in BOOKS.items() if not R.is_branch(k)}
 ARMS = ("gbm", "nn")
 # Кэш реплея лежит ВНЕ публикуемого каталога. `publish.sh` кладёт в
 # историю весь `research/*/out`, и семимегабайтный кэш там упёрся в
@@ -86,7 +92,7 @@ def cache_sig():
             # про смену пола, отдал бы прогону исходы ДРУГОЙ книги —
             # молча, потому что ключ записи от пола не зависит.
             "floor": {bk: R.floor_frac_of(bk, D2.FLOOR_FRAC)
-                      for bk in sorted(BOOKS)},
+                      for bk in sorted(BASE_BOOKS)},
             "take": R.TAKE_MULT,
             # Охраны рынком (`rules.WAVE_GUARD_PCT`) в подписи НЕТ намеренно:
             # кэш хранит исход позиции БЕЗ охраны, а охрана — вид над
@@ -298,6 +304,8 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
     rows, cells, one, live = RP.build_rows(packed, now=now,
                                            keys=R.H24_ORDER, log=log)
     ph.mark("касса")
+    # ветви (спека 18): наследование записи — ДО первой записи сестры
+    RP.inherit_branches(journal or R.H24_JOURNAL, "h24", log=log)
     RP.append_journal(rows, path=journal or R.H24_JOURNAL, log=log)
     ph.mark("журнал")
     s = RP.summarize(path=journal or R.H24_JOURNAL, live=live,
@@ -317,7 +325,11 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
                         "AHEAD_H": R.AHEAD_H, "HOLD_H": R.H24_HOLD_H,
                         "TICKET": R.TICKET,
                         "RULERS": {k: dict(R.RULERS[k]) for k in R.H24_ORDER},
-                        "RULER_ORDER": list(R.H24_ORDER)}})
+                        "RULER_ORDER": list(R.H24_ORDER),
+                        "FAMILY_RULES": dict(R.FAMILY_RULES),
+                        "FAMILY_SINCE": dict(R.FAMILY_SINCE),
+                        "RULER_SINCE": dict(R.RULER_SINCE),
+                        "BRANCH_AXES": R.BRANCH_AXES, "TREE": R.tree()}})
     RP.attach_open_dd(s)
     ph.mark("просадка открытых")
     s["timing"] = dict(ph.out)

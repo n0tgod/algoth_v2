@@ -307,6 +307,7 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
     ph.mark("издержки, гейт, возраст, охрана")
     rows, cells, one, live = RP.build_rows(packed, now=now, keys=keys, log=log)
     ph.mark("касса")
+    RP.inherit_branches(journal or R.PAIR_JOURNAL, "pair", log=log)
     RP.append_journal(rows, path=journal or R.PAIR_JOURNAL, log=log)
     ph.mark("журнал")
     s = RP.summarize(path=journal or R.PAIR_JOURNAL, live=live, keys=keys,

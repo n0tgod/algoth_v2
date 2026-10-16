@@ -19,6 +19,7 @@ import datetime as dt
 import glob
 import json
 import os
+import re
 
 RULES = 7                        # версия правил книг; смена — новая запись
 # Момент (UTC), с которого действует ЭТА версия правил. Нужен потому, что
@@ -260,8 +261,9 @@ MODE_EN_PLAIN = {"safe": "leverage from the name’s volatility, 6σ reserve",
 
 
 def mode_of(key):
-    """Режим по ключу книги: без приставки общего счёта и хвоста короткой."""
-    k = str(key)
+    """Режим по ключу книги: без приставки общего счёта, хвоста короткой
+    и суффикса ветви правил (`_g<порог>`, спека 18)."""
+    k = re.sub(r"_g\d+$", "", str(key))
     if k.startswith("pair_"):
         k = k[5:]
     for suf in ("_h", "_s"):
@@ -654,6 +656,108 @@ def wave_guard_of(key):
     return None if v is None else float(v)
 
 
+# --- ВЕТВИ ПРАВИЛ (спека 18, решение владельца 2026-10-16) ---------------
+# Дерево книг: режим → сторона → ветви правил. Ветвь — книга-сестра с тем
+# же ядром, листом и кассой, у которой ОДНО правило стороны другое.
+# Сегодня ось одна: охрана рынком у короткой стороны; значения объявлены
+# ДО прогона и по результатам не расширяются: 0 (без охраны), 2, 4
+# (действующее правило — `default`, решение владельца «ставь 4»), 6.
+# Ключ сестры — суффикс `_g<порог>` у ключа основной книги; код, пути и
+# журналы не переименовываются: сестра пишет в журнал СЕМЕЙСТВА под
+# своим `ruler`. Карты стороны (пик, доля билета, возраст, пол) сестра
+# НАСЛЕДУЕТ у основной книги — вторая копия числа не заводится. Ветви
+# нет у длинных книг: осей у них пока нет.
+BRANCH_AXES = {"guard": {"values": (0.0, 2.0, 4.0, 6.0), "default": 4.0,
+                         "title": "охрана рынком", "title_en": "market guard"}}
+# День рождения ветви: до него пересчёт, с него запись вперёд. Ветвь 2 %
+# НАСЛЕДУЕТ запись основной книги под прежним порогом 2 % (владелец
+# 16.10: «по факту мы возвращаем всё, что было»): строки версии h24 5 /
+# pair 11 писались ровно её правилами и переносятся в её запись
+# (`tools/branch_inherit.py`) — отсюда её день 15.10, день тех версий.
+BRANCH_SINCE = {0.0: "2026-10-16", 2.0: "2026-10-15", 6.0: "2026-10-16"}
+BRANCHES = {}        # ключ сестры → {"base", "rule", "value", "default"}
+RULER_SINCE = {}     # день записи вперёд у книги, если он не семейный
+# Наследование записи: строки версии `from_version` основных книг
+# семейства переносятся в ветвь `to` (`run_paper.inherit_branches`) ДО
+# первой записи сестры — иначе её пересчёт лёг бы под теми же ключами
+# решений, и строки, писанные вживую, стали бы пересчётом.
+BRANCH_INHERIT = {"h24": {"from_version": 5, "to": 2.0},
+                  "pair": {"from_version": 11, "to": 2.0}}
+
+
+def branch_key(base, value):
+    """Ключ ветви: `safe_h` + 2 % → `safe_h_g2`; 0 — `_g0`."""
+    return f"{base}_g{int(round(float(value)))}"
+
+
+def branch_title(value, en=False):
+    if not value:
+        return "no guard" if en else "без охраны"
+    return f"guard {float(value):g} %" if en else f"охрана {float(value):g} %"
+
+
+def _branch_meta(base, value, default):
+    return {"base": base, "rule": "guard", "value": float(value),
+            "default": bool(default),
+            "title": branch_title(value) + (" · default" if default else ""),
+            "title_en": branch_title(value, en=True) + (" · default" if default else "")}
+
+
+_AX = BRANCH_AXES["guard"]
+for _base in list(H24_ORDER):
+    RULERS[_base]["branch"] = _branch_meta(_base, _AX["default"], True)
+    for _val in _AX["values"]:
+        if _val == _AX["default"]:
+            continue
+        _k = branch_key(_base, _val)
+        BRANCHES[_k] = {"base": _base, "rule": "guard", "value": float(_val),
+                        "default": False}
+        RULERS[_k] = dict(RULERS[_base])
+        RULERS[_k]["title"] = RULERS[_base]["title"] + " · " + branch_title(_val)
+        RULERS[_k]["branch"] = _branch_meta(_base, _val, False)
+        if _val:
+            WAVE_GUARD_PCT[_k] = float(_val)
+        else:
+            RULERS[_k]["plain"] += " Охраны рынком у этой ветви НЕТ: шорт живёт до цели, пола или срока."
+            RULERS[_k]["plain_en"] += " This branch has NO guard by the market wave: a short lives to its target, floor or term."
+        RULER_SINCE[_k] = BRANCH_SINCE[_val]
+        for _m in (PEAKS, SHORT_SHARE, SHARE_SINCE, MIN_AGE_DAYS, FLOOR_FRAC_BY_BOOK):
+            if _base in _m:
+                _m[_k] = _m[_base]
+        H24_ORDER.append(_k)
+for _pk, (_lk, _sk) in list(PAIR_PARTS.items()):
+    RULERS[_pk]["branch"] = _branch_meta(_pk, _AX["default"], True)
+    for _val in _AX["values"]:
+        if _val == _AX["default"]:
+            continue
+        _k = branch_key(_pk, _val)
+        BRANCHES[_k] = {"base": _pk, "rule": "guard", "value": float(_val),
+                        "default": False}
+        PAIR_PARTS[_k] = (_lk, branch_key(_sk, _val))
+        RULERS[_k] = dict(RULERS[_pk])
+        RULERS[_k]["title"] = RULERS[_pk]["title"] + " · " + branch_title(_val)
+        RULERS[_k]["branch"] = _branch_meta(_pk, _val, False)
+        if not _val:
+            RULERS[_k]["plain"] += " Охраны рынком у короткой стороны этой ветви НЕТ."
+            RULERS[_k]["plain_en"] += " The short side of this branch has NO guard by the market wave."
+        RULER_SINCE[_k] = BRANCH_SINCE[_val]
+        for _m in (PEAKS, SHORT_SHARE, SHARE_SINCE, MIN_AGE_DAYS, PAIR_SHORT_GATE):
+            if _pk in _m:
+                _m[_k] = _m[_pk]
+PAIR_ORDER[:] = list(PAIR_PARTS)
+del _AX
+
+
+def base_of(key):
+    """Основная книга ветви; у книги без ветви — она сама."""
+    return ((RULERS.get(key) or {}).get("branch") or {}).get("base") or str(key)
+
+
+def is_branch(key):
+    """Сестра ли это (ветвь не по умолчанию)."""
+    return key in BRANCHES
+
+
 for _pk in list(PAIR_PARTS) + list(H24_ORDER):
     _sh = float(SHORT_SHARE.get(_pk, 1.0))
     # Пол капитуляции говорится там, где он СВОЙ: у книги с полом ядра
@@ -743,8 +847,35 @@ FAMILY_SINCE = {"pair": "2026-10-16", "h24": "2026-10-16", "sit": "2026-10-15"}
 
 
 def family_since(key):
-    """С какого дня у семейства книги идёт запись вперёд. Нет — None."""
-    return FAMILY_SINCE.get(family_of(key))
+    """С какого дня у книги идёт запись вперёд: свой день у ветви
+    (`RULER_SINCE`), иначе день семейства. Нет — None."""
+    return RULER_SINCE.get(key) or FAMILY_SINCE.get(family_of(key))
+
+
+def address_of(key):
+    """Адрес книги в дереве (спека 18 §2): режим, сторона, ветвь, ключ."""
+    br = (RULERS.get(key) or {}).get("branch")
+    return {"key": str(key), "mode": mode_of(key), "mode_en": title_en(key),
+            "side": side_of(key), "base": base_of(key),
+            "branch": ([{"rule": br["rule"], "value": br["value"],
+                         "default": bool(br.get("default")),
+                         "title": br.get("title"), "title_en": br.get("title_en")}]
+                       if br else [])}
+
+
+def tree():
+    """Дерево книг для каталога: режим → сторона → ветви с ключами книг.
+    Готовое на сервере, чтобы читатель не собирал его из суффиксов."""
+    out = []
+    for mode in ("safe", "optimal", "aggr"):
+        sides = []
+        for side, fam in (("long", "sit"), ("short", "h24"), ("both", "pair")):
+            keys = [k for k in order_of(fam) if mode_of(k) == mode]
+            default = next((k for k in keys if not is_branch(k)), keys[0] if keys else None)
+            sides.append({"side": side, "default": default,
+                          "branches": [address_of(k) for k in keys]})
+        out.append({"mode": mode, "mode_en": MODE_EN[mode], "sides": sides})
+    return out
 
 
 def family_rules(key):
