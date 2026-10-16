@@ -1111,7 +1111,7 @@
 - L139 `test_report_names_the_unmeasured_full_share_cell()` — Строка «1 сделка» без причины — молчаливая ложь ячейки.
 - L158 `main()`
 
-## research/dca_paper/test_branches.py · 178 строк
+## research/dca_paper/test_branches.py · 185 строк
 
 Ветви правил (спека 18): сестры в реестре, карты по наследству, подпись кэша без сестёр, дерево и адрес, пере…
 
@@ -1121,9 +1121,9 @@
 - L20 `test_sisters_in_registry_inherit_maps_and_differ_only_by_guard()`
 - L51 `test_birthdays_versions_and_tree()`
 - L77 `test_short_cache_signature_ignores_sisters_and_books_map_feeds_…`
-- L94 `_row(ruler, at, book_rules, sym='AUSDT', written=None, book=Non…`
-- L106 `test_inherit_copies_old_guard_rows_into_branch_two_and_is_idemp…`
-- L152 `test_inherit_runs_once_before_first_write_and_leaves_a_marker()`
+- L101 `_row(ruler, at, book_rules, sym='AUSDT', written=None, book=Non…`
+- L113 `test_inherit_copies_old_guard_rows_into_branch_two_and_is_idemp…`
+- L159 `test_inherit_runs_once_before_first_write_and_leaves_a_marker()`
 
 ## research/dca_paper/test_cost_gap.py · 141 строк
 

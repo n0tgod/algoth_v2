@@ -75,6 +75,13 @@ def test_birthdays_versions_and_tree():
 
 
 def test_short_cache_signature_ignores_sisters_and_books_map_feeds_them():
+    # подпись реплея ДЛИННЫХ книг — тоже без сестёр: сервер 16.10 18:10
+    # ответил «правила реплея изменились» общему счёту, потому что 9
+    # линеек в подписи стали 18 (сестры попали в `run_paper.RULERS`)
+    import run_paper as RP
+    long_sig = RP.cache_sig()["rulers"]
+    assert len(long_sig) == 9 and long_sig == sorted(
+        v for k, v in RP.RULERS.items() if R.family_of(k) != "pair" and not R.is_branch(k)), long_sig
     sig = S.cache_sig()
     assert sorted(sig["floor"]) == ["aggr_h", "optimal_h", "safe_h"], sig["floor"]
     assert sorted(sig["books"]) == ["optimal_s", "safe_s"]
