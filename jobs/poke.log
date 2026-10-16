@@ -2387,3 +2387,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792165552 ==
 [2026-10-16T15:45:54Z] задание nb04-waves запущено: tools/wave_episodes.py
+
+== сигнал 1792171912 ==
+[2026-10-16T17:31:54Z] задание nb05-api запущено: tools/app_api/restart.py
