@@ -440,6 +440,10 @@ class App:
                               "title": (r.get("title") if isinstance(r, dict) else None) or key,
                               # имя режима для людей (14.10): из свода, одним ядром с правилами
                               "title_en": (r.get("title_en") if isinstance(r, dict) else None) or key,
+                              # адрес в дереве книг (спека 18): ветвь правил и
+                              # основная книга — из свода, одним ядром с правилами
+                              "branch": (r.get("branch") if isinstance(r, dict) else None),
+                              "base": (((r.get("branch") or {}).get("base") if isinstance(r, dict) else None) or key),
                               # касса БУМАГИ — справка: подписка стартует с депозита (§2)
                               "paper_cash_usd": self.paper_cash(b, float(dep)),
                               "ticket_usd": self.ticket_of(b, float(dep)),
@@ -447,7 +451,9 @@ class App:
                               "n": ((b.get("all") or {}).get("n"))})
         return 200, {"cells": cells, "stale": d.get("stale"), "window": d.get("window"),
                      "sizings": sizings, "sizing_title": d.get("sizing_title") or {},
-                     "sizing_plain": d.get("sizing_plain") or {}}
+                     "sizing_plain": d.get("sizing_plain") or {},
+                     # дерево книг режим → сторона → ветви — готовое на сервере
+                     "tree": (d.get("rules") or {}).get("TREE")}
 
     @staticmethod
     def cell_key(book, deposit, sizing=None):

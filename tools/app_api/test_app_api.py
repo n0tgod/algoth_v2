@@ -24,9 +24,16 @@ import init as INIT                                           # noqa: E402
 import apple as APPLE                                         # noqa: E402
 
 SECRET = "s3cr3t-never-shown-xyz"
-DCA = {"rulers": [{"key": "optimal_h", "title": "оптимальная (шорт)", "side": "short"},
+DCA = {"rulers": [{"key": "optimal_h", "title": "оптимальная (шорт)", "side": "short",
+                   "branch": {"base": "optimal_h", "rule": "guard", "value": 4.0, "default": True,
+                              "title": "охрана 4 % · default", "title_en": "guard 4 % · default"}},
                   {"key": "pair_optimal", "title": "общий счёт", "side": "both"},
-                  {"key": "optimal", "title": "оптимальная"}],
+                  {"key": "optimal", "title": "оптимальная"},
+                  # сестра-ветвь (спека 18): адрес едет из свода как есть
+                  {"key": "optimal_h_g2", "title": "оптимальная (шорт h24) · охрана 2 %", "side": "short",
+                   "branch": {"base": "optimal_h", "rule": "guard", "value": 2.0, "default": False,
+                              "title": "охрана 2 %", "title_en": "guard 2 %"}}],
+       "rules": {"TREE": [{"mode": "optimal", "mode_en": "Depth", "sides": []}]},
        "deposits": [100.0, 1000.0, 10000.0],
        "books": {"optimal_h:1000": {"all": {"usd": 123.4, "final": 0.12, "n": 50}},
                  "pair_optimal:1000": {"all": {"usd": -20.0, "final": -0.02, "n": 10}},
@@ -175,8 +182,18 @@ def test_subscriptions_cells_hedge_warning_and_state():
         app, _ = _app(tmp, venue=FakeVenue(equity=1100.0, modes={"BTCUSDT": "hedge", "ETHUSDT": "oneway"}))
         acc = _login(app)
         st, cells = app.strategies()
-        assert st == 200 and len(cells["cells"]) == 9 * len(cells["sizings"])
+        assert st == 200 and len(cells["cells"]) == 12 * len(cells["sizings"])
         assert cells["sizings"][0] == "compound"
+        # дерево книг (спека 18): ветвь и основная книга — из свода, дерево целиком
+        g2 = next(x for x in cells["cells"] if x["book"] == "optimal_h_g2" and x["deposit"] == 1000.0
+                  and x["sizing"] == "compound")
+        assert g2["base"] == "optimal_h" and g2["branch"]["value"] == 2.0 and not g2["branch"]["default"]
+        base = next(x for x in cells["cells"] if x["book"] == "optimal_h" and x["deposit"] == 1000.0
+                    and x["sizing"] == "compound")
+        assert base["base"] == "optimal_h" and base["branch"]["default"] is True
+        plain = next(x for x in cells["cells"] if x["book"] == "optimal" and x["sizing"] == "compound")
+        assert plain["branch"] is None and plain["base"] == "optimal"
+        assert cells["tree"][0]["mode_en"] == "Depth"
         c = next(x for x in cells["cells"] if x["book"] == "optimal_h" and x["deposit"] == 1000.0
                  and x["sizing"] == "compound")
         assert c["side"] == "short" and abs(c["paper_cash_usd"] - 1123.4) < 1e-9
