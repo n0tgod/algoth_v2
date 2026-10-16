@@ -2170,6 +2170,26 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L135 `report(res)`
 - L195 `main(argv=None)`
 
+## research/dca_paper/inverse_guard.py · 222 строк
+
+Замер: ОБРАТНАЯ охрана рынком — выход, когда рынок пошёл в сторону позиции (вопрос владельца 2026-10-16: «сде…
+
+- L33 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L34 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L44 `OUT_MD = os.path.join(R.OUT, 'DCA-inverse-guard.…`
+- L45 `OUT_JSON = os.path.join(R.OUT, 'DCA-inverse-guard.…`
+- L46 `AXIS = LG.AXIS`
+- L47 `NULL_AT = (2.0, 4.0)`
+- L48 `DIRECT_SHORT = 4.0`
+- L49 `SHORTS = ('safe_h', 'optimal_h', 'aggr_h')`
+- L50 `WHY_INV = 'рынок за нас'`
+- L53 `guard(recs, pct, mkt, book, down, why)` — Записи под охраной (направление `down`) и пары «было → стало».
+- L61 `variants(side)` — Объявленные варианты: (имя, прямая, обратная).
+- L74 `run(seeds, log)`
+- L139 `_title(name)`
+- L150 `report(res)`
+- L199 `main(argv=None)`
+
 ## research/dca_paper/long_guard.py · 284 строк
 
 Замер: охрана рынком на ДЛИННЫХ книгах (вопрос владельца 2026-10-16).

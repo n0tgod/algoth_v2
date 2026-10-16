@@ -59,7 +59,21 @@ def test_null_uses_the_same_hours_and_other_positions():
           f"случайная открытая позиция №{i}")
 
 
+def test_inverse_variants_and_direction():
+    import inverse_guard as IG
+    names = [n for n, _d, _i in IG.variants("short")]
+    assert names[:2] == ["off", "direct4"] and "inv2" in names and "direct4+inv6" in names, names
+    assert [n for n, _d, _i in IG.variants("long")][:2] == ["off", "inv1"]
+    m = FakeMarket({1: -0.03, 2: 0.05})
+    out, hits = IG.guard([_rec(AT)], 2.0, m, "safe_h", down=True, why=IG.WHY_INV)
+    assert len(hits) == 1 and out[0]["exit"] == IG.WHY_INV and out[0]["exit_ts"] == AT + H - 1
+    out2, hits2 = IG.guard([_rec(AT)], 2.0, m, "safe", down=False, why=IG.WHY_INV)
+    assert len(hits2) == 1 and out2[0]["exit_ts"] == AT + 2 * H - 1
+    print("ok  обратная охрана: варианты объявлены, шорт — по падению рынка, лонг — по росту")
+
+
 if __name__ == "__main__":
     test_down_trigger_mirrors_up_and_default_is_unchanged()
     test_null_uses_the_same_hours_and_other_positions()
-    print("\nвсе 2 проверки прошли")
+    test_inverse_variants_and_direction()
+    print("\nвсе 3 проверки прошли")

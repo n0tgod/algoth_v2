@@ -1315,7 +1315,7 @@
 - L30 `write(path, rows)`
 - L36 `main()`
 
-## research/dca_paper/test_long_guard.py · 65 строк
+## research/dca_paper/test_long_guard.py · 79 строк
 
 Охрана вниз для длинных книг: ядро `wave.k_star/apply_guard(down=True)` и нуль замера `long_guard` (те же час…
 
@@ -1328,6 +1328,7 @@
 - L27 `_rec(at, n=10, d=0.01, state='closed')`
 - L34 `test_down_trigger_mirrors_up_and_default_is_unchanged()`
 - L48 `test_null_uses_the_same_hours_and_other_positions()`
+- L62 `test_inverse_variants_and_direction()`
 
 ## research/dca_paper/test_names.py · 227 строк
 
