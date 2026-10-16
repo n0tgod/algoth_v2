@@ -1,0 +1,8 @@
+== задание nb13-stop-long ==
+строка: run tools/stop_run.py research/dca_paper/run_paper.py
+начало: 2026-10-16T18:28:49Z
+запускаю: .venv/bin/python tools/stop_run.py research/dca_paper/run_paper.py
+найдено 1: 554732
+TERM → 554732
+остановлено: 554732
+конец: 2026-10-16T18:28:51Z, код 0

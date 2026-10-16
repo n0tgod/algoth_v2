@@ -156,3 +156,14 @@
 **Не посчитан:** правила реплея изменились. Это причина, а не пустая книга: без кэшей реплея обеих сторон общий счёт неоткуда взять.
 
 конец: 2026-10-16T18:28:03Z, код 0
+публикуется в ветку main:
+ jobs/done/nb11-status.done |   1 +
+ jobs/done/nb11-status.log  |  11 ++++
+ jobs/done/nb12-tails.done  |   1 +
+ jobs/done/nb12-tails.log   | 158 +++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log              |   2 +
+ 5 files changed, 173 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   43d43392..32bf69e1  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
