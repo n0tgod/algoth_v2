@@ -1,4 +1,3 @@
-2026-09-29T14:55:08Z · origin/main не получен (сеть или доступ) — задания могут быть не видны
 2026-10-02T01:05:05Z · дерево расходилось с origin/main: застрявший коммит опубликован
 2026-10-05T23:04:41Z · дерево расходилось с origin/main: застрявший коммит опубликован
 2026-10-05T23:16:35Z · дерево расходилось с origin/main: застрявший коммит опубликован
@@ -18,3 +17,4 @@
 2026-10-16T23:01:30Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
 2026-10-16T23:04:00Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
 2026-10-16T23:04:45Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+2026-10-16T23:19:53Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)

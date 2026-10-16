@@ -19,3 +19,13 @@ Already up to date.
 == перезапускаю циклы обучения ==
   не запущен: s8_loop/train.py --pretest
   остановлен, сторож поднимет: s8_loop/train.py$
+ВНИМАНИЕ: 2026-10-16T23:04:45Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nb24-restart-book.log | 17 ++++++++++++++++-
+ jobs/done/nb25-api-restart.log  | 13 +++++++++++++
+ jobs/queue-state.md             |  2 +-
+ 3 files changed, 30 insertions(+), 2 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   71483de8..52519972  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
