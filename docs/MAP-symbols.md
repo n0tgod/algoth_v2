@@ -9469,6 +9469,16 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L45 `check(paths, pct=PCT, asks_out=ASKS_OUT, statvfs=os.statvfs, no…` — Возвращает список путей над порогом; просьба пишется один раз.
 - L78 `main(argv=None, asks_out=ASKS_OUT, paths=None)`
 
+## tools/exit_probe.py · 81 строк
+
+Зонд: почему исполнитель Ladder закрыл позиции — записи намерений `exit` и событий исполнителя по именам за п…
+
+- L14 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L15 `ROOT = os.path.dirname(HERE)`
+- L16 `KEEP = ('kind', 'sym', 'book', 'side', 'reason…`
+- L21 `fmt_ts(v)`
+- L31 `main()`
+
 ## tools/freeze_weights.py · 77 строк
 
 Заморозить текущие веса S8: копия в `out/model/frozen/`.
