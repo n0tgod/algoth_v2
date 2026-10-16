@@ -29,3 +29,17 @@
 pair pair_aggr → pair_aggr_g2: строк 12401, из них вперёд 572, решения 2026-08-08 10:00 … 2026-10-16 01:00 UTC
 СТОП: память 2186 МБ больше предела 1800 МБ — прогон останавливается сам, цикл не трогаем
 конец: 2026-10-16T18:41:33Z, код 0
+публикуется в ветку main:
+ jobs/done/nb13-stop-long.log          |   10 +
+ jobs/done/nb14-daily-tail.log         |    4 +
+ jobs/done/nb15-pair-tail.done         |    1 +
+ jobs/done/nb15-pair-tail.log          |   31 +
+ jobs/done/nb16-status.log             |   50 +
+ jobs/poke.log                         |    3 +
+ research/dca_paper/out/DCA-paper.json | 2625 ++++++++++++++++++++-------------
+ research/dca_paper/out/DCA-paper.md   |   20 +-
+ research/dca_paper/out/DCA-short.json |    2 +-
+ research/dca_paper/out/DCA-short.md   |   26 +-
+ research/s8_loop/out/day_brake.json   |    2 +-
+ 11 files changed, 1694 insertions(+), 1080 deletions(-)
+fatal: cannot lock ref 'HEAD': is at 7ea4a4f51057fc7a81860d69a65805d993cdbc9b but expected 0ee8bfcaec74f4c72f8310acb974924b224600ed
