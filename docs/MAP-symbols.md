@@ -3280,7 +3280,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L472 `publish(name)`
 - L478 `main(argv=None)`
 
-## research/dca_paper/wave.py · 280 строк
+## research/dca_paper/wave.py · 307 строк
 
 Волна рынка и охрана рынком — ОДНА библиотека для книг и замеров.
 
@@ -3297,16 +3297,16 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
   - L71 `Hours.row(self, sym, ts)` — Сводка часа, в который попадает момент `ts`.
   - L81 `Hours.back(self, sym, ts, n)` — Сводки n предыдущих часов, старые сначала; пропуски — None.
 - L86 `class Market` — Цены из часовых сводок: ход имени, волна прокси-имён, β до входа, час срабатывания охраны.
-  - L90 `Market.__init__(self, hours=None, proxies=PROXY, min_proxy=MIN_PROXY)`
-  - L97 `Market.px(self, sym, ts)`
-  - L105 `Market.move(self, sym, t0, t1)`
-  - L109 `Market.wave(self, t0, t1)` — Средний ход прокси-имён за [t0, t1]; меньше MIN_PROXY цен — нет.
-  - L121 `Market.beta_pre(self, sym, at, n=72, min_n=48)` — β и ρ имени к волне по часовым доходностям ДО входа.
-  - L142 `Market.k_star(self, at, pct, kmax)` — Первый час k ≤ kmax, к концу которого волна с входа ≥ pct %.
-- L164 `path_of(rec)` — Путь позиции по часам из отметок ядра: {k: pnl долей маржи}.
-- L193 `exit_px_of(rec, pnl, end_ts)` — Цена, при которой позиция стоит `pnl` долей маржи, — из ЗАПОЛНЕНИЙ.
-- L226 `guard_record(rec, k, why=GUARD_EXIT)` — Та же запись, закрытая на отметке часа k: pnl ядра, срез отметок.
-- L248 `apply_guard(recs, pct, mkt, kmax, why=GUARD_EXIT)` — Охрана рынком над записями ОДНОЙ книги.
+  - L90 `Market.__init__(self, hours=None, proxies=PROXY, min_proxy=MIN_PROXY, …`
+  - L110 `Market.px(self, sym, ts)`
+  - L118 `Market.move(self, sym, t0, t1)`
+  - L122 `Market.wave(self, t0, t1)` — Средний ход прокси-имён за [t0, t1]; меньше MIN_PROXY цен — нет.
+  - L145 `Market.beta_pre(self, sym, at, n=72, min_n=48)` — β и ρ имени к волне по часовым доходностям ДО входа.
+  - L166 `Market.k_star(self, at, pct, kmax)` — Первый час k ≤ kmax, к концу которого волна с входа ≥ pct %.
+- L191 `path_of(rec)` — Путь позиции по часам из отметок ядра: {k: pnl долей маржи}.
+- L220 `exit_px_of(rec, pnl, end_ts)` — Цена, при которой позиция стоит `pnl` долей маржи, — из ЗАПОЛНЕНИЙ.
+- L253 `guard_record(rec, k, why=GUARD_EXIT)` — Та же запись, закрытая на отметке часа k: pnl ядра, срез отметок.
+- L275 `apply_guard(recs, pct, mkt, kmax, why=GUARD_EXIT)` — Охрана рынком над записями ОДНОЙ книги.
 
 ## research/dca_paper/wave_guard.py · 488 строк
 
@@ -9037,7 +9037,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L64 `operator_token(out)`
 - L76 `main(out=OUT, ip=SERVER_IP)`
 
-## tools/app_api/intents.py · 918 строк
+## tools/app_api/intents.py · 920 строк
 
 Намерения живого исполнителя Ladder (спека 15 §10a, этап L1).
 
@@ -9076,16 +9076,16 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L396 `busy_names(st, book_cell, rk, sk, now, ex=None)` — Имена, занятые у источника: живые намерения подписки по той же книге-источнику и открытые позиции той же книг…
 - L418 `decide(sub, st, legs_by_family, book_cell, env, log=print)` — Решения одной подписки по новым ногам. Возвращает (намерения, отказы, новое состояние `intents`).
 - L586 `guard_exits(sub, ex, it, env, log=print)` — Выходы книги по охране рынком (спека 14 §13) для позиций живого исполнителя — ТОЙ ЖЕ функцией, что бумага (`w…
-- L626 `_bp(a, b)`
-- L634 `paper_rows(book_cell, rk)` — Позиции бумажной ячейки — открытые и хвост закрытых — с книгой-источником.
-- L644 `match_paper(intent, rows)` — Строка бумаги того же решения: имя, источник, секунда решения.
-- L657 `parity_one(intent, q)` — Расхождение намерения с бумажной строкой — числом по полю.
-- L674 `parity(root, sub, st, book_cell, since=None, tail=PARITY_TAIL)` — Сверка намерений подписки с бумажной ячейкой: совпавшие — с расхождениями по полю (медиана и максимум |Δ|), н…
-- L719 `summary(st)` — Что отдаёт состояние подписки приложению (§10a L1: «намерения за час»).
-- L731 `cell_key(book, deposit, sizing)`
-- L736 `tick(db, dca, root, log=print, env=None)` — Один такт по всем активным подпискам. Возвращает число намерений.
-- L835 `reset_sub(db, root, sub_id, now=None)` — Сброс намерений подписки: файлы НЕ удаляются — переименовываются в `*-stale-<момент>.jsonl` (запись остаётся)…
-- L859 `main(argv=None)`
+- L628 `_bp(a, b)`
+- L636 `paper_rows(book_cell, rk)` — Позиции бумажной ячейки — открытые и хвост закрытых — с книгой-источником.
+- L646 `match_paper(intent, rows)` — Строка бумаги того же решения: имя, источник, секунда решения.
+- L659 `parity_one(intent, q)` — Расхождение намерения с бумажной строкой — числом по полю.
+- L676 `parity(root, sub, st, book_cell, since=None, tail=PARITY_TAIL)` — Сверка намерений подписки с бумажной ячейкой: совпавшие — с расхождениями по полю (медиана и максимум |Δ|), н…
+- L721 `summary(st)` — Что отдаёт состояние подписки приложению (§10a L1: «намерения за час»).
+- L733 `cell_key(book, deposit, sizing)`
+- L738 `tick(db, dca, root, log=print, env=None)` — Один такт по всем активным подпискам. Возвращает число намерений.
+- L837 `reset_sub(db, root, sub_id, now=None)` — Сброс намерений подписки: файлы НЕ удаляются — переименовываются в `*-stale-<момент>.jsonl` (запись остаётся)…
+- L861 `main(argv=None)`
 
 ## tools/app_api/keys_local.py · 68 строк
 

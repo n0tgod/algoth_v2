@@ -87,12 +87,25 @@ class Market:
     """Цены из часовых сводок: ход имени, волна прокси-имён, β до входа,
     час срабатывания охраны."""
 
-    def __init__(self, hours=None, proxies=PROXY, min_proxy=MIN_PROXY):
+    def __init__(self, hours=None, proxies=PROXY, min_proxy=MIN_PROXY,
+                 require_full=False):
         self.h = hours if hours is not None else Hours()
         self.proxies = tuple(proxies)
         self.min_proxy = int(min_proxy)
+        # `require_full` — для ЖИВОГО читателя (намерения исполнителя):
+        # сводка часа пишется по именам две-три минуты после его конца,
+        # и час, прочитанный на середине записи, несёт только тех, кто
+        # успел. 16.10 12:03 UTC охрана рынком закрыла три шорта по
+        # волне +2.18 % из 10 имён, пришедших к 12:03; по всем 19 волна
+        # была +1.46 % — ниже порога. С флагом волна часа, у которого
+        # цена есть не у всех имён, имевших её на входе, не считается
+        # (None, без записи в кэш) — следующий такт прочтёт полный час.
+        # Бумага читает часы спустя минуты и часы, ей флаг не нужен:
+        # умолчание даёт прежний счёт бит в бит.
+        self.require_full = bool(require_full)
         self._px, self._wave, self._kstar = {}, {}, {}
         self.wave_none = 0
+        self.wave_partial = 0
 
     def px(self, sym, ts):
         key = (sym, int(float(ts) // HOUR))
@@ -107,9 +120,20 @@ class Market:
         return (b / a - 1.0) if (a and b) else None
 
     def wave(self, t0, t1):
-        """Средний ход прокси-имён за [t0, t1]; меньше MIN_PROXY цен — нет."""
+        """Средний ход прокси-имён за [t0, t1]; меньше MIN_PROXY цен — нет.
+
+        С `require_full` — ещё и «не измерено», когда у части имён с
+        ценой на `t0` нет цены на `t1`: час ещё пишется.
+        """
         key = (int(float(t0) // HOUR), int(float(t1) // HOUR))
         if key not in self._wave:
+            if self.require_full:
+                n0 = sum(1 for p in self.proxies if self.px(p, t0) is not None)
+                n1 = sum(1 for p in self.proxies
+                         if self.px(p, t0) is not None and self.px(p, t1) is not None)
+                if n1 < n0:
+                    self.wave_partial += 1
+                    return None                      # без кэша: час дозаписывается
             ms = [m for m in (self.move(p, t0, t1) for p in self.proxies)
                   if m is not None]
             w = float(np.mean(ms)) if len(ms) >= self.min_proxy else None
@@ -149,6 +173,7 @@ class Market:
         if key not in self._kstar:
             t_in = float(at) - 1.0
             hit, missing = None, 0
+            partial0 = self.wave_partial
             for k in range(1, int(kmax) + 1):
                 w = self.wave(t_in, t_in + k * HOUR)
                 if w is None:
@@ -157,6 +182,8 @@ class Market:
                 if w >= float(pct) / 100.0:
                     hit = k
                     break
+            if self.wave_partial != partial0 and hit is None:
+                return (None, missing)               # час дозаписывается — не кэшировать
             self._kstar[key] = (hit, missing)
         return self._kstar[key]
 

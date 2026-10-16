@@ -608,7 +608,9 @@ def guard_exits(sub, ex, it, env, log=print):
         mkt = env.get("market")
         if mkt is None:
             import wave as WV                                # noqa: E402
-            mkt = WV.Market(WV.Hours())
+            # живой читатель: час, который ещё пишется по именам, не
+            # судится (16.10 — ложная охрана по 10 именам из 19)
+            mkt = WV.Market(WV.Hours(), require_full=True)
         for key, q, pct in todo:
             k, _miss = mkt.k_star(float(q["pos_at"]), pct, R.H24_HOLD_H - 1)
             if k is None:

@@ -1827,6 +1827,20 @@
 - L143 `test_portrait_ranks_the_worst_against_everyone()`
 - L161 `test_report_names_the_screen_the_null_and_the_false_positive_bu…`
 
+## research/dca_paper/test_wave_full.py · 67 строк
+
+Охрана рынком у живого читателя: час, который ещё пишется, не судится.
+
+- L17 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L22 `MOVES = {'BTC': 0.27, 'ETH': 1.04, 'SOL': 0.56,…` — ход 15.10 19:00 → 16.10 11:00 по данным зонда (б.п. → доли)
+- L25 `EARLY = {'BTC', 'ETH', 'BNB', 'DOGE', 'ADA', 'A…`
+- L26 `T0 = 1792090799.0`
+- L27 `T1 = T0 + 17 * 3600`
+- L30 `class FakeHours`
+  - L31 `FakeHours.__init__(self, present_at_t1)`
+  - L34 `FakeHours.row(self, sym, ts)`
+- L45 `test_partial_hour_is_not_measured_for_live_reader()`
+
 ## research/dca_paper/test_wave_guard.py · 166 строк
 
 Проверки охраны рынком.
