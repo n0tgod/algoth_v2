@@ -24,3 +24,14 @@ DCA-paper.json 2026-10-16 12:05 FAMILY_RULES {'pair': 11, 'h24': 5, 'sit': 3} FA
   safe:1000: итог 0.1603, n 431, рынок None, вперёд n 19
   safe:10000: итог 0.0871, n 1524, рынок None, вперёд n 19
 конец: 2026-10-16T13:19:08Z, код 0
+публикуется в ветку main:
+ jobs/done/na99-apirestart.log       | 11 +++++++++++
+ jobs/done/nb01-svod.done            |  1 +
+ jobs/done/nb01-svod.log             | 26 ++++++++++++++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 42 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   7c9ce209..63de512f  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
