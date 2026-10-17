@@ -1,12 +1,12 @@
 {
- "run_at": "2026-10-16 06:06 UTC",
+ "run_at": "2026-10-17 06:05 UTC",
  "rules": 1,
  "k": 14,
  "h": 30,
  "width": 0.1,
  "cost_bp": 11.0,
- "decisions": 75,
- "resolutions": 47,
+ "decisions": 76,
+ "resolutions": 48,
  "summary": {
   "ahead": {
    "tranches": 2,
@@ -27,24 +27,24 @@
    "coverage_median": 0.965
   },
   "backfilled": {
-   "tranches": 45,
+   "tranches": 46,
    "from": "2026-08-01",
-   "to": "2026-09-16",
-   "gross_mean_bp": 183.9,
-   "net_mean_bp": 89.0,
-   "net_median_bp": 20.5,
-   "net_pos_share": 0.511,
-   "t_naive": 1.08,
-   "t_nw": 0.74,
+   "to": "2026-09-17",
+   "gross_mean_bp": 199.4,
+   "net_mean_bp": 102.4,
+   "net_median_bp": 36.8,
+   "net_pos_share": 0.522,
+   "t_naive": 1.25,
+   "t_nw": 0.92,
    "independent": 2,
    "t_independent": -1.11,
    "net_mean_independent_bp": -323.3,
-   "funding_mean_bp": 83.9,
-   "truncated_legs_total": 3067,
-   "elapsed_median": 0.3314,
+   "funding_mean_bp": 86.0,
+   "truncated_legs_total": 3139,
+   "elapsed_median": 0.325,
    "coverage_median": 0.965
   }
  },
  "verdict": "записано вперёд 2 траншей (2026-08-26 … 2026-09-09), нетто -425.0 б.п. в среднем, независимых сечений 1 — копим календарь, вердикта нет",
- "took_min": 0.9
+ "took_min": 0.6
 }
