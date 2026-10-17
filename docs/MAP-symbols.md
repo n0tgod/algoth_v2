@@ -929,18 +929,18 @@ A3 — кандидаты в пары на момент окна.
 - L349 `report(res)`
 - L381 `main(argv=None)`
 
-## research/b1_book/memguard.py · 104 строк
+## research/b1_book/memguard.py · 110 строк
 
 Самоограничитель памяти сборщика (починка 10.10).
 
-- L33 `SOFT_MB = 1500`
-- L34 `HARD_MB = 2100`
-- L37 `rss_mb()` — RSS процесса по `/proc/self/status`; None — не прочитан.
-- L49 `malloc_trim()` — Вернуть ядру свободные страницы арен glibc. 1 — что-то вернулось, 0 — нечего, None — не glibc (не измерено, н…
-- L59 `ask_stop()` — Остановиться тем же путём, что при деплое: SIGTERM себе.
-- L64 `class MemGuard`
-  - L65 `MemGuard.__init__(self, drop, rss=rss_mb, trim=malloc_trim, die=ask_stop…`
-  - L73 `MemGuard.tick(self)` — Один такт: вернуть, что сделано. Чистая логика вокруг вызовов.
+- L39 `SOFT_MB = 2400` — 17.10: пороги переложены на машину 15.6 ГБ (CCX23 с 15.10; прежние считались от 7.7). Своды DCA с ветвями спе…
+- L40 `HARD_MB = 3200`
+- L43 `rss_mb()` — RSS процесса по `/proc/self/status`; None — не прочитан.
+- L55 `malloc_trim()` — Вернуть ядру свободные страницы арен glibc. 1 — что-то вернулось, 0 — нечего, None — не glibc (не измерено, н…
+- L65 `ask_stop()` — Остановиться тем же путём, что при деплое: SIGTERM себе.
+- L70 `class MemGuard`
+  - L71 `MemGuard.__init__(self, drop, rss=rss_mb, trim=malloc_trim, die=ask_stop…`
+  - L79 `MemGuard.tick(self)` — Один такт: вернуть, что сделано. Чистая логика вокруг вызовов.
 
 ## research/b1_book/memsize.py · 284 строк
 
@@ -9913,7 +9913,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 704 строк
+## tools/watchdog_book.sh · 710 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 
