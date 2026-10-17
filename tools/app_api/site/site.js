@@ -65,7 +65,7 @@ const Site = (() => {
     const depLabel = "$" + Number(r.deposit).toLocaleString("en-US");
     $("deps").innerHTML = (r.deposits || []).map((d) => `<button role="tab" aria-selected="${d === r.deposit}" data-dep="${d}">$${d >= 1000 ? (d / 1000) + "k" : d}</button>`).join("");
     for (const b of document.querySelectorAll("#deps button")) b.onclick = () => { try { localStorage.setItem("algoth.dep", b.dataset.dep); } catch (e) {} featured(b.dataset.dep); };
-    $("rank-title").textContent = "All strategies at " + depLabel;
+    $("rank-title").textContent = "Strategy tree at " + depLabel;
     renderBest(r, depLabel);
     // плитки шапки — только числа сервера: число стратегий, окно записи,
     // сделки лучшей, момент пересчёта; нет числа — прочерк, не ноль
@@ -95,9 +95,49 @@ const Site = (() => {
     drawLine._meta = {at: t.open_dd_at, share: t.open_dd_share, usd: t.open_dd};
     drawLine($("f-chart"), $("f-tip"), t.days, t.final >= 0 ? "var(--bid)" : "var(--ask)", t.open_dips);
     $("f-legend").innerHTML = t.open_dips ? `<span><i class="lg-line"></i>closed trades</span><span><i class="lg-dip"></i>with open positions at their worst hour of the day</span>` : "";
-    const tb = document.querySelector("#rank tbody");
-    tb.innerHTML = (r.ranking || []).map((x, i) => `<tr class="${i === 0 ? "top" : ""}"><td>${i + 1}</td><td>Ladder · ${esc(x.title_en)}</td><td>${esc(side === x.side ? side : ({long: "Long", short: "Short", both: "Both"}[x.side] || x.side))}</td>
-      <td class="num ${x.final >= 0 ? "good" : "bad"}">${pct(x.final)}<small class="usd">${both(x.usd, null)}</small></td><td class="num">${pct(x.max_dd)}<small class="usd">${both(x.max_dd_usd, null)}</small></td><td class="num">${x.n ?? "—"}</td><td class="num">${x.win == null ? "—" : Math.round(x.win * 100) + " %"}</td></tr>`).join("");
+    renderTree(r.ranking || []);
+  }
+
+  // Дерево стратегий на главной (владелец 17.10: «вместо таблицы — наши
+  // деревья»): режим → сторона → ветвь правил, как в приложении (спека 18).
+  // Листья — строки рейтинга сервера; место листа — его номер в рейтинге.
+  // Ничего не считается: группировка и порядок строк сервера.
+  const MODE_ORDER = ["Sigma", "Depth", "Gated"];
+  const SIDE_ORDER = ["long", "short", "both"];
+  const SIDE_NAME = {long: "Long", short: "Short", both: "Both"};
+  const SIDE_SUB = {long: "buys dips with a ladder", short: "sells rallies with a ladder", both: "long and short on one deposit"};
+  function renderTree(rows) {
+    const box = $("rank");
+    if (!rows.length) { box.innerHTML = `<p class="note">No strategy with closed trades at this deposit yet.</p>`; return; }
+    const place = new Map(rows.map((x, i) => [x.book, i + 1]));
+    const modes = {};
+    for (const x of rows) ((modes[x.title_en] = modes[x.title_en] || {})[x.side] = (modes[x.title_en][x.side] || [])).push(x);
+    const order = MODE_ORDER.filter((m) => modes[m]).concat(Object.keys(modes).filter((m) => !MODE_ORDER.includes(m)));
+    const leaf = (x) => {
+      // число и знак процента не разрываются переносом
+      const br = ((x.branch_en || "").replace(/ · default$/, "") || "base rules").replace(/ %/g, "\u00a0%");
+      const p = place.get(x.book);
+      return `<li class="t-leaf${p === 1 ? " first" : ""}"><div class="t-l1"><span class="t-rank">#${p}</span>` +
+        `<span class="t-br">${esc(br)}</span>${x.branch_default ? `<span class="t-def">default</span>` : ""}` +
+        `<span class="t-ret ${x.final >= 0 ? "good" : "bad"}">${pct(x.final)}</span></div>` +
+        `<div class="t-l2"><span>${both(x.usd, null)}</span><span>dd ${pct(x.max_dd)}</span><span>${x.n ?? "—"} trades</span>` +
+        `<span>${x.win == null ? "—" : Math.round(x.win * 100) + " % won"}</span></div></li>`;
+    };
+    box.innerHTML = order.map((m) => {
+      const sides = modes[m];
+      const all = Object.values(sides).flat();
+      const best = all.reduce((a, b) => ((b.final ?? -1e9) > (a.final ?? -1e9) ? b : a), all[0]);
+      const sideHtml = SIDE_ORDER.filter((sd) => sides[sd]).concat(Object.keys(sides).filter((sd) => !SIDE_ORDER.includes(sd))).map((sd) => {
+        const leaves = sides[sd].slice().sort((a, b) => (b.branch_default - a.branch_default) || ((b.final ?? -1e9) - (a.final ?? -1e9)));
+        return `<div class="t-side ${esc(sd)}"><div class="t-side-h"><span class="t-chip ${esc(sd)}">${esc(SIDE_NAME[sd] || sd)}</span>` +
+          `<small>${esc(SIDE_SUB[sd] || "")} · ${leaves.length} ${leaves.length === 1 ? "branch" : "branches"}</small></div>` +
+          `<ul class="t-leaves">${leaves.map(leaf).join("")}</ul></div>`;
+      }).join("");
+      return `<div class="t-mode"><div class="t-root"><div class="t-name">Ladder · ${esc(m)}</div>` +
+        `<small>${esc(all[0].plain || "")}</small>` +
+        `<div class="t-best">best leaf <b class="${best.final >= 0 ? "good" : "bad"}">${pct(best.final)}</b> · ${all.length} leaves</div></div>` +
+        `<div class="t-sides">${sideHtml}</div></div>`;
+    }).join("");
   }
 
   // Лучшие сделки (владелец 16.10): список и объём выборки — с сервера,

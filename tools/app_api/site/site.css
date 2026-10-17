@@ -161,3 +161,32 @@ table.rank.best .strat-m { display:none }
 @media (max-width:640px) { table.rank.best .strat-m { display:block; white-space:normal; max-width:46vw } table.rank.best td:last-child .pill { display:block; width:max-content; margin:3px 0 0 } }
 @media (max-width:640px) { .landing table.rank.best th:nth-child(3), .landing table.rank.best td:nth-child(3), .landing table.rank.best th:nth-child(5), .landing table.rank.best td:nth-child(5), .landing table.rank.best th:nth-child(6), .landing table.rank.best td:nth-child(6), .landing table.rank.best th:nth-child(7), .landing table.rank.best td:nth-child(7) { display:none } }
 .best-more.hide { display:none }
+/* дерево стратегий на главной (17.10) */
+.tree-lead b { color:var(--ink); font-weight:600 }
+.tree { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:16px; margin-top:12px }
+.t-mode { background:var(--chip); border:1px solid var(--rule); border-radius:14px; padding:14px 14px 10px; min-width:0 }
+.t-root { padding:2px 4px 12px; border-bottom:1px solid var(--rule) }
+.t-name { font:600 20px/1.2 "Newsreader",Georgia,serif; color:var(--ink) }
+.t-root small { display:block; color:var(--muted); font-size:12px; margin-top:3px }
+.t-best { margin-top:8px; font-size:12px; color:var(--muted) } .t-best b { font-family:"JetBrains Mono",ui-monospace,monospace }
+.t-sides { position:relative; margin:12px 0 0 10px; padding-left:16px; border-left:1px solid var(--rule) }
+.t-side { position:relative; margin:0 0 14px }
+.t-side::before { content:""; position:absolute; left:-16px; top:12px; width:12px; border-top:1px solid var(--rule) }
+.t-side:last-child::after { content:""; position:absolute; left:-17px; top:13px; bottom:-14px; width:3px; background:var(--chip) }
+.t-side-h { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin-bottom:6px }
+.t-side-h small { color:var(--muted); font-size:11px }
+.t-chip { font-size:11px; font-weight:700; padding:2px 8px; border-radius:5px }
+.t-chip.long { color:var(--bid); background:rgba(52,211,153,.12) } .t-chip.short { color:var(--ask); background:rgba(248,113,113,.12) } .t-chip.both { color:var(--vio-ink); background:rgba(139,92,246,.16) }
+.t-leaves { list-style:none; margin:0 0 0 8px; padding:0 0 0 14px; border-left:1px dashed var(--rule) }
+.t-leaf { position:relative; padding:7px 9px; margin:5px 0; border-radius:9px; background:var(--panel); border:1px solid transparent }
+.t-leaf::before { content:""; position:absolute; left:-14px; top:16px; width:10px; border-top:1px dashed var(--rule) }
+.t-leaf.first { border-color:rgba(139,92,246,.55); box-shadow:0 0 0 1px rgba(139,92,246,.15) inset }
+.t-l1 { display:flex; align-items:flex-start; gap:7px; min-width:0 }
+.t-rank { padding-top:2px; font:700 11px/1 "JetBrains Mono",ui-monospace,monospace; color:var(--muted); min-width:24px }
+.t-leaf.first .t-rank { color:var(--vio-ink) }
+.t-br { font-size:13px; color:var(--ink); min-width:0; line-height:1.25 }
+.t-def { font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); border:1px solid var(--rule); border-radius:5px; padding:1px 5px; flex:none }
+.t-ret { margin-left:auto; padding-left:6px; font:600 14px/1 "JetBrains Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums; flex:none }
+.t-l2 { display:flex; flex-wrap:wrap; gap:4px 12px; margin:5px 0 0 31px; font:11px/1.3 "JetBrains Mono",ui-monospace,monospace; color:var(--muted) }
+@media (max-width:640px) { .tree { grid-template-columns:1fr } .t-l2 { margin-left:0 } }
+
