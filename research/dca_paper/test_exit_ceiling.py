@@ -72,7 +72,9 @@ def test_random_exit_stays_inside_fence_and_stats_count_rule_best():
     rng = random.Random(7)
     seen = set()
     for _ in range(200):
-        r = EC.random_recs([rec], "safe_h", rng)[0]
+        out, hits = EC.random_recs([rec], "safe_h", rng)
+        r = out[0]
+        assert len(hits) == 1 and hits[0][0] is rec and hits[0][3] == 5 and 1 <= hits[0][2] <= 5
         if r is rec:
             seen.add("rule")
         else:

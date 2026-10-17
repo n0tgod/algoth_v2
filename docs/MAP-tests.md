@@ -1251,7 +1251,7 @@
 - L93 `test_control_samples_each_book_to_its_own_size()` — Выборка того же размера — ПО КАЖДОЙ книге своя.
 - L116 `test_report_names_axes_thresholds_and_the_control()`
 
-## research/dca_paper/test_exit_ceiling.py · 103 строк
+## research/dca_paper/test_exit_ceiling.py · 105 строк
 
 Потолок выхода (`exit_ceiling.py`): идеальный выход — лучший час СТРОГО внутри забора (не позже выхода правил…
 

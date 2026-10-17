@@ -92,16 +92,21 @@ def ceiling_recs(recs, book):
 
 
 def random_recs(recs, book, rng):
-    """Слепой выход: случайный час внутри того же забора (или свой выход)."""
-    out = []
+    """Слепой выход: случайный час внутри того же забора (или свой выход).
+    Возвращает записи и пары (было, стало, k, K) по всем позициям с забором
+    — чтобы касса сравнивалась с исходом ПОЗИЦИЙ (урок: касса растёт
+    оборотом, когда позиция проигрывает)."""
+    out, hits = [], []
     for r in recs:
         p, last = fence(r, book)
         if p is None or last < 1:
             out.append(r)
             continue
         k = rng.randint(1, last + 1)                 # last+1 — выход правила
-        out.append(r if k > last else WV.guard_record(r, k, why=WHY_RAND))
-    return out
+        new = r if k > last else WV.guard_record(r, k, why=WHY_RAND)
+        out.append(new)
+        hits.append((r, new, min(k, p["K"]), p["K"]))
+    return out, hits
 
 
 def pos_stats(hits):
@@ -214,11 +219,18 @@ def run(seeds, log):
         cells["ceiling"] = {"cash": c_ceil, "pos": pos, "pos_pair_short": ppos}
         log(f"окно {wname}: потолок посчитан ({time.time() - t0:.0f} с)")
         # слепой выход — зёрна
-        draws = []
+        draws, pdelta = [], {}
         for sd in range(seeds):
             rng = random.Random(3000 + sd)
-            by_r = {k: random_recs(recs, k, rng) for k, recs in part.items()}
-            ps_r = {pk: random_recs(recs, pk, rng) for pk, recs in pshort.items()}
+            by_r, ps_r = {}, {}
+            for k, recs in part.items():
+                by_r[k], hits = random_recs(recs, k, rng)
+                st = pos_stats(hits)
+                pdelta.setdefault(k, []).append(st.get("delta_mean"))
+            for pk, recs in pshort.items():
+                ps_r[pk], hits = random_recs(recs, pk, rng)
+                st = pos_stats(hits)
+                pdelta.setdefault(pk, []).append(st.get("delta_mean"))
             c = LG.cash(by_r, long_keys + short_keys, now)
             c.update(LG.cash(pack_pairs(pairs, by_r, ps_r), pair_keys, now))
             draws.append(c)
@@ -226,6 +238,8 @@ def run(seeds, log):
                 log(f"  слепой выход: зерно {sd + 1}/{seeds}")
         rnd = {}
         for k in long_keys + short_keys + pair_keys:
+            xs_d = [x for x in pdelta.get(k, []) if x is not None]
+            rnd.setdefault(k, {})["pos_delta_mean"] = (sum(xs_d) / len(xs_d)) if xs_d else None
             for d in DEPS:
                 xs = [(x[k][int(d)] or {}).get("final") for x in draws]
                 xs = [x for x in xs if x is not None]
@@ -290,6 +304,11 @@ def report(res):
                     if name == "random":
                         extra = (" · не хуже правила в %d %% зёрен" % round(100 * b["share_not_worse"])
                                  if b.get("share_not_worse") is not None else "")
+                        pdm = c.get("pos_delta_mean")
+                        extra += (" · Δ на позицию %s" % _pts(pdm)) if pdm is not None else ""
+                    elif name == "ceiling":
+                        pp_ = (cells["ceiling"]["pos"].get(k) or cells["ceiling"]["pos_pair_short"].get(k) or {})
+                        extra = (" · Δ на позицию %s" % _pts(pp_["delta_mean"])) if pp_.get("n") else ""
                     L.append("| %s (`%s`) | %s%s | %s | %s | %s | %s | %s |" % (
                         R.title_en(k), k, title, extra, _pp(a.get("final")), _pp(a.get("max_dd")),
                         _pp(b.get("final")), _pp(b.get("max_dd")),
