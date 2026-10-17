@@ -1228,6 +1228,52 @@ class Collector:
                 "asked_hours": want, "capped": bool(want > n),
                 "max_hours": self.CANDLE_MAX_H, "end": anchor}
 
+    def live_bar(self, sym):
+        """Живая минута ОДНОГО имени — из памяти, без диска (владелец
+        17.10: «нужен живой график для открытых сделок»).
+
+        График открытой позиции обновлялся раз в 30 с и каждый раз
+        перечитывал с диска весь текущий час сделок (`candles_files`), а
+        между обновлениями последняя цена стояла. Здесь — текущая и
+        предыдущая минута из ленты сделок в памяти (`tape`, 120 последних)
+        ТЕМ ЖЕ ядром, что свечи записи (`minute_bars`), последняя сделка и
+        последняя середина стакана (`mid`). Дёшево настолько, чтобы
+        спрашивать раз в пару секунд.
+
+        Имя неизвестно — `known: False`, а не чужое имя: живая цена под
+        чужой позицией была бы подменой. Минута без сделок — `bar: None`,
+        не ровная свеча: цену здесь не выдумывают. Лента коротка (120
+        сделок): минута, начавшаяся раньше её первой сделки, собрана не из
+        всех сделок — `bar_full` говорит об этом, а предыдущая минута
+        отдаётся только полной.
+        """
+        now = time.time()
+        if sym not in self.books:
+            return {"sym": sym, "known": False, "now": round(now, 3)}
+        with self.lock:
+            tape = list(self.tape[sym])
+            mid = list(self.mid[sym])
+        m0 = int(now // 60) * 60
+        tape_from = (tape[0]["ts"] / 1000.0) if tape else None
+        bars = {b[0]: b for b in minute_bars(
+            [t for t in tape if t.get("ts") is not None and t["ts"] / 1000.0 >= m0 - 60])}
+        last = tape[-1] if tape else None
+        # Лента, не дошедшая до своего предела, держит ВСЕ сделки с подъёма
+        # сборщика — покрытие полное; заполненная — только от первой в ней.
+        saturated = len(tape) >= (self.tape[sym].maxlen or 0)
+        def covers(t0):
+            return tape_from is not None and (not saturated or tape_from <= t0)
+        prev_full = covers(m0 - 60)
+        return {"sym": sym, "known": True, "now": round(now, 3), "minute": m0,
+                "bar": bars.get(m0),
+                "bar_full": bool(covers(m0)),
+                "prev": bars.get(m0 - 60) if prev_full else None,
+                "last": ({"px": float(last["p"]), "ts": round(last["ts"] / 1000.0, 3),
+                          "v": float(last.get("v") or 0.0)} if last else None),
+                "mid": ({"px": mid[-1][1], "ts": mid[-1][0]} if mid else None),
+                "tape_from": (round(tape_from, 3) if tape_from is not None else None),
+                "tape_n": len(tape)}
+
     def heat_files(self, sym, hours=12, end=None):
         """Тепловая карта лесенки стакана под свечи: записи, не память.
 

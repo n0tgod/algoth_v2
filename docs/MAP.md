@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 624, строк: 258718, каталогов: 86.
+Модулей кода: 624, строк: 258831, каталогов: 86.
 
 
 ## корень — память проекта, идеи, README
@@ -127,7 +127,7 @@
 
 - `absorb.py` · 365 строк — Поглощение в стакане: крупный стоит, его выедают, он подставляет снова.
 - `book.py` · 216 строк — Стакан: состояние, применение обновлений, снимок.
-- `collect.py` · 8064 строк — Сбор стакана и ленты площадки исполнения живьём.
+- `collect.py` · 8110 строк — Сбор стакана и ленты площадки исполнения живьём.
 - `layout_check.py` · 148 строк — Замер раскладки плиток страницы DCA настоящим браузером.
 - `measure_pack.py` · 405 строк — Замер: сколько весит запись стакана в разных форматах — на ЖИВЫХ часах.
 - `memguard.py` · 114 строк — Самоограничитель памяти сборщика (починка 10.10).
@@ -137,8 +137,8 @@
 - `replay.py` · 360 строк — Прогон записанного потока через тот же детектор.
 - `signals.py` · 808 строк — Живой детектор: уровни, события поглощения и бумажные сделки.
 - `store.py` · 348 строк — Хранение потока: запись без потерь и чтение через порчу.
-- `web.py` · 12425 строк — Страница наблюдения: стакан, лента, глубина и журнал живьём.
-- тесты: `headless_check.js` (6505), `test_book.py` (9382), `test_measure_pack.py` (133), `test_memsize.py` (110), `test_remote.py` (336)
+- `web.py` · 12432 строк — Страница наблюдения: стакан, лента, глубина и журнал живьём.
+- тесты: `headless_check.js` (6505), `test_book.py` (9437), `test_measure_pack.py` (133), `test_memsize.py` (110), `test_remote.py` (336)
 - отчёты в `out/` (2): B1-feature-audit.md, measure-pack.md
 
 ## research/d1_seconds — D1 — первые секунды после падения (гипотеза 7)
@@ -852,7 +852,7 @@
 - `app_api/restart.py` · 32 строк — Перезапуск процесса API приложения со свежим кодом (через очередь). Останавливает процесс и сразу поднимает н…
 - `app_api/sealed.py` · 87 строк — Запечатанный конверт для секретов ключей биржи (спека 15 §7a.2).
 - `app_api/selftest.py` · 98 строк — Самопроверка API на сервере: процесс жив, TLS отвечает, вход оператора работает, книги читаются. Печатает сло…
-- `app_api/server.py` · 1685 строк — HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
+- `app_api/server.py` · 1687 строк — HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - `app_api/set_site.py` · 45 строк — Задать настройки сайта (`out/site.json`) с сервера через очередь — то же, что панель оператора на /account, к…
 - `app_api/set_topic.py` · 44 строк — Сменить тему пушей APNs (Bundle ID приложения) в `out/apns.json`.
 - `app_api/site/site.js` · 455 строк — Кабинет Algoth (спека 16 L4). Все числа и слова — ответы API; страница
@@ -904,4 +904,4 @@
 - `watchdog_book.sh` · 710 строк — Сторож сбора: поднимает умершее и перезапускает зависшее.
 - `wave_episodes.py` · 108 строк — Зонд: как часто рынок даёт волну, на которую смотрит охрана.
 - `wave_rows_probe.py` · 59 строк — Зонд: строки часовых сводок прокси-имён за данный час — какие поля, когда записаны, и какая волна выходит по…
-- тесты: `app_api/test_app_api.py` (1625), `test_disk_alarm.py` (64), `test_jobs.sh` (257), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_api.sh` (47), `test_watchdog_books.sh` (114), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (59), `test_watchdog_ship.sh` (49)
+- тесты: `app_api/test_app_api.py` (1628), `test_disk_alarm.py` (64), `test_jobs.sh` (257), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_api.sh` (47), `test_watchdog_books.sh` (114), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (59), `test_watchdog_ship.sh` (49)

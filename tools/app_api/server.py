@@ -1294,7 +1294,9 @@ def computed_at_of(d):
 PUB_ROUTES = {"dca": ("full", "focus", "dep", "ruler", "sizing"),
               "dca_marks": ("dep", "ruler", "sizing"),
               "dca_trades": ("sym", "book"),
-              "candles": ("sym", "hours", "end")}
+              "candles": ("sym", "hours", "end"),
+              # живая минута открытой позиции (17.10): из памяти сборщика
+              "live_bar": ("sym",)}
 PUB_VALUE = re.compile(r"^[A-Za-z0-9._:\-]{1,64}$")
 
 # Сайт (спека 16 L4): главная, документы, кабинет — файлы `site/`, те же

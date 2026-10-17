@@ -12109,6 +12109,13 @@ def serve(collector, port, token, log):
                                             end=end),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
+            if u.path == "/live_bar":
+                # живая минута одного имени из памяти — для графика
+                # открытой позиции в приложении (раз в пару секунд)
+                return self._ok(json.dumps(
+                    collector.live_bar(q.get("sym", [None])[0]),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
             if u.path == "/mem":
                 # Перепись памяти сборщика: кто сколько держит, по
                 # структурам (`memsize.py`); `deep=1` — гистограмма типов,

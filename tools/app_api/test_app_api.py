@@ -554,6 +554,9 @@ def test_public_summary_without_page_key_whitelist_and_collector_failure():
             assert "k" not in calls[-1][1]                       # ключ добавляет только сервер
             st, r = _http(port, "GET", "/api/v1/pub/candles?sym=BTCUSDT&hours=24&end=1791999332.5")
             assert st == 200 and r["params"] == {"sym": "BTCUSDT", "hours": "24", "end": "1791999332.5"}
+            st, r = _http(port, "GET", "/api/v1/pub/live_bar?sym=BTCUSDT")
+            assert st == 200 and r == {"route": "live_bar", "params": {"sym": "BTCUSDT"}}, (st, r)
+            assert _http(port, "GET", "/api/v1/pub/live_bar?sym=BTCUSDT&hours=2")[0] == 400
             # чужой маршрут, чужой параметр, не-латиница — отказ словами, сборщик не зовётся
             n = len(calls)
             for path, word in (("/api/v1/pub/mem", "no such data"),

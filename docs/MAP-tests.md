@@ -289,7 +289,7 @@
 - L700 `paperStub()`
 - L835 `bookDaysStub()`
 
-## research/b1_book/test_book.py · 9382 строк
+## research/b1_book/test_book.py · 9437 строк
 
 Тесты стакана. Закрывают место, где ошибка портит все данные молча.
 
@@ -329,117 +329,118 @@
 - L1667 `test_live_detector_agrees_with_batch()` — Живой детектор обязан решать так же, как тот, чем считаны отчёты.
 - L1705 `test_metrics_explain_refusal()` — Отказ обязан быть объяснён числом, а не молчанием.
 - L1723 `test_warm_start_restores_history()` — Перезапуск не должен обнулять наблюдение.
-- L1769 `test_candles_window_can_end_in_the_past()` — Свечи под сделку берутся из ЕЁ времени, а не из последних часов.
-- L1841 `test_heat_grid_from_book_snapshots()` — Тепловая карта лесенки: клетка — средний покоящийся $ за минуту в корзине цены.
-- L1928 `test_recount_survives_restart()` — Встречный счёт переживает перезапуск сборщика.
-- L1975 `test_nofile_covers_every_kind()` — Дескрипторов запрашивается по числу ВИДОВ рядов, не по двойке.
-- L1995 `test_model_state_carries_training_stall()` — Ответ `/model` несёт вердикт «обучение стоит» по правилу `stall.py`.
-- L2036 `test_model_state_cache_follows_journal_signature()` — Ответ `/model` пересобирается, когда меняются файлы книг, а не раз в 30 с.
-- L2096 `test_brake_recomputes_only_when_journals_or_day_change()` — Тормоз не пересчитывает реализованный день при неизменных входах.
-- L2160 `test_jsonl_cache_budget_counts_objects_not_file_bytes()` — Бюджет кеша журналов меряется памятью объектов, а не байтами файла.
-- L2219 `test_second_ring_matches_deque_bit_for_bit()` — Посекундная история массивом отдаёт то же, что кольцо кортежей.
-- L2301 `test_health_is_one_definition()` — Здоровье сбора — одно определение на страницу и на файл.
-- L2349 `test_collected_symbols_are_not_lost()` — Состав сбора не теряет монет, по которым уже собраны ряды.
-- L2373 `test_warm_start_is_cheap_and_safe()` — Подъём не читает лишнего и не портит живой ряд.
-- L2422 `test_disk_rate_compares_same_phase_of_hour()` — Скорость роста диска меряется в одной фазе часа.
-- L2480 `test_warm_mid_is_lazy_and_ordered()` — Середина читается по запросу и не ломает порядок времени.
-- L2539 `test_shrunken_run_announces_dropped_symbols()` — Урезанный состав сбора обязан назвать пропавших поимённо.
-- L2593 `test_warm_start_survives_truncated_file()` — Обрубленный хвост файла не вправе уносить запуск.
-- L2634 `QUIET = (0.0, 1.0, 1.0, 100.0, 99.9, 99.95)`
-- L2637 `book_with(level_px=None, level_sz=0.0, side='b', n=20, step=0.1…` — Стакан из обычных уровней; при желании — с крупным на одной цене.
-- L2649 `calibrate(tr, secs=None)` — Накопить «обычное» — без этого крупный не с чем сравнивать.
-- L2662 `test_interrupted_trade_is_finished_from_tape()` — Оборванная сделка досчитывается по ленте — и честно про дыру.
-- L2763 `test_recount_runs_itself_and_merges_live()` — Пересчёт запускается сам, а живые сделки дописываются как есть.
-- L2829 `test_open_trade_is_visible_but_not_counted()` — Открытая позиция обязана быть видна и обязана не считаться.
-- L2870 `test_book_absorption_needs_all_five()` — Поглощение — пять условий сразу, и каждое обязано уметь отказать.
-- L2913 `test_gate_fires_equally_on_smooth_and_lumpy_books()` — Гейт «крупный» обязан срабатывать одинаково часто у всех.
-- L2962 `test_level_out_of_reach_is_never_a_candidate()` — Недосягаемый уровень не должен выдавать себя за измерение.
-- L2995 `test_reach_window_counts_seconds_not_snapshots()` — Ход копится по НОВЫМ секундам, а не по снимкам книги.
-- L3017 `test_quantile_threshold_belongs_to_the_sample()` — Порог обязан быть значением из выборки, а не выдуманным.
-- L3037 `test_level_is_not_judged_against_itself()` — Текущий замер не входит в выборку, по которой его судят.
-- L3055 `test_book_absorption_rejects_pulled_and_broken()` — Снятый уровень и пробитый уровень — не поглощение.
-- L3087 `test_two_rules_run_side_by_side()` — Правила не должны запирать друг друга.
-- L3107 `test_stop_sees_the_candle_it_entered_on()` — Стоп считается по свечам ДО СЕКУНДЫ ВХОДА, а не до пересчёта.
-- L3144 `test_stop_clears_the_biggest_candle_not_the_median()` — Стоп не вправе стоять внутри крупнейшей свечи окна.
-- L3179 `test_stop_goes_behind_structure_not_inside_noise()` — Стоп обязан стоять за экстремумом и накоплением, а не в шуме.
-- L3223 `test_replay_drives_detector_from_files()` — Прогон записи обязан кормить тот же детектор, что работает живьём.
-- L3280 `test_seeded_replay_keeps_entry_changes_stop()` — Те же входы, новая геометрия — вход обязан остаться прежним.
-- L3345 `test_target_skips_levels_that_do_not_pay_for_risk()` — Цель — ближайший уровень, ОПРАВДЫВАЮЩИЙ риск, а не просто ближайший.
-- L3377 `test_compare_pairs_old_and_recomputed()` — Сопоставление «было / стало» обязано считать по парам, а не в среднем.
-- L3414 `test_rejected_subscription_is_not_silence()` — Отклонённая подписка обязана назваться и не гасить остальные.
-- L3465 `test_paper_off_is_silent_but_named()` — Выключенные бумажные сделки: ни одной новой, лента детектору не подаётся — и это НАЗВАНО, а не выглядит полом…
-- L3514 `test_symbol_groups_for_page()` — Группы монет для страницы: разметка A3 + справочник, новые листинги честно в «прочих», а не рассованы по дога…
-- L3547 `test_liq_and_metrics_recorded()` — Ликвидации и тикеры пишутся: живой поток не восстановим задним числом, и тихая потеря этих рядов была бы видн…
-- L3585 `test_sit_scan_anchors_forecast_to_live_price()` — Живой вход: карта от модели, курок от цены.
-- L3663 `test_sit_scan_v11_room_and_eaten()` — Правило v11: запас переживает шум, обещание съедено не больше потолка.
-- L3724 `test_sit_noise_is_median_minute_range()` — Мера шума v12: максимум медианы целых минут и текущей минуты.
-- L3782 `test_sit_scan_stop_is_the_quantile_level()` — Стоп берётся из квантильных концов листа, а не из линии прогноза.
-- L3839 `test_sit_scan_max_rr_takes_the_other_end()` — Потолок отношения — правило книги низкого RR (владелец, 2026-08-22).
-- L3920 `test_sit_scan_day_brake_blocks_traded_not_observation()` — Дневной тормоз в сканере: торгуемая книга не входит, наблюдательная запись пишет (контрольная рука — без неё…
-- L4038 `test_sit_scan_enters_only_on_a_crossing_it_saw()` — Вход — событие, а не состояние, в котором имя застали.
-- L4212 `test_sit_scan_candidate_gates_floor_side_and_agree()` — Гейты книги кандидата: пол входа, места по сторонам, согласие рук.
-- L4311 `test_sit_scan_book_noise_multiplier()` — Правило книги равного риска: запас до стопа не тоньше 1.5 шума.
-- L4399 `test_sit_scan_min_stop_book_rule()` — Правило книги равного риска: стоп не тоньше порога (1 %).
-- L4474 `test_take_limit_fill_and_exit_event()` — Тейк — лимитка: принты сквозь уровень исполняют по уровню.
-- L4537 `test_collector_keeps_its_public_methods()` — Сборщик цел: у него на месте всё, чем его запускают.
-- L4560 `test_pending_live_exit_is_shown_before_the_review()` — Живой выход виден сразу, а не через час.
-- L4626 `test_learning_day_by_day()` — Сводка обучения: навык по сечению, деньги дня и связь между ними.
-- L4731 `test_paper_book_summary_comes_from_the_artefact()` — Месячная книга: свод из артефакта, транши из журнала.
-- L4879 `test_book_days_splits_one_book_by_day()` — Дневная статистика книги: разбивка по календарным суткам UTC.
-- L5036 `test_league_counts_a_decision_once()` — Разбивка ситуаций «одно решение — один голос».
-- L5113 `test_league_ranks_by_realised_money()` — Лига: агрегаты по рукам/книгам/ситуациям и топ по деньгам.
-- L5256 `test_model_tree_names_every_book()` — Дерево моделей: у каждой книги из карты есть текст, оба языка.
-- L5407 `test_tournament_page_reads_artifact()` — Лист турнира: ответ — из артефакта прогона, пороги — из турнира.
-- L5498 `test_tree_page_fits_the_phone()` — Дерево на телефоне — вертикальное; правила закреплены источником.
-- L5521 `test_dca_tiles_line_up_and_fill_the_row()` — Плитки сводки DCA: значения на одной линии, ряд без хвоста.
-- L5571 `test_dca_palette_comes_from_the_mockups()` — Цвета страницы DCA взяты из макетов, а не подобраны на глаз.
-- L5624 `test_dca_page_fits_the_phone()` — Страница DCA на телефоне: таблицы ложатся карточками.
-- L5663 `test_tree_scrolls_to_its_left_edge()` — Первая карточка дерева обязана быть достижима прокруткой.
-- L5697 `test_volatility_splits_results_by_regime()` — Волатильность рынка против результата книг.
-- L5811 `test_marks_poll_serves_the_book_in_view()` — Опрос переоценки обслуживает ТУ книгу, которую смотрят.
-- L5865 `test_journal_marker_is_parsed_not_basenamed()` — Маркер журнала тени несёт ДВА поля, и разбирать надо оба.
-- L5891 `test_book_registry_is_one_list()` — Книги объявлены один раз, и запрос каждой идёт в СВОЙ каталог.
-- L5964 `test_glossary_describes_the_live_model()` — Справочник: каждое семейство названо, каждый признак расписан.
-- L6083 `test_live_entries_reach_both_pages()` — Обзор и история сделок обязаны показывать ОДНИ сделки.
-- L6156 `test_sit_watch_levels_and_crossing()` — Живой сторож ситуационной книги: уровни и пересечение.
-- L6290 `test_all_symbols_filter()` — `--symbols all`: USDT-перпы минус не-крипто, ничего лишнего.
-- L6363 `test_shard_split_covers_everything()`
-- L6375 `test_pack_queue_single_worker()` — Смена часа закрывает сотни файлов разом; сжатие обязано идти очередью, а не потоком на файл — иначе раз в час…
-- L6408 `test_closed_trade_is_returned_for_writing()` — Закрытие обязано выйти наружу, иначе его некому записать.
-- L6444 `test_restore_marks_trade_cut_by_restart()` — Открытие без закрытия — не «ничего не было», а оборванная сделка.
-- L6469 `test_store_writes_plain_and_packs_on_hour()` — Текущий час лежит простым текстом, прошлый — сжатым.
-- L6506 `test_store_hour_not_counted_twice()` — Час, лежащий и простым, и сжатым, не удваивается.
-- L6540 `test_store_salvages_corrupted_archive()` — Порча В СЕРЕДИНЕ архива не вправе уносить то, что записано после.
-- L6582 `test_scanner_prefers_the_biggest_move_for_its_own_coin()` — Слот достаётся тому, у кого ход крупен ДЛЯ НЕГО.
-- L6619 `test_switcher_says_how_the_book_is_ordered()` — Подпись обязана говорить, ЧТО за книга.
-- L6650 `test_shadow_off_marker_is_a_state_not_an_alarm()` — Маркер выключения тени — состояние, не поломка.
-- L6688 `test_jobs_poke_runs_queue_and_holds_rate()` — Сигнал очереди: запускает `tools/jobs.sh` и не даёт долбить.
-- L6738 `test_run_live_refuses_to_archive_open_positions()` — Журнал с открытыми позициями не отставляется молча — блоком скрипта.
-- L6797 `test_watchdog_respects_shadow_off_marker()` — Сторож не воскрешает выключенную тень — настоящим блоком скрипта.
-- L6852 `test_factory_built_splits_forward_from_replay()` — Построенное системой: дерево читает РЕЕСТР и АРТЕФАКТ, и делит деньги на форвард и реплей прошлого.
-- L7020 `test_strategy_card_shows_applied_beside_declared_and_twins()` — Карточка стратегии: применённое рядом с объявленным и близнецы.
-- L7160 `test_candidate_book_is_addressable_and_unknown_key_is_refused()` — Книга кандидата открывается своим ключом; чужой ключ — отказ.
-- L7264 `test_agents_limit_wait_is_a_state_not_a_silence_alarm()` — Роль, ждущая снятия лимита, тревогой тишины НЕ помечается.
-- L7346 `test_agents_state_reads_the_registry_and_the_disk()` — Автономная система: тексты из реестра, построенность — с диска.
-- L7456 `test_dca_serves_ruler_and_deposit_as_one_book()` — Дорога сборщика до книги DCA: линейка и депозит вместе, не порознь.
-- L7951 `test_dca_page_does_not_reparse_an_unchanged_journal()` — Свод и график DCA не разбирают журнал заново, пока он не менялся.
-- L8033 `test_dca_open_pnl_is_marked_live_not_hourly()` — Открытый pnl DCA-книги переоценивается ЖИВОЙ серединой.
-- L8126 `test_dca_cut_position_carries_its_reason()` — Оборванная позиция едет странице С ПРИЧИНОЙ, и текст ОДИН.
-- L8191 `test_dca_serves_last_answer_while_rebuilding()` — Свод при сменившихся файлах (13.10): запрос из сети получает прежний готовый ответ сразу с `rebuilding: true`…
-- L8224 `test_dca_focus_slims_other_books_and_keeps_the_cache()` — `/dca?focus=` (13.10): у книг кроме выбранной нет списка сделок, число сделок и итоги остаются; копии книг в…
-- L8243 `test_dca_trades_speak_the_language_of_the_chart()` — Позиции DCA-книги едут графику В ЕГО ФОРМЕ, и ТВХ приходит готовой.
-- L8485 `test_dca_chart_carries_the_liquidation_of_the_book()` — У ступеней позиции есть цена ликвидации — ядром, а не копией.
-- L8550 `test_dca_chart_reads_the_journal_of_its_own_family()` — График берёт позиции из журнала СВОЕГО семейства, а не длинного.
-- L8657 `test_dca_list_counts_rules_of_the_family_not_of_the_project()` — Список сделок книги живёт по версии правил СВОЕГО семейства.
-- L8732 `test_memguard_drops_then_stops_only_above_hard_and_counts()` — Самоограничитель памяти (починка 10.10): выше мягкого порога — сброс кешей, сбор мусора и возврат памяти ядру…
-- L8793 `test_collector_drop_caches_empties_every_page_cache_and_counts_…` — Сброс кешей сборщика опустошает кеш журналов (класс), кеш кусков DCA, ответы `/dca` и `/model` — и называет,…
-- L8846 `test_dca_parts_cache_has_a_budget_and_evicts_the_least_used()` — Кеш кусков DCA-журналов ограничен бюджетом в байтах объектов (починка 10.10: рос без предела, 245 МБ, удвоен…
-- L8915 `test_dca_summary_is_rebuilt_by_file_signature_not_by_clock()` — Свод `/dca` пересобирается, когда меняются файлы (куски журналов, артефакты), а не раз в две минуты; свежесть…
-- L8997 `test_pinned_journal_files_survive_the_cache_budget()` — Файлы периодического сторожа закреплены в кеше журналов и в бюджет не входят (починка 10.10: сторож выходов к…
-- L9057 `test_model_signature_sees_only_the_files_the_build_reads()` — Подпись кеша `/model` — по файлам, из которых сборка берёт числа (починка 10.10): файл каталога книги, меняющ…
-- L9107 `test_brake_reads_only_the_books_it_counts()` — Тормоз читает и подписывает журналы только ТОРГУЕМЫХ книг без эхо (починка 10.10): эхо-книги в сумму не входя…
-- L9175 `test_acme_challenge_served_without_page_key_and_nothing_else()` — L2 спеки 16: проверочный файл Let's Encrypt отдаётся на порту 80 без ключа страниц — только из каталога вызов…
-- L9225 `main()`
+- L1769 `test_live_bar_comes_from_memory_and_does_not_invent_prices()` — Живая минута открытой позиции (17.10): текущая минута — из ленты сделок в памяти тем же ядром, что свечи запи…
+- L1823 `test_candles_window_can_end_in_the_past()` — Свечи под сделку берутся из ЕЁ времени, а не из последних часов.
+- L1895 `test_heat_grid_from_book_snapshots()` — Тепловая карта лесенки: клетка — средний покоящийся $ за минуту в корзине цены.
+- L1982 `test_recount_survives_restart()` — Встречный счёт переживает перезапуск сборщика.
+- L2029 `test_nofile_covers_every_kind()` — Дескрипторов запрашивается по числу ВИДОВ рядов, не по двойке.
+- L2049 `test_model_state_carries_training_stall()` — Ответ `/model` несёт вердикт «обучение стоит» по правилу `stall.py`.
+- L2090 `test_model_state_cache_follows_journal_signature()` — Ответ `/model` пересобирается, когда меняются файлы книг, а не раз в 30 с.
+- L2150 `test_brake_recomputes_only_when_journals_or_day_change()` — Тормоз не пересчитывает реализованный день при неизменных входах.
+- L2214 `test_jsonl_cache_budget_counts_objects_not_file_bytes()` — Бюджет кеша журналов меряется памятью объектов, а не байтами файла.
+- L2273 `test_second_ring_matches_deque_bit_for_bit()` — Посекундная история массивом отдаёт то же, что кольцо кортежей.
+- L2355 `test_health_is_one_definition()` — Здоровье сбора — одно определение на страницу и на файл.
+- L2403 `test_collected_symbols_are_not_lost()` — Состав сбора не теряет монет, по которым уже собраны ряды.
+- L2427 `test_warm_start_is_cheap_and_safe()` — Подъём не читает лишнего и не портит живой ряд.
+- L2476 `test_disk_rate_compares_same_phase_of_hour()` — Скорость роста диска меряется в одной фазе часа.
+- L2534 `test_warm_mid_is_lazy_and_ordered()` — Середина читается по запросу и не ломает порядок времени.
+- L2593 `test_shrunken_run_announces_dropped_symbols()` — Урезанный состав сбора обязан назвать пропавших поимённо.
+- L2647 `test_warm_start_survives_truncated_file()` — Обрубленный хвост файла не вправе уносить запуск.
+- L2688 `QUIET = (0.0, 1.0, 1.0, 100.0, 99.9, 99.95)`
+- L2691 `book_with(level_px=None, level_sz=0.0, side='b', n=20, step=0.1…` — Стакан из обычных уровней; при желании — с крупным на одной цене.
+- L2703 `calibrate(tr, secs=None)` — Накопить «обычное» — без этого крупный не с чем сравнивать.
+- L2716 `test_interrupted_trade_is_finished_from_tape()` — Оборванная сделка досчитывается по ленте — и честно про дыру.
+- L2817 `test_recount_runs_itself_and_merges_live()` — Пересчёт запускается сам, а живые сделки дописываются как есть.
+- L2883 `test_open_trade_is_visible_but_not_counted()` — Открытая позиция обязана быть видна и обязана не считаться.
+- L2924 `test_book_absorption_needs_all_five()` — Поглощение — пять условий сразу, и каждое обязано уметь отказать.
+- L2967 `test_gate_fires_equally_on_smooth_and_lumpy_books()` — Гейт «крупный» обязан срабатывать одинаково часто у всех.
+- L3016 `test_level_out_of_reach_is_never_a_candidate()` — Недосягаемый уровень не должен выдавать себя за измерение.
+- L3049 `test_reach_window_counts_seconds_not_snapshots()` — Ход копится по НОВЫМ секундам, а не по снимкам книги.
+- L3071 `test_quantile_threshold_belongs_to_the_sample()` — Порог обязан быть значением из выборки, а не выдуманным.
+- L3091 `test_level_is_not_judged_against_itself()` — Текущий замер не входит в выборку, по которой его судят.
+- L3109 `test_book_absorption_rejects_pulled_and_broken()` — Снятый уровень и пробитый уровень — не поглощение.
+- L3141 `test_two_rules_run_side_by_side()` — Правила не должны запирать друг друга.
+- L3161 `test_stop_sees_the_candle_it_entered_on()` — Стоп считается по свечам ДО СЕКУНДЫ ВХОДА, а не до пересчёта.
+- L3198 `test_stop_clears_the_biggest_candle_not_the_median()` — Стоп не вправе стоять внутри крупнейшей свечи окна.
+- L3233 `test_stop_goes_behind_structure_not_inside_noise()` — Стоп обязан стоять за экстремумом и накоплением, а не в шуме.
+- L3277 `test_replay_drives_detector_from_files()` — Прогон записи обязан кормить тот же детектор, что работает живьём.
+- L3334 `test_seeded_replay_keeps_entry_changes_stop()` — Те же входы, новая геометрия — вход обязан остаться прежним.
+- L3399 `test_target_skips_levels_that_do_not_pay_for_risk()` — Цель — ближайший уровень, ОПРАВДЫВАЮЩИЙ риск, а не просто ближайший.
+- L3431 `test_compare_pairs_old_and_recomputed()` — Сопоставление «было / стало» обязано считать по парам, а не в среднем.
+- L3468 `test_rejected_subscription_is_not_silence()` — Отклонённая подписка обязана назваться и не гасить остальные.
+- L3519 `test_paper_off_is_silent_but_named()` — Выключенные бумажные сделки: ни одной новой, лента детектору не подаётся — и это НАЗВАНО, а не выглядит полом…
+- L3568 `test_symbol_groups_for_page()` — Группы монет для страницы: разметка A3 + справочник, новые листинги честно в «прочих», а не рассованы по дога…
+- L3601 `test_liq_and_metrics_recorded()` — Ликвидации и тикеры пишутся: живой поток не восстановим задним числом, и тихая потеря этих рядов была бы видн…
+- L3639 `test_sit_scan_anchors_forecast_to_live_price()` — Живой вход: карта от модели, курок от цены.
+- L3717 `test_sit_scan_v11_room_and_eaten()` — Правило v11: запас переживает шум, обещание съедено не больше потолка.
+- L3778 `test_sit_noise_is_median_minute_range()` — Мера шума v12: максимум медианы целых минут и текущей минуты.
+- L3836 `test_sit_scan_stop_is_the_quantile_level()` — Стоп берётся из квантильных концов листа, а не из линии прогноза.
+- L3893 `test_sit_scan_max_rr_takes_the_other_end()` — Потолок отношения — правило книги низкого RR (владелец, 2026-08-22).
+- L3974 `test_sit_scan_day_brake_blocks_traded_not_observation()` — Дневной тормоз в сканере: торгуемая книга не входит, наблюдательная запись пишет (контрольная рука — без неё…
+- L4092 `test_sit_scan_enters_only_on_a_crossing_it_saw()` — Вход — событие, а не состояние, в котором имя застали.
+- L4266 `test_sit_scan_candidate_gates_floor_side_and_agree()` — Гейты книги кандидата: пол входа, места по сторонам, согласие рук.
+- L4365 `test_sit_scan_book_noise_multiplier()` — Правило книги равного риска: запас до стопа не тоньше 1.5 шума.
+- L4453 `test_sit_scan_min_stop_book_rule()` — Правило книги равного риска: стоп не тоньше порога (1 %).
+- L4528 `test_take_limit_fill_and_exit_event()` — Тейк — лимитка: принты сквозь уровень исполняют по уровню.
+- L4591 `test_collector_keeps_its_public_methods()` — Сборщик цел: у него на месте всё, чем его запускают.
+- L4614 `test_pending_live_exit_is_shown_before_the_review()` — Живой выход виден сразу, а не через час.
+- L4680 `test_learning_day_by_day()` — Сводка обучения: навык по сечению, деньги дня и связь между ними.
+- L4785 `test_paper_book_summary_comes_from_the_artefact()` — Месячная книга: свод из артефакта, транши из журнала.
+- L4933 `test_book_days_splits_one_book_by_day()` — Дневная статистика книги: разбивка по календарным суткам UTC.
+- L5090 `test_league_counts_a_decision_once()` — Разбивка ситуаций «одно решение — один голос».
+- L5167 `test_league_ranks_by_realised_money()` — Лига: агрегаты по рукам/книгам/ситуациям и топ по деньгам.
+- L5310 `test_model_tree_names_every_book()` — Дерево моделей: у каждой книги из карты есть текст, оба языка.
+- L5461 `test_tournament_page_reads_artifact()` — Лист турнира: ответ — из артефакта прогона, пороги — из турнира.
+- L5552 `test_tree_page_fits_the_phone()` — Дерево на телефоне — вертикальное; правила закреплены источником.
+- L5575 `test_dca_tiles_line_up_and_fill_the_row()` — Плитки сводки DCA: значения на одной линии, ряд без хвоста.
+- L5625 `test_dca_palette_comes_from_the_mockups()` — Цвета страницы DCA взяты из макетов, а не подобраны на глаз.
+- L5678 `test_dca_page_fits_the_phone()` — Страница DCA на телефоне: таблицы ложатся карточками.
+- L5717 `test_tree_scrolls_to_its_left_edge()` — Первая карточка дерева обязана быть достижима прокруткой.
+- L5751 `test_volatility_splits_results_by_regime()` — Волатильность рынка против результата книг.
+- L5865 `test_marks_poll_serves_the_book_in_view()` — Опрос переоценки обслуживает ТУ книгу, которую смотрят.
+- L5919 `test_journal_marker_is_parsed_not_basenamed()` — Маркер журнала тени несёт ДВА поля, и разбирать надо оба.
+- L5945 `test_book_registry_is_one_list()` — Книги объявлены один раз, и запрос каждой идёт в СВОЙ каталог.
+- L6018 `test_glossary_describes_the_live_model()` — Справочник: каждое семейство названо, каждый признак расписан.
+- L6137 `test_live_entries_reach_both_pages()` — Обзор и история сделок обязаны показывать ОДНИ сделки.
+- L6210 `test_sit_watch_levels_and_crossing()` — Живой сторож ситуационной книги: уровни и пересечение.
+- L6344 `test_all_symbols_filter()` — `--symbols all`: USDT-перпы минус не-крипто, ничего лишнего.
+- L6417 `test_shard_split_covers_everything()`
+- L6429 `test_pack_queue_single_worker()` — Смена часа закрывает сотни файлов разом; сжатие обязано идти очередью, а не потоком на файл — иначе раз в час…
+- L6462 `test_closed_trade_is_returned_for_writing()` — Закрытие обязано выйти наружу, иначе его некому записать.
+- L6498 `test_restore_marks_trade_cut_by_restart()` — Открытие без закрытия — не «ничего не было», а оборванная сделка.
+- L6523 `test_store_writes_plain_and_packs_on_hour()` — Текущий час лежит простым текстом, прошлый — сжатым.
+- L6560 `test_store_hour_not_counted_twice()` — Час, лежащий и простым, и сжатым, не удваивается.
+- L6594 `test_store_salvages_corrupted_archive()` — Порча В СЕРЕДИНЕ архива не вправе уносить то, что записано после.
+- L6636 `test_scanner_prefers_the_biggest_move_for_its_own_coin()` — Слот достаётся тому, у кого ход крупен ДЛЯ НЕГО.
+- L6673 `test_switcher_says_how_the_book_is_ordered()` — Подпись обязана говорить, ЧТО за книга.
+- L6704 `test_shadow_off_marker_is_a_state_not_an_alarm()` — Маркер выключения тени — состояние, не поломка.
+- L6742 `test_jobs_poke_runs_queue_and_holds_rate()` — Сигнал очереди: запускает `tools/jobs.sh` и не даёт долбить.
+- L6792 `test_run_live_refuses_to_archive_open_positions()` — Журнал с открытыми позициями не отставляется молча — блоком скрипта.
+- L6851 `test_watchdog_respects_shadow_off_marker()` — Сторож не воскрешает выключенную тень — настоящим блоком скрипта.
+- L6906 `test_factory_built_splits_forward_from_replay()` — Построенное системой: дерево читает РЕЕСТР и АРТЕФАКТ, и делит деньги на форвард и реплей прошлого.
+- L7074 `test_strategy_card_shows_applied_beside_declared_and_twins()` — Карточка стратегии: применённое рядом с объявленным и близнецы.
+- L7214 `test_candidate_book_is_addressable_and_unknown_key_is_refused()` — Книга кандидата открывается своим ключом; чужой ключ — отказ.
+- L7318 `test_agents_limit_wait_is_a_state_not_a_silence_alarm()` — Роль, ждущая снятия лимита, тревогой тишины НЕ помечается.
+- L7400 `test_agents_state_reads_the_registry_and_the_disk()` — Автономная система: тексты из реестра, построенность — с диска.
+- L7510 `test_dca_serves_ruler_and_deposit_as_one_book()` — Дорога сборщика до книги DCA: линейка и депозит вместе, не порознь.
+- L8005 `test_dca_page_does_not_reparse_an_unchanged_journal()` — Свод и график DCA не разбирают журнал заново, пока он не менялся.
+- L8087 `test_dca_open_pnl_is_marked_live_not_hourly()` — Открытый pnl DCA-книги переоценивается ЖИВОЙ серединой.
+- L8180 `test_dca_cut_position_carries_its_reason()` — Оборванная позиция едет странице С ПРИЧИНОЙ, и текст ОДИН.
+- L8245 `test_dca_serves_last_answer_while_rebuilding()` — Свод при сменившихся файлах (13.10): запрос из сети получает прежний готовый ответ сразу с `rebuilding: true`…
+- L8278 `test_dca_focus_slims_other_books_and_keeps_the_cache()` — `/dca?focus=` (13.10): у книг кроме выбранной нет списка сделок, число сделок и итоги остаются; копии книг в…
+- L8297 `test_dca_trades_speak_the_language_of_the_chart()` — Позиции DCA-книги едут графику В ЕГО ФОРМЕ, и ТВХ приходит готовой.
+- L8539 `test_dca_chart_carries_the_liquidation_of_the_book()` — У ступеней позиции есть цена ликвидации — ядром, а не копией.
+- L8604 `test_dca_chart_reads_the_journal_of_its_own_family()` — График берёт позиции из журнала СВОЕГО семейства, а не длинного.
+- L8711 `test_dca_list_counts_rules_of_the_family_not_of_the_project()` — Список сделок книги живёт по версии правил СВОЕГО семейства.
+- L8786 `test_memguard_drops_then_stops_only_above_hard_and_counts()` — Самоограничитель памяти (починка 10.10): выше мягкого порога — сброс кешей, сбор мусора и возврат памяти ядру…
+- L8847 `test_collector_drop_caches_empties_every_page_cache_and_counts_…` — Сброс кешей сборщика опустошает кеш журналов (класс), кеш кусков DCA, ответы `/dca` и `/model` — и называет,…
+- L8900 `test_dca_parts_cache_has_a_budget_and_evicts_the_least_used()` — Кеш кусков DCA-журналов ограничен бюджетом в байтах объектов (починка 10.10: рос без предела, 245 МБ, удвоен…
+- L8969 `test_dca_summary_is_rebuilt_by_file_signature_not_by_clock()` — Свод `/dca` пересобирается, когда меняются файлы (куски журналов, артефакты), а не раз в две минуты; свежесть…
+- L9051 `test_pinned_journal_files_survive_the_cache_budget()` — Файлы периодического сторожа закреплены в кеше журналов и в бюджет не входят (починка 10.10: сторож выходов к…
+- L9111 `test_model_signature_sees_only_the_files_the_build_reads()` — Подпись кеша `/model` — по файлам, из которых сборка берёт числа (починка 10.10): файл каталога книги, меняющ…
+- L9161 `test_brake_reads_only_the_books_it_counts()` — Тормоз читает и подписывает журналы только ТОРГУЕМЫХ книг без эхо (починка 10.10): эхо-книги в сумму не входя…
+- L9229 `test_acme_challenge_served_without_page_key_and_nothing_else()` — L2 спеки 16: проверочный файл Let's Encrypt отдаётся на порту 80 без ключа страниц — только из каталога вызов…
+- L9279 `main()`
 
 ## research/b1_book/test_measure_pack.py · 133 строк
 
@@ -4812,7 +4813,7 @@ X1: исполнитель против подставной биржи.
 - L291 `такт_демона_пишет_статус_и_не_молчит_об_ошибке`
 - L375 `which_python`
 
-## tools/app_api/test_app_api.py · 1625 строк
+## tools/app_api/test_app_api.py · 1628 строк
 
 Проверки API приложения (спека 15 Y0): конверт открывается только приватной половиной и ломается от подмены;…
 
@@ -4840,27 +4841,27 @@ X1: исполнитель против подставной биржи.
 - L417 `test_top_strategy_for_the_landing_is_ranked_by_declared_rule()` — Главная сайта: лучшая книга на 1 000 $ по доходу за всю запись, кривая — накопленная сумма дневного ряда на д…
 - L474 `test_site_pages_settings_overview_and_apple_web_audience()` — L4 спеки 16: сайт отдаётся с API (главная, кабинет, документы, стиль, скрипт), www → без www, чужой путь — 40…
 - L530 `test_public_summary_without_page_key_whitelist_and_collector_fa…` — L1 спеки 16: свод для приложения без сессии и без ключа страниц — четыре ответа сборщика, только названные па…
-- L583 `test_silent_connection_does_not_block_tls_api()` — Соединение, открытое и замолчавшее, не держит API (11.10, ночь).
-- L625 `test_init_is_idempotent_and_prints_pin()`
-- L635 `test_apple_verify_names_the_audience_and_accepts_listed_ones()`
-- L658 `_ec_pem()`
-- L669 `test_push_key_is_checked_by_signing_and_words_come_from_the_rec…` — Ключ APNs принимается только если им можно подписать; слова пуша — из записи сделки, деньги печатаются, а не…
-- L723 `test_devices_trades_ingest_and_push_chain()` — Журнал исполнителя → запись → пуш на устройства; повтор чтения не дублирует; мёртвый токен выключается; пробн…
-- L826 `_pos(sym, at, fills, side='long', closed=None, lev=4.0, margin=…`
-- L843 `test_follower_turns_cell_positions_into_executor_events_once()` — Сухой исполнитель: позиции ячейки подписки → события §7.6 — первый рунг вход, следующие доливы с переездом це…
-- L887 `test_follower_tick_feeds_trades_and_pushes_for_the_subscribed_c…` — Такт сервера: следователь → журнал подписки → записи `trades` с mode dry → пуш на устройство; чужие ячейки не…
-- L935 `_flat_bars(t0, n=1440, px=100.0, jitter=0.0)`
-- L943 `_bars_fn(bars)`
-- L949 `_sheet_line(hour, written_at, rows, arm='nn')`
-- L953 `_pick_line(hour, shorts, arm='nn')`
-- L957 `test_intents_plan_entry_like_paper_and_size_from_subscription_c…` — Намерение входа считается теми же функциями, что бумага: вход, плечо, рунги, цель, пол и ликвидация совпадают…
-- L1073 `test_intents_sources_are_read_as_tail_once_and_tick_feeds_state…` — Такт сервера: источники читаются хвостом от смещения (первое чтение — хвост, неполная строка остаётся), ноги…
-- L1194 `test_intents_for_live_sub_use_executor_cash_names_levels_and_gu…` — Живая подписка: уровни на КАЖДОЙ глубине — `levels_of` по плановым ценам рунгов; касса — депозит + реализован…
-- L1304 `test_arm_needs_word_switch_fresh_equity_and_one_live_per_key()` — Перевод в живые сделки — только кнопкой владельца с подтверждением словом `книга:депозит`; рубильник оператор…
-- L1384 `test_manual_close_appends_exit_intent_for_the_executor()` — Кнопка Close (владелец 11.10): намерение выхода с причиной «manual» дописывается в журнал намерений подписки…
-- L1436 `test_live_positions_are_built_from_executor_journal_in_paper_ro…` — Живые позиции — строками той же формы, что бумажные: вход и доливы из журнала исполнителя (`fills`, `walk` с…
-- L1546 `test_supervisor_starts_armed_subs_with_key_on_stdin_and_stops_u…` — Супервизор: подписке в live — ровно один процесс, ключ ТОЛЬКО трубой; первый подъём не читает сухие намерения…
-- L1612 `TESTS = [v for k, v in sorted(globals().items()…`
+- L586 `test_silent_connection_does_not_block_tls_api()` — Соединение, открытое и замолчавшее, не держит API (11.10, ночь).
+- L628 `test_init_is_idempotent_and_prints_pin()`
+- L638 `test_apple_verify_names_the_audience_and_accepts_listed_ones()`
+- L661 `_ec_pem()`
+- L672 `test_push_key_is_checked_by_signing_and_words_come_from_the_rec…` — Ключ APNs принимается только если им можно подписать; слова пуша — из записи сделки, деньги печатаются, а не…
+- L726 `test_devices_trades_ingest_and_push_chain()` — Журнал исполнителя → запись → пуш на устройства; повтор чтения не дублирует; мёртвый токен выключается; пробн…
+- L829 `_pos(sym, at, fills, side='long', closed=None, lev=4.0, margin=…`
+- L846 `test_follower_turns_cell_positions_into_executor_events_once()` — Сухой исполнитель: позиции ячейки подписки → события §7.6 — первый рунг вход, следующие доливы с переездом це…
+- L890 `test_follower_tick_feeds_trades_and_pushes_for_the_subscribed_c…` — Такт сервера: следователь → журнал подписки → записи `trades` с mode dry → пуш на устройство; чужие ячейки не…
+- L938 `_flat_bars(t0, n=1440, px=100.0, jitter=0.0)`
+- L946 `_bars_fn(bars)`
+- L952 `_sheet_line(hour, written_at, rows, arm='nn')`
+- L956 `_pick_line(hour, shorts, arm='nn')`
+- L960 `test_intents_plan_entry_like_paper_and_size_from_subscription_c…` — Намерение входа считается теми же функциями, что бумага: вход, плечо, рунги, цель, пол и ликвидация совпадают…
+- L1076 `test_intents_sources_are_read_as_tail_once_and_tick_feeds_state…` — Такт сервера: источники читаются хвостом от смещения (первое чтение — хвост, неполная строка остаётся), ноги…
+- L1197 `test_intents_for_live_sub_use_executor_cash_names_levels_and_gu…` — Живая подписка: уровни на КАЖДОЙ глубине — `levels_of` по плановым ценам рунгов; касса — депозит + реализован…
+- L1307 `test_arm_needs_word_switch_fresh_equity_and_one_live_per_key()` — Перевод в живые сделки — только кнопкой владельца с подтверждением словом `книга:депозит`; рубильник оператор…
+- L1387 `test_manual_close_appends_exit_intent_for_the_executor()` — Кнопка Close (владелец 11.10): намерение выхода с причиной «manual» дописывается в журнал намерений подписки…
+- L1439 `test_live_positions_are_built_from_executor_journal_in_paper_ro…` — Живые позиции — строками той же формы, что бумажные: вход и доливы из журнала исполнителя (`fills`, `walk` с…
+- L1549 `test_supervisor_starts_armed_subs_with_key_on_stdin_and_stops_u…` — Супервизор: подписке в live — ровно один процесс, ключ ТОЛЬКО трубой; первый подъём не читает сухие намерения…
+- L1615 `TESTS = [v for k, v in sorted(globals().items()…`
 
 ## tools/test_disk_alarm.py · 64 строк
 

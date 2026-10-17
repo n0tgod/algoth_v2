@@ -1766,6 +1766,60 @@ def test_warm_start_restores_history():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_live_bar_comes_from_memory_and_does_not_invent_prices():
+    """Живая минута открытой позиции (17.10): текущая минута — из ленты
+    сделок в памяти тем же ядром, что свечи записи; предыдущая — только
+    когда лента покрывает её целиком; минута без сделок — None, не ровная
+    свеча; неизвестное имя — `known: False`, а не чужие цены; последняя
+    сделка и середина стакана — как есть."""
+    import tempfile
+    import time as _time
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    a = C.Collector(["TEST"], [], root, lambda m: None, paper=True)
+    try:
+        now = _time.time()
+        m0 = int(now // 60) * 60
+        assert a.live_bar("NOPE")["known"] is False and "bar" not in a.live_bar("NOPE")
+        empty = a.live_bar("TEST")
+        assert empty["known"] and empty["bar"] is None and empty["last"] is None and empty["mid"] is None
+        # лента: три сделки предыдущей минуты, две — текущей
+        rows = [(m0 - 60 + 5, 10.0, 1.0), (m0 - 60 + 20, 10.4, 2.0), (m0 - 60 + 50, 10.2, 1.0),
+                (m0 + 3, 10.3, 1.0), (min(m0 + 40, now), 10.1, 3.0)]
+        for ts, p, v in rows:
+            a.tape["TEST"].append({"ts": int(ts * 1000), "s": "TEST", "side": 1, "p": p, "v": v})
+        a.mid["TEST"].append((round(now, 1), 10.15))
+        d = a.live_bar("TEST")
+        assert d["minute"] == m0 and d["bar_full"] is True
+        assert d["bar"] == [m0, 10.3, 10.3, 10.1, 10.1, 10.3 * 1.0 + 10.1 * 3.0], d["bar"]
+        assert d["prev"] == [m0 - 60, 10.0, 10.4, 10.0, 10.2, 10.0 + 10.4 * 2 + 10.2], d["prev"]
+        assert d["last"]["px"] == 10.1 and d["last"]["v"] == 3.0 and d["mid"]["px"] == 10.15
+        assert d["tape_n"] == 5 and abs(d["tape_from"] - (m0 - 60 + 5)) < 1e-3
+        # та же минута через ядро свечей записи — бит в бит (одно ядро)
+        assert C.minute_bars([t for t in a.tape["TEST"] if t["ts"] / 1000.0 >= m0])[0] == d["bar"]
+        # лента ЗАПОЛНЕНА (120) и началась внутри текущей минуты: предыдущая
+        # не отдаётся, текущая помечена неполной — сделок до первой в ленте не видно
+        a.tape["TEST"].clear()
+        for i in range(a.tape["TEST"].maxlen):
+            a.tape["TEST"].append({"ts": int((m0 + 1 + i * 0.01) * 1000), "s": "TEST", "side": 1,
+                                   "p": 10.0 + 0.001 * i, "v": 1.0})
+        d2 = a.live_bar("TEST")
+        assert d2["prev"] is None and d2["bar_full"] is False and d2["bar"][0] == m0 and d2["tape_n"] == 120
+        # сделок в текущей минуте нет — бар None, последняя сделка остаётся
+        a.tape["TEST"].clear()
+        a.tape["TEST"].append({"ts": int((m0 - 60 + 5) * 1000), "s": "TEST", "side": 1, "p": 9.9, "v": 1.0})
+        d3 = a.live_bar("TEST")
+        assert d3["bar"] is None and d3["last"]["px"] == 9.9 and d3["prev"] is not None
+        print("ok  живая минута: из ленты в памяти тем же ядром, предыдущая только полной, "
+              "без сделок — None, чужое имя — known: False")
+    finally:
+        try:
+            a.w.close()
+        except Exception:                                 # noqa: BLE001
+            pass
+
+
 def test_candles_window_can_end_in_the_past():
     """Свечи под сделку берутся из ЕЁ времени, а не из последних часов.
 
@@ -9363,6 +9417,7 @@ def main():
     test_health_is_one_definition()
     test_model_state_carries_training_stall()
     test_collected_symbols_are_not_lost()
+    test_live_bar_comes_from_memory_and_does_not_invent_prices()
     test_candles_window_can_end_in_the_past()
     test_heat_grid_from_book_snapshots()
     test_recount_survives_restart()
