@@ -2076,6 +2076,34 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L443 `publish(name)`
 - L449 `main(argv=None)`
 
+## research/dca_paper/exit_ceiling.py · 364 строк
+
+Потолок выхода: сколько денег вообще лежит в ВЫБОРЕ МОМЕНТА ВЫХОДА.
+
+- L43 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L44 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L54 `OUT_MD = os.path.join(R.OUT, 'DCA-exit-ceiling.m…`
+- L55 `OUT_JSON = os.path.join(R.OUT, 'DCA-exit-ceiling.j…`
+- L56 `DEPS = LG.DEPS`
+- L57 `SINCE = LG.SINCE`
+- L58 `WHY_CEIL = 'потолок'`
+- L59 `WHY_RAND = 'случайный выход'`
+- L60 `MEM_LIMIT_MB = 3000`
+- L61 `EXIT_KINDS = ('тейк', 'пол', 'срок', 'рынок', 'рынок…`
+- L64 `fence(rec, book)` — Часы, в которые позиция могла быть закрыта раньше правила: (путь, последний допустимый час). Открытая или без…
+- L74 `ceiling_recs(recs, book)` — Записи с идеальным выходом внутри забора и пары (было, стало, k*, K).
+- L94 `random_recs(recs, book, rng)` — Слепой выход: случайный час внутри того же забора (или свой выход).
+- L107 `pos_stats(hits)` — Что потолок делает с ПОЗИЦИЯМИ (в долях маржи, без кассы).
+- L132 `load(log)` — Записи книг как они ЖИВУТ: длинные; короткие с возрастом и охраной; общий счёт — своей короткой стороной (воз…
+- L165 `pack_pairs(pairs, longs_by, shorts_by)` — Общий счёт из уже обработанных сторон (метка `book` — у записи).
+- L174 `run(seeds, log)`
+- L247 `WIN_TITLE = {'all': 'Вся запись', 'half1': 'Первая …`
+- L249 `SIDE_TITLE = {'long': 'ДЛИННЫЕ книги', 'short': 'КОР…`
+- L253 `_pp(x)`
+- L257 `_pts(x)`
+- L261 `report(res)`
+- L341 `main(argv=None)`
+
 ## research/dca_paper/fund_check.py · 281 строк
 
 Проверка величины funding: сколько начислений, с каким шагом и почему.

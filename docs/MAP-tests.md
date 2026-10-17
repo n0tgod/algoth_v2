@@ -1251,6 +1251,17 @@
 - L93 `test_control_samples_each_book_to_its_own_size()` — Выборка того же размера — ПО КАЖДОЙ книге своя.
 - L116 `test_report_names_axes_thresholds_and_the_control()`
 
+## research/dca_paper/test_exit_ceiling.py · 103 строк
+
+Потолок выхода (`exit_ceiling.py`): идеальный выход — лучший час СТРОГО внутри забора (не позже выхода правил…
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `H = 3600.0`
+- L17 `AT = 1789002000.0`
+- L20 `_rec(steps, exit='срок', state='closed', sym='AAAUSDT')`
+- L28 `test_ceiling_picks_best_hour_inside_fence_only()`
+- L70 `test_random_exit_stays_inside_fence_and_stats_count_rule_best()`
+
 ## research/dca_paper/test_fund_check.py · 111 строк
 
 Проверки проверки funding.
