@@ -70,3 +70,25 @@
 - Входы не трогались: судится ТОЛЬКО выход. Доход книг пока рыночный (15.10), и выход может лишь перераспределить тот же рыночный ход.
 
 Прогон 171.1 с, 2026-10-17 22:57 UTC.
+ВНИМАНИЕ: 2026-10-17T22:57:05Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nb37-status.done                   |    1 +
+ jobs/done/nb37-status.log                    |   19 +
+ jobs/done/nb38-exit-ceiling.done             |    1 +
+ jobs/done/nb38-exit-ceiling.log              |   72 +
+ jobs/poke.log                                |    4 +
+ jobs/queue-state.md                          |    2 +-
+ research/dca_paper/out/DCA-exit-ceiling.json |    1 +
+ research/dca_paper/out/DCA-exit-ceiling.md   |  289 ++++
+ research/dca_paper/out/DCA-pair.md           |   24 +-
+ research/dca_paper/out/DCA-paper.json        | 2274 +++++++++++++-------------
+ research/dca_paper/out/DCA-paper.md          |   20 +-
+ research/dca_paper/out/DCA-short.json        |    2 +-
+ research/dca_paper/out/DCA-short.md          |   32 +-
+ research/s8_loop/out/day_brake.json          |    2 +-
+ 14 files changed, 1565 insertions(+), 1178 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   cd367906..f5e520a5  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-17T22:57:10Z, код 0
