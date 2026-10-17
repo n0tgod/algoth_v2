@@ -9720,6 +9720,22 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 
 - L73 `finish_rebase()` — Конфликт на артефакте разрешается в пользу того, что лежит на диске ЗДЕСЬ, то есть в пользу прогона. Так уже…
 
+## tools/publish_doctor.py · 225 строк
+
+Доктор публикации: почему сервер молчит в git — и отчёт В ОБХОД канала.
+
+- L40 `ROOT = os.path.dirname(os.path.dirname(os.path…`
+- L41 `BRANCH = 'server-doctor'`
+- L42 `MAPS = ('docs/MAP.md', 'docs/MAP-symbols.md', …`
+- L43 `MARK = re.compile('^\\+(<<<<<<<|=======$|>>>>>…`
+- L46 `sh(cmd, timeout=120, check=False)` — (код, вывод) команды в корне репозитория; таймаут — тоже ответ.
+- L56 `tail(path, n)`
+- L65 `age_s(path)`
+- L72 `report(title)`
+- L128 `push_report(text, branch=BRANCH, log=print)` — Отчёт — коммитом в служебную ветку плумбингом: без хуков, без индекса.
+- L160 `repair(log=print)` — Консервативная починка — только состояния, уже ломавшие публикацию.
+- L200 `main()`
+
 ## tools/publish_mech_code.py · 88 строк
 
 Опубликовать КОД механики, отчёт которой уже уехал в git.
