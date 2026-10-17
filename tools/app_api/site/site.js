@@ -78,7 +78,10 @@ const Site = (() => {
     $("f-rule").textContent = r.rule + (r.stale ? " The hourly run has not arrived; numbers describe the previous run." : "");
     if (!t) { $("f-title").textContent = "No strategy with trades yet."; return; }
     const side = {long: "Long", short: "Short", both: "Both sides"}[t.side] || t.side;
-    $("f-title").textContent = `Ladder · ${t.title_en} · ${side}`;
+    // ветвь правил — в имени (17.10: «Depth · Short» без ветви читалось как
+    // основная книга, а лучшей была сестра «4+2» с другими числами)
+    const br = t.branch_en && !t.branch_default ? " · " + t.branch_en : "";
+    $("f-title").textContent = `Ladder · ${t.title_en} · ${side}${br}`;
     $("f-plain").textContent = t.plain || "";
     const ret = $("f-return"); ret.textContent = pct(t.final); ret.className = t.final >= 0 ? "good" : "bad";
     $("f-return-usd").textContent = both(t.usd, null) + " · return over the whole record";
