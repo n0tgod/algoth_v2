@@ -1,0 +1,210 @@
+== задание nb28-logtail ==
+строка: run tools/logtail.py --since 2026-10-17-08 --until 2026-10-17-10
+начало: 2026-10-17T09:39:27Z
+запускаю: .venv/bin/python tools/logtail.py --since 2026-10-17-08 --until 2026-10-17-10
+
+== research/b1_book/out/watchdog.log ==
+  строк в окне 48
+  [2026-10-17T08:00:02Z] DCA-книги: последний счёт 302 с назад — прогон
+  [2026-10-17T08:05:01Z] ПЕРЕЗАПУСК СБОРЩИКА: процесс сборщика не найден
+  [2026-10-17T08:05:15Z] цикл обучения не найден — поднимаю
+  [2026-10-17T08:05:15Z] короткие книги h24: последний счёт 915 с назад — прогон --no-publish
+  [2026-10-17T08:05:15Z] прогон книг отложен: в этом такте уже запущен короткие книги — по одному
+  [2026-10-17T08:10:01Z] ПЕРЕЗАПУСК СБОРЩИКА: процесс сборщика не найден
+  [2026-10-17T08:10:15Z] DCA-книги: последний счёт 615 с назад — прогон --no-publish
+  [2026-10-17T08:15:02Z] DCA-книги: последний счёт 302 с назад — прогон --no-publish
+  [2026-10-17T08:20:01Z] ПЕРЕЗАПУСК СБОРЩИКА: процесс сборщика не найден
+  [2026-10-17T08:20:15Z] цикл обучения не найден — поднимаю
+  [2026-10-17T08:20:15Z] короткие книги h24: последний счёт 915 с назад — прогон --no-publish
+  [2026-10-17T08:20:15Z] прогон книг отложен: в этом такте уже запущен короткие книги — по одному
+  [2026-10-17T08:25:01Z] DCA-книги: последний счёт 601 с назад — прогон --no-publish
+  [2026-10-17T08:30:01Z] ПЕРЕЗАПУСК СБОРЩИКА: процесс сборщика не найден
+  [2026-10-17T08:30:14Z] цикл обучения не найден — поднимаю
+  [2026-10-17T08:30:15Z] DCA-книги: последний счёт 315 с назад — прогон --no-publish
+  [2026-10-17T08:35:02Z] короткие книги h24: последний счёт 902 с назад — прогон --no-publish
+  [2026-10-17T08:35:02Z] прогон книг отложен: в этом такте уже запущен короткие книги — по одному
+  [2026-10-17T08:40:01Z] ПЕРЕЗАПУСК СБОРЩИКА: процесс сборщика не найден
+  [2026-10-17T08:40:15Z] цикл обучения не найден — поднимаю
+  [2026-10-17T08:40:16Z] DCA-книги: последний счёт 616 с назад — прогон --no-publish
+  [2026-10-17T08:45:02Z] DCA-книги: последний счёт 302 с назад — прогон --no-publish
+  [2026-10-17T08:50:01Z] ПЕРЕЗАПУСК СБОРЩИКА: процесс сборщика не найден
+  [2026-10-17T08:50:15Z] цикл обучения не найден — поднимаю
+  [2026-10-17T08:50:15Z] короткие книги h24: последний счёт 915 с назад — прогон --no-publish
+  [2026-10-17T08:50:15Z] прогон книг отложен: в этом такте уже запущен короткие книги — по одному
+  [2026-10-17T08:55:01Z] ПЕРЕЗАПУСК СБОРЩИКА: процесс сборщика не найден
+  [2026-10-17T08:55:15Z] цикл обучения не найден — поднимаю
+  [2026-10-17T08:55:15Z] DCA-книги: последний счёт 615 с назад — прогон --no-publish
+  [2026-10-17T09:00:01Z] DCA-книги: последний счёт 301 с назад — прогон
+  [2026-10-17T09:05:01Z] ПЕРЕЗАПУСК СБОРЩИКА: процесс сборщика не найден
+  [2026-10-17T09:05:14Z] цикл обучения не найден — поднимаю
+  [2026-10-17T09:05:15Z] короткие книги h24: последний счёт 915 с назад — прогон --no-publish
+  [2026-10-17T09:05:15Z] прогон книг отложен: в этом такте уже запущен короткие книги — по одному
+  [2026-10-17T09:10:01Z] DCA-книги: последний счёт 601 с назад — прогон --no-publish
+  [2026-10-17T09:15:01Z] ПЕРЕЗАПУСК СБОРЩИКА: процесс сборщика не найден
+  [2026-10-17T09:15:14Z] цикл обучения не найден — поднимаю
+  [2026-10-17T09:15:15Z] DCA-книги: последний счёт 315 с назад — прогон --no-publish
+  [2026-10-17T09:20:01Z] короткие книги h24: последний счёт 901 с назад — прогон --no-publish
+  [2026-10-17T09:20:01Z] прогон книг отложен: в этом такте уже запущен короткие книги — по одному
+  [2026-10-17T09:25:01Z] ПЕРЕЗАПУСК СБОРЩИКА: процесс сборщика не найден
+  [2026-10-17T09:25:15Z] цикл обучения не найден — поднимаю
+  [2026-10-17T09:25:16Z] DCA-книги: последний счёт 616 с назад — прогон --no-publish
+  [2026-10-17T09:30:02Z] DCA-книги: последний счёт 302 с назад — прогон --no-publish
+  [2026-10-17T09:35:01Z] ПЕРЕЗАПУСК СБОРЩИКА: процесс сборщика не найден
+  [2026-10-17T09:35:15Z] цикл обучения не найден — поднимаю
+  [2026-10-17T09:35:16Z] короткие книги h24: последний счёт 915 с назад — прогон --no-publish
+  [2026-10-17T09:35:16Z] прогон книг отложен: в этом такте уже запущен короткие книги — по одному
+
+== research/b1_book/out/ship.log ==
+  строк в окне 0
+
+== research/b1_book/out/collect.log ==
+  строк в окне 0
+
+== research/dca_paper/out/short.log ==
+  строк в окне 14
+  запись доходит до 2026-10-17 08:00 UTC
+  запись доходит до 2026-10-17 08:00 UTC
+  запись доходит до 2026-10-17 08:16 UTC
+  запись доходит до 2026-10-17 08:16 UTC
+  запись доходит до 2026-10-17 08:35 UTC
+  запись доходит до 2026-10-17 08:35 UTC
+  запись доходит до 2026-10-17 08:45 UTC
+  запись доходит до 2026-10-17 08:45 UTC
+  запись доходит до 2026-10-17 09:03 UTC
+  запись доходит до 2026-10-17 09:03 UTC
+  запись доходит до 2026-10-17 09:20 UTC
+  запись доходит до 2026-10-17 09:20 UTC
+  запись доходит до 2026-10-17 09:33 UTC
+  запись доходит до 2026-10-17 09:33 UTC
+
+== journalctl (warning и выше) ==
+  строк 1
+  -- No entries --
+
+== journalctl sshd/cron ==
+  строк 631
+  2026-10-17T09:19:04+00:00 ubuntu-8gb-nbg1-2 sshd[828815]: Invalid user supernode from 179.43.153.2 port 48044
+  2026-10-17T09:19:04+00:00 ubuntu-8gb-nbg1-2 sshd[828815]: pam_unix(sshd:auth): check pass; user unknown
+  2026-10-17T09:19:04+00:00 ubuntu-8gb-nbg1-2 sshd[828815]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=179.43.153.2
+  2026-10-17T09:19:07+00:00 ubuntu-8gb-nbg1-2 sshd[828815]: Failed password for invalid user supernode from 179.43.153.2 port 48044 ssh2
+  2026-10-17T09:19:08+00:00 ubuntu-8gb-nbg1-2 sshd[828815]: Connection closed by invalid user supernode 179.43.153.2 port 48044 [preauth]
+  2026-10-17T09:19:26+00:00 ubuntu-8gb-nbg1-2 sshd[828818]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=80.94.92.55  user=root
+  2026-10-17T09:19:28+00:00 ubuntu-8gb-nbg1-2 sshd[828818]: Failed password for root from 80.94.92.55 port 45248 ssh2
+  2026-10-17T09:19:28+00:00 ubuntu-8gb-nbg1-2 sshd[828818]: Connection closed by authenticating user root 80.94.92.55 port 45248 [preauth]
+  2026-10-17T09:20:01+00:00 ubuntu-8gb-nbg1-2 CRON[828835]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-10-17T09:20:01+00:00 ubuntu-8gb-nbg1-2 CRON[828836]: (root) CMD (/root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1)
+  2026-10-17T09:20:03+00:00 ubuntu-8gb-nbg1-2 CRON[828835]: pam_unix(cron:session): session closed for user root
+  2026-10-17T09:20:54+00:00 ubuntu-8gb-nbg1-2 sshd[829975]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=45.148.10.157  user=root
+  2026-10-17T09:20:56+00:00 ubuntu-8gb-nbg1-2 sshd[829975]: Failed password for root from 45.148.10.157 port 16998 ssh2
+  2026-10-17T09:20:59+00:00 ubuntu-8gb-nbg1-2 sshd[829975]: Failed password for root from 45.148.10.157 port 16998 ssh2
+  2026-10-17T09:21:03+00:00 ubuntu-8gb-nbg1-2 sshd[829975]: Failed password for root from 45.148.10.157 port 16998 ssh2
+  2026-10-17T09:21:06+00:00 ubuntu-8gb-nbg1-2 sshd[829975]: Failed password for root from 45.148.10.157 port 16998 ssh2
+  2026-10-17T09:21:10+00:00 ubuntu-8gb-nbg1-2 sshd[829975]: Failed password for root from 45.148.10.157 port 16998 ssh2
+  2026-10-17T09:21:10+00:00 ubuntu-8gb-nbg1-2 sshd[829975]: Connection reset by authenticating user root 45.148.10.157 port 16998 [preauth]
+  2026-10-17T09:21:11+00:00 ubuntu-8gb-nbg1-2 sshd[829975]: PAM 4 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=45.148.10.157  user=root
+  2026-10-17T09:21:11+00:00 ubuntu-8gb-nbg1-2 sshd[829975]: PAM service(sshd) ignoring max retries; 5 > 3
+  2026-10-17T09:21:32+00:00 ubuntu-8gb-nbg1-2 sshd[829999]: Invalid user dirk from 179.43.153.2 port 58768
+  2026-10-17T09:21:32+00:00 ubuntu-8gb-nbg1-2 sshd[829999]: pam_unix(sshd:auth): check pass; user unknown
+  2026-10-17T09:21:32+00:00 ubuntu-8gb-nbg1-2 sshd[829999]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=179.43.153.2
+  2026-10-17T09:21:35+00:00 ubuntu-8gb-nbg1-2 sshd[829999]: Failed password for invalid user dirk from 179.43.153.2 port 58768 ssh2
+  2026-10-17T09:21:36+00:00 ubuntu-8gb-nbg1-2 sshd[829999]: Connection closed by invalid user dirk 179.43.153.2 port 58768 [preauth]
+  2026-10-17T09:21:43+00:00 ubuntu-8gb-nbg1-2 sshd[830003]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=80.94.92.55  user=root
+  2026-10-17T09:21:44+00:00 ubuntu-8gb-nbg1-2 sshd[830003]: Failed password for root from 80.94.92.55 port 48128 ssh2
+  2026-10-17T09:21:45+00:00 ubuntu-8gb-nbg1-2 sshd[830003]: Connection closed by authenticating user root 80.94.92.55 port 48128 [preauth]
+  2026-10-17T09:21:55+00:00 ubuntu-8gb-nbg1-2 sshd[830007]: Connection closed by 115.190.145.176 port 40692
+  2026-10-17T09:23:55+00:00 ubuntu-8gb-nbg1-2 sshd[830033]: Invalid user ems from 117.50.70.169 port 10222
+  2026-10-17T09:23:55+00:00 ubuntu-8gb-nbg1-2 sshd[830033]: pam_unix(sshd:auth): check pass; user unknown
+  2026-10-17T09:23:55+00:00 ubuntu-8gb-nbg1-2 sshd[830033]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=117.50.70.169
+  2026-10-17T09:23:55+00:00 ubuntu-8gb-nbg1-2 sshd[830035]: Invalid user dancer from 179.43.153.2 port 43462
+  2026-10-17T09:23:55+00:00 ubuntu-8gb-nbg1-2 sshd[830035]: pam_unix(sshd:auth): check pass; user unknown
+  2026-10-17T09:23:55+00:00 ubuntu-8gb-nbg1-2 sshd[830035]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=179.43.153.2
+  2026-10-17T09:23:57+00:00 ubuntu-8gb-nbg1-2 sshd[830033]: Failed password for invalid user ems from 117.50.70.169 port 10222 ssh2
+  2026-10-17T09:23:57+00:00 ubuntu-8gb-nbg1-2 sshd[830035]: Failed password for invalid user dancer from 179.43.153.2 port 43462 ssh2
+  2026-10-17T09:23:57+00:00 ubuntu-8gb-nbg1-2 sshd[830035]: Connection closed by invalid user dancer 179.43.153.2 port 43462 [preauth]
+  2026-10-17T09:23:58+00:00 ubuntu-8gb-nbg1-2 sshd[830033]: Received disconnect from 117.50.70.169 port 10222:11: Bye Bye [preauth]
+  2026-10-17T09:23:58+00:00 ubuntu-8gb-nbg1-2 sshd[830033]: Disconnected from invalid user ems 117.50.70.169 port 10222 [preauth]
+  2026-10-17T09:24:47+00:00 ubuntu-8gb-nbg1-2 sshd[830037]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=80.94.92.55  user=root
+  2026-10-17T09:24:49+00:00 ubuntu-8gb-nbg1-2 sshd[830037]: Failed password for root from 80.94.92.55 port 51014 ssh2
+  2026-10-17T09:24:49+00:00 ubuntu-8gb-nbg1-2 sshd[830037]: Connection closed by authenticating user root 80.94.92.55 port 51014 [preauth]
+  2026-10-17T09:25:01+00:00 ubuntu-8gb-nbg1-2 CRON[830039]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-10-17T09:25:01+00:00 ubuntu-8gb-nbg1-2 CRON[830040]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-10-17T09:25:01+00:00 ubuntu-8gb-nbg1-2 CRON[830041]: (root) CMD (/root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1)
+  2026-10-17T09:25:01+00:00 ubuntu-8gb-nbg1-2 CRON[830042]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+  2026-10-17T09:25:01+00:00 ubuntu-8gb-nbg1-2 CRON[830039]: pam_unix(cron:session): session closed for user root
+  2026-10-17T09:25:18+00:00 ubuntu-8gb-nbg1-2 CRON[830040]: pam_unix(cron:session): session closed for user root
+  2026-10-17T09:26:24+00:00 ubuntu-8gb-nbg1-2 sshd[831185]: Invalid user agave2 from 179.43.153.2 port 45624
+  2026-10-17T09:26:24+00:00 ubuntu-8gb-nbg1-2 sshd[831185]: pam_unix(sshd:auth): check pass; user unknown
+  2026-10-17T09:26:24+00:00 ubuntu-8gb-nbg1-2 sshd[831185]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=179.43.153.2
+  2026-10-17T09:26:25+00:00 ubuntu-8gb-nbg1-2 sshd[831185]: Failed password for invalid user agave2 from 179.43.153.2 port 45624 ssh2
+  2026-10-17T09:26:25+00:00 ubuntu-8gb-nbg1-2 sshd[831185]: Connection closed by invalid user agave2 179.43.153.2 port 45624 [preauth]
+  2026-10-17T09:27:21+00:00 ubuntu-8gb-nbg1-2 sshd[831222]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=62.60.130.253  user=root
+  2026-10-17T09:27:22+00:00 ubuntu-8gb-nbg1-2 sshd[831222]: Failed password for root from 62.60.130.253 port 34718 ssh2
+  2026-10-17T09:27:25+00:00 ubuntu-8gb-nbg1-2 sshd[831222]: Failed password for root from 62.60.130.253 port 34718 ssh2
+  2026-10-17T09:27:27+00:00 ubuntu-8gb-nbg1-2 sshd[831222]: Failed password for root from 62.60.130.253 port 34718 ssh2
+  2026-10-17T09:27:30+00:00 ubuntu-8gb-nbg1-2 sshd[831222]: Failed password for root from 62.60.130.253 port 34718 ssh2
+  2026-10-17T09:27:32+00:00 ubuntu-8gb-nbg1-2 sshd[831222]: Failed password for root from 62.60.130.253 port 34718 ssh2
+  2026-10-17T09:27:33+00:00 ubuntu-8gb-nbg1-2 sshd[831222]: Connection reset by authenticating user root 62.60.130.253 port 34718 [preauth]
+  2026-10-17T09:27:33+00:00 ubuntu-8gb-nbg1-2 sshd[831222]: PAM 4 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=62.60.130.253  user=root
+  2026-10-17T09:27:33+00:00 ubuntu-8gb-nbg1-2 sshd[831222]: PAM service(sshd) ignoring max retries; 5 > 3
+  2026-10-17T09:27:38+00:00 ubuntu-8gb-nbg1-2 sshd[831249]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=80.94.92.55  user=root
+  2026-10-17T09:27:39+00:00 ubuntu-8gb-nbg1-2 sshd[831249]: Failed password for root from 80.94.92.55 port 54010 ssh2
+  2026-10-17T09:27:40+00:00 ubuntu-8gb-nbg1-2 sshd[831249]: Connection closed by authenticating user root 80.94.92.55 port 54010 [preauth]
+  2026-10-17T09:28:39+00:00 ubuntu-8gb-nbg1-2 sshd[831300]: Invalid user agave4 from 179.43.153.2 port 54906
+  2026-10-17T09:28:39+00:00 ubuntu-8gb-nbg1-2 sshd[831300]: pam_unix(sshd:auth): check pass; user unknown
+  2026-10-17T09:28:39+00:00 ubuntu-8gb-nbg1-2 sshd[831300]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=179.43.153.2
+  2026-10-17T09:28:40+00:00 ubuntu-8gb-nbg1-2 sshd[831300]: Failed password for invalid user agave4 from 179.43.153.2 port 54906 ssh2
+  2026-10-17T09:28:41+00:00 ubuntu-8gb-nbg1-2 sshd[831300]: Connection closed by invalid user agave4 179.43.153.2 port 54906 [preauth]
+  2026-10-17T09:30:01+00:00 ubuntu-8gb-nbg1-2 CRON[831327]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-10-17T09:30:01+00:00 ubuntu-8gb-nbg1-2 CRON[831328]: (root) CMD (/root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1)
+  2026-10-17T09:30:04+00:00 ubuntu-8gb-nbg1-2 CRON[831327]: pam_unix(cron:session): session closed for user root
+  2026-10-17T09:30:57+00:00 ubuntu-8gb-nbg1-2 sshd[832458]: Invalid user jitobam from 179.43.153.2 port 34444
+  2026-10-17T09:30:57+00:00 ubuntu-8gb-nbg1-2 sshd[832458]: pam_unix(sshd:auth): check pass; user unknown
+  2026-10-17T09:30:57+00:00 ubuntu-8gb-nbg1-2 sshd[832458]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=179.43.153.2
+  2026-10-17T09:30:59+00:00 ubuntu-8gb-nbg1-2 sshd[832458]: Failed password for invalid user jitobam from 179.43.153.2 port 34444 ssh2
+  2026-10-17T09:31:01+00:00 ubuntu-8gb-nbg1-2 sshd[832458]: Connection closed by invalid user jitobam 179.43.153.2 port 34444 [preauth]
+  2026-10-17T09:33:11+00:00 ubuntu-8gb-nbg1-2 sshd[832507]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=80.94.92.55  user=root
+  2026-10-17T09:33:12+00:00 ubuntu-8gb-nbg1-2 sshd[832507]: Failed password for root from 80.94.92.55 port 56910 ssh2
+  2026-10-17T09:33:13+00:00 ubuntu-8gb-nbg1-2 sshd[832507]: Connection closed by authenticating user root 80.94.92.55 port 56910 [preauth]
+  2026-10-17T09:33:22+00:00 ubuntu-8gb-nbg1-2 sshd[832516]: Invalid user bam from 179.43.153.2 port 43650
+  2026-10-17T09:33:22+00:00 ubuntu-8gb-nbg1-2 sshd[832516]: pam_unix(sshd:auth): check pass; user unknown
+  2026-10-17T09:33:22+00:00 ubuntu-8gb-nbg1-2 sshd[832516]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=179.43.153.2
+  2026-10-17T09:33:24+00:00 ubuntu-8gb-nbg1-2 sshd[832516]: Failed password for invalid user bam from 179.43.153.2 port 43650 ssh2
+  2026-10-17T09:33:25+00:00 ubuntu-8gb-nbg1-2 sshd[832516]: Connection closed by invalid user bam 179.43.153.2 port 43650 [preauth]
+  2026-10-17T09:33:50+00:00 ubuntu-8gb-nbg1-2 sshd[832521]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=45.148.10.157  user=root
+  2026-10-17T09:33:53+00:00 ubuntu-8gb-nbg1-2 sshd[832521]: Failed password for root from 45.148.10.157 port 43652 ssh2
+  2026-10-17T09:33:57+00:00 ubuntu-8gb-nbg1-2 sshd[832521]: Failed password for root from 45.148.10.157 port 43652 ssh2
+  2026-10-17T09:33:59+00:00 ubuntu-8gb-nbg1-2 sshd[832521]: Failed password for root from 45.148.10.157 port 43652 ssh2
+  2026-10-17T09:34:01+00:00 ubuntu-8gb-nbg1-2 sshd[832521]: Failed password for root from 45.148.10.157 port 43652 ssh2
+  2026-10-17T09:34:04+00:00 ubuntu-8gb-nbg1-2 sshd[832521]: Failed password for root from 45.148.10.157 port 43652 ssh2
+  2026-10-17T09:34:06+00:00 ubuntu-8gb-nbg1-2 sshd[832521]: Connection reset by authenticating user root 45.148.10.157 port 43652 [preauth]
+  2026-10-17T09:34:06+00:00 ubuntu-8gb-nbg1-2 sshd[832521]: PAM 4 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=45.148.10.157  user=root
+  2026-10-17T09:34:06+00:00 ubuntu-8gb-nbg1-2 sshd[832521]: PAM service(sshd) ignoring max retries; 5 > 3
+  2026-10-17T09:35:01+00:00 ubuntu-8gb-nbg1-2 CRON[832531]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-10-17T09:35:01+00:00 ubuntu-8gb-nbg1-2 CRON[832532]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-10-17T09:35:01+00:00 ubuntu-8gb-nbg1-2 CRON[832533]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+  2026-10-17T09:35:01+00:00 ubuntu-8gb-nbg1-2 CRON[832534]: (root) CMD (/root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1)
+  2026-10-17T09:35:01+00:00 ubuntu-8gb-nbg1-2 CRON[832531]: pam_unix(cron:session): session closed for user root
+  2026-10-17T09:35:18+00:00 ubuntu-8gb-nbg1-2 CRON[832532]: pam_unix(cron:session): session closed for user root
+  2026-10-17T09:35:41+00:00 ubuntu-8gb-nbg1-2 sshd[833732]: Invalid user web3signer from 179.43.153.2 port 40320
+  2026-10-17T09:35:41+00:00 ubuntu-8gb-nbg1-2 sshd[833732]: pam_unix(sshd:auth): check pass; user unknown
+  2026-10-17T09:35:41+00:00 ubuntu-8gb-nbg1-2 sshd[833732]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=179.43.153.2
+  2026-10-17T09:35:42+00:00 ubuntu-8gb-nbg1-2 sshd[833732]: Failed password for invalid user web3signer from 179.43.153.2 port 40320 ssh2
+  2026-10-17T09:35:44+00:00 ubuntu-8gb-nbg1-2 sshd[833732]: Connection closed by invalid user web3signer 179.43.153.2 port 40320 [preauth]
+  2026-10-17T09:36:01+00:00 ubuntu-8gb-nbg1-2 sshd[833741]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=40.117.97.0  user=root
+  2026-10-17T09:36:03+00:00 ubuntu-8gb-nbg1-2 sshd[833741]: Failed password for root from 40.117.97.0 port 47666 ssh2
+  2026-10-17T09:36:03+00:00 ubuntu-8gb-nbg1-2 sshd[833741]: Received disconnect from 40.117.97.0 port 47666:11: Bye Bye [preauth]
+  2026-10-17T09:36:03+00:00 ubuntu-8gb-nbg1-2 sshd[833741]: Disconnected from authenticating user root 40.117.97.0 port 47666 [preauth]
+  2026-10-17T09:36:13+00:00 ubuntu-8gb-nbg1-2 sshd[833744]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=117.6.44.221  user=root
+  2026-10-17T09:36:14+00:00 ubuntu-8gb-nbg1-2 sshd[833744]: Failed password for root from 117.6.44.221 port 49680 ssh2
+  2026-10-17T09:36:15+00:00 ubuntu-8gb-nbg1-2 sshd[833744]: Received disconnect from 117.6.44.221 port 49680:11: Bye Bye [preauth]
+  2026-10-17T09:36:15+00:00 ubuntu-8gb-nbg1-2 sshd[833744]: Disconnected from authenticating user root 117.6.44.221 port 49680 [preauth]
+  2026-10-17T09:38:11+00:00 ubuntu-8gb-nbg1-2 sshd[833812]: Invalid user staker from 179.43.153.2 port 39678
+  2026-10-17T09:38:11+00:00 ubuntu-8gb-nbg1-2 sshd[833812]: pam_unix(sshd:auth): check pass; user unknown
+  2026-10-17T09:38:11+00:00 ubuntu-8gb-nbg1-2 sshd[833812]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=179.43.153.2
+  2026-10-17T09:38:13+00:00 ubuntu-8gb-nbg1-2 sshd[833812]: Failed password for invalid user staker from 179.43.153.2 port 39678 ssh2
+  2026-10-17T09:38:13+00:00 ubuntu-8gb-nbg1-2 sshd[833812]: Connection closed by invalid user staker 179.43.153.2 port 39678 [preauth]
+
+== dmesg -T (память, диск, сеть) ==
+  строк 1
+  [Thu Oct 15 11:42:56 2026] systemd[1]: Starting systemd-remount-fs.service - Remount Root and Kernel File Systems...
+конец: 2026-10-17T09:39:32Z, код 0
