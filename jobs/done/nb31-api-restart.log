@@ -1,0 +1,9 @@
+== задание nb31-api-restart ==
+строка: run tools/app_api/restart.py
+начало: 2026-10-17T14:32:20Z
+запускаю: .venv/bin/python tools/app_api/restart.py 
+порт 443: слушает
+конец: 2026-10-17T14:32:26Z, код 0
+ВНИМАНИЕ: 2026-10-17T14:32:26Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+ОТКАЗ: в публикуемых файлах остались маркеры конфликта (6).
+Разберите руками: git diff --cached | grep -n '<<<<<<<'

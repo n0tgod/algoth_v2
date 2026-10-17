@@ -1,0 +1,55 @@
+== задание nb32-status ==
+строка: status
+начало: 2026-10-17T16:37:49Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   75G   69G  53% /
+/dev/sdb        147G   76G   64G  55% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 172751  164266 /root/algoth_v2/bot/target/release/bot ladder --dir /root/algoth_v2/bot/out/dca/sub_0a1d813d9612bc11 --base https://api.bybit.com --keys-stdin -
+ 839687   24767 .venv/bin/python research/s8_loop/train.py
+ 882549   14863 .venv/bin/python research/b1_book/collect.py --http 8765
+--- убийства ядра по памяти за сутки ---
+0 (подробно: run tools/memtop.py)
+--- обучение S8 ---
+обучение S8: веса от 2026-10-17 15:40 UTC, 1.0 ч назад (каденция 24, тревога с 36 ч); последний цикл 16:11 UTC: весам 0.5 ч при каденции 24
+--- идущие прогоны ---
+нет
+--- статус сбора ---
+{"t": 1792255068.7, "uptime_sec": 14861.9, "rss_mb": 2610, "mem_guard": {"drops": 188, "dies": 0, "max_rss_mb": 2749}, "messages": 23592114, "trades": 2084804, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 4240179, "snapshot_errors": 5, "last_snap_age_sec": 2.1, "snap_pass_sec": 0.069, "writes": {"book": 4240179, "trades": 2084800, "raw": 110814, "liq": 1329, "metrics": 37506}, "write_age_sec": {"book": 2.1, "trades": 27.9, "raw": 0.2, "liq": 228.8, "metrics": 60.3}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.2345, "ask": 0.2347, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0003566, "ask": 0.0003568, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1, "ask":
+--- живой исполнитель ---
+{
+  "at_ms": 1792064189590,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 268.11562509,
+    "equity": 264.97302509
+  }
+}
+--- исполнитель Ladder ---
+
+sub_0a1d813d9612bc11: статусу 2 с, режим live, позиций 3 (отметка у 3), пауза None, без входов False, ошибка None, стоп пола на бирже у 3 из 3, цель лимиткой у 3 из 3
+    BASEDUSDT short глубина 1/1: средняя 0.05239, цель 0.04401, пол 0.15460186274509802, стоп биржи 0.15461000000000003, рунгов лежит 0, закрытие None
+    EPICUSDT short глубина 1/1: средняя 0.2501, цель 0.2104, пол 0.7380401960784313, стоп биржи 0.7381000000000001, рунгов лежит 0, закрытие None
+    ICNTUSDT short глубина 1/1: средняя 0.1741, цель 0.1288, пол 0.5116841463414635, стоп биржи 0.5117, рунгов лежит 0, закрытие None
+  чужое на счёте: нет
+sub_3f11698eb30279fa: статусу 524568 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+sub_b0b417879b985874: статусу 164269 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+конец: 2026-10-17T16:37:49Z
+ВНИМАНИЕ: 2026-10-17T16:37:49Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+ОТКАЗ: в публикуемых файлах остались маркеры конфликта (9).
+Разберите руками: git diff --cached | grep -n '<<<<<<<'

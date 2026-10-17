@@ -208,3 +208,75 @@
   строк 1
   [Thu Oct 15 11:42:56 2026] systemd[1]: Starting systemd-remount-fs.service - Remount Root and Kernel File Systems...
 конец: 2026-10-17T09:39:32Z, код 0
+ВНИМАНИЕ: 2026-10-17T09:39:32Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nb27-status.done  |   1 +
+ jobs/done/nb27-status.log   |  19 +++
+ jobs/done/nb28-logtail.done |   1 +
+ jobs/done/nb28-logtail.log  | 210 +++++++++++++++++++++++++
+ jobs/done/nb29-memtop.done  |   1 +
+ jobs/done/nb29-memtop.log   | 376 ++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log               |   5 +
+ jobs/queue-state.md         |   4 +-
+ 8 files changed, 615 insertions(+), 2 deletions(-)
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   docs/MAP.md
+	modified:   jobs/done/nb28-logtail.log
+	modified:   research/dca_paper/out/DCA-pair.json
+	modified:   research/dca_paper/out/DCA-short.json
+	modified:   research/paper_monthly/out/daily.log
+	modified:   research/s10_policy/out/tournament.log
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	bot/out/
+	research/a1_universe/.cache_opts/
+	research/a1_universe/.cache_risk/
+	research/mech_13a67a67/RUNBOOK.md
+	research/mech_13a67a67/controls_check.py
+	research/mech_13a67a67/run_age_mode.py
+	research/mech_193cbb87/_diff.py
+	research/mech_193cbb87/_finish_build.py
+	research/mech_193cbb87/_look.py
+	research/mech_193cbb87/_probe.py
+	research/mech_258a860c/_probe.py
+	research/mech_258a860c/_scratch.py
+	research/mech_2859b3d4/_ev_count.py
+	research/mech_2859b3d4/_speed.py
+	research/mech_2859b3d4/out/run.log
+	research/mech_357a7c60/_bite.py
+	research/mech_357a7c60/_cmp.py
+	research/mech_357a7c60/_keys.py
+	research/mech_357a7c60/_render.py
+	research/mech_374e2591/_mkbuild.py
+	research/mech_374e2591/_needs_owner.json
+	research/mech_374e2591/_notes.txt
+	research/mech_374e2591/_probe.py
+	research/mech_374e2591/_probe2.py
+	research/mech_374e2591/_probe3.py
+	research/mech_374e2591/_uniq.py
+	research/mech_374e2591/cache/
+	research/mech_59653014/_controls_check.py
+	research/mech_59653014/_smoke.py
+	research/mech_59653014/cache/
+	research/mech_59653014/out/run.log
+	research/mech_63fa406a/
+	research/mech_9dd65163/_probe2.py
+	research/mech_9dd65163/_probe3.py
+	research/mech_9dd65163/_probe4.py
+	research/mech_bb7c3581/_bite.py
+	research/mech_bb7c3581/_probe.py
+	research/mech_dc3b6317/_dbg_scan.py
+	research/mech_dc3b6317/_uniq.py
+	research/mech_fcbd3542/.cache_ann/
+	research/mech_fcbd3542/.smoke.sh
+	"research/mech_fcbd3542/.\320\275\320\265\321\202/"
+	research/probe_fshift/.gitignore
+	research/s8_loop/books_extra.json
+
+no changes added to commit (use "git add" and/or "git commit -a")
