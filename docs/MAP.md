@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 625, строк: 259056, каталогов: 86.
+Модулей кода: 625, строк: 259093, каталогов: 86.
 
 
 ## корень — память проекта, идеи, README
@@ -880,7 +880,7 @@
 - `memtop.py` · 155 строк — Кто держит память на сервере — через очередь заданий.
 - `probe_cli_models.py` · 56 строк — Какие модели принимает CLI НА ЭТОЙ машине.
 - `project_map.py` · 546 строк — Карта кода проекта — из самих файлов, не руками.
-- `publish.sh` · 195 строк — Опубликовать артефакты прогона: отчёты и сводки — в git.
+- `publish.sh` · 205 строк — Опубликовать артефакты прогона: отчёты и сводки — в git.
 - `publish_doctor.py` · 225 строк — Доктор публикации: почему сервер молчит в git — и отчёт В ОБХОД канала.
 - `publish_mech_code.py` · 88 строк — Опубликовать КОД механики, отчёт которой уже уехал в git.
 - `record_ship.py` · 437 строк — Выгрузка закрытых суток записи стакана в объектное хранилище (S3).
@@ -905,4 +905,4 @@
 - `watchdog_book.sh` · 710 строк — Сторож сбора: поднимает умершее и перезапускает зависшее.
 - `wave_episodes.py` · 108 строк — Зонд: как часто рынок даёт волну, на которую смотрит охрана.
 - `wave_rows_probe.py` · 59 строк — Зонд: строки часовых сводок прокси-имён за данный час — какие поля, когда записаны, и какая волна выходит по…
-- тесты: `app_api/test_app_api.py` (1628), `test_disk_alarm.py` (64), `test_jobs.sh` (257), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_api.sh` (47), `test_watchdog_books.sh` (114), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (59), `test_watchdog_ship.sh` (49)
+- тесты: `app_api/test_app_api.py` (1628), `test_disk_alarm.py` (64), `test_jobs.sh` (284), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_api.sh` (47), `test_watchdog_books.sh` (114), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (59), `test_watchdog_ship.sh` (49)

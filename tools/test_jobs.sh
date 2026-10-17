@@ -187,6 +187,33 @@ check "большой файл в ветку не ушёл" 0 "${inb:-нет}"
 inq=$( (cd "$pub" && git ls-tree -r --name-only origin/main | grep -c "jobs/done/q1.log") )
 check "лог задания ушёл вместе с остальным" 1 "${inq:-нет}"
 has "причина в состоянии очереди" "$pub/jobs/queue-state.md" "НЕ опубликованы"
+# 7c. Неслитая генерируемая карта кода не держит публикацию (17.10: `UU
+# docs/MAP.md` пролежал в индексе сервера 12 часов — каждая публикация
+# отказывала по маркерам, не снимая его, а очередь при этом работала).
+# Подделка сначала доказывает, что легла: статус карты ровно `UU`.
+(
+  cd "$pub" || exit 1
+  cp "$SRC/resolve_maps.sh" tools/; chmod +x tools/resolve_maps.sh
+  echo "карта своя" > docs/MAP.md
+  git add docs/MAP.md; git -c core.hooksPath=/dev/null commit -qm "карта своя"
+  ( cd other && git pull -q origin main >/dev/null 2>&1; echo "карта чужая" > docs/MAP.md \
+    && git add docs/MAP.md && git -c core.hooksPath=/dev/null commit -qm "карта чужая" \
+    && git push -q origin main )
+  git fetch -q origin main
+  git merge -q origin/main >/dev/null 2>&1 || true
+  git status --porcelain docs/MAP.md > "$pub/uu.txt"
+  echo "ещё задание" > jobs/done/q2.log
+  bash tools/publish.sh "тест: неслитая карта" > "$pub/maps.txt" 2>&1
+)
+# в фикстуре карты раньше не было: обе стороны её ДОБАВИЛИ — git пишет `AA`,
+# на сервере она была — `UU`; неслитость одна и та же
+has "подделка легла: карта была неслитой (UU/AA)" "$pub/uu.txt" "^\(UU\|AA\)"
+has "публикация с неслитой картой прошла" "$pub/maps.txt" "опубликовано"
+has "карта сведена пересборкой" "$pub/maps.txt" "сведён пересборкой"
+inq=$( (cd "$pub" && git ls-tree -r --name-only origin/main | grep -c "jobs/done/q2.log") )
+check "лог задания после сведения ушёл" 1 "${inq:-нет}"
+mk=$( (cd "$pub" && git show origin/main:docs/MAP.md 2>/dev/null | grep -c '^<<<<<<<') )
+check "маркеров в опубликованной карте нет" 0 "${mk:-нет}"
 rm -rf "$pub"
 
 # 8b. Роль автономной системы: объявленная запускается, выдуманная
