@@ -398,3 +398,12 @@ branch 'main' set up to track 'origin/main'.
 
 отчёт doctor-20261017-220427.md → origin/server-doctor: ушёл
 конец: 2026-10-17T22:04:30Z, код 0
+ВНИМАНИЕ: 2026-10-17T22:04:30Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nb36-publish-doctor.log | 307 ++++++++++++++++++++++++++------------
+ jobs/queue-state.md               |   2 +-
+ 2 files changed, 214 insertions(+), 95 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   fd79c953..2951592a  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
