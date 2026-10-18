@@ -9144,6 +9144,20 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L247 `limit_hit()` — Откат на запасную модель — на ДВЕ причины и ровно один раз. Молчаливый перебор моделей превратил бы «роль отр…
 - L260 `model_unsupported()` — Отказ ИМЕННО модели, а не задания: CLI её не знает или не берёт. Условие узкое намеренно — «unsupported» вооб…
 
+## tools/anthropic_key_check.py · 107 строк
+
+Лёг ли ключ Anthropic и жив ли он (спека 19, этап N0). Ключ НЕ печатается.
+
+- L26 `ROOT = os.path.dirname(os.path.dirname(os.path…`
+- L27 `PATH = os.path.join(ROOT, 'tools', 'app_api', …`
+- L28 `API = 'https://api.anthropic.com'`
+- L29 `VERSION = '2023-06-01'`
+- L32 `read_key(path=PATH)` — → (ключ или None, список вердиктов). Ключ наружу не выходит.
+- L51 `scrub(text, key)`
+- L55 `call(key, method, path, body=None)`
+- L71 `err_of(doc)`
+- L76 `main()`
+
 ## tools/app_api/__init__.py · 5 строк
 
 API приложения Algoth (спека 15 §7, §7a): аккаунты, ключи биржи, подписки на ячейки стратегий, состояние и со…
