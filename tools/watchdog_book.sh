@@ -686,6 +686,7 @@ if ! pgrep -f "market_state/collect.py" >/dev/null; then
     [ -f "$MSTATE" ] && ms_hour=$(date -u -r "$MSTATE" +%Y%m%d%H 2>/dev/null || echo none)
     ms_mm=$(date -u +%M | sed 's/^0//')
     if [ "${ms_mm:-0}" -lt 15 ] && [ "$ms_hour" != "$(date -u +%Y%m%d%H)" ]; then
+        mkdir -p "$(dirname "$MSTATE_LOG")"      # git пустых каталогов не переносит
         echo "[$(now)] состояние рынка: срез часа ${ms_hour} — прогон"
         setsid nohup bash -c "
             nice -n 15 .venv/bin/python research/market_state/collect.py \
@@ -707,6 +708,10 @@ if ! pgrep -f "research/news/collect.py" >/dev/null; then
         [ "$nw_ts" -gt 0 ] && nw_age=$(( $(date -u +%s) - nw_ts ))
     fi
     if [ "$nw_age" -gt 840 ]; then
+        # Каталог лога создаётся ЗДЕСЬ: git пустых каталогов не переносит,
+        # и перенаправление в несуществующий каталог роняет запуск раньше
+        # Python — сторож пишет «прогон», а не бежит ничего (18.10, 16:05).
+        mkdir -p "$(dirname "$NEWS_LOG")"
         echo "[$(now)] новостной фон: срез ${nw_age} с назад — прогон"
         setsid nohup bash -c "
             nice -n 15 .venv/bin/python research/news/collect.py \
