@@ -1,0 +1,9 @@
+== задание nb58-gate-dry2 ==
+строка: run research/ai_gate/gate_run.py --dry
+начало: 2026-10-18T17:15:19Z
+запускаю: .venv/bin/python research/ai_gate/gate_run.py --dry
+флаг ожидания обучения висит 62 мин — считаю застрявшим и не уступаю
+длинные книги: aggr 6879, optimal 6879, safe 6879
+короткие книги: aggr_h 6077, aggr_h_g0 6077, aggr_h_g2 6077, aggr_h_g4i2 6077, aggr_h_g6 6077, optimal_h 6077, optimal_h_g0 6077, optimal_h_g2 6077, optimal_h_g4i2 6077, optimal_h_g6 6077, safe_h 6077, safe_h_g0 6077, safe_h_g2 6077, safe_h_g4i2 6077, safe_h_g6 6077
+проход: новых входов 0, вызовов 0 ($0.0000), под сторожем 0, вызовов сторожа 0, закрытий 0, heartbeat 0; за сутки потрачено $0; 4.1 с; пик памяти 428 МБ
+конец: 2026-10-18T17:15:24Z, код 0
