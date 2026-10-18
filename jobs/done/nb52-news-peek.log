@@ -16,3 +16,19 @@
 1:*/5 * * * * /root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1
 2:@reboot sleep 30 && /root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1
 конец: 2026-10-18T16:12:31Z, код 0
+ВНИМАНИЕ: 2026-10-18T16:12:31Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nb51-restart-news-page.log  |   11 +
+ jobs/done/nb52-news-peek.done         |    1 +
+ jobs/done/nb52-news-peek.log          |   18 +
+ jobs/poke.log                         |    3 +
+ jobs/queue-state.md                   |    2 +-
+ research/dca_paper/out/DCA-pair.md    |   42 +-
+ research/dca_paper/out/DCA-paper.json | 1814 +++++++++++++++++----------------
+ research/dca_paper/out/DCA-paper.md   |   20 +-
+ research/s8_loop/out/day_brake.json   |    2 +-
+ 9 files changed, 1013 insertions(+), 900 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   8b4fdfed..b5944338  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
