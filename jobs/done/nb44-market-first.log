@@ -2,3 +2,23 @@
 строка: run research/market_state/collect.py
 начало: 2026-10-18T11:04:09Z
 запускаю: .venv/bin/python research/market_state/collect.py 
+ВНИМАНИЕ: 2026-10-18T11:20:17Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nb46-restart-pages.log          | 17 +++++++++
+ jobs/queue-state.md                       |  2 +-
+ research/dca_paper/out/DCA-pair.md        | 48 ++++++++++++------------
+ research/dca_paper/out/DCA-short.json     |  2 +-
+ research/dca_paper/out/DCA-short.md       | 62 +++++++++++++++----------------
+ research/market_state/out/MARKET-state.md | 16 ++++++++
+ research/market_state/out/latest.json     |  1 +
+ 7 files changed, 91 insertions(+), 57 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   86dcc012..c999447b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+имена Bybit в торговле: 798; в прогоне 798; не-крипто среди них 277
+Binance торгует 525 перпов USDT; пересечение с нашими 461 (нет на Binance: 337)
+OKX: свопов USDT 494; наших базовых монет там 439 из 798
+событий известно 92, новых 92
+покрытие: bybit 798/798, binance 461/461, okx 435/439; строк 1166529 (докачка 851520); отказов 0; 967.7 с
+конец: 2026-10-18T11:20:23Z, код 0
