@@ -2493,3 +2493,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792319255 ==
 [2026-10-18T10:27:37Z] задание nb43-source-probe запущено: tools/source_probe.py
+
+== сигнал 1792321446 ==
+[2026-10-18T11:04:09Z] задание nb44-market-first запущено: research/market_state/collect.py
