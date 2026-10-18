@@ -4583,6 +4583,14 @@ M2: каркас walk-forward — чистая математика без чт�
 - L380 `run(get=http_json, limit=0, dry=False, log=print, hist_path=HIS…`
 - L547 `main(argv=None)`
 
+## research/market_state/peek.py · 68 строк
+
+Заглянуть в запись состояния рынка на сервере (только чтение).
+
+- L18 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L23 `when(ms)`
+- L30 `main()`
+
 ## research/mech_12cc2578/_ask.py · 61 строк
 
 Дописать в отчёт постройки просьбу к владельцу — ДОСЛОВНЫМ повтором уже открытой просьбы `4c923cf1`.
