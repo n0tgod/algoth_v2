@@ -1,0 +1,10 @@
+== задание nb50-key-check ==
+строка: run tools/anthropic_key_check.py
+начало: 2026-10-18T12:00:04Z
+запускаю: .venv/bin/python tools/anthropic_key_check.py 
+права файла 0o600
+форма верна, длина 106
+ключ принят: моделей доступно 14: claude-haiku-5-5, claude-sonnet-5-5, claude-opus-5-5, claude-fable-5-1, claude-opus-5, claude-sonnet-5, claude-fable-5, claude-opus-4-8, claude-opus-4-7, claude-sonnet-4-6, claude-opus-4-6, claude-opus-4-5-20251101
+вызов claude-haiku-5-5: ответ есть, токенов вход 10, выход 1
+ИТОГ: ключ лёг и жив, баланс есть
+конец: 2026-10-18T12:00:06Z, код 0
