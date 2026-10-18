@@ -7,3 +7,14 @@
 короткие книги: aggr_h 6077, aggr_h_g0 6077, aggr_h_g2 6077, aggr_h_g4i2 6077, aggr_h_g6 6077, optimal_h 6077, optimal_h_g0 6077, optimal_h_g2 6077, optimal_h_g4i2 6077, optimal_h_g6 6077, safe_h 6077, safe_h_g0 6077, safe_h_g2 6077, safe_h_g4i2 6077, safe_h_g6 6077
 проход: новых входов 0, вызовов 0 ($0.0000), под сторожем 0, вызовов сторожа 0, закрытий 0, heartbeat 0; за сутки потрачено $0; 4.1 с; пик памяти 428 МБ
 конец: 2026-10-18T17:15:24Z, код 0
+ВНИМАНИЕ: 2026-10-18T17:15:24Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nb58-gate-dry2.done | 1 +
+ jobs/done/nb58-gate-dry2.log  | 9 +++++++++
+ jobs/poke.log                 | 3 +++
+ jobs/queue-state.md           | 2 +-
+ 4 files changed, 14 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   76065fff..a13ad493  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
