@@ -2314,6 +2314,27 @@
 - L351 `test_nonoverlap()`
 - L356 `main()`
 
+## research/market_state/test_collect.py · 184 строк
+
+Сборщик состояния рынка: разборы ответов площадок в форме зонда nb43, продление ряда по часам (а не по файлу)…
+
+- L12 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `BB_RATIO = {'retCode': 0, 'result': {'list': [{'sy…`
+- L19 `BN_RATIO = [{'symbol': 'BTCUSDT', 'longAccount': '…`
+- L23 `OKX_RATIO = {'code': '0', 'data': [['1792317600000'…`
+- L26 `test_parsers_match_probe_shapes()`
+- L53 `test_market_and_events_take_names_from_the_answer()`
+- L80 `test_rows_extend_by_time_and_coverage_is_a_number()`
+- L90 `_fake_get(urls_seen)`
+- L131 `test_run_with_fake_network_writes_by_day_and_names_failures()`
+
+## research/market_state/test_page.py · 38 строк
+
+Страница состояния рынка (`web.market_state_json`): нет файла — причина словами, не пустой объект; возраст сч…
+
+- L10 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L15 `test_market_state_json_ages_and_names_absence()`
+
 ## research/mech_12cc2578/test_horizon.py · 793 строк
 
 Проверки механики 12cc2578 — «вторая цель в листе сечения».
@@ -5074,6 +5095,13 @@ X1: исполнитель против подставной биржи.
 - L32 `check()`
 - L33 `run()`
 - L60 `run_flag()`
+
+## tools/test_watchdog_market.sh · 47 строк
+
+Проверка блока сторожа «состояние рынка»: раз в час в первые 15 минут,
+
+- L24 `run()`
+- L39 `check()`
 
 ## tools/test_watchdog_mem.sh · 68 строк
 

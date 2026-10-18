@@ -147,6 +147,7 @@ const NAV_ITEMS = [
   ["/tournament-page", "tournament", "турнир"],
   ["/paper-page", "monthly", "месячная"],
   ["/dca-page", "DCA", "DCA"],
+  ["/market-page", "market", "рынок"],
   ["/agents-page", "agents", "агенты"],
   ["/asks-page", "needs you", "нужно от вас"],
   ["/built-page", "built", "построено"],
@@ -11956,6 +11957,156 @@ render();
 </script>
 """
 
+MARKET_LATEST = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "market_state", "out", "latest.json")
+MARKET_STALE_S = 2 * 3600
+
+
+def market_state_json(path=MARKET_LATEST, now=None):
+    """Срез сборщика состояния рынка (спека 19 §3b) с возрастом и вердиктом.
+
+    Файл маленький и перечитывается на каждый запрос: сборщик — другой
+    процесс, кэш здесь был бы второй правдой. Нет файла — причина словами,
+    не пустой объект: пустая страница неотличима от исправной тишины.
+    """
+    import time as _t
+    try:
+        with open(path, encoding="utf-8") as f:
+            d = json.load(f)
+    except OSError:
+        return {"error": "срез не записан: файла нет (сборщик ещё не ходил или сторож его не поднял)"}
+    except ValueError:
+        return {"error": "срез повреждён: файл не разбирается"}
+    try:
+        import datetime as _dt
+        at = _dt.datetime.strptime(d.get("computed_at", ""), "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=_dt.timezone.utc)
+        age = int((now if now is not None else _t.time()) - at.timestamp())
+    except ValueError:
+        age = None
+    d["age_s"] = age
+    d["stale"] = (age is None) or age > MARKET_STALE_S
+    return d
+
+
+MARKETPAGE = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>market — who is long, who is short</title>
+<style>
+:root{color-scheme:dark;--ground:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;--accent:#9747ff;--good:#3ddc7f;--bad:#ff6473}
+*{box-sizing:border-box;margin:0}
+body{background:var(--ground);color:var(--ink);font:14px/1.5 "Inter",system-ui,sans-serif}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1160px;margin:0 auto;padding:0 16px 72px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 0 12px;margin-bottom:12px;
+ border-bottom:1px solid var(--rule-soft)}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;color:var(--ink);text-decoration:none}
+.brand b{color:var(--accent)}
+.tag{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+ border:1px solid var(--rule);border-radius:999px;padding:4px 10px}
+.sp{flex:1 1 auto}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);
+ border:1px solid var(--rule);border-radius:999px;padding:4px 11px;background:var(--chip)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 6px var(--good)}
+.stale .dot{background:var(--bad);box-shadow:0 0 6px var(--bad)}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:0 0 14px}
+.st{background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:11px 13px}
+.st .k{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.st .v{font-size:17px;font-weight:600;margin-top:5px}
+.st .s{font-size:10.5px;color:var(--muted);margin-top:4px}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:16px;padding:14px 16px;margin-bottom:14px}
+.card h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--rule-soft);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:500;cursor:pointer;user-select:none}
+.good{color:var(--good)} .bad{color:var(--bad)} .dim{color:var(--muted)}
+.bar{display:inline-block;height:8px;border-radius:4px;vertical-align:middle}
+input{background:var(--chip);color:var(--ink);border:1px solid var(--rule);border-radius:8px;padding:5px 9px;font:inherit}
+.err{color:var(--bad);font-size:12px;white-space:pre-wrap}
+.ev{font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--rule-soft)}
+.ev .dim{margin-left:6px}
+""" + NAVCSS + r"""</style>
+<div class="wrap">
+<header class="top">
+  <a id="home" class="brand" href="/">ALG<b>O</b>TH</a>
+  <span class="tag">market · positioning</span>
+  <span class="sp"></span>
+  <span id="hb" class="pill"><span class="dot"></span><span id="age" class="mono">&hellip;</span></span>
+</header>
+<div id="nav"></div>
+<div class="card" id="intro">Who is long and who is short, per name, from three venues: the share of
+ accounts long on Bybit (our venue), Binance crowd and Binance top traders, OKX long/short ratio.
+ Recorded hourly for spec 19 (the AI gate dossier and the deterministic grid v2). Coverage is a
+ count, not a promise: a name missing on a venue is a dash, never a zero.</div>
+<div class="stats" id="stats"></div>
+<div class="card" id="errs" style="display:none"><h2>sources that refused</h2><div class="err" id="errt"></div></div>
+<div class="card"><h2>names <input id="q" placeholder="filter&hellip;" style="margin-left:10px"></h2>
+ <div style="overflow:auto"><table id="tbl"><thead><tr>
+  <th data-k="sym">name</th><th data-k="bb_long">Bybit long %</th><th>skew</th>
+  <th data-k="bn_long">Binance crowd %</th><th data-k="bn_top">Binance top %</th>
+  <th data-k="okx_ls">OKX L/S</th><th>as of</th></tr></thead><tbody id="tb"></tbody></table></div></div>
+<div class="card"><h2>events, last 24 h</h2><div id="evs" class="dim">&hellip;</div></div>
+</div>
+<script>
+const KEY = new URLSearchParams(location.search).get("k") || "";
+document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + r"""
+navMount("/market-page");
+function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+const pct = v => v == null ? "&mdash;" : (100 * v).toFixed(1);
+let D = null, sortK = "bb_long", sortAsc = false;
+function st(k, v, s){ return `<div class="st"><div class="k">${k}</div><div class="v mono">${v}</div><div class="s">${s||""}</div></div>`; }
+function cov(c){ if (!c) return "&mdash;"; return c.of ? `${c.got} / ${c.of}` : "&mdash;"; }
+function covS(c){ if (!c) return ""; let s = c.pct == null ? "no names" : c.pct + " %"; if (c.absent) s += ` · ${c.absent} not listed there`; if (c.why) s += " · " + c.why; return s; }
+function render(){
+  const d = D; if (!d) return;
+  const hb = document.getElementById("hb"); hb.classList.toggle("stale", !!d.stale);
+  document.getElementById("age").textContent = d.error ? "no slice" :
+    (d.age_s == null ? "age unknown" : (d.age_s < 3600 ? Math.round(d.age_s/60) + " min ago" : (d.age_s/3600).toFixed(1) + " h ago") + (d.stale ? " · STALE" : ""));
+  if (d.error){ document.getElementById("stats").innerHTML = st("state", "&mdash;", esc(d.error)); return; }
+  const m = d.market || {}, c = d.coverage || {};
+  document.getElementById("stats").innerHTML =
+    st("Bybit names", cov(c.bybit), covS(c.bybit)) + st("Binance names", cov(c.binance), covS(c.binance)) +
+    st("OKX coins", cov(c.okx), covS(c.okx)) +
+    st("fear &amp; greed", m.fng == null ? "&mdash;" : m.fng, esc(m.fng_label || "")) +
+    st("BTC dominance", m.btc_dom == null ? "&mdash;" : m.btc_dom + " %", m.mcap_24h_pct == null ? "" : "market cap 24 h " + (m.mcap_24h_pct > 0 ? "+" : "") + m.mcap_24h_pct + " %") +
+    st("insurance USDT", m.insurance_usdt == null ? "&mdash;" : (m.insurance_usdt/1e6).toFixed(2) + " M", "Bybit fund") +
+    st("stablecoins", m.stables_usd == null ? "&mdash;" : (m.stables_usd/1e9).toFixed(1) + " B", m.stable_px ? Object.entries(m.stable_px).map(([k,v]) => k + " " + v).join(" · ") : "") +
+    st("trending", (m.trending || []).slice(0, 6).join(" ") || "&mdash;", "CoinGecko search") +
+    st("rows this run", d.rows == null ? "&mdash;" : d.rows, d.backfill ? "backfill " + d.backfill : "run " + d.secs + " s");
+  const errs = d.errors || [];
+  document.getElementById("errs").style.display = errs.length ? "" : "none";
+  document.getElementById("errt").textContent = errs.join("\n");
+  const q = (document.getElementById("q").value || "").toUpperCase();
+  let rows = Object.entries(d.names || {}).map(([sym, v]) => Object.assign({sym}, v)).filter(r => !q || r.sym.includes(q));
+  rows.sort((a, b) => { const x = a[sortK], y = b[sortK]; if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1;
+    return (x < y ? -1 : x > y ? 1 : 0) * (sortAsc ? 1 : -1); });
+  document.getElementById("tb").innerHTML = rows.map(r => {
+    const sk = r.bb_long == null ? null : (r.bb_long - 0.5) * 100;
+    const bar = sk == null ? "" : `<span class="bar" style="width:${Math.min(60, Math.abs(sk) * 2)}px;background:${sk >= 0 ? "var(--good)" : "var(--bad)"}"></span>`;
+    return `<tr><td class="mono">${esc(r.sym)}${r.nc ? ' <span class="dim">non-crypto</span>' : ""}</td><td class="mono">${pct(r.bb_long)}</td>
+     <td class="mono ${sk == null ? "dim" : sk >= 0 ? "good" : "bad"}">${sk == null ? "&mdash;" : (sk > 0 ? "+" : "") + sk.toFixed(1) + " pp"} ${bar}</td>
+     <td class="mono">${pct(r.bn_long)}</td><td class="mono">${pct(r.bn_top)}</td>
+     <td class="mono">${r.okx_ls == null ? "&mdash;" : r.okx_ls.toFixed(2)}</td>
+     <td class="mono dim">${r.t ? new Date(r.t).toISOString().slice(5, 16).replace("T", " ") : "&mdash;"}</td></tr>`; }).join("");
+  const ev = d.events_24h || [];
+  document.getElementById("evs").innerHTML = ev.length ? ev.map(e =>
+    `<div class="ev">${esc(e.title)}<span class="dim">${esc(e.src)} · ${esc(e.kind || "")} · ${e.t ? new Date(e.t).toISOString().slice(5, 16).replace("T", " ") : ""}</span></div>`).join("")
+    : "no events in the last 24 h (or sources refused — see above)";
+}
+document.querySelectorAll("th[data-k]").forEach(th => th.onclick = () => { const k = th.dataset.k; if (sortK === k) sortAsc = !sortAsc; else { sortK = k; sortAsc = k === "sym"; } render(); });
+document.getElementById("q").oninput = render;
+async function load(){
+  try { const r = await fetch("/market_state?k=" + encodeURIComponent(KEY)); D = await r.json(); }
+  catch (e) { D = {error: "page could not reach the collector: " + e}; }
+  render();
+}
+load(); setInterval(load, 60000);
+</script>
+"""
+
+
 def slim_dca(d, focus):
     """Свод `/dca` для экрана одной книги: у книг, кроме `focus`, нет
     списка сделок (`trades`; `trades_omitted: true`, число `trades_total`
@@ -12320,6 +12471,12 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/dca-page":
                 return self._ok(DCAPAGE.encode("utf-8"),
+                                "text/html; charset=utf-8")
+            if u.path == "/market_state":
+                return self._ok(json.dumps(market_state_json(), ensure_ascii=False).encode("utf-8"),
+                                "application/json; charset=utf-8")
+            if u.path == "/market-page":
+                return self._ok(MARKETPAGE.encode("utf-8"),
                                 "text/html; charset=utf-8")
             if u.path == "/paper-page":
                 return self._ok(PAPERPAGE.encode("utf-8"),

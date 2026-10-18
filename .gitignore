@@ -33,3 +33,8 @@ research/dca_paper/out/bars_cache/
 # кэш контекста издержек (costs.context cache=…, 15.10) — пересоздаётся по подписи каталога funding
 research/dca_paper/out/costs_context.pkl
 research/dca_paper/out/costs_context.pkl.tmp
+# запись состояния рынка (спека 19 §3b): строки по суткам, ≈ 5 МБ/сут,
+# последняя метка на имя и список виденных событий — не в git; в git
+# идут сводка latest.json и отчёт
+research/market_state/out/record/
+research/market_state/out/collect.log

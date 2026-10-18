@@ -1105,7 +1105,7 @@ A3 — кандидаты в пары на момент окна.
 - L279 `_parse(f, parse=json.loads)` — Разобрать построчно. Возвращает `(записи, дочитано ли до конца)`.
 - L298 `_salvage(path, log, parse=json.loads)` — Разобрать сжатый файл по членам, пропуская испорченные.
 
-## research/b1_book/web.py · 12432 строк
+## research/b1_book/web.py · 12589 строк
 
 Страница наблюдения: стакан, лента, глубина и журнал живьём.
 
@@ -1114,34 +1114,38 @@ A3 — кандидаты в пары на момент окна.
 - L78 `QTYJS = <текст, 11 строк>` — Контракты позиции (монеты, а не деньги). Величины разнесены на порядки — 0.0003 BTC против двенадцати миллион…
 - L97 `EXITJS = <текст, 10 строк>` — Причины выхода в ячейках таблиц — коротким словом. Длинная фраза («price broke the promised adverse path») пе…
 - L117 `BOOKJS = '\nconst BOOK_LIST = ' + json.dumps([li…` — Книги: ключ и подпись, СОБРАНЫ ИЗ РЕЕСТРА (`s8_loop/books.py`), а не записаны здесь. Список жил восемью копия…
-- L138 `NAVJS = <текст, 32 строк>` — Состав меню — решение владельца (2026-08-22): пункт playbook ВЕРНУЛСЯ на справочник (перепутал при прошлой пр…
-- L173 `NAVCSS = <текст, 8 строк>` — Стили меню — тоже один раз: пять копий CSS разъехались бы так же незаметно, как разъехался бы список.
-- L183 `PAGE = '<!doctype html><meta charset="utf-8">\…`
-- L1816 `TRADES = '<!doctype html><meta charset="utf-8">\…` — Отдельная страница истории сделок модели. Заведена по просьбе владельца: на обзоре таблица режется до шестиде…
-- L2681 `BOTPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L3049 `CHART = '<!doctype html><meta charset="utf-8">\…`
-- L5464 `FEATJS = <текст, 98 строк>` — Перевод признаков на человеческий — ОДИН на все страницы, которые его показывают (разбор сделки и справочник)…
-- L5570 `TRADEINFO = '<!doctype html><meta charset="utf-8">\…` — Страница разбора ОДНОЙ сделки — просьба владельца: у каждой сделки значок «i», по нему страница, где простыми…
-- L5919 `LEARNPAGE = '<!doctype html><meta charset="utf-8">\…` — Справочник — просьба владельца: страница со всеми «стратегиями» модели и подробным объяснением каждой простым…
-- L6091 `BOOKDAYS = '<!doctype html><meta charset="utf-8">\…` — Дневная статистика ОДНОЙ книги — просьба владельца: «кликаем на 4-hour book, и открывается страница, где стат…
-- L6403 `DCAPAGE = '<!doctype html><meta charset="utf-8">\…` — Бумажная месячная книга (`research/paper_monthly`). Своего показа у неё не было вовсе: книга писала отчёт фай…
-- L7977 `PAPERPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L8308 `LIVEPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L8747 `VOLPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L8992 `GLOSSARY_PAGE = '<!doctype html><meta charset="utf-8">\…`
-- L9246 `TREEPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница дерева моделей — просьба владельца: разветвление от основных ML и AI, и по каждой ветке простыми сло…
-- L9743 `TOURPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница турнира политик — просьба владельца: весь лист веток и подветок отдельной страницей. Данные — артефа…
-- L10148 `LEAGUE = '<!doctype html><meta charset="utf-8">\…` — Страница лиги — просьба владельца: наблюдение за каждой стратегией и моделью отдельно (что ведёт себя лучше)…
-- L10478 `BUILTPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница автономной системы: конвейер ролей и механических шагов, границы и то, что уже построено. Тексты — и…
-- L10834 `STRATPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L11261 `ASKSPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L11429 `AGENTSPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L11959 `slim_dca(d, focus)` — Свод `/dca` для экрана одной книги: у книг, кроме `focus`, нет списка сделок (`trades`; `trades_omitted: true…
-- L11984 `SITE_HOST = 'algoth.trade'`
-- L11985 `ACME_PREFIX = '/.well-known/acme-challenge/'`
-- L11986 `ACME_NAME = re.compile('^[A-Za-z0-9_-]{16,128}$')`
-- L11987 `ACME_DIR = os.path.join(os.path.dirname(os.path.di…`
-- L11991 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
+- L138 `NAVJS = <текст, 33 строк>` — Состав меню — решение владельца (2026-08-22): пункт playbook ВЕРНУЛСЯ на справочник (перепутал при прошлой пр…
+- L174 `NAVCSS = <текст, 8 строк>` — Стили меню — тоже один раз: пять копий CSS разъехались бы так же незаметно, как разъехался бы список.
+- L184 `PAGE = '<!doctype html><meta charset="utf-8">\…`
+- L1817 `TRADES = '<!doctype html><meta charset="utf-8">\…` — Отдельная страница истории сделок модели. Заведена по просьбе владельца: на обзоре таблица режется до шестиде…
+- L2682 `BOTPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L3050 `CHART = '<!doctype html><meta charset="utf-8">\…`
+- L5465 `FEATJS = <текст, 98 строк>` — Перевод признаков на человеческий — ОДИН на все страницы, которые его показывают (разбор сделки и справочник)…
+- L5571 `TRADEINFO = '<!doctype html><meta charset="utf-8">\…` — Страница разбора ОДНОЙ сделки — просьба владельца: у каждой сделки значок «i», по нему страница, где простыми…
+- L5920 `LEARNPAGE = '<!doctype html><meta charset="utf-8">\…` — Справочник — просьба владельца: страница со всеми «стратегиями» модели и подробным объяснением каждой простым…
+- L6092 `BOOKDAYS = '<!doctype html><meta charset="utf-8">\…` — Дневная статистика ОДНОЙ книги — просьба владельца: «кликаем на 4-hour book, и открывается страница, где стат…
+- L6404 `DCAPAGE = '<!doctype html><meta charset="utf-8">\…` — Бумажная месячная книга (`research/paper_monthly`). Своего показа у неё не было вовсе: книга писала отчёт фай…
+- L7978 `PAPERPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L8309 `LIVEPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L8748 `VOLPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L8993 `GLOSSARY_PAGE = '<!doctype html><meta charset="utf-8">\…`
+- L9247 `TREEPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница дерева моделей — просьба владельца: разветвление от основных ML и AI, и по каждой ветке простыми сло…
+- L9744 `TOURPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница турнира политик — просьба владельца: весь лист веток и подветок отдельной страницей. Данные — артефа…
+- L10149 `LEAGUE = '<!doctype html><meta charset="utf-8">\…` — Страница лиги — просьба владельца: наблюдение за каждой стратегией и моделью отдельно (что ведёт себя лучше)…
+- L10479 `BUILTPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница автономной системы: конвейер ролей и механических шагов, границы и то, что уже построено. Тексты — и…
+- L10835 `STRATPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L11262 `ASKSPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L11430 `AGENTSPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L11960 `MARKET_LATEST = os.path.join(os.path.dirname(os.path.di…`
+- L11962 `MARKET_STALE_S = 2 * 3600`
+- L11965 `market_state_json(path=MARKET_LATEST, now=None)` — Срез сборщика состояния рынка (спека 19 §3b) с возрастом и вердиктом.
+- L11991 `MARKETPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L12110 `slim_dca(d, focus)` — Свод `/dca` для экрана одной книги: у книг, кроме `focus`, нет списка сделок (`trades`; `trades_omitted: true…
+- L12135 `SITE_HOST = 'algoth.trade'`
+- L12136 `ACME_PREFIX = '/.well-known/acme-challenge/'`
+- L12137 `ACME_NAME = re.compile('^[A-Za-z0-9_-]{16,128}$')`
+- L12138 `ACME_DIR = os.path.join(os.path.dirname(os.path.di…`
+- L12142 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
 
 ## research/d1_seconds/detect.py · 367 строк
 
@@ -4528,6 +4532,56 @@ M2: каркас walk-forward — чистая математика без чт�
 - L207 `stats(ic_list)` — Сводка по ряду IC непересекающихся сечений.
 - L223 `nonoverlap(eval_idx, h)` — Каждое h-е оценочное сечение — статистика без перекрытия форвардов (урок R2).
 - L229 `parse_day(s)`
+
+## research/market_state/collect.py · 561 строк
+
+Сборщик состояния рынка (спека 19 §3b): кто в лонге, кто в шорте — по именам.
+
+- L52 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L53 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L55 `OUT = os.path.join(HERE, 'out')`
+- L56 `RECORD = os.path.join(OUT, 'record')`
+- L57 `HIST = os.path.join(RECORD, 'hist.json')`
+- L58 `SEEN = os.path.join(RECORD, 'seen_events.json')`
+- L59 `LATEST = os.path.join(OUT, 'latest.json')`
+- L60 `REPORT = os.path.join(OUT, 'MARKET-state.md')`
+- L62 `BYBIT = 'https://api.bybit.com'`
+- L63 `BINANCE = 'https://fapi.binance.com'`
+- L64 `BINANCE_CMS = 'https://www.binance.com/bapi/composite…`
+- L66 `OKX = 'https://www.okx.com'`
+- L67 `BYBIT_BACKFILL = 500`
+- L68 `BINANCE_BACKFILL = 500`
+- L69 `PACE = {'bybit': (2, 0.2), 'binance': (1, 0.4)…`
+- L70 `TIMEOUT = 15`
+- L71 `STALE_S = 2 * 3600`
+- L72 `BINANCE_CATALOGS = ('48', '161')`
+- L75 `utc_now()`
+- L79 `http_json(url, timeout=TIMEOUT, tries=2)` — GET → JSON. Повтор один, отказ — исключением с кодом и адресом.
+- L100 `parse_bybit_names(doc)` — instruments-info → {symbol: baseCoin} по торгуемым перпам USDT.
+- L110 `parse_bybit_ratio(doc)` — account-ratio → [{t, long, short}] по возрастанию времени.
+- L123 `parse_binance_names(doc)` — exchangeInfo → множество бессрочных USDT-контрактов в торговле.
+- L133 `parse_binance_ratio(lst)` — global/top long-short → [{t, long}] (доля лонгов).
+- L145 `parse_okx_ccys(doc)` — public/instruments SWAP → множество базовых монет USDT-свопов.
+- L157 `parse_okx_ratio(doc)` — long-short-account-ratio → [{t, ls}] (лонгов на одного шортиста).
+- L169 `parse_market(fng=None, cg=None, ins=None, stables=None)` — Четыре ответа уровня рынка → плоский словарь; чего нет — нет.
+- L206 `parse_bybit_events(doc)` — announcements → [{id, src, t, title, kind}]; id — ссылка.
+- L223 `parse_binance_events(doc)` — CMS article list → события с именем каталога ИЗ ответа.
+- L240 `parse_hacks(lst, since_s)`
+- L256 `new_rows(rows, last_t)` — Оставить точки новее последней записанной: ряд продлевается по часам.
+- L261 `day_of(t_ms)`
+- L265 `coverage(got, of)`
+- L270 `skew(long_share)` — Перекос толпы в п.п. от 50: +13 — толпа в лонге на 63 %.
+- L275 `summarize(names, latest, cov, market, events, errors, t0, n_row…` — Сводка часа для страницы и приложения; имена — только с данными.
+- L296 `report_md(s)`
+- L320 `class Writer` — Строки записи — по суткам ИХ времени, чтобы сетка читала по дням.
+  - L323 `Writer.__init__(self, root=RECORD, dry=False)`
+  - L327 `Writer.write(self, row)`
+  - L339 `Writer.close(self)`
+- L344 `_load(path, default)`
+- L352 `_save(path, obj)`
+- L360 `_pool(src, items, fn, log)` — Вежливый обход: потоки и пауза по площадке; отказ имени — счётчик, не падение.
+- L380 `run(get=http_json, limit=0, dry=False, log=print, hist_path=HIS…`
+- L547 `main(argv=None)`
 
 ## research/mech_12cc2578/_ask.py · 61 строк
 
@@ -10042,7 +10096,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 710 строк
+## tools/watchdog_book.sh · 732 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 
