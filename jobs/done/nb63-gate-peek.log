@@ -1,0 +1,25 @@
+== задание nb63-gate-peek ==
+строка: run research/ai_gate/peek.py
+начало: 2026-10-18T18:22:57Z
+запускаю: .venv/bin/python research/ai_gate/peek.py 
+== gate.log: есть
+короткие книги: aggr_h 6081, aggr_h_g0 6081, aggr_h_g2 6081, aggr_h_g4i2 6081, aggr_h_g6 6081, optimal_h 6081, optimal_h_ai 6081, optimal_h_g0 6081, optimal_h_g2 6081, optimal_h_g4i2 6081, optimal_h_g6 6081, safe_h 6081, safe_h_g0 6081, safe_h_g2 6081, safe_h_g4i2 6081, safe_h_g6 6081
+проход: новых входов 0, вызовов 0 ($0.0000), под сторожем 0, вызовов сторожа 0, закрытий 0, heartbeat 0; за сутки потрачено $0; 5.9 с; пик памяти 475 МБ
+ВНИМАНИЕ: 2026-10-18T18:05:09Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/queue-state.md                 | 2 +-
+ research/ai_gate/out/latest.json    | 2 +-
+ research/s8_loop/out/day_brake.json | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   538a50f8..e796a7e3  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+длинные книги: aggr 6879, optimal 6879, optimal_ai 6879, safe 6879
+короткие книги: aggr_h 6081, aggr_h_g0 6081, aggr_h_g2 6081, aggr_h_g4i2 6081, aggr_h_g6 6081, optimal_h 6081, optimal_h_ai 6081, optimal_h_g0 6081, optimal_h_g2 6081, optimal_h_g4i2 6081, optimal_h_g6 6081, safe_h 6081, safe_h_g0 6081, safe_h_g2 6081, safe_h_g4i2 6081, safe_h_g6 6081
+проход: новых входов 0, вызовов 0 ($0.0000), под сторожем 0, вызовов сторожа 0, закрытий 0, heartbeat 0; за сутки потрачено $0; 4.8 с; пик памяти 476 МБ
+optimal: записей 6879, последний вход 2026-10-18 13:11 UTC, входов с дня рождения 0
+optimal_h: записей 5068, последний вход 2026-10-18 18:00 UTC, входов с дня рождения 4
+train_wait.flag: нет
+сейчас: 2026-10-18 18:23
+конец: 2026-10-18T18:23:01Z, код 0
