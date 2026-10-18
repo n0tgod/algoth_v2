@@ -2481,3 +2481,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792277956 ==
 [2026-10-17T22:59:18Z] задание nb39-exit-ceiling запущено: research/dca_paper/exit_ceiling.py
+
+== сигнал 1792288199 ==
+[2026-10-18T01:50:01Z] задание nb40-exit-grid запущено: research/dca_paper/exit_grid.py
