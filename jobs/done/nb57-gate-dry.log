@@ -1,0 +1,6 @@
+== задание nb57-gate-dry ==
+строка: run research/ai_gate/gate_run.py --dry
+начало: 2026-10-18T17:14:13Z
+запускаю: .venv/bin/python research/ai_gate/gate_run.py --dry
+обучение S8 ждёт памяти (train_wait.flag) — проход уступает
+конец: 2026-10-18T17:14:14Z, код 0
