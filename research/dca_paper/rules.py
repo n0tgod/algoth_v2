@@ -282,7 +282,10 @@ def mode_of(key):
 
 
 def title_en(key):
-    """Английское имя режима книги; неизвестный ключ — как есть."""
+    """Английское имя режима книги; неизвестный ключ — как есть. У ветви
+    судьи спеки 19 — имя её корня в дереве («AI judge»), не режима плеча."""
+    if str(key).endswith("_ai"):
+        return "AI judge"
     return MODE_EN.get(mode_of(key), str(key))
 
 
@@ -826,7 +829,12 @@ for _base in [k for k in H24_ORDER if k not in BRANCHES]:
 # отклоняется API. Запись вперёд — с первых полных суток после дня
 # рождения решений (18.10 18:00 UTC). Контроли (без новостей, жребий,
 # делистинг) — в `research/ai_gate/gate_books.py` и на `/market-page`.
-AI_BRANCHES = {"optimal_ai": "optimal", "optimal_h_ai": "optimal_h"}
+AI_BRANCHES = {"optimal_ai": "optimal", "optimal_h_ai": "optimal_h", "pair_optimal_ai": "pair_optimal"}
+# В дереве судья — ОТДЕЛЬНЫЙ корень (владелец 18.10: «эту ветку нужно
+# завести в корне отдельно, а также сделать для both»): Long, Short и общий
+# счёт Both. Плечо и пол — от Depth (`mode_of` = optimal), корень — свой.
+AI_ROOT = "ai"
+AI_ROOT_EN = "AI judge"
 AI_SINCE = "2026-10-19"
 # Старт С НУЛЯ (владелец 18.10: «бэктест по этим стратегиям не нужно
 # выводить, он не правильный по сути»): судьи в прошлом не было, и до
@@ -836,11 +844,11 @@ AI_SINCE = "2026-10-19"
 # ветви до этой правки, `is_current` не считает её строками (журнал
 # write-once: строки не удаляются, они перестают входить в счёт).
 AI_START_TS = 1792368000.0          # 2026-10-19 00:00 UTC
-AI_TITLE = {"ru": "ИИ-судья: вход и сторож", "en": "AI judge: entry + watcher"}
+AI_TITLE = {"ru": "вход и сторож", "en": "entry + watcher"}
 for _k, _base in AI_BRANCHES.items():
     BRANCHES[_k] = {"base": _base, "rule": "ai", "value": 1.0, "default": False}
     RULERS[_k] = dict(RULERS[_base])
-    RULERS[_k]["title"] = RULERS[_base]["title"] + " · " + AI_TITLE["ru"]
+    RULERS[_k]["title"] = RULERS[_base]["title"] + " · ИИ-судья"
     RULERS[_k]["branch"] = {"base": _base, "rule": "ai", "value": 1.0, "default": False,
                             "title": AI_TITLE["ru"], "title_en": AI_TITLE["en"]}
     RULERS[_k]["plain"] = RULERS[_base]["plain"] + (
@@ -853,10 +861,16 @@ for _k, _base in AI_BRANCHES.items():
         "something new turns against it. Paper only; judged not before Nov 10.")
     RULER_SINCE[_k] = AI_SINCE
     for _m in (PEAKS, SHORT_SHARE, SHARE_SINCE, MIN_AGE_DAYS, FLOOR_FRAC_BY_BOOK,
-               WAVE_GUARD_PCT, WAVE_INV_GUARD_PCT):
+               WAVE_GUARD_PCT, WAVE_INV_GUARD_PCT, PAIR_SHORT_GATE):
         if _base in _m:
             _m[_k] = _m[_base]
-    if _base in H24_ORDER:
+    if _base in PAIR_PARTS:
+        # стороны общего счёта судьи — основные книги Depth: решения судьи
+        # ключуются ими (`ai_branch.apply_base`), билет и гейты — правилами
+        # общего счёта Depth по наследству
+        PAIR_PARTS[_k] = PAIR_PARTS[_base]
+        PAIR_ORDER.append(_k)
+    elif _base in H24_ORDER:
         H24_ORDER.append(_k)
     else:
         RULER_ORDER_ALL.append(_k)
@@ -982,10 +996,15 @@ def family_since(key):
     return RULER_SINCE.get(key) or FAMILY_SINCE.get(family_of(key))
 
 
+def root_of(key):
+    """Корень книги в дереве: режим плеча, у ветви судьи — свой корень `ai`."""
+    return AI_ROOT if key in AI_BRANCHES else mode_of(key)
+
+
 def address_of(key):
-    """Адрес книги в дереве (спека 18 §2): режим, сторона, ветвь, ключ."""
+    """Адрес книги в дереве (спека 18 §2): корень, режим, сторона, ветвь, ключ."""
     br = (RULERS.get(key) or {}).get("branch")
-    return {"key": str(key), "mode": mode_of(key), "mode_en": title_en(key),
+    return {"key": str(key), "root": root_of(key), "mode": mode_of(key), "mode_en": title_en(key),
             "side": side_of(key), "base": base_of(key),
             "branch": ([dict({"rule": br["rule"], "value": br["value"],
                               "default": bool(br.get("default")),
@@ -998,14 +1017,14 @@ def tree():
     """Дерево книг для каталога: режим → сторона → ветви с ключами книг.
     Готовое на сервере, чтобы читатель не собирал его из суффиксов."""
     out = []
-    for mode in ("safe", "optimal", "aggr"):
+    for mode in ("safe", "optimal", "aggr", AI_ROOT):
         sides = []
         for side, fam in (("long", "sit"), ("short", "h24"), ("both", "pair")):
-            keys = [k for k in order_of(fam) if mode_of(k) == mode]
+            keys = [k for k in order_of(fam) if root_of(k) == mode]
             default = next((k for k in keys if not is_branch(k)), keys[0] if keys else None)
             sides.append({"side": side, "default": default,
                           "branches": [address_of(k) for k in keys]})
-        out.append({"mode": mode, "mode_en": MODE_EN[mode], "sides": sides})
+        out.append({"mode": mode, "mode_en": MODE_EN.get(mode, AI_ROOT_EN), "sides": sides})
     return out
 
 

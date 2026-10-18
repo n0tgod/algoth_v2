@@ -52,6 +52,7 @@ sys.path.insert(0, os.path.join(ROOT, "research", "a1_universe"))
 import rules as R                                             # noqa: E402
 import instruments_refresh as IR                              # noqa: E402
 import run_paper as RP                                        # noqa: E402
+import ai_branch as AIB                                       # noqa: E402
 import run_short as S                                         # noqa: E402
 import run_d13 as D13                                         # noqa: E402
 import arm_book as AB                                         # noqa: E402
@@ -295,7 +296,7 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
     # Справочник читается ОДИН раз на прогон: фильтр возраста спрашивает
     # его на каждое короткое решение всех трёх книг.
     launch = IR.launches() if launch is None else launch
-    gates, ages, guards = {}, {}, {}
+    gates, ages, guards, ai_gates = {}, {}, {}, {}
     for pk in keys:
         lk, sk = R.parts_of(pk)
         mine = [r for r in packed[pk] if (r.get("book") or pk) == sk]
@@ -306,8 +307,13 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
         ages[pk] = why_age
         # охрана рынком — правило ВЫХОДА короткой стороны (спека 14 §13)
         kept, guards[pk] = RP.guard_shorts(kept, pk, log=log, now=now)
-        packed[pk] = [r for r in packed[pk]
-                      if (r.get("book") or pk) == lk] + kept
+        longs_part = [r for r in packed[pk] if (r.get("book") or pk) == lk]
+        # общий счёт судьи спеки 19: решения по книге каждой стороны, старт с нуля
+        if R.is_ai(pk):
+            longs_part, g_l = AIB.apply_base(longs_part, lk, log=log, label=f"{pk}/{lk}")
+            kept, g_s = AIB.apply_base(kept, sk, log=log, label=f"{pk}/{sk}")
+            ai_gates[pk] = {"long": g_l, "short": g_s}
+        packed[pk] = longs_part + kept
     ph.mark("издержки, гейт, возраст, охрана")
     rows, cells, one, live = RP.build_rows(packed, now=now, keys=keys, log=log)
     ph.mark("касса")
@@ -362,7 +368,7 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
                  sk: [r for r in srows if R.ruler_of(r) == sk]}, dep)
     s.update({"family": "pair", "hedge": True, "cells": cells,
               "separate_costs": sep_costs, "gates": gates, "ages": ages,
-              "guards": guards,
+              "guards": guards, "ai_gate": ai_gates,
               "one_name": one, "parts": {k: R.parts_of(k) for k in keys},
               "secs": round(time.time() - t0, 1),
               "computed_at": time.strftime("%Y-%m-%d %H:%M", time.gmtime()),

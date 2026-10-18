@@ -1171,7 +1171,7 @@
 - L139 `test_report_names_the_unmeasured_full_share_cell()` — Строка «1 сделка» без причины — молчаливая ложь ячейки.
 - L158 `main()`
 
-## research/dca_paper/test_branches.py · 286 строк
+## research/dca_paper/test_branches.py · 289 строк
 
 Ветви правил (спека 18): сестры в реестре, карты по наследству, подпись кэша без сестёр, дерево и адрес, пере…
 

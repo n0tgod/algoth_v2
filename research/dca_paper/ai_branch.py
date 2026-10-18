@@ -35,11 +35,19 @@ def _decisions():
 
 
 def apply(recs, key, log=print):
-    """→ (записи ветви, свод: убрано, без решения с дня рождения, закрыто сторожем, why)."""
+    """→ (записи ветви, свод: убрано, без решения, закрыто сторожем, why)."""
     import rules as R                                          # noqa: E402
     if not R.is_ai(key):
         return recs, None
-    base = R.AI_BRANCHES[key]
+    return apply_base(recs, R.AI_BRANCHES[key], log=log, label=key)
+
+
+def apply_base(recs, base, log=print, label=None):
+    """Решения судьи по книге `base` над записями этой книги. Общий счёт
+    судьи зовёт её по стороне: длинная — `optimal`, короткая — `optimal_h`
+    (решения ключуются основной книгой стороны)."""
+    import rules as R                                          # noqa: E402
+    key = label or base
     # старт с нуля: позиции раньше старта ветви в её кассу не идут — депозит
     # чистый в момент старта, бэктеста у ветви нет (владелец 18.10)
     recs = [r for r in recs if float(r.get("at", 0)) >= R.AI_START_TS]

@@ -43,7 +43,7 @@ def test_sisters_in_registry_inherit_maps_and_differ_only_by_guard():
             assert R.family_of(k) == "pair" and R.side_of(k) == "both" and R.mode_of(k) == R.mode_of(pk)
             assert R.SHORT_SHARE[k] == R.SHORT_SHARE[pk] and R.MIN_AGE_DAYS[k] == R.MIN_AGE_DAYS[pk]
     guard_h24 = [k for k in R.H24_ORDER if not R.is_ai(k)]
-    assert len(guard_h24) == 15 and len(R.PAIR_ORDER) == 12
+    assert len(guard_h24) == 15 and len([k for k in R.PAIR_ORDER if not R.is_ai(k)]) == 12
     assert [k for k in R.order_of("sit") if not R.is_ai(k)] == ["safe", "optimal", "aggr"]
     # длинные книги ветвей охраны не несут (ветвь судьи — своя, ниже)
     for lk in ("safe", "optimal", "aggr"):
@@ -60,9 +60,9 @@ def test_birthdays_versions_and_tree():
     row = {"rules": R.RULES, "book_rules": R.FAMILY_RULES["h24"], "ruler": "safe_h_g2"}
     assert R.is_current(row) and not R.is_current(dict(row, book_rules=5))
     t = R.tree()
-    assert [m["mode"] for m in t] == ["safe", "optimal", "aggr"]
+    assert [m["mode"] for m in t] == ["safe", "optimal", "aggr", "ai"], "судья — отдельный корень последним"
     guard_only = lambda xs: [x for x in xs if not R.is_ai(x["key"])]          # noqa: E731
-    for m in t:
+    for m in [x for x in t if x["mode"] != "ai"]:
         sides = {s["side"]: s for s in m["sides"]}
         assert set(sides) == {"long", "short", "both"}
         lb = guard_only(sides["long"]["branches"])
@@ -76,7 +76,7 @@ def test_birthdays_versions_and_tree():
             assert vals == sorted(want), vals
             assert sum(1 for x in br if x["branch"][0]["default"]) == 1
     a = R.address_of("pair_optimal_g6")
-    assert a == {"key": "pair_optimal_g6", "mode": "optimal", "mode_en": "Depth", "side": "both",
+    assert a == {"key": "pair_optimal_g6", "root": "optimal", "mode": "optimal", "mode_en": "Depth", "side": "both",
                  "base": "pair_optimal", "branch": [{"rule": "guard", "value": 6.0, "default": False,
                                                      "title": "охрана 6 %", "title_en": "guard 6 %"}]}, a
     print("ok  дни рождения ветвей (2 % — с 15.10), версия семейная, дерево 3 × (1 + 5 + 4)")
@@ -255,9 +255,11 @@ def test_inverse_branch_four_plus_two_registry_text_and_end_to_end():
 
 
 def test_ai_branch_registry_inherits_base_and_is_paper_only_by_rule():
-    assert R.AI_BRANCHES == {"optimal_ai": "optimal", "optimal_h_ai": "optimal_h"}
-    assert "optimal_ai" in R.order_of("sit") and "optimal_h_ai" in R.order_of("h24")
-    assert not any(R.is_ai(k) for k in R.PAIR_ORDER), "у общего счёта ветви судьи нет"
+    assert R.AI_BRANCHES == {"optimal_ai": "optimal", "optimal_h_ai": "optimal_h", "pair_optimal_ai": "pair_optimal"}
+    assert "optimal_ai" in R.order_of("sit") and "optimal_h_ai" in R.order_of("h24") and "pair_optimal_ai" in R.order_of("pair")
+    assert R.parts_of("pair_optimal_ai") == ["optimal", "optimal_h"], "стороны — основные книги Depth"
+    assert R.side_of("pair_optimal_ai") == "both" and R.SHORT_SHARE["pair_optimal_ai"] == R.SHORT_SHARE["pair_optimal"]
+    assert R.PAIR_SHORT_GATE["pair_optimal_ai"] == R.PAIR_SHORT_GATE["pair_optimal"]
     for k, base in R.AI_BRANCHES.items():
         assert R.is_branch(k) and R.base_of(k) == base and R.mode_of(k) == "optimal"
         assert R.side_of(k) == R.side_of(base) and R.family_of(k) == R.family_of(base)
@@ -265,12 +267,13 @@ def test_ai_branch_registry_inherits_base_and_is_paper_only_by_rule():
         assert R.wave_guard_of(k) == R.wave_guard_of(base), "охрана основной книги — по наследству"
         assert R.hold_of(k) == R.hold_of(base) and R.FLOOR_FRAC_BY_BOOK.get(k) == R.FLOOR_FRAC_BY_BOOK.get(base)
         a = R.address_of(k)
-        assert a["branch"][0]["rule"] == "ai" and a["branch"][0]["title_en"] == "AI judge: entry + watcher"
+        assert a["branch"][0]["rule"] == "ai" and a["branch"][0]["title_en"] == "entry + watcher"
+        assert a["root"] == "ai" and a["mode"] == "optimal" and R.title_en(k) == "AI judge"
         assert "AI judge branch" in R.RULERS[k]["plain_en"] and "Paper only" in R.RULERS[k]["plain_en"]
     t = {m["mode"]: {s["side"]: [b["key"] for b in s["branches"]] for s in m["sides"]} for m in R.tree()}
-    assert "optimal_ai" in t["optimal"]["long"] and "optimal_h_ai" in t["optimal"]["short"]
-    assert not any("_ai" in k for k in t["safe"]["long"] + t["aggr"]["short"]), "только Depth"
-    print("ok  ветвь судьи: Depth обеих сторон, правила основной книги по наследству, адрес и текст, день 19.10")
+    assert t["ai"] == {"long": ["optimal_ai"], "short": ["optimal_h_ai"], "both": ["pair_optimal_ai"]}
+    assert not any("_ai" in k for m in ("safe", "optimal", "aggr") for sd in t[m].values() for k in sd), "в корнях режимов судьи нет"
+    print("ok  ветвь судьи: свой корень (Long, Short, Both), правила Depth по наследству, адрес и текст, день 19.10")
 
 
 if __name__ == "__main__":
