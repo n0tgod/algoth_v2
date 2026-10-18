@@ -67,3 +67,27 @@
 |---|--:|--:|--:|--:|--:|--:|---|
 | правило книги | +107.6 % | +47.2 % | +275.9 % | +53.3 % | +89.3 % | +76.6 % | — |
 | слепой выход (среднее) | +153.2 % | +57.6 % | +726.7 % | +83.5 % | +138.8 % | +124.0 % | -0.2 п.п., +1.1 п.п., +1.1 п.п. |
+ВНИМАНИЕ: 2026-10-18T01:52:44Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nb40-exit-grid.done                      |    1 +
+ jobs/done/nb40-exit-grid.log                       |   69 +
+ jobs/poke.log                                      |    3 +
+ jobs/queue-state.md                                |    2 +-
+ research/dca_paper/out/DCA-exit-grid.json          |    1 +
+ research/dca_paper/out/DCA-exit-grid.md            |  189 ++
+ research/dca_paper/out/DCA-pair.md                 |  232 +-
+ research/dca_paper/out/DCA-paper.json              | 2392 ++++++++++----------
+ research/dca_paper/out/DCA-paper.md                |   20 +-
+ research/dca_paper/out/DCA-short.json              |    2 +-
+ research/dca_paper/out/DCA-short.md                |  132 +-
+ research/dca_paper/out/fixed_pair-2026-10-17.jsonl |   45 +
+ .../dca_paper/out/fixed_short-2026-10-17.jsonl     |   52 +
+ research/dca_paper/out/pair-2026-10-17.jsonl       |   41 +
+ research/dca_paper/out/short-2026-10-17.jsonl      |   47 +
+ research/s8_loop/out/day_brake.json                |    2 +-
+ 16 files changed, 1839 insertions(+), 1391 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   5096ab1a..3e33f06c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-18T01:52:50Z, код 0
