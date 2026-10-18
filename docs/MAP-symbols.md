@@ -4583,7 +4583,7 @@ M2: каркас walk-forward — чистая математика без чт�
 - L380 `run(get=http_json, limit=0, dry=False, log=print, hist_path=HIS…`
 - L547 `main(argv=None)`
 
-## research/market_state/peek.py · 68 строк
+## research/market_state/peek.py · 82 строк
 
 Заглянуть в запись состояния рынка на сервере (только чтение).
 

@@ -48,7 +48,21 @@ def main():
     try:
         doc = C.http_json(f"{C.BYBIT}/v5/announcements/index?locale=en-US&limit=3")
         for it in ((doc.get("result") or {}).get("list") or []):
-            print("bybit raw:", {k: (str(v)[:60]) for k, v in it.items() if k != "description"})
+            print(f"bybit: dateTimestamp={it.get('dateTimestamp')} ({when(it.get('dateTimestamp'))}) "
+                  f"publishTime={it.get('publishTime')} ({when(it.get('publishTime'))}) | {str(it.get('title'))[:70]}")
+    except Exception as e:                                   # noqa: BLE001
+        print("bybit announcements не получены:", e)
+    try:
+        for d in sorted(os.listdir(C.RECORD)):
+            if not d.startswith("state-"):
+                continue
+            n = 0
+            with open(os.path.join(C.RECORD, d), encoding="utf-8") as f:
+                for line in f:
+                    if '"src":"event"' in line:
+                        n += 1
+            if n:
+                print(f"  события в {d}: {n}")
     except Exception as e:                                   # noqa: BLE001
         print("bybit announcements не получены:", e)
     try:
