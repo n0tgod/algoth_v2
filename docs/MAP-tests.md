@@ -1089,7 +1089,7 @@
 - L133 `test_day_table_puts_both_branches_on_the_same_days()` — Вопрос «а в этот день?» итогу не задать — нужны сутки обеих веток.
 - L168 `test_report_names_both_branches_and_the_control()`
 
-## research/dca_paper/test_ai_branch.py · 57 строк
+## research/dca_paper/test_ai_branch.py · 64 строк
 
 Ветвь судьи над записями: skip убирает вход, close сторожа закрывает по рынку на часе после решения (причина…
 

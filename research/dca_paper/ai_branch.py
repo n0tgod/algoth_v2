@@ -40,6 +40,9 @@ def apply(recs, key, log=print):
     if not R.is_ai(key):
         return recs, None
     base = R.AI_BRANCHES[key]
+    # старт с нуля: позиции раньше старта ветви в её кассу не идут — депозит
+    # чистый в момент старта, бэктеста у ветви нет (владелец 18.10)
+    recs = [r for r in recs if float(r.get("at", 0)) >= R.AI_START_TS]
     try:
         import gate_books as GB                                # noqa: E402
         import gate_run as G                                   # noqa: E402
@@ -49,10 +52,11 @@ def apply(recs, key, log=print):
         log(f"{key}: {why} — записи как у {base}")
         return recs, {"why": why, "cut": 0, "unjudged": None, "closes": 0}
     if not rows:
-        return recs, {"why": "решений судьи ещё нет", "cut": 0, "unjudged": None, "closes": 0}
+        return recs, {"why": "решений судьи ещё нет", "cut": 0, "unjudged": None, "closes": 0,
+                      "start": R.AI_START_TS}
     dec = GB.entry_index(rows).get("ai_news", {})
     kept, cut, _unj = GB.filt(recs, base, dec)
-    unjudged = sum(1 for r in recs if float(r.get("at", 0)) >= G.GATE_SINCE and G.key_of(base, r) not in dec)
+    unjudged = sum(1 for r in recs if G.key_of(base, r) not in dec)
     out, n, _ks = GB.apply_closes(kept, base, GB.close_index(rows), R.JUDGE_EXIT)
     log(f"{key}: судья убрал {cut} входов, закрыл {n}; без решения с дня рождения {unjudged}")
-    return out, {"why": None, "cut": cut, "unjudged": unjudged, "closes": n}
+    return out, {"why": None, "cut": cut, "unjudged": unjudged, "closes": n, "start": R.AI_START_TS}

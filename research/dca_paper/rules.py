@@ -58,7 +58,15 @@ def is_current(row):
             return False
     except (TypeError, ValueError):
         return False
-    want = FAMILY_RULES.get(family_of(ruler_of(row)))
+    rk = ruler_of(row)
+    # ветвь судьи спеки 19 стартует с нуля: её строки раньше старта — не её
+    if rk in AI_BRANCHES:
+        try:
+            if float(row.get("at", 0)) < AI_START_TS:
+                return False
+        except (TypeError, ValueError):
+            return False
+    want = FAMILY_RULES.get(family_of(rk))
     if want is None:
         return True
     try:
@@ -820,6 +828,14 @@ for _base in [k for k in H24_ORDER if k not in BRANCHES]:
 # делистинг) — в `research/ai_gate/gate_books.py` и на `/market-page`.
 AI_BRANCHES = {"optimal_ai": "optimal", "optimal_h_ai": "optimal_h"}
 AI_SINCE = "2026-10-19"
+# Старт С НУЛЯ (владелец 18.10: «бэктест по этим стратегиям не нужно
+# выводить, он не правильный по сути»): судьи в прошлом не было, и до
+# старта ветвь повторяла бы основную книгу. Позиции раньше AI_START_TS в
+# ветвь не входят — `ai_branch.apply` их не отдаёт в кассу (депозит
+# чистый в момент старта), а строки журнала, уже записанные под ключом
+# ветви до этой правки, `is_current` не считает её строками (журнал
+# write-once: строки не удаляются, они перестают входить в счёт).
+AI_START_TS = 1792368000.0          # 2026-10-19 00:00 UTC
 AI_TITLE = {"ru": "ИИ-судья: вход и сторож", "en": "AI judge: entry + watcher"}
 for _k, _base in AI_BRANCHES.items():
     BRANCHES[_k] = {"base": _base, "rule": "ai", "value": 1.0, "default": False}
