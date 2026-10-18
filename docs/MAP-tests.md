@@ -1237,6 +1237,16 @@
 - L18 `row(day, usd, sym='AUSDT')`
 - L23 `main()`
 
+## research/dca_paper/test_delist_cases.py · 58 строк
+
+Замер делистингов: имена из заголовка и описания (перп и спот раздельно), снятые контракты из справочника, «д…
+
+- L8 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L12 `H = 3600`
+- L15 `test_parse_and_closed()`
+- L26 `test_match_held_after_and_effect()`
+- L45 `test_report_zero_says_so()`
+
 ## research/dca_paper/test_entry_filter.py · 60 строк
 
 Фильтр входа (`entry_filter.py`): порог — верхние q по первой половине; неизмеренный признак решение не отсек…

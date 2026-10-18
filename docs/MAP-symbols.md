@@ -2050,6 +2050,34 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L261 `report(s)`
 - L382 `main()`
 
+## research/dca_paper/delist_cases.py · 285 строк
+
+Бывает ли случай «держим имя, а площадка объявила делистинг» (спека 19 §5a, N2a).
+
+- L41 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L42 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L45 `OUT_MD = os.path.join(HERE, 'out', 'DCA-delist-c…`
+- L46 `OUT_JSON = os.path.join(HERE, 'out', 'DCA-delist-c…`
+- L47 `INSTRUMENTS = os.path.join(ROOT, 'research', 'a1_univ…`
+- L48 `API = 'https://api.bybit.com/v5/announcements…`
+- L49 `SINCE_MS = int(datetime(2026, 8, 4, tzinfo=timezon…`
+- L50 `HOUR = 3600.0`
+- L51 `MEM_LIMIT_MB = 3000`
+- L52 `PERP_RE = re.compile('\\b([0-9A-Z]{2,25}USDT)\\b')`
+- L53 `SPOT_RE = re.compile('\\b([0-9A-Z]{2,25})/USDT\\b…`
+- L56 `fmt(ms)`
+- L62 `parse_ann(it)` — Объявление → {t, title, perps, spots}; t — момент публикации.
+- L75 `closed_contracts(instruments, since_ms)` — Справочник → [(символ, момент снятия мс)] за окно.
+- L88 `span_of(r)` — Позиция → (вход с, выход с) или None; выход — exit_ts, иначе по часам пути.
+- L103 `after_announcement(cum, at, t_s)` — Сколько позиция сделала ПОСЛЕ часа публикации: итог − путь[k].
+- L112 `match(anns, positions, closed_at)` — Объявления о перпах × позиции → случаи «держали» и «вошли после».
+- L139 `fetch_anns(log, get=None, pages=20)`
+- L162 `positions_of(log)`
+- L185 `run(log=print)`
+- L224 `pct(x)`
+- L228 `report(r)`
+- L263 `main(argv=None)`
+
 ## research/dca_paper/entry_filter.py · 312 строк
 
 Фильтр входа на признаках, без модели (владелец 2026-10-18: «ИИ фильтрует сделки — решает, какие из потока от…
