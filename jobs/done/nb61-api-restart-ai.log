@@ -1,0 +1,6 @@
+== задание nb61-api-restart-ai ==
+строка: run tools/app_api/restart.py
+начало: 2026-10-18T17:37:04Z
+запускаю: .venv/bin/python tools/app_api/restart.py 
+порт 443: слушает
+конец: 2026-10-18T17:37:09Z, код 0
