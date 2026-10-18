@@ -6,8 +6,10 @@ set -u
 cd "$(dirname "$0")/.."
 tmp=$(mktemp -d /tmp/wdmarket-XXXXXX)
 trap 'rm -rf "$tmp"' EXIT
-sed -n '/^# --- состояние рынка: доли лонгов/,/^# --- очередь заданий/p' tools/watchdog_book.sh \
-    | sed '$d' > "$tmp/block.sh"
+# до СЛЕДУЮЩЕГО заголовка «# --- », каким бы он ни был: блок, вставший
+# между соседями, иначе попадал в вырезку (18.10)
+awk -v s='# --- состояние рынка: доли лонгов' 'index($0, s) == 1 {on = 1; print; next} on && /^# --- / {exit} on' \
+    tools/watchdog_book.sh > "$tmp/block.sh"
 grep -q "market_state/collect.py" "$tmp/block.sh" || { echo "ПАДЕНИЕ: блок не вырезался"; exit 1; }
 mkdir -p "$tmp/stubs" "$tmp/research/market_state/out"
 cat > "$tmp/stubs/pgrep" <<'S'

@@ -28,7 +28,13 @@ def test_market_state_json_ages_and_names_absence():
         with open(p, "w", encoding="utf-8") as f:
             f.write("{не json")
         assert W.market_state_json(p)["error"].startswith("срез повреждён")
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump({"computed_at": "2026-10-18T10:00:00Z"}, f)
+        assert W.news_state_json(p, now=now + 30 * 60)["stale"] is False
+        assert W.news_state_json(p, now=now + 50 * 60)["stale"] is True, "новости: порог 45 мин, не 2 ч"
+        assert W.market_state_json(p, now=now + 50 * 60)["stale"] is False
     assert '"/market-page", "market", "рынок"' in W.NAVJS, "страница есть в меню"
+    assert "/news_state?k=" in W.MARKETPAGE and "renderNews" in W.MARKETPAGE
     assert "/market_state?k=" in W.MARKETPAGE and 'navMount("/market-page")' in W.MARKETPAGE
     print("ok  страница: нет файла — причина, возраст от computed_at, тревога > 2 ч, в меню есть")
 

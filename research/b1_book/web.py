@@ -11960,9 +11960,17 @@ render();
 MARKET_LATEST = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "market_state", "out", "latest.json")
 MARKET_STALE_S = 2 * 3600
+NEWS_LATEST = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "news", "out", "latest.json")
+NEWS_STALE_S = 45 * 60
 
 
-def market_state_json(path=MARKET_LATEST, now=None):
+def news_state_json(path=NEWS_LATEST, now=None):
+    """Срез новостного фона (спека 19 §4): тот же читатель, порог 45 мин."""
+    return market_state_json(path, now, NEWS_STALE_S)
+
+
+def market_state_json(path=MARKET_LATEST, now=None, stale_s=None):
     """Срез сборщика состояния рынка (спека 19 §3b) с возрастом и вердиктом.
 
     Файл маленький и перечитывается на каждый запрос: сборщик — другой
@@ -11984,7 +11992,7 @@ def market_state_json(path=MARKET_LATEST, now=None):
     except ValueError:
         age = None
     d["age_s"] = age
-    d["stale"] = (age is None) or age > MARKET_STALE_S
+    d["stale"] = (age is None) or age > (MARKET_STALE_S if stale_s is None else stale_s)
     return d
 
 
@@ -12047,6 +12055,10 @@ input{background:var(--chip);color:var(--ink);border:1px solid var(--rule);borde
   <th data-k="bn_long">Binance crowd %</th><th data-k="bn_top">Binance top %</th>
   <th data-k="okx_ls">OKX L/S</th><th>as of</th></tr></thead><tbody id="tb"></tbody></table></div></div>
 <div class="card"><h2>events, last 24 h</h2><div id="evs" class="dim">&hellip;</div></div>
+<div class="card"><h2>news <span id="nage" class="dim mono" style="text-transform:none;letter-spacing:0"></span></h2>
+ <div id="nfeeds" class="dim" style="font-size:12px;margin-bottom:6px"></div>
+ <div id="ncal" style="font-size:12.5px;margin-bottom:8px"></div>
+ <div id="nerr" class="err"></div><div id="nlist" class="dim">&hellip;</div></div>
 </div>
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
@@ -12102,7 +12114,31 @@ async function load(){
   catch (e) { D = {error: "page could not reach the collector: " + e}; }
   render();
 }
+function renderNews(n){
+  const age = document.getElementById("nage");
+  if (!n || n.error){ age.textContent = n ? "· " + n.error : ""; document.getElementById("nlist").textContent = "—"; return; }
+  age.textContent = "· " + (n.age_s == null ? "age unknown" : Math.round(n.age_s / 60) + " min ago") + (n.stale ? " · STALE" : "")
+    + ` · ${n.day_items} in 24 h, ${n.day_tagged} tied to our names`;
+  age.className = n.stale ? "bad mono" : "dim mono";
+  document.getElementById("nfeeds").textContent = Object.entries(n.feeds || {}).map(([k, v]) =>
+    k + ": " + (v.error ? "REFUSED " + v.error : v.got + " in feed, " + v.new + " new")).join(" · ");
+  const cal = n.calendar_48h || [];
+  document.getElementById("ncal").innerHTML = cal.length ? "next 48 h: " + cal.map(e => `<b>${esc(e.t.slice(5, 16).replace("T", " "))}</b> ${esc(e.title)}`).join(" · ") : '<span class="dim">no calendar events in the next 48 h</span>';
+  document.getElementById("nerr").textContent = (n.errors || []).join("\n");
+  const hs = n.headlines || [];
+  document.getElementById("nlist").innerHTML = hs.length ? hs.map(h => {
+    const tg = Object.entries(h.tags || {}).map(([s, how]) => `<span class="mono" style="color:var(--accent)">${esc(s.replace(/USDT$/, ""))}</span><span class="dim" style="font-size:10px">${how === "cash" ? "$" : how === "word" ? "" : "·n"}</span>`).join(" ");
+    return `<div class="ev"><a href="${esc(h.link)}" target="_blank" rel="noopener" style="color:var(--ink);text-decoration:none">${esc(h.title)}</a> ${tg}<span class="dim">${esc(h.src)} · ${new Date(h.t).toISOString().slice(5, 16).replace("T", " ")}</span></div>`; }).join("")
+    : "no headlines in the last 24 h";
+}
+async function loadNews(){
+  let n = null;
+  try { const r = await fetch("/news_state?k=" + encodeURIComponent(KEY)); n = await r.json(); }
+  catch (e) { n = {error: "page could not reach the collector: " + e}; }
+  renderNews(n);
+}
 load(); setInterval(load, 60000);
+loadNews(); setInterval(loadNews, 60000);
 </script>
 """
 
@@ -12474,6 +12510,9 @@ def serve(collector, port, token, log):
                                 "text/html; charset=utf-8")
             if u.path == "/market_state":
                 return self._ok(json.dumps(market_state_json(), ensure_ascii=False).encode("utf-8"),
+                                "application/json; charset=utf-8")
+            if u.path == "/news_state":
+                return self._ok(json.dumps(news_state_json(), ensure_ascii=False).encode("utf-8"),
                                 "application/json; charset=utf-8")
             if u.path == "/market-page":
                 return self._ok(MARKETPAGE.encode("utf-8"),

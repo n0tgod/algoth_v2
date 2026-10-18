@@ -2328,7 +2328,7 @@
 - L94 `_fake_get(urls_seen)`
 - L137 `test_run_with_fake_network_writes_by_day_and_names_failures()`
 
-## research/market_state/test_page.py · 38 строк
+## research/market_state/test_page.py · 44 строк
 
 Страница состояния рынка (`web.market_state_json`): нет файла — причина словами, не пустой объект; возраст сч…
 
@@ -3277,6 +3277,19 @@
 - L672 `test_report_span_phrase_follows_the_number()`
 - L687 `test_report_says_not_measured_instead_of_zero()`
 - L703 `main()`
+
+## research/news/test_collect.py · 133 строк
+
+Сборщик новостей: разбор RSS в форме живых лент (пространства имён, CDATA с разметкой, рубрики), привязка к м…
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L18 `RSS = <текст, 14 строк>`
+- L33 `INSTR = {'1000PEPEUSDT': {'base_coin': '1000PEP…`
+- L40 `CG = [{'symbol': 'btc', 'name': 'Bitcoin'}, …`
+- L45 `test_parse_rss_like_live_feeds()`
+- L59 `test_tagging_three_ways_with_stopwords_and_multipliers()`
+- L77 `test_calendar_utc_by_us_dst_rule_and_deribit()`
+- L92 `test_run_with_fake_network()`
 
 ## research/paper_monthly/test_book.py · 605 строк
 
@@ -5096,12 +5109,12 @@ X1: исполнитель против подставной биржи.
 - L33 `run()`
 - L60 `run_flag()`
 
-## tools/test_watchdog_market.sh · 48 строк
+## tools/test_watchdog_market.sh · 50 строк
 
 Проверка блока сторожа «состояние рынка»: раз в час в первые 15 минут,
 
-- L24 `run()`
-- L40 `check()`
+- L26 `run()`
+- L42 `check()`
 
 ## tools/test_watchdog_mem.sh · 68 строк
 
@@ -5109,6 +5122,13 @@ X1: исполнитель против подставной биржи.
 
 - L32 `check()`
 - L33 `run()`
+
+## tools/test_watchdog_news.sh · 34 строк
+
+Проверка блока сторожа «новостной фон»: прогон, когда срез старше 14 мин
+
+- L19 `run()`
+- L27 `check()`
 
 ## tools/test_watchdog_pair.sh · 59 строк
 

@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 640, строк: 262047, каталогов: 87.
+Модулей кода: 644, строк: 262669, каталогов: 88.
 
 
 ## корень — память проекта, идеи, README
@@ -138,7 +138,7 @@
 - `replay.py` · 360 строк — Прогон записанного потока через тот же детектор.
 - `signals.py` · 808 строк — Живой детектор: уровни, события поглощения и бумажные сделки.
 - `store.py` · 348 строк — Хранение потока: запись без потерь и чтение через порчу.
-- `web.py` · 12589 строк — Страница наблюдения: стакан, лента, глубина и журнал живьём.
+- `web.py` · 12628 строк — Страница наблюдения: стакан, лента, глубина и журнал живьём.
 - тесты: `headless_check.js` (6505), `test_book.py` (9437), `test_measure_pack.py` (133), `test_memsize.py` (110), `test_remote.py` (336)
 - отчёты в `out/` (2): B1-feature-audit.md, measure-pack.md
 
@@ -348,7 +348,7 @@
 
 - `collect.py` · 576 строк — Сборщик состояния рынка (спека 19 §3b): кто в лонге, кто в шорте — по именам.
 - `peek.py` · 82 строк — Заглянуть в запись состояния рынка на сервере (только чтение).
-- тесты: `test_collect.py` (192), `test_page.py` (38)
+- тесты: `test_collect.py` (192), `test_page.py` (44)
 - отчёты в `out/` (1): MARKET-state.md
 
 ## research/mech_12cc2578 — (по докстрингу) Дописать в отчёт постройки просьбу к владельцу — ДОСЛОВНЫМ повтором уже открытой просьбы `4c923cf1`.
@@ -497,6 +497,12 @@
 - `run_halves.py` · 1311 строк — Механика `fcbd3542` — отскок первых секунд по половинам универсума.
 - `ticksig.py` · 346 строк — tick/σ — шаг цены в единицах волатильности, метка на имя-месяц.
 - тесты: `test_halves.py` (721)
+
+## research/news — (по докстрингу) Сборщик новостей (спека 19 §4, этап N1): RSS с привязкой к монетам.
+
+- `collect.py` · 313 строк — Сборщик новостей (спека 19 §4, этап N1): RSS с привязкой к монетам.
+- `macro_cal.py` · 74 строк — Календарь событий для судьи (спека 19 §4, E5); имя не calendar.py — перекрыло бы модуль Python: даты, которые…
+- тесты: `test_collect.py` (133)
 
 ## research/ops — диагностика сервера: книги по дням, живой отчёт
 
@@ -916,7 +922,7 @@
 - `train_alarm.py` · 73 строк — Тревога «обучение S8 стоит» — сторожу, `status` и журналу «нужно от вас».
 - `unstick_publish.py` · 77 строк — Разморозить публикацию: вернуть разрезанный журнал к версии git.
 - `venv_add.py` · 75 строк — Установка пакетов в окружение сервера через очередь заданий.
-- `watchdog_book.sh` · 731 строк — Сторож сбора: поднимает умершее и перезапускает зависшее.
+- `watchdog_book.sh` · 752 строк — Сторож сбора: поднимает умершее и перезапускает зависшее.
 - `wave_episodes.py` · 108 строк — Зонд: как часто рынок даёт волну, на которую смотрит охрана.
 - `wave_rows_probe.py` · 59 строк — Зонд: строки часовых сводок прокси-имён за данный час — какие поля, когда записаны, и какая волна выходит по…
-- тесты: `app_api/test_app_api.py` (1628), `test_disk_alarm.py` (64), `test_jobs.sh` (284), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_api.sh` (47), `test_watchdog_books.sh` (114), `test_watchdog_market.sh` (48), `test_watchdog_mem.sh` (68), `test_watchdog_pair.sh` (59), `test_watchdog_ship.sh` (49)
+- тесты: `app_api/test_app_api.py` (1628), `test_disk_alarm.py` (64), `test_jobs.sh` (284), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_api.sh` (47), `test_watchdog_books.sh` (114), `test_watchdog_market.sh` (50), `test_watchdog_mem.sh` (68), `test_watchdog_news.sh` (34), `test_watchdog_pair.sh` (59), `test_watchdog_ship.sh` (49)

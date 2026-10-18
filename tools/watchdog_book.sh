@@ -693,6 +693,27 @@ if ! pgrep -f "market_state/collect.py" >/dev/null; then
     fi
 fi
 
+# --- новостной фон: RSS с привязкой к монетам (спека 19 §4) ----------
+# Лёгкий процесс (три ленты и справочник имён раз в сутки): каждые
+# 15 мин — когда последний срез старше 14 мин; идущий не дублируется.
+# Без окна по минутам, поэтому фаза не уплывает (урок 18.10 у состояния
+# рынка). Срез старше 45 мин — тревога на странице /market-page.
+NEWS=research/news/out/latest.json
+NEWS_LOG=research/news/out/collect.log
+if ! pgrep -f "research/news/collect.py" >/dev/null; then
+    nw_age=999999999
+    if [ -f "$NEWS" ]; then
+        nw_ts=$(date -u -r "$NEWS" +%s 2>/dev/null || echo 0)
+        [ "$nw_ts" -gt 0 ] && nw_age=$(( $(date -u +%s) - nw_ts ))
+    fi
+    if [ "$nw_age" -gt 840 ]; then
+        echo "[$(now)] новостной фон: срез ${nw_age} с назад — прогон"
+        setsid nohup bash -c "
+            nice -n 15 .venv/bin/python research/news/collect.py \
+                >> $NEWS_LOG 2>&1" &
+    fi
+fi
+
 # --- очередь заданий (docs/00-INDEX.md) -------------------------------
 # Ассистент кладёт задание файлом в git, сервер его выполняет: прямого
 # доступа к серверу у ассистента нет (наружу открыты только 80 и 443),

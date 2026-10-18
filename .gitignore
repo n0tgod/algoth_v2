@@ -38,3 +38,7 @@ research/dca_paper/out/costs_context.pkl.tmp
 # идут сводка latest.json и отчёт
 research/market_state/out/record/
 research/market_state/out/collect.log
+# запись новостного фона (спека 19 §4): тексты чужих изданий в git не идут;
+# в git — сводка latest.json и отчёт
+research/news/out/record/
+research/news/out/collect.log

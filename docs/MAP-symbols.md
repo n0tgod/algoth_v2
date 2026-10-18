@@ -1105,7 +1105,7 @@ A3 — кандидаты в пары на момент окна.
 - L279 `_parse(f, parse=json.loads)` — Разобрать построчно. Возвращает `(записи, дочитано ли до конца)`.
 - L298 `_salvage(path, log, parse=json.loads)` — Разобрать сжатый файл по членам, пропуская испорченные.
 
-## research/b1_book/web.py · 12589 строк
+## research/b1_book/web.py · 12628 строк
 
 Страница наблюдения: стакан, лента, глубина и журнал живьём.
 
@@ -1138,14 +1138,17 @@ A3 — кандидаты в пары на момент окна.
 - L11430 `AGENTSPAGE = '<!doctype html><meta charset="utf-8">\…`
 - L11960 `MARKET_LATEST = os.path.join(os.path.dirname(os.path.di…`
 - L11962 `MARKET_STALE_S = 2 * 3600`
-- L11965 `market_state_json(path=MARKET_LATEST, now=None)` — Срез сборщика состояния рынка (спека 19 §3b) с возрастом и вердиктом.
-- L11991 `MARKETPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L12110 `slim_dca(d, focus)` — Свод `/dca` для экрана одной книги: у книг, кроме `focus`, нет списка сделок (`trades`; `trades_omitted: true…
-- L12135 `SITE_HOST = 'algoth.trade'`
-- L12136 `ACME_PREFIX = '/.well-known/acme-challenge/'`
-- L12137 `ACME_NAME = re.compile('^[A-Za-z0-9_-]{16,128}$')`
-- L12138 `ACME_DIR = os.path.join(os.path.dirname(os.path.di…`
-- L12142 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
+- L11963 `NEWS_LATEST = os.path.join(os.path.dirname(os.path.di…`
+- L11965 `NEWS_STALE_S = 45 * 60`
+- L11968 `news_state_json(path=NEWS_LATEST, now=None)` — Срез новостного фона (спека 19 §4): тот же читатель, порог 45 мин.
+- L11973 `market_state_json(path=MARKET_LATEST, now=None, stale_s=None)` — Срез сборщика состояния рынка (спека 19 §3b) с возрастом и вердиктом.
+- L11999 `MARKETPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L12146 `slim_dca(d, focus)` — Свод `/dca` для экрана одной книги: у книг, кроме `focus`, нет списка сделок (`trades`; `trades_omitted: true…
+- L12171 `SITE_HOST = 'algoth.trade'`
+- L12172 `ACME_PREFIX = '/.well-known/acme-challenge/'`
+- L12173 `ACME_NAME = re.compile('^[A-Za-z0-9_-]{16,128}$')`
+- L12174 `ACME_DIR = os.path.join(os.path.dirname(os.path.di…`
+- L12178 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
 
 ## research/d1_seconds/detect.py · 367 строк
 
@@ -6232,6 +6235,61 @@ tick/σ — шаг цены в единицах волатильности, ме
 - L302 `build(month, symbols, load_closes, load_turnover=None, ticks=No…` — Метки всех имён на месяц. Возвращает `(метки, окно)`.
 - L331 `halves(labels, key='ticksig')` — Деление имён пополам по медиане `key`. Только размеченные.
 
+## research/news/collect.py · 313 строк
+
+Сборщик новостей (спека 19 §4, этап N1): RSS с привязкой к монетам.
+
+- L43 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L44 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L48 `OUT = os.path.join(HERE, 'out')`
+- L49 `RECORD = os.path.join(OUT, 'record')`
+- L50 `SEEN = os.path.join(RECORD, 'seen.json')`
+- L51 `NAMES = os.path.join(RECORD, 'names.json')`
+- L52 `LATEST = os.path.join(OUT, 'latest.json')`
+- L53 `REPORT = os.path.join(OUT, 'NEWS-state.md')`
+- L54 `INSTRUMENTS = os.path.join(ROOT, 'research', 'a1_univ…`
+- L56 `FEEDS = [('coindesk', 'https://www.coindesk.com…`
+- L59 `CG_MARKETS = 'https://api.coingecko.com/api/v3/coins…`
+- L61 `TEXT_MAX = 2000`
+- L62 `NAMES_TTL_S = 86400`
+- L63 `STALE_S = 45 * 60`
+- L64 `NS = {'content': 'http://purl.org/rss/1.0/mo…`
+- L65 `WORD_STOP = {'THE', 'AND', 'FOR', 'ONE', 'NEW', 'CE…`
+- L76 `NAME_STOP = {'story', 'movement', 'official', 'sign…`
+- L78 `MULT_RE = re.compile('^(?:1000000|100000|10000|10…`
+- L79 `TAG_RE = re.compile('<[^>]+>')`
+- L80 `WS_RE = re.compile('\\s+')`
+- L83 `utc_now()`
+- L87 `http_text(url, timeout=20)`
+- L100 `clean(s)`
+- L104 `parse_rss(text, src)` — RSS 2.0 → [{id, src, t (мс UTC), title, text, link, cats}]; битая запись пропускается.
+- L125 `ticker_of(base)` — База Bybit → тикер в тексте: 1000PEPE → PEPE.
+- L130 `bybit_tickers(instruments)` — {тикер: [символы Bybit]} по торгуемым перпам USDT справочника.
+- L142 `names_map(cg_rows, tickers)` — CoinGecko markets → {имя в нижнем регистре: тикер}, только тикеры с Bybit.
+- L153 `tag(item, tickers, names)` — → {символ Bybit: способ} — cash сильнее word сильнее name.
+- L176 `summarize(items_day, per_feed, errors, upcoming, t0, n_new, now…`
+- L189 `report_md(s)`
+- L204 `_load(path, default)`
+- L212 `_save(path, obj)`
+- L220 `load_names(get, tickers, path=NAMES, log=print)`
+- L238 `run(get=http_text, dry=False, log=print, record=RECORD, instrum…`
+- L300 `main(argv=None)`
+
+## research/news/macro_cal.py · 74 строк
+
+Календарь событий для судьи (спека 19 §4, E5); имя не calendar.py — перекрыло бы модуль Python: даты, которые…
+
+- L17 `FOMC_SRC = 'https://www.federalreserve.gov/monetar…`
+- L18 `CPI_SRC = 'https://www.bls.gov/schedule/news_rele…`
+- L21 `FOMC = [('2026-10-28', False), ('2026-12-09', …` — день решения (второй день заседания); «*» на странице ФРС — с прогнозами (SEP)
+- L26 `CPI = [('2026-11-10', '2026-10'), ('2026-12-1…` — день выхода CPI и месяц, за который
+- L30 `_nth_sunday(y, m, n)`
+- L36 `ny_offset_h(d)` — Смещение Нью-Йорка от UTC в часах на дату d: −4 летом, −5 зимой.
+- L41 `ny_to_utc(day, hh, mm)`
+- L46 `last_friday(y, m)`
+- L52 `events(start, end)` — События в [start, end) — список словарей по возрастанию времени.
+- L72 `upcoming(now, hours=48)`
+
 ## research/ops/book_days_probe.py · 62 строк
 
 Дневная разбивка книг — числами, прямо с диска сервера.
@@ -10119,7 +10177,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 731 строк
+## tools/watchdog_book.sh · 752 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 
