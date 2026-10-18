@@ -2043,6 +2043,31 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L261 `report(s)`
 - L382 `main()`
 
+## research/dca_paper/entry_filter.py · 312 строк
+
+Фильтр входа на признаках, без модели (владелец 2026-10-18: «ИИ фильтрует сделки — решает, какие из потока от…
+
+- L57 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L58 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L66 `OUT_MD = os.path.join(R.OUT, 'DCA-entry-filter.m…`
+- L67 `OUT_JSON = os.path.join(R.OUT, 'DCA-entry-filter.j…`
+- L68 `DEPS = LG.DEPS`
+- L69 `HOUR = 3600.0`
+- L70 `FEATS = ('lev', 'weak', 'against24', 'wave_agai…`
+- L71 `FEAT_TITLE = {'lev': 'плечо выше', 'weak': 'обещание…`
+- L75 `CUTS = (0.1, 0.2, 0.3)`
+- L76 `MEM_LIMIT_MB = 3000`
+- L79 `feats_of(r, side, mkt, cache)` — Признаки решения при входе (только прошлое). Нет данных — None.
+- L100 `threshold(values, q)` — Порог «верхние q»: решения со значением > порога убираются.
+- L108 `apply_filter(recs, fts, feat, thr)` — Убрать решения с признаком > порога. Признак не измерен — решение ОСТАЁТСЯ (неизмеренное не отсекается — инач…
+- L125 `random_cut(recs, n, rng)`
+- L132 `judge_side(books, side, keys, now, seeds, log, t0)` — Пороги — по первой половине; касса — в обеих половинах; нуль — случайное отсечение того же числа решений в ка…
+- L182 `verdict(out)` — Критерий, объявленный до прогона.
+- L206 `run(seeds, log)`
+- L226 `_pp(x)`
+- L230 `report(res)`
+- L289 `main(argv=None)`
+
 ## research/dca_paper/entry_gate.py · 481 строк
 
 Гейты ВХОДА книг DCA: запас до пола и теснота стакана.

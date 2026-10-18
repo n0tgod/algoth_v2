@@ -1237,6 +1237,14 @@
 - L18 `row(day, usd, sym='AUSDT')`
 - L23 `main()`
 
+## research/dca_paper/test_entry_filter.py · 60 строк
+
+Фильтр входа (`entry_filter.py`): порог — верхние q по первой половине; неизмеренный признак решение не отсек…
+
+- L10 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L15 `test_threshold_filter_and_random_cut()`
+- L33 `test_verdict_needs_all_books_null_and_same_sign()`
+
 ## research/dca_paper/test_entry_gate.py · 160 строк
 
 Проверки замера «гейты входа книг DCA».
