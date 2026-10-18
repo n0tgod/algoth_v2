@@ -2503,3 +2503,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792322606 ==
 [2026-10-18T11:23:28Z] задание nb47-market-peek запущено: research/market_state/peek.py
+
+== сигнал 1792322738 ==
+[2026-10-18T11:25:40Z] задание nb48-market-peek2 запущено: research/market_state/peek.py

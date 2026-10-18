@@ -12,3 +12,18 @@ binance catalog: 48 New Cryptocurrency Listing
   article: {'id': '287541', 'code': '927d3a7b5d6c43fb888e38f110005906', 'title': 'Binance Exchange Adds Blackberry (BBB), Mongodb Inc (MDBB), ', 'type': '1', 'releaseDate': '1791946804033'}
 сейчас: 1792322609127 2026-10-18 11:23
 конец: 2026-10-18T11:23:29Z, код 0
+ВНИМАНИЕ: 2026-10-18T11:23:29Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nb44-market-first.log       |   9 +
+ jobs/done/nb47-market-peek.done       |   1 +
+ jobs/done/nb47-market-peek.log        |  14 +
+ jobs/poke.log                         |   3 +
+ jobs/queue-state.md                   |   2 +-
+ research/dca_paper/out/DCA-paper.json | 910 +++++++++++++++++-----------------
+ research/dca_paper/out/DCA-paper.md   |  18 +-
+ research/s8_loop/out/day_brake.json   |   2 +-
+ 8 files changed, 493 insertions(+), 466 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   64b629d8..c899d6a7  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
