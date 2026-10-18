@@ -1,0 +1,18 @@
+== задание nb52-news-peek ==
+строка: run research/news/peek_log.py
+начало: 2026-10-18T16:12:30Z
+запускаю: .venv/bin/python research/news/peek_log.py 
+== research/news/out/collect.log: НЕТ
+== research/b1_book/out/watchdog.log: есть
+[2026-10-18T13:00:02Z] состояние рынка: срез часа 2026101811 — прогон
+[2026-10-18T14:00:02Z] состояние рынка: срез часа 2026101813 — прогон
+[2026-10-18T15:00:01Z] состояние рынка: срез часа 2026101814 — прогон
+[2026-10-18T16:00:01Z] состояние рынка: срез часа 2026101815 — прогон
+[2026-10-18T16:05:01Z] новостной фон: срез 999999999 с назад — прогон
+[2026-10-18T16:10:02Z] новостной фон: срез 999999999 с назад — прогон
+== процессы
+нет
+== сторож в cron
+1:*/5 * * * * /root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1
+2:@reboot sleep 30 && /root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1
+конец: 2026-10-18T16:12:31Z, код 0
