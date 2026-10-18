@@ -1,0 +1,14 @@
+== задание nb47-market-peek ==
+строка: run research/market_state/peek.py
+начало: 2026-10-18T11:23:28Z
+запускаю: .venv/bin/python research/market_state/peek.py 
+строк за 2026-10-18 по источникам: {'bybit': 9576, 'bn_global': 5532, 'bn_top': 5532, 'okx': 5206, 'market': 1}
+событий в записи: 0; последние 8:
+bybit raw: {'title': 'New: Bybit Odds Launches U.S. Midterm Election Contracts (No', 'type': "{'key': 'latest_bybit_news', 'title': 'Latest Bybit News'}", 'tags': "['Latest Updates']", 'url': 'https://announcements.bybit.com/en-US/article/new-bybit-odds', 'dateTimestamp': '1792022400000', 'startDateTimestamp': '1792022400000', 'endDateTimestamp': '1793404800000', 'publishTime': '1792062835000'}
+bybit raw: {'title': 'Bybit Expands Beyond Crypto With Direct Access to U.S. Stock', 'type': "{'key': 'latest_activities', 'title': 'Latest Campaigns'}", 'tags': "['Latest Updates']", 'url': 'https://announcements.bybit.com/en-US/article/bybit-expands-', 'dateTimestamp': '1791763200000', 'startDateTimestamp': '1791763200000', 'endDateTimestamp': '1793404800000', 'publishTime': '1791797660000'}
+bybit raw: {'title': '[Exclusive Launch] Full Stocks Ahead: Share 150,000 USDC', 'type': "{'key': 'latest_activities', 'title': 'Latest Campaigns'}", 'tags': "['USDC']", 'url': 'https://announcements.bybit.com/en-US/article/exclusive-laun', 'dateTimestamp': '1791763200000', 'startDateTimestamp': '1791763200000', 'endDateTimestamp': '1793404800000', 'publishTime': '1791964494000'}
+binance catalog: 48 New Cryptocurrency Listing
+  article: {'id': '287560', 'code': 'e52ef13311eb4e1a96f07099152e61d5', 'title': 'Binance Will Add 4 bStocks Tokenized Securities as Collatera', 'type': '1', 'releaseDate': '1791948608368'}
+  article: {'id': '287541', 'code': '927d3a7b5d6c43fb888e38f110005906', 'title': 'Binance Exchange Adds Blackberry (BBB), Mongodb Inc (MDBB), ', 'type': '1', 'releaseDate': '1791946804033'}
+сейчас: 1792322609127 2026-10-18 11:23
+конец: 2026-10-18T11:23:29Z, код 0

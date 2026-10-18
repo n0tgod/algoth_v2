@@ -2500,3 +2500,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792322090 ==
 [2026-10-18T11:14:53Z] задание nb46-restart-pages: перезапуск сборщика
+
+== сигнал 1792322606 ==
+[2026-10-18T11:23:28Z] задание nb47-market-peek запущено: research/market_state/peek.py

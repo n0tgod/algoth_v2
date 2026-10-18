@@ -22,3 +22,12 @@ OKX: свопов USDT 494; наших базовых монет там 439 из
 событий известно 92, новых 92
 покрытие: bybit 798/798, binance 461/461, okx 435/439; строк 1166529 (докачка 851520); отказов 0; 967.7 с
 конец: 2026-10-18T11:20:23Z, код 0
+ВНИМАНИЕ: 2026-10-18T11:20:23Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nb44-market-first.log | 20 ++++++++++++++++++++
+ jobs/queue-state.md             |  2 +-
+ 2 files changed, 21 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   c999447b..4d8bc53b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
