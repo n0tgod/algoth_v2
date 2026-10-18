@@ -35,3 +35,18 @@
 | SCRTUSDT | short | 2026-09-03 22:00 | 2026-09-03 09:01 | +2.9 % | 3 |
 | BLASTUSDT | short | 2026-10-03 08:00 | 2026-10-03 07:38 | +6.3 % | 3 |
 
+ВНИМАНИЕ: 2026-10-18T16:44:40Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nb53-delist-cases.done             |  1 +
+ jobs/done/nb53-delist-cases.log              | 37 ++++++++++++++++++++++++++++
+ jobs/poke.log                                |  3 +++
+ jobs/queue-state.md                          |  2 +-
+ research/dca_paper/out/DCA-delist-cases.json |  1 +
+ research/dca_paper/out/DCA-delist-cases.md   | 28 +++++++++++++++++++++
+ research/s8_loop/out/day_brake.json          |  2 +-
+ 7 files changed, 72 insertions(+), 2 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   03b13636..ed1c974c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-18T16:44:46Z, код 0
