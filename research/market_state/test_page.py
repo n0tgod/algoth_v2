@@ -35,6 +35,14 @@ def test_market_state_json_ages_and_names_absence():
         assert W.market_state_json(p, now=now + 50 * 60)["stale"] is False
     assert '"/market-page", "market", "рынок"' in W.NAVJS, "страница есть в меню"
     assert "/news_state?k=" in W.MARKETPAGE and "renderNews" in W.MARKETPAGE
+    assert "/gate_state?k=" in W.MARKETPAGE and "renderGate" in W.MARKETPAGE
+    with tempfile.TemporaryDirectory() as d:
+        g = W.gate_state_json(d)
+        assert g["error"].startswith("срез не записан") and g["books"]["error"] == "ветки ещё не посчитаны"
+        json.dump({"computed_at": "2026-10-18T10:00:00Z", "today": {}}, open(os.path.join(d, "latest.json"), "w"))
+        json.dump({"days": 1.0, "books": {}}, open(os.path.join(d, "AI-gate-books.json"), "w"))
+        g = W.gate_state_json(d, now=1792317600 + 50 * 60)
+        assert g["stale"] is True and g["books"]["days"] == 1.0, "судья: порог 45 мин, ветки рядом"
     assert "/market_state?k=" in W.MARKETPAGE and 'navMount("/market-page")' in W.MARKETPAGE
     print("ok  страница: нет файла — причина, возраст от computed_at, тревога > 2 ч, в меню есть")
 

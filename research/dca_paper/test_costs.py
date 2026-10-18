@@ -183,7 +183,7 @@ def test_slippage_on_base_entry_and_market_exits_only():
     assert C.slippage_usd(dict(_row(), fills=[]), slip) is None
     assert C.slippage_usd(dict(_row(), exit_px=None), slip) is None
     assert C.slippage_usd(dict(_row(), exit="пол"), 0.0) == 0.0
-    assert set(C.MARKET_EXITS) == {"пол", "срок", "трейл", "стоп", "рынок", "рынок за нас"}
+    assert set(C.MARKET_EXITS) == {"пол", "срок", "трейл", "стоп", "рынок", "рынок за нас", "судья", "делистинг"}
     for ex in ("рынок", "рынок за нас"):              # охрана — рыночный выход
         assert abs(C.slippage_usd(dict(_row(), exit=ex), slip)
                    - C.slippage_usd(dict(_row(), exit="пол"), slip)) < 1e-12, ex

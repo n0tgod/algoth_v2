@@ -11965,6 +11965,23 @@ NEWS_LATEST = os.path.join(
 NEWS_STALE_S = 45 * 60
 
 
+GATE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "ai_gate", "out")
+GATE_STALE_S = 45 * 60
+
+
+def gate_state_json(gate_dir=GATE_DIR, now=None):
+    """Судья спеки 19: сводка записи (порог 45 мин) и ветки кассой."""
+    d = market_state_json(os.path.join(gate_dir, "latest.json"), now, GATE_STALE_S)
+    try:
+        with open(os.path.join(gate_dir, "AI-gate-books.json"), encoding="utf-8") as f:
+            d["books"] = json.load(f)
+    except OSError:
+        d["books"] = {"error": "ветки ещё не посчитаны"}
+    except ValueError:
+        d["books"] = {"error": "файл веток не разбирается"}
+    return d
+
+
 def news_state_json(path=NEWS_LATEST, now=None):
     """Срез новостного фона (спека 19 §4): тот же читатель, порог 45 мин."""
     return market_state_json(path, now, NEWS_STALE_S)
@@ -12055,6 +12072,10 @@ input{background:var(--chip);color:var(--ink);border:1px solid var(--rule);borde
   <th data-k="bn_long">Binance crowd %</th><th data-k="bn_top">Binance top %</th>
   <th data-k="okx_ls">OKX L/S</th><th>as of</th></tr></thead><tbody id="tb"></tbody></table></div></div>
 <div class="card"><h2>events, last 24 h</h2><div id="evs" class="dim">&hellip;</div></div>
+<div class="card"><h2>AI judge <span id="gage" class="dim mono" style="text-transform:none;letter-spacing:0"></span></h2>
+ <div id="gtop" style="font-size:12.5px;margin-bottom:8px"></div>
+ <div id="gbooks" style="overflow:auto"></div>
+ <div id="glist" class="dim" style="margin-top:8px">&hellip;</div></div>
 <div class="card"><h2>news <span id="nage" class="dim mono" style="text-transform:none;letter-spacing:0"></span></h2>
  <div id="nfeeds" class="dim" style="font-size:12px;margin-bottom:6px"></div>
  <div id="ncal" style="font-size:12.5px;margin-bottom:8px"></div>
@@ -12139,6 +12160,51 @@ async function loadNews(){
 }
 load(); setInterval(load, 60000);
 loadNews(); setInterval(loadNews, 60000);
+const pp = x => x == null ? "&mdash;" : (x > 0 ? "+" : "") + (100 * x).toFixed(2) + " %";
+function renderGate(g){
+  const age = document.getElementById("gage");
+  if (!g || g.error){ age.textContent = g ? "· " + g.error : ""; document.getElementById("glist").textContent = "—"; return; }
+  age.textContent = "· " + (g.age_s == null ? "age unknown" : Math.round(g.age_s / 60) + " min ago") + (g.stale ? " · STALE" : "");
+  age.className = g.stale ? "bad mono" : "dim mono";
+  const t = g.today || {};
+  document.getElementById("gtop").innerHTML =
+    `today: <b>${t.entries || 0}</b> entries judged, <b>${t.skips || 0}</b> skipped` +
+    (t.skip_pct == null ? "" : ` (<span class="${t.skip_alarm ? "bad" : ""}">${t.skip_pct} %${t.skip_alarm ? " — ALARM > 60 %" : ""}</span>)`) +
+    ` · no verdict ${t.no_verdict || 0} · without news skipped ${t.plain_skips || 0} · repeat ${t.repeat_same || 0}/${t.repeat_pairs || 0} same` +
+    ` · watcher calls ${t.watch_calls || 0}, closes ${t.closes || 0}, heartbeats ${t.heartbeats || 0}` +
+    ` · spent <b>$${(t.usd || 0).toFixed(2)}</b> of $${t.budget_usd} budget` + (g.background_fresh === false ? ' · <span class="bad">background STALE</span>' : "");
+  const b = g.books || {};
+  if (b.error){ document.getElementById("gbooks").innerHTML = `<span class="dim">${esc(b.error)}</span>`; }
+  else {
+    let h = `<div class="dim" style="font-size:12px;margin-bottom:4px">forward since 10-18 18:00 UTC, ${b.days} days · judgement not before ${esc(b.judge_day)} — numbers before it are NOT a verdict · computed ${esc(b.computed_at)} UTC</div>`;
+    for (const [book, x] of Object.entries(b.books || {})){
+      h += `<div style="margin-top:6px"><b>${book === "optimal" ? "Depth · Long" : "Depth · Short"}</b> <span class="dim">${x.why ? esc(x.why) : `${x.positions} positions · judge cut ${x.counts.ai_news_cut}, plain cut ${x.counts.ai_plain_cut}, unjudged ${x.counts.unjudged} · watcher closed ${x.counts.judge_closes} · delist closed ${x.counts.delist_closes}`}</span></div>`;
+      if (x.why) continue;
+      h += `<table><thead><tr><th>branch</th><th>$1k</th><th>$10k</th><th>max DD $10k</th><th>positions</th></tr></thead><tbody>`;
+      for (const n of ["book", "ai_news", "ai_plain", "ai_news_x", "delist"]){
+        const v = x.branches[n] || {}; const a = v[1000] || v["1000"] || {}, c = v[10000] || v["10000"] || {};
+        h += `<tr><td>${n}</td><td class="mono">${pp(a.final)}</td><td class="mono">${pp(c.final)}</td><td class="mono">${pp(c.max_dd)}</td><td class="mono">${c.n == null ? "&mdash;" : c.n}</td></tr>`;
+      }
+      for (const n of ["rand", "rand_x"]){
+        const v = x.branches[n] || {}; const a = v[1000] || v["1000"] || {}, c = v[10000] || v["10000"] || {};
+        h += `<tr><td>${n} <span class="dim">median of ${b.seeds}</span></td><td class="mono">${pp(a.median_final)}</td><td class="mono">${pp(c.median_final)}</td><td class="dim" colspan="2">not worse than model: ${c.not_worse_share == null ? "&mdash;" : c.not_worse_share}</td></tr>`;
+      }
+      h += "</tbody></table>";
+    }
+    document.getElementById("gbooks").innerHTML = h;
+  }
+  const rs = g.recent || [];
+  document.getElementById("glist").innerHTML = rs.length ? rs.slice(0, 25).map(r =>
+    `<div class="ev"><span class="mono">${esc((r.sym || "").replace(/USDT$/, ""))}</span> ${esc(r.side || "")} · <b class="${r.decision === "skip" || r.decision === "close" ? "bad" : ""}">${esc(r.decision)}</b> <span class="dim">${esc(r.branch)} · ${r.confidence == null ? "" : r.confidence}</span> ${esc((r.reasons || []).join("; "))}${r.no_verdict ? ' <span class="bad">' + esc(r.no_verdict) + "</span>" : ""}<span class="dim">${new Date(r.t * 1000).toISOString().slice(5, 16).replace("T", " ")}</span></div>`).join("")
+    : "no decisions yet (the branches start 10-18 18:00 UTC)";
+}
+async function loadGate(){
+  let g = null;
+  try { const r = await fetch("/gate_state?k=" + encodeURIComponent(KEY)); g = await r.json(); }
+  catch (e) { g = {error: "page could not reach the collector: " + e}; }
+  renderGate(g);
+}
+loadGate(); setInterval(loadGate, 60000);
 </script>
 """
 
@@ -12510,6 +12576,9 @@ def serve(collector, port, token, log):
                                 "text/html; charset=utf-8")
             if u.path == "/market_state":
                 return self._ok(json.dumps(market_state_json(), ensure_ascii=False).encode("utf-8"),
+                                "application/json; charset=utf-8")
+            if u.path == "/gate_state":
+                return self._ok(json.dumps(gate_state_json(), ensure_ascii=False).encode("utf-8"),
                                 "application/json; charset=utf-8")
             if u.path == "/news_state":
                 return self._ok(json.dumps(news_state_json(), ensure_ascii=False).encode("utf-8"),

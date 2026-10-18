@@ -744,6 +744,30 @@ if ! pgrep -f "ai_gate/gate_run.py" >/dev/null \
     fi
 fi
 
+# --- ветки судьи кассой (спека 19 N3) ----------------------------------
+# Раз в час, во второй половине часа (первую занимают сборщик рынка и
+# лист), когда расчёт старше 55 мин; идущий не дублируется; при свежем
+# флаге ожидания обучения не стартует. Предел памяти 2500 МБ — в прогоне.
+GBOOKS=research/ai_gate/out/AI-gate-books.json
+GBOOKS_LOG=research/ai_gate/out/gate_books.log
+if ! pgrep -f "ai_gate/gate_books.py" >/dev/null \
+   && { [ ! -f research/s8_loop/out/train_wait.flag ] \
+        || [ -n "$(find research/s8_loop/out/train_wait.flag -mmin +60 2>/dev/null)" ]; }; then
+    gb_age=999999999
+    if [ -f "$GBOOKS" ]; then
+        gb_ts=$(date -u -r "$GBOOKS" +%s 2>/dev/null || echo 0)
+        [ "$gb_ts" -gt 0 ] && gb_age=$(( $(date -u +%s) - gb_ts ))
+    fi
+    gb_mm=$(date -u +%M | sed 's/^0//')
+    if [ "${gb_mm:-0}" -ge 30 ] && [ "$gb_age" -gt 3300 ]; then
+        mkdir -p "$(dirname "$GBOOKS_LOG")"
+        echo "[$(now)] ветки судьи: расчёт ${gb_age} с назад — прогон"
+        setsid nohup bash -c "
+            nice -n 15 .venv/bin/python research/ai_gate/gate_books.py \
+                >> $GBOOKS_LOG 2>&1" &
+    fi
+fi
+
 # --- очередь заданий (docs/00-INDEX.md) -------------------------------
 # Ассистент кладёт задание файлом в git, сервер его выполняет: прямого
 # доступа к серверу у ассистента нет (наружу открыты только 80 и 443),

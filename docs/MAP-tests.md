@@ -238,6 +238,17 @@
   - L225 `Summary.test_half_life_filter_narrows_selection(self)`
   - L232 `Summary.test_off_grid_window_is_refused_not_averaged(self)` — Окно не по сетке ломает смысл «соседнего» — и должно падать.
 
+## research/ai_gate/test_gate_books.py · 73 строк
+
+Ветки судьи: «не судили» остаётся во всех ветках и считается числом; жребий убирает ровно столько же входов в…
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `H = 3600`
+- L17 `T0 = G.GATE_SINCE + 2 * H`
+- L20 `rec(sym, at, K=6, state='closed', step=0.01)`
+- L26 `test_index_filter_rand()`
+- L48 `test_closes_judge_rand_delist()`
+
 ## research/ai_gate/test_gate_run.py · 125 строк
 
 Запись вперёд судьи: вход судится один раз и только с дня рождения и не старше LATE_H; повтор — 5 % ключей по…
@@ -2366,7 +2377,7 @@
 - L94 `_fake_get(urls_seen)`
 - L137 `test_run_with_fake_network_writes_by_day_and_names_failures()`
 
-## research/market_state/test_page.py · 44 строк
+## research/market_state/test_page.py · 52 строк
 
 Страница состояния рынка (`web.market_state_json`): нет файла — причина словами, не пустой объект; возраст сч…
 
@@ -5153,6 +5164,13 @@ X1: исполнитель против подставной биржи.
 
 - L18 `run()`
 - L33 `check()`
+
+## tools/test_watchdog_gate_books.sh · 41 строк
+
+Проверка блока сторожа «ветки судьи кассой»: раз в час во второй половине
+
+- L17 `run()`
+- L32 `check()`
 
 ## tools/test_watchdog_market.sh · 53 строк
 
