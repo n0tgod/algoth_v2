@@ -2490,3 +2490,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792316719 ==
 [2026-10-18T09:45:21Z] задание nb42-entry-filter запущено: research/dca_paper/entry_filter.py
+
+== сигнал 1792319255 ==
+[2026-10-18T10:27:37Z] задание nb43-source-probe запущено: tools/source_probe.py

@@ -1,0 +1,99 @@
+== задание nb43-source-probe ==
+строка: run tools/source_probe.py
+начало: 2026-10-18T10:27:37Z
+запускаю: .venv/bin/python tools/source_probe.py 
+bybit account-ratio (лонг/шорт по аккаунтам, монета)
+  https://api.bybit.com/v5/market/account-ratio
+  код 200, 0.21 с: {"retCode":0,"retMsg":"OK","result":{"list":[{"symbol":"BTCUSDT","buyRatio":"0.6329","sellRatio":"0.3671","timestamp":"1792317600000"},{"symbol":"BTCUSDT","buyRatio":"0.6302","sellRatio":"0.3698","tim
+
+bybit open-interest (OI, монета, час)
+  https://api.bybit.com/v5/market/open-interest
+  код 200, 0.18 с: {"retCode":0,"retMsg":"OK","result":{"symbol":"BTCUSDT","category":"linear","list":[{"openInterest":"58225.33900000","singleOpenInterest":"29112.67","timestamp":"1792317600000"},{"openInterest":"58777
+
+bybit tickers (OI value, funding, 24h, все имена одним ответом)
+  https://api.bybit.com/v5/market/tickers
+  код 200, 0.18 с: {"retCode":0,"retMsg":"OK","result":{"category":"linear","list":[{"symbol":"BTCUSDT","lastPrice":"82187.40","indexPrice":"82218.32","markPrice":"82187.40","prevPrice24h":"81588.80","price24hPcnt":"0.0
+
+bybit funding history
+  https://api.bybit.com/v5/market/funding/history
+  код 200, 0.18 с: {"retCode":0,"retMsg":"OK","result":{"category":"linear","list":[{"symbol":"BTCUSDT","fundingRate":"0.00005818","fundingRateTimestamp":"1792310400000"},{"symbol":"BTCUSDT","fundingRate":"0.00003568","
+
+bybit insurance (страховой фонд)
+  https://api.bybit.com/v5/market/insurance
+  код 200, 0.2 с: {"retCode":0,"retMsg":"OK","result":{"updatedTime":"1792319160000","list":[{"coin":"USDT","symbols":"FOLKSUSDT,EVAAUSDT,FIGHTUSDT,KGENUSDT,ELSAUSDT,SOONUSDT,SKRUSDT,BPUSDT","balance":"2663688.33470384
+
+bybit announcements (листинги/делистинги)
+  https://api.bybit.com/v5/announcements/index
+  код 200, 0.19 с: {"retCode":0,"retMsg":"OK","result":{"list":[{"title":"New: Bybit Odds Launches U.S. Midterm Election Contracts (Nov 6, 2026)","description":"Bybit Odds: U.S. Midterm Contracts","type":{"key":"latest_
+
+binance global long/short accounts
+  https://fapi.binance.com/futures/data/globalLongShortAccountRatio
+  код 200, 0.26 с: [{"symbol":"BTCUSDT","longAccount":"0.6274","longShortRatio":"1.6838","shortAccount":"0.3726","timestamp":1792314000000},{"symbol":"BTCUSDT","longAccount":"0.6251","longShortRatio":"1.6674","shortAcco
+
+binance top traders long/short positions
+  https://fapi.binance.com/futures/data/topLongShortPositionRatio
+  код 200, 0.25 с: [{"symbol":"BTCUSDT","longAccount":"0.6433","longShortRatio":"1.8036","shortAccount":"0.3567","timestamp":1792314000000},{"symbol":"BTCUSDT","longAccount":"0.6414","longShortRatio":"1.7889","shortAcco
+
+binance taker buy/sell ratio
+  https://fapi.binance.com/futures/data/takerlongshortRatio
+  код 200, 0.26 с: [{"buySellRatio":"2.2417","sellVol":"364.8400","buyVol":"817.8580","timestamp":1792310400000},{"buySellRatio":"1.6467","sellVol":"2492.4760","buyVol":"4104.4820","timestamp":1792314000000}]
+
+binance open interest hist
+  https://fapi.binance.com/futures/data/openInterestHist
+  код 200, 0.25 с: [{"symbol":"BTCUSDT","sumOpenInterest":"93673.68300000","sumOpenInterestValue":"7655810189.51046300","CMCCirculatingSupply":"20098843.00000000","timestamp":1792314000000},{"symbol":"BTCUSDT","sumOpenI
+
+binance announcements (CMS)
+  https://www.binance.com/bapi/composite/v1/public/cms/article/list/query
+  код 200, 0.27 с: {"code":"000000","message":null,"messageDetail":null,"data":{"catalogs":[{"catalogId":48,"parentCatalogId":null,"icon":"https://public.bnbstatic.com/image/cms/content/body/202505/d3201bf0be35bb246b65a
+
+okx long/short ratio
+  https://www.okx.com/api/v5/rubik/stat/contracts/long-short-account-ratio
+  код 200, 0.31 с: {"code":"0","data":[["1792317600000","1.71"],["1792314000000","1.73"],["1792310400000","1.74"],["1792306800000","1.73"],["1792303200000","1.73"],["1792299600000","1.73"],["1792296000000","1.75"],["179
+
+okx taker volume
+  https://www.okx.com/api/v5/rubik/stat/taker-volume
+  код 200, 0.29 с: {"code":"0","data":[["1792317600000","158698897.1743","224561922.1208"],["1792314000000","26286762.9491","44767415.7682"],["1792310400000","33604206.7481","36368185.7786"],["1792306800000","24923448.4
+
+fear & greed
+  https://api.alternative.me/fng/
+  код 200, 0.29 с: { 	"name": "Fear and Greed Index", 	"data": [ 		{ 			"value": "53", 			"value_classification": "Neutral", 			"timestamp": "1792281600", 			"time_until_update": "48740" 		} 	], 	"metadata": { 		"error"
+
+coingecko trending
+  https://api.coingecko.com/api/v3/search/trending
+  код 200, 0.06 с: { "coins": [{"item":{"id":"minter","coin_id":102179584,"name":"Minter","symbol":"MINTER","market_cap_rank":921,"thumb":"https://coin-images.coingecko.com/coins/images/102179584/standard/logo.png?17922
+
+coingecko global (доминация BTC)
+  https://api.coingecko.com/api/v3/global
+  код 200, 0.18 с: {"data":{"active_cryptocurrencies":22339,"upcoming_icos":0,"ongoing_icos":49,"ended_icos":3376,"markets":1508,"total_market_cap":{"btc":33411896.325194675,"eth":1134255275.687503,"ltc":46281293781.804
+
+defillama hacks
+  https://api.llama.fi/hacks
+  код 200, 0.07 с: [{"date":1647475200,"name":"ApeCoin","classification":"Governance","technique":"Flashloan Governance Attack","amount":820000,"chain":["Ethereum"],"bridgeHack":false,"targetType":"Token","source":"","r
+
+defillama stablecoins
+  https://stablecoins.llama.fi/stablecoins
+  код 200, 0.07 с: {"peggedAssets":[{"id":"1","name":"Tether","symbol":"USDT","gecko_id":"tether","pegType":"peggedUSD","priceSource":"defillama","pegMechanism":"fiat-backed","circulating":{"peggedUSD":183399572685.9821
+
+coindesk rss
+  https://www.coindesk.com/arc/outboundfeeds/rss/
+  код 200, 0.1 с: <?xml version="1.0" encoding="UTF-8"?> <rss xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:
+
+cointelegraph rss
+  https://cointelegraph.com/rss
+  код 200, 0.06 с: <?xml version="1.0" encoding="UTF-8"?> <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:media="http://search.yahoo.com/mrss/" xmlns:dc="http://purl.org/dc/elements/1.1
+
+theblock rss
+  https://www.theblock.co/rss.xml
+  код 200, 0.06 с: <?xml version="1.0" encoding="UTF-8"?><rss version="2.0"     xmlns:content="http://purl.org/rss/1.0/modules/content/"     xmlns:wfw="http://wellformedweb.org/CommentAPI/"     xmlns:dc="http://purl.org
+
+cryptopanic (нужен ключ — ждём 4xx)
+  https://cryptopanic.com/api/v1/posts/
+  код 403, 0.06 с: <!DOCTYPE html> <!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en-US"> <![endif]--> <!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en-US"> <![endif]--> <!--[if IE 8]>    <html class="no-
+
+anthropic api (без ключа — ждём 401, значит достижим)
+  https://api.anthropic.com/v1/models
+  код 401, 0.16 с: {"type":"error","error":{"type":"authentication_error","message":"x-api-key header is required"},"request_id":"req_011Cg9YVuBo5wpR2wHXyTHdD"}
+
+итого отвечают 2xx: 21 из 23
+[{"name": "bybit account-ratio (лонг/шорт по аккаунтам, монета)", "url": "https://api.bybit.com/v5/m
+конец: 2026-10-18T10:27:41Z, код 0
