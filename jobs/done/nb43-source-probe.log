@@ -97,3 +97,20 @@ anthropic api (без ключа — ждём 401, значит достижим
 итого отвечают 2xx: 21 из 23
 [{"name": "bybit account-ratio (лонг/шорт по аккаунтам, монета)", "url": "https://api.bybit.com/v5/m
 конец: 2026-10-18T10:27:41Z, код 0
+ВНИМАНИЕ: 2026-10-18T10:27:42Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nb43-source-probe.done      |    1 +
+ jobs/done/nb43-source-probe.log       |   99 +++
+ jobs/poke.log                         |    3 +
+ jobs/queue-state.md                   |    2 +-
+ research/dca_paper/out/DCA-pair.md    |   48 +-
+ research/dca_paper/out/DCA-paper.json | 1122 +++++++++++++++++----------------
+ research/dca_paper/out/DCA-paper.md   |   20 +-
+ research/dca_paper/out/DCA-short.json |    2 +-
+ research/dca_paper/out/DCA-short.md   |   62 +-
+ research/s8_loop/out/day_brake.json   |    2 +-
+ 10 files changed, 767 insertions(+), 594 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   7b7d0f26..2d84298c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
