@@ -4,3 +4,76 @@
 запускаю: .venv/bin/python research/ai_gate/gate_run.py --dry
 обучение S8 ждёт памяти (train_wait.flag) — проход уступает
 конец: 2026-10-18T17:14:14Z, код 0
+ВНИМАНИЕ: 2026-10-18T17:14:14Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nb56-ai-estimate.log            | 9 +++++++++
+ jobs/done/nb57-gate-dry.done              | 1 +
+ jobs/done/nb57-gate-dry.log               | 6 ++++++
+ jobs/poke.log                             | 3 +++
+ jobs/queue-state.md                       | 6 +++---
+ research/market_state/out/MARKET-state.md | 8 ++++----
+ research/market_state/out/latest.json     | 2 +-
+ research/news/out/NEWS-state.md           | 4 ++--
+ research/news/out/latest.json             | 2 +-
+ research/s8_loop/out/day_brake.json       | 2 +-
+ 10 files changed, 31 insertions(+), 12 deletions(-)
+On branch main
+Your branch is ahead of 'origin/main' by 1 commit.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   jobs/done/nb57-gate-dry.log
+	modified:   research/dca_paper/out/DCA-pair.json
+	modified:   research/paper_monthly/out/daily.log
+	modified:   research/s10_policy/out/tournament.log
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	bot/out/
+	research/a1_universe/.cache_opts/
+	research/a1_universe/.cache_risk/
+	research/mech_13a67a67/RUNBOOK.md
+	research/mech_13a67a67/controls_check.py
+	research/mech_13a67a67/run_age_mode.py
+	research/mech_193cbb87/_diff.py
+	research/mech_193cbb87/_finish_build.py
+	research/mech_193cbb87/_look.py
+	research/mech_193cbb87/_probe.py
+	research/mech_258a860c/_probe.py
+	research/mech_258a860c/_scratch.py
+	research/mech_2859b3d4/_ev_count.py
+	research/mech_2859b3d4/_speed.py
+	research/mech_2859b3d4/out/run.log
+	research/mech_357a7c60/_bite.py
+	research/mech_357a7c60/_cmp.py
+	research/mech_357a7c60/_keys.py
+	research/mech_357a7c60/_render.py
+	research/mech_374e2591/_mkbuild.py
+	research/mech_374e2591/_needs_owner.json
+	research/mech_374e2591/_notes.txt
+	research/mech_374e2591/_probe.py
+	research/mech_374e2591/_probe2.py
+	research/mech_374e2591/_probe3.py
+	research/mech_374e2591/_uniq.py
+	research/mech_374e2591/cache/
+	research/mech_59653014/_controls_check.py
+	research/mech_59653014/_smoke.py
+	research/mech_59653014/cache/
+	research/mech_59653014/out/run.log
+	research/mech_63fa406a/
+	research/mech_9dd65163/_probe2.py
+	research/mech_9dd65163/_probe3.py
+	research/mech_9dd65163/_probe4.py
+	research/mech_bb7c3581/_bite.py
+	research/mech_bb7c3581/_probe.py
+	research/mech_dc3b6317/_dbg_scan.py
+	research/mech_dc3b6317/_uniq.py
+	research/mech_fcbd3542/.cache_ann/
+	research/mech_fcbd3542/.smoke.sh
+	"research/mech_fcbd3542/.\320\275\320\265\321\202/"
+	research/probe_fshift/.gitignore
+	research/s8_loop/books_extra.json
+
+no changes added to commit (use "git add" and/or "git commit -a")
