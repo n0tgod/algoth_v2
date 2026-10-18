@@ -70,6 +70,7 @@ PACE = {"bybit": (2, 0.20), "binance": (1, 0.40), "okx": (1, 0.15)}   # пото
 TIMEOUT = 15
 STALE_S = 2 * 3600        # порог тревоги «запись стоит» на странице
 BINANCE_CATALOGS = ("48", "161")   # имя каталога берётся ИЗ ответа, не из памяти
+BYBIT_ANN_TYPES = ("", "new_crypto", "delistings", "maintenance_updates")   # "" — общая лента
 
 
 def utc_now():
@@ -208,8 +209,10 @@ def parse_bybit_events(doc):
     out = []
     for it in ((doc.get("result") or {}).get("list") or []):
         url = str(it.get("url") or it.get("title") or "")
+        # `publishTime` — момент публикации; `dateTimestamp` — лишь полночь
+        # дня (проверено peek 18.10): им событие ложилось в сутки без часа.
         try:
-            t = int(it.get("dateTimestamp") or it.get("publishTime") or 0)
+            t = int(it.get("publishTime") or it.get("dateTimestamp") or 0)
         except (TypeError, ValueError):
             t = 0
         kind = ((it.get("type") or {}).get("key") if isinstance(it.get("type"), dict)
@@ -508,10 +511,18 @@ def run(get=http_json, limit=0, dry=False, log=print, hist_path=HIST, seen_path=
 
     # --- события -----------------------------------------------------------
     events = []
-    try:
-        events += parse_bybit_events(get(f"{BYBIT}/v5/announcements/index?locale=en-US&limit=50"))
-    except Exception as e:                                   # noqa: BLE001
-        errors.append(f"bybit announcements: {e}")
+    # Общая лента площадки на 50 записей покрывает два месяца кампаний и
+    # новостей (peek 18.10); листинги, делистинги и обслуживание — своими
+    # типами, иначе E1 читает рекламу вместо делистингов.
+    for typ in BYBIT_ANN_TYPES:
+        try:
+            q = f"&type={typ}" if typ else ""
+            doc = get(f"{BYBIT}/v5/announcements/index?locale=en-US&limit=50{q}")
+            if doc.get("retCode") not in (0, None):
+                errors.append(f"bybit announcements {typ or 'all'}: retCode {doc.get('retCode')} {doc.get('retMsg')}")
+            events += parse_bybit_events(doc)
+        except Exception as e:                               # noqa: BLE001
+            errors.append(f"bybit announcements {typ or 'all'}: {e}")
     for cat in BINANCE_CATALOGS:
         try:
             events += parse_binance_events(get(BINANCE_CMS + cat))
@@ -521,6 +532,10 @@ def run(get=http_json, limit=0, dry=False, log=print, hist_path=HIST, seen_path=
         events += parse_hacks(get("https://api.llama.fi/hacks"), time.time() - 7 * 86400)
     except Exception as e:                                   # noqa: BLE001
         errors.append(f"hacks: {e}")
+    uniq = {}
+    for e in events:
+        uniq.setdefault(e["id"], e)
+    events = list(uniq.values())
     new_ev = [e for e in events if e["id"] not in seen]
     for e in new_ev:
         row = {"t": e["t"] or int(time.time() * 1000), "sym": "*", "src": "event", "venue": e["src"]}

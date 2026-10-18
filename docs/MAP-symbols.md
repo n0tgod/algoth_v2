@@ -4533,7 +4533,7 @@ M2: каркас walk-forward — чистая математика без чт�
 - L223 `nonoverlap(eval_idx, h)` — Каждое h-е оценочное сечение — статистика без перекрытия форвардов (урок R2).
 - L229 `parse_day(s)`
 
-## research/market_state/collect.py · 561 строк
+## research/market_state/collect.py · 576 строк
 
 Сборщик состояния рынка (спека 19 §3b): кто в лонге, кто в шорте — по именам.
 
@@ -4555,33 +4555,34 @@ M2: каркас walk-forward — чистая математика без чт�
 - L70 `TIMEOUT = 15`
 - L71 `STALE_S = 2 * 3600`
 - L72 `BINANCE_CATALOGS = ('48', '161')`
-- L75 `utc_now()`
-- L79 `http_json(url, timeout=TIMEOUT, tries=2)` — GET → JSON. Повтор один, отказ — исключением с кодом и адресом.
-- L100 `parse_bybit_names(doc)` — instruments-info → {symbol: baseCoin} по торгуемым перпам USDT.
-- L110 `parse_bybit_ratio(doc)` — account-ratio → [{t, long, short}] по возрастанию времени.
-- L123 `parse_binance_names(doc)` — exchangeInfo → множество бессрочных USDT-контрактов в торговле.
-- L133 `parse_binance_ratio(lst)` — global/top long-short → [{t, long}] (доля лонгов).
-- L145 `parse_okx_ccys(doc)` — public/instruments SWAP → множество базовых монет USDT-свопов.
-- L157 `parse_okx_ratio(doc)` — long-short-account-ratio → [{t, ls}] (лонгов на одного шортиста).
-- L169 `parse_market(fng=None, cg=None, ins=None, stables=None)` — Четыре ответа уровня рынка → плоский словарь; чего нет — нет.
-- L206 `parse_bybit_events(doc)` — announcements → [{id, src, t, title, kind}]; id — ссылка.
-- L223 `parse_binance_events(doc)` — CMS article list → события с именем каталога ИЗ ответа.
-- L240 `parse_hacks(lst, since_s)`
-- L256 `new_rows(rows, last_t)` — Оставить точки новее последней записанной: ряд продлевается по часам.
-- L261 `day_of(t_ms)`
-- L265 `coverage(got, of)`
-- L270 `skew(long_share)` — Перекос толпы в п.п. от 50: +13 — толпа в лонге на 63 %.
-- L275 `summarize(names, latest, cov, market, events, errors, t0, n_row…` — Сводка часа для страницы и приложения; имена — только с данными.
-- L296 `report_md(s)`
-- L320 `class Writer` — Строки записи — по суткам ИХ времени, чтобы сетка читала по дням.
-  - L323 `Writer.__init__(self, root=RECORD, dry=False)`
-  - L327 `Writer.write(self, row)`
-  - L339 `Writer.close(self)`
-- L344 `_load(path, default)`
-- L352 `_save(path, obj)`
-- L360 `_pool(src, items, fn, log)` — Вежливый обход: потоки и пауза по площадке; отказ имени — счётчик, не падение.
-- L380 `run(get=http_json, limit=0, dry=False, log=print, hist_path=HIS…`
-- L547 `main(argv=None)`
+- L73 `BYBIT_ANN_TYPES = ('', 'new_crypto', 'delistings', 'maint…`
+- L76 `utc_now()`
+- L80 `http_json(url, timeout=TIMEOUT, tries=2)` — GET → JSON. Повтор один, отказ — исключением с кодом и адресом.
+- L101 `parse_bybit_names(doc)` — instruments-info → {symbol: baseCoin} по торгуемым перпам USDT.
+- L111 `parse_bybit_ratio(doc)` — account-ratio → [{t, long, short}] по возрастанию времени.
+- L124 `parse_binance_names(doc)` — exchangeInfo → множество бессрочных USDT-контрактов в торговле.
+- L134 `parse_binance_ratio(lst)` — global/top long-short → [{t, long}] (доля лонгов).
+- L146 `parse_okx_ccys(doc)` — public/instruments SWAP → множество базовых монет USDT-свопов.
+- L158 `parse_okx_ratio(doc)` — long-short-account-ratio → [{t, ls}] (лонгов на одного шортиста).
+- L170 `parse_market(fng=None, cg=None, ins=None, stables=None)` — Четыре ответа уровня рынка → плоский словарь; чего нет — нет.
+- L207 `parse_bybit_events(doc)` — announcements → [{id, src, t, title, kind}]; id — ссылка.
+- L226 `parse_binance_events(doc)` — CMS article list → события с именем каталога ИЗ ответа.
+- L243 `parse_hacks(lst, since_s)`
+- L259 `new_rows(rows, last_t)` — Оставить точки новее последней записанной: ряд продлевается по часам.
+- L264 `day_of(t_ms)`
+- L268 `coverage(got, of)`
+- L273 `skew(long_share)` — Перекос толпы в п.п. от 50: +13 — толпа в лонге на 63 %.
+- L278 `summarize(names, latest, cov, market, events, errors, t0, n_row…` — Сводка часа для страницы и приложения; имена — только с данными.
+- L299 `report_md(s)`
+- L323 `class Writer` — Строки записи — по суткам ИХ времени, чтобы сетка читала по дням.
+  - L326 `Writer.__init__(self, root=RECORD, dry=False)`
+  - L330 `Writer.write(self, row)`
+  - L342 `Writer.close(self)`
+- L347 `_load(path, default)`
+- L355 `_save(path, obj)`
+- L363 `_pool(src, items, fn, log)` — Вежливый обход: потоки и пауза по площадке; отказ имени — счётчик, не падение.
+- L383 `run(get=http_json, limit=0, dry=False, log=print, hist_path=HIS…`
+- L562 `main(argv=None)`
 
 ## research/market_state/peek.py · 82 строк
 

@@ -68,9 +68,13 @@ def test_market_and_events_take_names_from_the_answer():
     assert ev == [{"id": "binance:abc", "src": "binance", "t": 1792300000000,
                    "title": "Binance Will Delist X", "kind": "Delisting"}], ev
     bb = C.parse_bybit_events({"result": {"list": [
-        {"title": "New Listing: FOO", "url": "https://announcements.bybit.com/x", "dateTimestamp": 1792300000000,
-         "type": {"key": "new_crypto", "title": "New Listings"}, "tags": ["Spot", "Derivatives"]}]}})
+        {"title": "New Listing: FOO", "url": "https://announcements.bybit.com/x", "dateTimestamp": 1792281600000,
+         "publishTime": 1792300000000,
+         "type": {"key": "new_crypto", "title": "New Listings"}, "tags": ["Spot", "Derivatives"]},
+        {"title": "Old form", "url": "u2", "dateTimestamp": 1792281600000, "type": "x"}]}})
     assert bb[0]["kind"] == "new_crypto" and bb[0]["id"].startswith("bybit:https")
+    assert bb[0]["t"] == 1792300000000, "момент публикации, не полночь дня"
+    assert bb[1]["t"] == 1792281600000 and bb[1]["kind"] == "x", "без publishTime — полночь дня"
     hk = C.parse_hacks([{"date": 1792200000, "name": "P", "classification": "Bridge", "amount": 1e6},
                         {"date": 1600000000, "name": "Old"}], since_s=1792000000)
     assert len(hk) == 1 and hk[0]["kind"] == "hack"
@@ -119,7 +123,9 @@ def _fake_get(urls_seen):
         if p.endswith("trending"):
             return {"coins": [{"item": {"symbol": "minter"}}]}
         if p.endswith("announcements/index"):
-            return {"result": {"list": [{"title": "A", "url": "u1", "dateTimestamp": 1792317600000, "type": {"key": "k"}}]}}
+            if "type=delistings" in url:
+                return {"retCode": 10001, "retMsg": "bad type", "result": {}}
+            return {"retCode": 0, "result": {"list": [{"title": "A", "url": "u1", "publishTime": 1792317600000, "type": {"key": "k"}}]}}
         if "cms" in p:
             return {"data": {"catalogs": []}}
         if p.endswith("/hacks"):
@@ -141,6 +147,8 @@ def test_run_with_fake_network_writes_by_day_and_names_failures():
         assert s["coverage"]["binance"]["got"] == 2 and s["coverage"]["binance"]["absent"] == 1
         assert s["coverage"]["okx"]["got"] == 1 and s["coverage"]["okx"]["absent"] == 2
         assert any("ONLYBBUSDT" in e for e in s["errors"]) and any(e.startswith("cg:") for e in s["errors"])
+        assert any("delistings: retCode 10001" in e for e in s["errors"]), "отказ площадки по типу — причина, не тишина"
+        assert len(s["events_24h"]) == 1, "одно объявление тремя лентами — одно событие"
         assert s["market"]["fng"] == 53 and "btc_dom" not in s["market"] and s["market"]["trending"] == ["MINTER"]
         assert s["names"]["BTCUSDT"]["bb_long"] == 0.6329 and s["names"]["BTCUSDT"]["okx_ls"] == 1.71
         assert s["names"]["ETHUSDT"]["bn_top"] == 0.6274 and "okx_ls" not in s["names"]["ETHUSDT"]

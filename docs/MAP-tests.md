@@ -2314,7 +2314,7 @@
 - L351 `test_nonoverlap()`
 - L356 `main()`
 
-## research/market_state/test_collect.py · 184 строк
+## research/market_state/test_collect.py · 192 строк
 
 Сборщик состояния рынка: разборы ответов площадок в форме зонда nb43, продление ряда по часам (а не по файлу)…
 
@@ -2324,9 +2324,9 @@
 - L23 `OKX_RATIO = {'code': '0', 'data': [['1792317600000'…`
 - L26 `test_parsers_match_probe_shapes()`
 - L53 `test_market_and_events_take_names_from_the_answer()`
-- L80 `test_rows_extend_by_time_and_coverage_is_a_number()`
-- L90 `_fake_get(urls_seen)`
-- L131 `test_run_with_fake_network_writes_by_day_and_names_failures()`
+- L84 `test_rows_extend_by_time_and_coverage_is_a_number()`
+- L94 `_fake_get(urls_seen)`
+- L137 `test_run_with_fake_network_writes_by_day_and_names_failures()`
 
 ## research/market_state/test_page.py · 38 строк
 
