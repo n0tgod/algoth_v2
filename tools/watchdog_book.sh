@@ -674,20 +674,19 @@ fi
 
 # --- состояние рынка: доли лонгов и шортов по именам (спека 19 §3b) ---
 # Отдельный лёгкий процесс (сеть и десятки МБ): раз в час, в первые
-# 15 минут часа, когда последний срез старше 50 мин; идущий прогон не
-# дублируется; часы 02 и 06 не пропускаются — с циклом он не толкается.
-# Срез старше 2 ч — тревога на странице /market-page, не здесь.
+# 15 минут часа, когда последний срез сделан в ПРОШЛОМ часе; идущий
+# прогон не дублируется; часы 02 и 06 не пропускаются — с циклом он не
+# толкается. Срез старше 2 ч — тревога на странице /market-page.
+# Не «старше 50 мин» (18.10): срез, легший в xx:20, в окне следующего
+# часа имеет 40–50 мин, и час пропускался — фаза уплывала молча.
 MSTATE=research/market_state/out/latest.json
 MSTATE_LOG=research/market_state/out/collect.log
 if ! pgrep -f "market_state/collect.py" >/dev/null; then
-    ms_age=999999999
-    if [ -f "$MSTATE" ]; then
-        ms_ts=$(date -u -r "$MSTATE" +%s 2>/dev/null || echo 0)
-        [ "$ms_ts" -gt 0 ] && ms_age=$(( $(date -u +%s) - ms_ts ))
-    fi
+    ms_hour=none
+    [ -f "$MSTATE" ] && ms_hour=$(date -u -r "$MSTATE" +%Y%m%d%H 2>/dev/null || echo none)
     ms_mm=$(date -u +%M | sed 's/^0//')
-    if [ "${ms_mm:-0}" -lt 15 ] && [ "$ms_age" -gt 3000 ]; then
-        echo "[$(now)] состояние рынка: срез ${ms_age} с назад — прогон"
+    if [ "${ms_mm:-0}" -lt 15 ] && [ "$ms_hour" != "$(date -u +%Y%m%d%H)" ]; then
+        echo "[$(now)] состояние рынка: срез часа ${ms_hour} — прогон"
         setsid nohup bash -c "
             nice -n 15 .venv/bin/python research/market_state/collect.py \
                 >> $MSTATE_LOG 2>&1" &

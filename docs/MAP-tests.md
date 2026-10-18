@@ -5096,12 +5096,12 @@ X1: исполнитель против подставной биржи.
 - L33 `run()`
 - L60 `run_flag()`
 
-## tools/test_watchdog_market.sh · 47 строк
+## tools/test_watchdog_market.sh · 48 строк
 
 Проверка блока сторожа «состояние рынка»: раз в час в первые 15 минут,
 
 - L24 `run()`
-- L39 `check()`
+- L40 `check()`
 
 ## tools/test_watchdog_mem.sh · 68 строк
 
