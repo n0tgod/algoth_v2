@@ -726,6 +726,15 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L202 `market_news(items, at_ms, hours=24, cap=10)`
 - L209 `dossier(kind, rec, book, side, at_s, *, px=None, crowd=None, ma…` — Досье для судьи. news=None — ветка без новостей (`ai_plain`): блоков новостей нет вовсе.
 
+## research/ai_gate/peek.py · 47 строк
+
+Заглянуть в судью на сервере (только чтение): хвост лога прохода, свежесть кандидатов книг Depth (последний ч…
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L14 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L19 `ts(t)`
+- L23 `main()`
+
 ## research/asset_groups/check_coverage.py · 180 строк
 
 Проверка группировки активов: покрытие, дубликаты, опечатки, размер групп.
