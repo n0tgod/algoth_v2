@@ -135,8 +135,37 @@ def history_of(recs, sym, at_s):
 
 
 def entries_per_day(recs, now, days=7):
-    ts = {int(float(r["at"])) for r in recs if float(r.get("at", 0)) >= now - days * 86400}
+    """Входов в сутки: уникальные (имя, час входа). Не по времени одному — в
+    одном часе книга открывает десятки имён (18.10: 88 шортов за сутки
+    читались как 20.9)."""
+    ts = {(r.get("sym"), int(float(r["at"]))) for r in recs if float(r.get("at", 0)) >= now - days * 86400}
     return len(ts) / days
+
+
+def estimate_only(log=print):
+    """Цена в сутки по ценам вызовов последнего сухого часа и счёту входов
+    книг за 7 суток — без единого вызова модели."""
+    import exit_ceiling as EC                                  # noqa: E402
+    try:
+        with open(OUT_JSON, encoding="utf-8") as f:
+            prev = json.load(f)
+    except (OSError, ValueError):
+        return {"error": "нет прошлого сухого часа — цена вызова не измерена"}
+    data, why = EC.load(log)
+    if why:
+        return {"error": f"книги не загружены: {why}"}
+    now = data["now"]
+    per_day = {b: round(entries_per_day(data["books"].get(b) or [], now), 1) for b, _ in BOOKS}
+    open_now = sum(1 for b, _ in BOOKS for r in (data["books"].get(b) or []) if (r.get("state") or "closed") == "open")
+    e = prev["by_kind"]["entry"]["mean_usd"]
+    h = prev["by_kind"].get("hold", {}).get("mean_usd", e)
+    entry_calls = sum(per_day.values()) * 2 * 1.05
+    out = {"computed_at": time.strftime("%Y-%m-%d %H:%M", time.gmtime()), "entries_per_day_7d": per_day,
+           "open_now": open_now, "entry_call_usd": e, "hold_call_usd": h,
+           "entry_calls_day": round(entry_calls), "usd_entry_day": round(entry_calls * e, 2),
+           "heartbeat_calls_day_if_model": open_now * 4, "usd_heartbeat_day_if_model": round(open_now * 4 * h, 2)}
+    log(json.dumps(out, ensure_ascii=False))
+    return out
 
 
 def run(cap_entry, cap_open, log=print, client=None):
@@ -301,7 +330,16 @@ def main(argv=None):
     ap.add_argument("--cap", type=int, default=6, help="входов на книгу")
     ap.add_argument("--cap-open", type=int, default=4, help="открытых позиций на книгу")
     ap.add_argument("--no-publish", action="store_true")
+    ap.add_argument("--estimate", action="store_true", help="только цена в сутки, без вызовов модели")
     a = ap.parse_args(argv)
+    if a.estimate:
+        import arm_book as AB                                  # noqa: E402
+        res = estimate_only(log=AB.guarded(print, limit=3000))
+        with open(os.path.join(OUT, "AI-dry-estimate.json"), "w", encoding="utf-8") as f:
+            json.dump(res, f, ensure_ascii=False)
+        if not a.no_publish and not res.get("error"):
+            subprocess.run(["tools/publish.sh", "оценка цены судьи"], cwd=ROOT, check=False)
+        return 0 if not res.get("error") else 1
     try:
         sys.stdout.reconfigure(line_buffering=True)
     except Exception:                                        # noqa: BLE001

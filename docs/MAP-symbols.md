@@ -590,7 +590,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L285 `summarize(rows, where=None)`
 - L372 `main()`
 
-## research/ai_gate/dry_hour.py · 324 строк
+## research/ai_gate/dry_hour.py · 362 строк
 
 Сухой час судьи (спека 19, этап N2): настоящие кандидаты, настоящая модель, цена числом.
 
@@ -612,11 +612,12 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L105 `events_for(events, sym, t_ms)`
 - L117 `load_news()`
 - L129 `history_of(recs, sym, at_s)`
-- L137 `entries_per_day(recs, now, days=7)`
-- L142 `run(cap_entry, cap_open, log=print, client=None)`
-- L231 `summarize(rows, cov, per_day, data, t0)`
-- L273 `report(s)`
-- L299 `main(argv=None)`
+- L137 `entries_per_day(recs, now, days=7)` — Входов в сутки: уникальные (имя, час входа). Не по времени одному — в одном часе книга открывает десятки имён…
+- L145 `estimate_only(log=print)` — Цена в сутки по ценам вызовов последнего сухого часа и счёту входов книг за 7 суток — без единого вызова моде…
+- L171 `run(cap_entry, cap_open, log=print, client=None)`
+- L260 `summarize(rows, cov, per_day, data, t0)`
+- L302 `report(s)`
+- L328 `main(argv=None)`
 
 ## research/ai_gate/judge.py · 223 строк
 
