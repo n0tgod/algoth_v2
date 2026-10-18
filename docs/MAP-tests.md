@@ -238,6 +238,19 @@
   - L225 `Summary.test_half_life_filter_narrows_selection(self)`
   - L232 `Summary.test_off_grid_window_is_refused_not_averaged(self)` — Окно не по сетке ломает смысл «соседнего» — и должно падать.
 
+## research/ai_gate/test_judge.py · 108 строк
+
+Ядро судьи: разбор ответа (вне словаря и не JSON — отказ, не мнение), цена по модели, которая ответила; досье…
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L18 `test_parse_and_cost()`
+- L38 `test_dossier_moves_news()`
+- L59 `class FakeClient`
+  - L60 `FakeClient.__init__(self, resp=None, exc=None)`
+  - L65 `FakeClient._create(self, **kw)`
+- L72 `_resp(text, stop='end_turn', model='claude-opus-5-5')`
+- L78 `test_ask_paths()`
+
 ## research/asset_groups/test_pairs.py · 179 строк
 
 Проверки отбора кандидатов A3.

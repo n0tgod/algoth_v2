@@ -590,6 +590,63 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L285 `summarize(rows, where=None)`
 - L372 `main()`
 
+## research/ai_gate/dry_hour.py · 324 строк
+
+Сухой час судьи (спека 19, этап N2): настоящие кандидаты, настоящая модель, цена числом.
+
+- L32 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L33 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L39 `OUT = os.path.join(HERE, 'out')`
+- L40 `RECORD = os.path.join(OUT, 'record')`
+- L41 `OUT_MD = os.path.join(OUT, 'AI-dry-hour.md')`
+- L42 `OUT_JSON = os.path.join(OUT, 'AI-dry-hour.json')`
+- L43 `MS_RECORD = os.path.join(ROOT, 'research', 'market_…`
+- L44 `NEWS_RECORD = os.path.join(ROOT, 'research', 'news', …`
+- L45 `BOOKS = (('optimal', 'long'), ('optimal_h', 'sh…`
+- L46 `KLINE = 'https://api.bybit.com/v5/market/kline?…`
+- L47 `H = 3600`
+- L50 `klines(sym, at_s)` — {начало часа с: close} за 7 суток до решения; отказ — None.
+- L60 `load_state(days)` — Запись состояния рынка → {sym: {src: [(t, row)]}}, рынок и события.
+- L83 `at_or_before(rows, t_ms)`
+- L93 `crowd_of(state, sym, t_ms)`
+- L105 `events_for(events, sym, t_ms)`
+- L117 `load_news()`
+- L129 `history_of(recs, sym, at_s)`
+- L137 `entries_per_day(recs, now, days=7)`
+- L142 `run(cap_entry, cap_open, log=print, client=None)`
+- L231 `summarize(rows, cov, per_day, data, t0)`
+- L273 `report(s)`
+- L299 `main(argv=None)`
+
+## research/ai_gate/judge.py · 223 строк
+
+Ядро судьи спеки 19: досье решения, вызов модели, разбор ответа, цена.
+
+- L33 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L34 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L35 `KEY_PATH = os.path.join(ROOT, 'tools', 'app_api', …`
+- L37 `MODEL = 'claude-opus-5-5'`
+- L38 `EFFORT = 'medium'`
+- L39 `MAX_TOKENS = 16000`
+- L40 `PROMPT_V = 'v1-2026-10-18'`
+- L41 `FALLBACK_BETA = 'server-side-fallback-2026-07-01'`
+- L43 `PRICES = {'claude-opus-5-5': {'in': 4.0, 'out': …` — $ за миллион токенов; источник — platform.claude.com/docs/en/about-claude/pricing (WebFetch 18.10.2026)
+- L46 `PRICES_SRC = 'https://platform.claude.com/docs/en/ab…`
+- L48 `SYSTEM_ENTRY = <текст, 8 строк>`
+- L57 `SYSTEM_HOLD = <текст, 8 строк>`
+- L67 `schema(words)`
+- L77 `KINDS = {'entry': (SYSTEM_ENTRY, ('open', 'skip…`
+- L81 `read_key(path=KEY_PATH)`
+- L90 `cost_usd(usage, model)` — Цена вызова по прайсу модели, которая ОТВЕТИЛА; неизвестная модель — None.
+- L100 `parse_verdict(stop_reason, text, words)` — → (verdict | None, why). Ответ вне схемы — не мнение, а отказ.
+- L121 `make_client(key)`
+- L126 `ask(client, kind, dossier)` — Один вызов → строка журнала: решение, причины, модель, токены, цена, задержка.
+- L172 `REC_KEYS = ('lev', 'fav_bp', 'arm', 'hand', 'rr', …`
+- L175 `moves(closes_by_hour, at_s)` — Ход цены к часу решения: 1/4/24/168 ч, в %. closes_by_hour — {начало часа с: close}.
+- L192 `news_for(items, sym, at_ms, hours=72, cap=10)` — Новости по имени до момента решения (за `hours`), свежие первыми.
+- L202 `market_news(items, at_ms, hours=24, cap=10)`
+- L209 `dossier(kind, rec, book, side, at_s, *, px=None, crowd=None, ma…` — Досье для судьи. news=None — ветка без новостей (`ai_plain`): блоков новостей нет вовсе.
+
 ## research/asset_groups/check_coverage.py · 180 строк
 
 Проверка группировки активов: покрытие, дубликаты, опечатки, размер групп.
