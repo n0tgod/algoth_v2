@@ -4,3 +4,15 @@
 запускаю: .venv/bin/python tools/venv_add.py anthropic
 пакет anthropic: версия 1.15.0
 конец: 2026-10-18T16:49:56Z, код 0
+ВНИМАНИЕ: 2026-10-18T16:49:56Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nb54-venv-anthropic.done  | 1 +
+ jobs/done/nb54-venv-anthropic.log   | 6 ++++++
+ jobs/poke.log                       | 3 +++
+ jobs/queue-state.md                 | 2 +-
+ research/s8_loop/out/day_brake.json | 2 +-
+ 5 files changed, 12 insertions(+), 2 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   e590e7a2..a90a514b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
