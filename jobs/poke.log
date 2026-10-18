@@ -2523,3 +2523,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792341872 ==
 [2026-10-18T16:44:34Z] задание nb53-delist-cases запущено: research/dca_paper/delist_cases.py
+
+== сигнал 1792342187 ==
+[2026-10-18T16:49:50Z] задание nb54-venv-anthropic запущено: tools/venv_add.py
