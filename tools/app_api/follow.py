@@ -28,7 +28,7 @@ import os
 import time
 
 EXIT_KINDS = {"тейк": "take", "пол": "floor", "срок": "term",
-              "рынок": "market", "рынок за нас": "market",
+              "рынок": "market", "рынок за нас": "market", "судья": "market", "делистинг": "market",
               "ликвидация": "liq", "команда": "cmd_close"}
 
 

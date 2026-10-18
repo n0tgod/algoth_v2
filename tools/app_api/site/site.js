@@ -147,7 +147,8 @@ const Site = (() => {
   // отобраны прогонами книг по деньгам нетто. Страница только печатает:
   // 20 строк, остальные — кнопкой. Нет поля — прочерк словами, не пустота.
   const EXIT_EN = {"тейк": "target", "пол": "floor", "срок": "term", "рынок": "market guard",
-                   "рынок за нас": "inverse guard", "ликвидация": "liquidation", "трейл": "trail", "стоп": "stop"};
+                   "рынок за нас": "inverse guard", "ликвидация": "liquidation", "трейл": "trail", "стоп": "stop",
+                   "судья": "AI judge", "делистинг": "delisting"};
   const SIDE_EN = {long: "Long", short: "Short", both: "Both"};
   let bestAll = false;
   function renderBest(r, depLabel) {

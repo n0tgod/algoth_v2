@@ -50,6 +50,7 @@ import run_d2 as D2                                           # noqa: E402
 import run_d10 as D10                                         # noqa: E402
 import run_d11 as D11                                         # noqa: E402
 import tail as TL                                             # noqa: E402
+import ai_branch as AIB                                       # noqa: E402
 
 # Ячейка сетки D10, которой торгует семейство: плечо забора, без доливов,
 # цель ×2. Объявлена здесь одним местом — из неё же выводится подпись
@@ -293,13 +294,17 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
     # Справочник читается ОДИН раз на прогон: его спрашивают все три
     # книги на каждое решение.
     launch = IR.launches() if launch is None else launch
-    ages, guards = {}, {}
+    ages, guards, gates = {}, {}, {}
     for bk in list(packed):
         packed[bk], ages[bk] = RP.age_shorts(packed[bk], bk, launch=launch,
                                              log=log, now=now)
         # охрана рынком — после возраста и до кассы: правило ВЫХОДА
         packed[bk], guards[bk] = RP.guard_shorts(packed[bk], bk, log=log,
                                                  now=now)
+        # ветвь судьи спеки 19 — после возраста и охраны: её решения
+        # судят ту же позицию, что основная книга
+        if R.is_ai(bk):
+            packed[bk], gates[bk] = AIB.apply(packed[bk], bk, log=log)
     ph.mark("возраст и охрана")
     rows, cells, one, live = RP.build_rows(packed, now=now,
                                            keys=R.H24_ORDER, log=log)
@@ -312,7 +317,7 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
                      keys=R.H24_ORDER)
     ph.mark("свод")
     s.update({"family": "h24", "cells": cells, "one_name": one, "ages": ages,
-              "guards": guards,
+              "guards": guards, "ai_gate": gates,
               "signal": {"book": "h24", "arms": list(ARMS), "cell": CELL[0],
                          "hold_h": R.H24_HOLD_H, "legs": len(legs_),
                          "gate": "край ≥ 33 б.п., отношение любое"},

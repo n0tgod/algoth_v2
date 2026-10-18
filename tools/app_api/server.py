@@ -33,6 +33,8 @@ import urllib.request
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
+# суффикс ветви правил в ключе книги: охрана `_g<порог>[i<обратный>]` (спека 18), судья `_ai` (спека 19)
+BRANCH_SUFFIX = re.compile(r"(?:_g\d+(?:i\d+)?|_ai)$")
 import db as DBM                                              # noqa: E402
 import legal as LEGAL                                         # noqa: E402
 import sealed
@@ -453,8 +455,14 @@ class App:
             key = r.get("key") if isinstance(r, dict) else r
             if not key:
                 continue
+            # запас без поля `side`: суффикс ветви (`_g…`, `_ai`) снимается
+            # ДО хвоста короткой — иначе `optimal_h_ai` читался бы лонгом
+            bare = BRANCH_SUFFIX.sub("", str(key))
             side = (r.get("side") if isinstance(r, dict) else None) or (
-                "both" if str(key).startswith(PAIR_PREFIX) else "short" if str(key).endswith("_h") else "long")
+                "both" if bare.startswith(PAIR_PREFIX) else "short" if bare.endswith("_h") else "long")
+            br = (r.get("branch") if isinstance(r, dict) else None) or {}
+            # ветвь судьи спеки 19 — только бумага: живой исполнитель судью не знает
+            paper_only = (br.get("rule") == "ai") or str(key).endswith("_ai")
             for dep, sizing in ((dp, z) for dp in deps for z in sizings):
                 b = (d.get("books") or {}).get(self.cell_key(key, dep, sizing)) or {}
                 cells.append({"book": key, "deposit": float(dep), "side": side,
@@ -469,6 +477,7 @@ class App:
                               # адрес в дереве книг (спека 18): ветвь правил и
                               # основная книга — из свода, одним ядром с правилами
                               "branch": (r.get("branch") if isinstance(r, dict) else None),
+                              "paper_only": paper_only,
                               "base": (((r.get("branch") or {}).get("base") if isinstance(r, dict) else None) or key),
                               # касса БУМАГИ — справка: подписка стартует с депозита (§2)
                               "paper_cash_usd": self.paper_cash(b, float(dep)),
@@ -538,6 +547,9 @@ class App:
                      and abs(c["deposit"] - deposit) < 1e-9 and c["sizing"] == sizing), None)
         if cell is None:
             return 400, {"error": f"no strategy {book} with deposit {deposit:g} $ on the server"}
+        if cell.get("paper_only"):
+            return 400, {"error": "this branch is paper only: the AI judge decides on paper, "
+                                  "the live executor does not run it — subscribe to the base book instead"}
         for s in self.db.subs_on_key(key_id):
             # одна книга на ключ в ЛЮБОМ формате: две подписки одной книги
             # торговали бы одни имена на одном счёте и ломали сверку

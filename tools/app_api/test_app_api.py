@@ -177,6 +177,33 @@ def test_key_add_rejects_money_moving_and_readonly_warns_on_ip_and_hides_secret(
         assert len(app.list_keys(acc)[1]["keys"]) == 1
 
 
+def test_ai_branch_is_paper_only_and_side_survives_suffix():
+    import server as SRV
+    assert SRV.BRANCH_SUFFIX.sub("", "optimal_h_ai") == "optimal_h" and SRV.BRANCH_SUFFIX.sub("", "pair_safe_g4i2") == "pair_safe"
+    with tempfile.TemporaryDirectory() as tmp:
+        app, _ = _app(tmp, venue=FakeVenue(equity=1100.0, modes={}))
+        real = app.dca
+        def with_ai():
+            d = json.loads(json.dumps(real() or {}))
+            d.setdefault("rulers", []).append({"key": "optimal_h_ai", "title_en": "Depth",
+                                               "branch": {"base": "optimal_h", "rule": "ai", "value": 1.0,
+                                                          "default": False, "title_en": "AI judge: entry + watcher"}})
+            d["rulers"].append("optimal_ai")                       # запас: ключ без поля — по суффиксу
+            return d
+        app.dca = with_ai
+        st, cells = app.strategies()
+        ai = [x for x in cells["cells"] if x["book"] in ("optimal_h_ai", "optimal_ai")]
+        assert ai and all(x["paper_only"] for x in ai)
+        assert {x["side"] for x in ai if x["book"] == "optimal_h_ai"} == {"short"}, "суффикс ветви снят до хвоста короткой"
+        assert {x["side"] for x in ai if x["book"] == "optimal_ai"} == {"long"}
+        acc = _login(app)
+        st, k = app.add_key(acc, "bybit", "ABCD1234KEY", SECRET)
+        dep = next(x["deposit"] for x in ai if x["book"] == "optimal_h_ai")
+        st, r = app.add_subscription(acc, k["key_id"], "optimal_h_ai", dep)
+        assert st == 400 and "paper only" in r["error"], (st, r)
+    print("ok  ветвь судьи — только бумага: ячейка помечена, подписка отклонена словами; сторона по ключу с суффиксом")
+
+
 def test_subscriptions_cells_hedge_warning_and_state():
     with tempfile.TemporaryDirectory() as tmp:
         app, _ = _app(tmp, venue=FakeVenue(equity=1100.0, modes={"BTCUSDT": "hedge", "ETHUSDT": "oneway"}))
@@ -193,6 +220,7 @@ def test_subscriptions_cells_hedge_warning_and_state():
         assert base["base"] == "optimal_h" and base["branch"]["default"] is True
         plain = next(x for x in cells["cells"] if x["book"] == "optimal" and x["sizing"] == "compound")
         assert plain["branch"] is None and plain["base"] == "optimal"
+        assert not any(x["paper_only"] for x in cells["cells"]), "обычные ячейки — не только бумага"
         assert cells["tree"][0]["mode_en"] == "Depth"
         c = next(x for x in cells["cells"] if x["book"] == "optimal_h" and x["deposit"] == 1000.0
                  and x["sizing"] == "compound")

@@ -1926,8 +1926,14 @@ def main():
         for (pr, sym, _at), r in cache.items():
             if pr in by_pair and D6.tradable(sym):
                 by_pair[pr].append(r)
-        rows, cells, one, live = build_rows(
-            {k: by_pair[tuple(RULERS[k])] for k in keys})
+        # ветвь судьи спеки 19 — записи основной книги под решениями судьи
+        import ai_branch as AIB
+        packed, gates = {}, {}
+        for k in keys:
+            packed[k] = by_pair[tuple(RULERS[k])]
+            if R.is_ai(k):
+                packed[k], gates[k] = AIB.apply(packed[k], k)
+        rows, cells, one, live = build_rows(packed)
         ph.mark("касса")
         append_journal(rows)
         ph.mark("журнал")
@@ -1939,7 +1945,7 @@ def main():
                  # последний час записи
                  "window": D6.window(legs), "cells": cells, "one_name": one,
                  "states": got.get("states"), "data_end": got.get("data_end"),
-                 "live": live,
+                 "live": live, "ai_gate": gates,
                  # Сколько денег книги посчитано по котировке, видно
                  # числом, а не пересказом: закрытые строки с пометкой
                  # считаются здесь же, из тех же строк, что легли в журнал.

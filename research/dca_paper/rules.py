@@ -263,8 +263,8 @@ MODE_EN_PLAIN = {"safe": "leverage from the name’s volatility, 6σ reserve",
 def mode_of(key):
     """Режим по ключу книги: без приставки общего счёта, хвоста короткой
     и суффикса ветви правил (`_g<порог>` или `_g<порог>i<обратный>`,
-    спека 18)."""
-    k = re.sub(r"_g\d+(?:i\d+)?$", "", str(key))
+    спека 18; `_ai` — ветвь судьи спеки 19)."""
+    k = re.sub(r"(?:_g\d+(?:i\d+)?|_ai)$", "", str(key))
     if k.startswith("pair_"):
         k = k[5:]
     for suf in ("_h", "_s"):
@@ -805,6 +805,50 @@ for _base in [k for k in H24_ORDER if k not in BRANCHES]:
             if _base in _m:
                 _m[_k] = _m[_base]
         H24_ORDER.append(_k)
+
+
+# Ветвь судьи спеки 19 (владелец 18.10: «можно завести новую ветку под
+# это»): записи основной книги Depth, к которым применены решения судьи —
+# вход, которому модель с новостями сказала skip, не открывается; открытая
+# позиция закрывается по рынку, если сторож сказал close (причина
+# «судья»). Остальное — правила основной книги целиком, включая охрану
+# рынком у шортов. Применяет `ai_branch.apply` (ядро — `research/ai_gate`),
+# кэш реплея не трогается: решение — правило над записями, как охрана.
+# ТОЛЬКО БУМАГА: живой исполнитель судью не знает, подписка на ветвь
+# отклоняется API. Запись вперёд — с первых полных суток после дня
+# рождения решений (18.10 18:00 UTC). Контроли (без новостей, жребий,
+# делистинг) — в `research/ai_gate/gate_books.py` и на `/market-page`.
+AI_BRANCHES = {"optimal_ai": "optimal", "optimal_h_ai": "optimal_h"}
+AI_SINCE = "2026-10-19"
+AI_TITLE = {"ru": "ИИ-судья: вход и сторож", "en": "AI judge: entry + watcher"}
+for _k, _base in AI_BRANCHES.items():
+    BRANCHES[_k] = {"base": _base, "rule": "ai", "value": 1.0, "default": False}
+    RULERS[_k] = dict(RULERS[_base])
+    RULERS[_k]["title"] = RULERS[_base]["title"] + " · " + AI_TITLE["ru"]
+    RULERS[_k]["branch"] = {"base": _base, "rule": "ai", "value": 1.0, "default": False,
+                            "title": AI_TITLE["ru"], "title_en": AI_TITLE["en"]}
+    RULERS[_k]["plain"] = RULERS[_base]["plain"] + (
+        " Ветвь ИИ-судьи (спека 19): каждый вход сначала смотрит модель с новостями, долей лонгов и "
+        "событиями по имени и может его отклонить; открытую позицию сторож закрывает по рынку, если после "
+        "входа вышло что-то новое против неё. Только бумага, суд не раньше 10.11.")
+    RULERS[_k]["plain_en"] = RULERS[_base]["plain_en"] + (
+        " AI judge branch (spec 19): before each entry a model reads the news, the crowd positioning and "
+        "exchange events for the name and may veto it; a watcher closes an open position at market when "
+        "something new turns against it. Paper only; judged not before Nov 10.")
+    RULER_SINCE[_k] = AI_SINCE
+    for _m in (PEAKS, SHORT_SHARE, SHARE_SINCE, MIN_AGE_DAYS, FLOOR_FRAC_BY_BOOK,
+               WAVE_GUARD_PCT, WAVE_INV_GUARD_PCT):
+        if _base in _m:
+            _m[_k] = _m[_base]
+    if _base in H24_ORDER:
+        H24_ORDER.append(_k)
+    else:
+        RULER_ORDER_ALL.append(_k)
+
+
+def is_ai(key):
+    """Ветвь ли судьи спеки 19."""
+    return key in AI_BRANCHES
 
 
 def base_of(key):
