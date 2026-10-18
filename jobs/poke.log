@@ -2520,3 +2520,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 [2026-10-18T16:12:30Z] задание nb52-news-peek запущено: research/news/peek_log.py
 
 == сигнал 1792340097 ==
+
+== сигнал 1792341872 ==
+[2026-10-18T16:44:34Z] задание nb53-delist-cases запущено: research/dca_paper/delist_cases.py
