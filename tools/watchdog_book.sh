@@ -719,6 +719,29 @@ if ! pgrep -f "research/news/collect.py" >/dev/null; then
     fi
 fi
 
+# --- судья спеки 19: запись решений вперёд (этап N3) ------------------
+# Каждые 15 мин — когда сводка старше 14 мин; идущий не дублируется; при
+# флаге ожидания обучения не стартует (соседи уступают, урок 15.10); сам
+# проход ещё раз проверяет флаг и останавливается на 2500 МБ. Деньги с
+# ключа Anthropic: забор суток в самом прогоне (BUDGET_DAY_USD).
+GATE=research/ai_gate/out/latest.json
+GATE_LOG=research/ai_gate/out/gate.log
+if ! pgrep -f "ai_gate/gate_run.py" >/dev/null \
+   && [ ! -f research/s8_loop/out/train_wait.flag ]; then
+    gt_age=999999999
+    if [ -f "$GATE" ]; then
+        gt_ts=$(date -u -r "$GATE" +%s 2>/dev/null || echo 0)
+        [ "$gt_ts" -gt 0 ] && gt_age=$(( $(date -u +%s) - gt_ts ))
+    fi
+    if [ "$gt_age" -gt 840 ]; then
+        mkdir -p "$(dirname "$GATE_LOG")"        # git пустых каталогов не переносит
+        echo "[$(now)] судья: сводка ${gt_age} с назад — проход"
+        setsid nohup bash -c "
+            nice -n 15 .venv/bin/python research/ai_gate/gate_run.py \
+                >> $GATE_LOG 2>&1" &
+    fi
+fi
+
 # --- очередь заданий (docs/00-INDEX.md) -------------------------------
 # Ассистент кладёт задание файлом в git, сервер его выполняет: прямого
 # доступа к серверу у ассистента нет (наружу открыты только 80 и 443),

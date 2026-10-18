@@ -35,103 +35,15 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(ROOT, "research", "dca_paper"))
 sys.path.insert(0, os.path.join(ROOT, "research", "news"))
 import judge as J                                            # noqa: E402
+import context as CTX                                        # noqa: E402
+from context import load_state, load_news                    # noqa: E402
 
 OUT = os.path.join(HERE, "out")
 RECORD = os.path.join(OUT, "record")
 OUT_MD = os.path.join(OUT, "AI-dry-hour.md")
 OUT_JSON = os.path.join(OUT, "AI-dry-hour.json")
-MS_RECORD = os.path.join(ROOT, "research", "market_state", "out", "record")
-NEWS_RECORD = os.path.join(ROOT, "research", "news", "out", "record")
 BOOKS = (("optimal", "long"), ("optimal_h", "short"))
-KLINE = "https://api.bybit.com/v5/market/kline?category=linear&symbol={s}&interval=60&end={e}&limit=170"
 H = 3600
-
-
-def klines(sym, at_s):
-    """{начало часа с: close} за 7 суток до решения; отказ — None."""
-    try:
-        req = urllib.request.Request(KLINE.format(s=sym, e=int(at_s * 1000)), headers={"User-Agent": "algoth-ai/1"})
-        doc = json.loads(urllib.request.urlopen(req, timeout=15).read())
-        return {int(r[0]) // 1000: float(r[4]) for r in (doc.get("result") or {}).get("list") or []}
-    except Exception:                                        # noqa: BLE001
-        return None
-
-
-def load_state(days):
-    """Запись состояния рынка → {sym: {src: [(t, row)]}}, рынок и события."""
-    by, market, events = {}, [], []
-    for p in sorted(glob.glob(os.path.join(MS_RECORD, "state-*.jsonl")))[-days:]:
-        with open(p, encoding="utf-8") as f:
-            for line in f:
-                try:
-                    r = json.loads(line)
-                except ValueError:
-                    continue
-                if r.get("src") == "market":
-                    market.append(r)
-                elif r.get("src") == "event":
-                    events.append(r)
-                else:
-                    by.setdefault(r.get("sym"), {}).setdefault(r["src"], []).append(r)
-    for d in by.values():
-        for v in d.values():
-            v.sort(key=lambda r: r["t"])
-    market.sort(key=lambda r: r["t"])
-    return by, market, events
-
-
-def at_or_before(rows, t_ms):
-    best = None
-    for r in rows:
-        if r["t"] <= t_ms:
-            best = r
-        else:
-            break
-    return best
-
-
-def crowd_of(state, sym, t_ms):
-    d = state.get(sym) or {}
-    out = {}
-    for src, key in (("bybit", "long"), ("bn_global", "long"), ("bn_top", "long"), ("okx", "ls")):
-        now = at_or_before(d.get(src, []), t_ms)
-        ago = at_or_before(d.get(src, []), t_ms - 24 * H * 1000)
-        if now:
-            out[src] = {"now": now.get(key), "24h_ago": ago.get(key) if ago else None,
-                        "as_of": time.strftime("%m-%d %H:%M", time.gmtime(now["t"] / 1000))}
-    return out or None
-
-
-def events_for(events, sym, t_ms):
-    base = sym[:-4] if sym.endswith("USDT") else sym
-    lo = t_ms - 72 * H * 1000
-    out = []
-    for e in events:
-        title = str(e.get("title") or "")
-        if lo <= e["t"] <= t_ms and (sym in title or f" {base} " in f" {title} " or f"({base})" in title):
-            out.append({"t": time.strftime("%Y-%m-%d %H:%M", time.gmtime(e["t"] / 1000)),
-                        "venue": e.get("venue"), "kind": e.get("kind"), "title": title})
-    return out
-
-
-def load_news():
-    items = []
-    for p in sorted(glob.glob(os.path.join(NEWS_RECORD, "news-*.jsonl"))):
-        with open(p, encoding="utf-8") as f:
-            for line in f:
-                try:
-                    items.append(json.loads(line))
-                except ValueError:
-                    continue
-    return items
-
-
-def history_of(recs, sym, at_s):
-    prev = [r for r in recs if r.get("sym") == sym and float(r.get("at", 0)) < at_s]
-    if not prev:
-        return {"positions_before": 0}
-    return {"positions_before": len(prev), "hit_floor": sum(1 for r in prev if r.get("exit") == "пол"),
-            "last_entry_utc": time.strftime("%Y-%m-%d %H:%M", time.gmtime(max(float(r["at"]) for r in prev)))}
 
 
 def entries_per_day(recs, now, days=7):
@@ -170,9 +82,6 @@ def estimate_only(log=print):
 
 def run(cap_entry, cap_open, log=print, client=None):
     import exit_ceiling as EC                                  # noqa: E402
-    import wave as WV                                          # noqa: E402
-    import macro_cal as CAL                                    # noqa: E402
-    from datetime import datetime, timezone
     t0 = time.time()
     key = J.read_key()
     if client is None:
@@ -210,37 +119,17 @@ def run(cap_entry, cap_open, log=print, client=None):
             for r in sample:
                 at_s = float(r["at"])
                 ask_s = now if kind == "hold" else at_s
-                t_ms = int(ask_s * 1000)
-                px = J.moves(klines(r["sym"], ask_s) or {}, ask_s)
-                btc = J.moves(klines("BTCUSDT", ask_s) or {}, ask_s)
-                crowd = crowd_of(state, r["sym"], t_ms)
-                mk = at_or_before(market_rows, t_ms)
-                market = {"btc_moves": btc, **({k: mk[k] for k in ("fng", "btc_dom", "mcap_24h_pct", "insurance_usdt")
-                                                if k in mk} if mk else {"note": "market slice not recorded at this time"})}
-                ev = events_for(events, r["sym"], t_ms)
-                nw = J.news_for(news, r["sym"], t_ms, hours=72 if kind == "entry" else max(1, int((now - at_s) / H) + 1))
-                mn = J.market_news(news, t_ms)
-                cal = CAL.upcoming(datetime.fromtimestamp(ask_s, tz=timezone.utc), 48)
-                hist = history_of(recs, r["sym"], at_s)
+                kw, nw, c = CTX.build(kind, r, book, side, now, recs, state, market_rows, events, news)
                 cov["кандидатов"] += 1
-                cov["ход цены есть"] += bool(px)
-                cov["толпа Bybit есть"] += bool(crowd and "bybit" in crowd)
-                cov["Binance есть"] += bool(crowd and "bn_global" in crowd)
-                cov["новости по имени есть"] += bool(nw)
-                cov["срез рынка есть"] += bool(mk)
-                since = None
-                if kind == "hold":
-                    pth = WV.path_of(r) or {}
-                    cum = pth.get("cum") or {}
-                    since = {"hours_held": round((now - at_s) / H, 1),
-                             "pnl_pct_of_margin": round(100 * cum[max(cum)], 2) if cum else None,
-                             "entry_crowd": crowd_of(state, r["sym"], int(at_s * 1000))}
+                cov["ход цены есть"] += c["px"]
+                cov["толпа Bybit есть"] += c["crowd_bybit"]
+                cov["Binance есть"] += c["crowd_binance"]
+                cov["новости по имени есть"] += c["news"]
+                cov["срез рынка есть"] += c["market"]
                 variants = (("ai_news", True), ("ai_news_repeat", True), ("ai_plain", False)) if kind == "entry" \
                     else (("watch", True),)
                 for name, with_news in variants:
-                    d = J.dossier(kind, r, book, side, ask_s, px=px, crowd=crowd, market=market, history=hist,
-                                  news=nw if with_news else None, mkt_news=mn, calendar=cal, events=ev,
-                                  since_entry=since)
+                    d = J.dossier(kind, r, book, side, ask_s, news=nw if with_news else None, **kw)
                     blob = json.dumps(d, ensure_ascii=False, sort_keys=True)
                     out = J.ask(client, kind, d)
                     out.update({"variant": name, "book": book, "sym": r["sym"], "side": side, "at": at_s,

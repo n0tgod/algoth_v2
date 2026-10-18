@@ -590,34 +590,83 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L285 `summarize(rows, where=None)`
 - L372 `main()`
 
-## research/ai_gate/dry_hour.py · 362 строк
+## research/ai_gate/context.py · 153 строк
+
+Контекст для досье судьи (спека 19): запись состояния рынка, новости, ход цены с площадки, история имени в кн…
+
+- L17 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L18 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L19 `MS_RECORD = os.path.join(ROOT, 'research', 'market_…`
+- L20 `NEWS_RECORD = os.path.join(ROOT, 'research', 'news', …`
+- L24 `KLINE = 'https://api.bybit.com/v5/market/kline?…`
+- L25 `H = 3600`
+- L28 `klines(sym, at_s)` — {начало часа с: close} за 7 суток до решения; отказ — None.
+- L38 `load_state(days)` — Запись состояния рынка → {sym: {src: [(t, row)]}}, рынок и события.
+- L61 `at_or_before(rows, t_ms)`
+- L71 `crowd_of(state, sym, t_ms)`
+- L83 `events_for(events, sym, t_ms, since_ms=None)` — События площадок и взломы с именем — в (since, t]; по умолчанию 72 ч до t.
+- L96 `load_news()`
+- L108 `history_of(recs, sym, at_s)`
+- L118 `build(kind, r, book, side, now, recs, state, market_rows, event…` — Досье и счёт покрытия: вход — на момент решения `at`, держание — на `now`.
+
+## research/ai_gate/dry_hour.py · 251 строк
 
 Сухой час судьи (спека 19, этап N2): настоящие кандидаты, настоящая модель, цена числом.
 
 - L32 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L33 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L39 `OUT = os.path.join(HERE, 'out')`
-- L40 `RECORD = os.path.join(OUT, 'record')`
-- L41 `OUT_MD = os.path.join(OUT, 'AI-dry-hour.md')`
-- L42 `OUT_JSON = os.path.join(OUT, 'AI-dry-hour.json')`
-- L43 `MS_RECORD = os.path.join(ROOT, 'research', 'market_…`
-- L44 `NEWS_RECORD = os.path.join(ROOT, 'research', 'news', …`
+- L41 `OUT = os.path.join(HERE, 'out')`
+- L42 `RECORD = os.path.join(OUT, 'record')`
+- L43 `OUT_MD = os.path.join(OUT, 'AI-dry-hour.md')`
+- L44 `OUT_JSON = os.path.join(OUT, 'AI-dry-hour.json')`
 - L45 `BOOKS = (('optimal', 'long'), ('optimal_h', 'sh…`
-- L46 `KLINE = 'https://api.bybit.com/v5/market/kline?…`
-- L47 `H = 3600`
-- L50 `klines(sym, at_s)` — {начало часа с: close} за 7 суток до решения; отказ — None.
-- L60 `load_state(days)` — Запись состояния рынка → {sym: {src: [(t, row)]}}, рынок и события.
-- L83 `at_or_before(rows, t_ms)`
-- L93 `crowd_of(state, sym, t_ms)`
-- L105 `events_for(events, sym, t_ms)`
-- L117 `load_news()`
-- L129 `history_of(recs, sym, at_s)`
-- L137 `entries_per_day(recs, now, days=7)` — Входов в сутки: уникальные (имя, час входа). Не по времени одному — в одном часе книга открывает десятки имён…
-- L145 `estimate_only(log=print)` — Цена в сутки по ценам вызовов последнего сухого часа и счёту входов книг за 7 суток — без единого вызова моде…
-- L171 `run(cap_entry, cap_open, log=print, client=None)`
-- L260 `summarize(rows, cov, per_day, data, t0)`
-- L302 `report(s)`
-- L328 `main(argv=None)`
+- L46 `H = 3600`
+- L49 `entries_per_day(recs, now, days=7)` — Входов в сутки: уникальные (имя, час входа). Не по времени одному — в одном часе книга открывает десятки имён…
+- L57 `estimate_only(log=print)` — Цена в сутки по ценам вызовов последнего сухого часа и счёту входов книг за 7 суток — без единого вызова моде…
+- L83 `run(cap_entry, cap_open, log=print, client=None)`
+- L149 `summarize(rows, cov, per_day, data, t0)`
+- L191 `report(s)`
+- L217 `main(argv=None)`
+
+## research/ai_gate/gate_run.py · 361 строк
+
+Запись вперёд судьи (спека 19, этап N3): решения в реальном времени.
+
+- L39 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L40 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L45 `OUT = os.path.join(HERE, 'out')`
+- L46 `DECISIONS = os.path.join(OUT, 'decisions')`
+- L47 `RECORD = os.path.join(OUT, 'record')`
+- L48 `WATCH = os.path.join(RECORD, 'watch.json')`
+- L49 `LATEST = os.path.join(OUT, 'latest.json')`
+- L50 `PUBLISHED = os.path.join(RECORD, 'published_hour.tx…`
+- L51 `NEWS_LATEST = os.path.join(ROOT, 'research', 'news', …`
+- L52 `MS_LATEST = os.path.join(ROOT, 'research', 'market_…`
+- L53 `TRAIN_WAIT = os.path.join(ROOT, 'research', 's8_loop…`
+- L55 `GATE_SINCE = 1792346400`
+- L56 `BOOKS = (('optimal', 'long'), ('optimal_h', 'sh…`
+- L57 `LATE_H = 6`
+- L58 `REPEAT_MOD = 20`
+- L59 `BUDGET_DAY_USD = 8.0`
+- L60 `CROWD_SHIFT = 0.1`
+- L61 `HEARTBEAT_S = 6 * 3600`
+- L62 `NEWS_STALE_S = 45 * 60`
+- L63 `MS_STALE_S = 2 * 3600`
+- L64 `H = 3600`
+- L67 `_peak_mb()`
+- L75 `key_of(book, r)`
+- L79 `is_repeat(key)`
+- L83 `day_of(t)`
+- L87 `read_decisions(days=None)`
+- L100 `spent_today(rows, now)`
+- L105 `file_age(path, now)`
+- L112 `pick_new(cands, judged, now)` — Кандидаты без решения, не раньше дня рождения и не старше LATE_H.
+- L123 `watch_triggers(w, sym, now_ms, news, events, crowd_now)` — Событие для сторожа с прошлой проверки → список причин (пусто — нет события).
+- L139 `write_rows(rows, full=None)`
+- L151 `candidates(log)` — Позиции книг Depth так, как они живут (шорты — после возраста и охраны).
+- L169 `run(log=print, client=None, dry=False, now=None)`
+- L300 `summary(rows, now, stats, t0, fresh, news_age, ms_age)`
+- L333 `main(argv=None)`
 
 ## research/ai_gate/judge.py · 223 строк
 
@@ -10269,7 +10318,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 757 строк
+## tools/watchdog_book.sh · 780 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 

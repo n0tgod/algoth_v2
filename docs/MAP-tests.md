@@ -238,6 +238,21 @@
   - L225 `Summary.test_half_life_filter_narrows_selection(self)`
   - L232 `Summary.test_off_grid_window_is_refused_not_averaged(self)` — Окно не по сетке ломает смысл «соседнего» — и должно падать.
 
+## research/ai_gate/test_gate_run.py · 123 строк
+
+Запись вперёд судьи: вход судится один раз и только с дня рождения и не старше LATE_H; повтор — 5 % ключей по…
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L17 `H = 3600`
+- L18 `NOW = G.GATE_SINCE + 10 * H + 300`
+- L21 `class Client`
+  - L22 `Client.__init__(self, decide)`
+- L26 `fake_ask(client, kind, d)`
+- L33 `setup(tmp, books, news=(), events=(), state=None)`
+- L49 `rows_of()`
+- L53 `test_entries_once_window_repeat_budget()`
+- L86 `test_watcher_events_heartbeat_stale_and_yield()`
+
 ## research/ai_gate/test_judge.py · 108 строк
 
 Ядро судьи: разбор ответа (вне словаря и не JSON — отказ, не мнение), цена по модели, которая ответила; досье…
@@ -5131,6 +5146,13 @@ X1: исполнитель против подставной биржи.
 - L32 `check()`
 - L33 `run()`
 - L60 `run_flag()`
+
+## tools/test_watchdog_gate.sh · 40 строк
+
+Проверка блока сторожа «судья спеки 19»: проход, когда сводка старше 14
+
+- L18 `run()`
+- L31 `check()`
 
 ## tools/test_watchdog_market.sh · 53 строк
 
