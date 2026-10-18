@@ -6290,6 +6290,12 @@ tick/σ — шаг цены в единицах волатильности, ме
 - L52 `events(start, end)` — События в [start, end) — список словарей по возрастанию времени.
 - L72 `upcoming(now, hours=48)`
 
+## research/news/peek_log.py · 24 строк
+
+Хвост лога сборщика новостей и строки сторожа о нём (только чтение).
+
+- L12 `ROOT = os.path.dirname(os.path.dirname(os.path…`
+
 ## research/ops/book_days_probe.py · 62 строк
 
 Дневная разбивка книг — числами, прямо с диска сервера.
