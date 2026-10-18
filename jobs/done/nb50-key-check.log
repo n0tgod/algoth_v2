@@ -8,3 +8,21 @@
 вызов claude-haiku-5-5: ответ есть, токенов вход 10, выход 1
 ИТОГ: ключ лёг и жив, баланс есть
 конец: 2026-10-18T12:00:06Z, код 0
+ВНИМАНИЕ: 2026-10-18T12:00:06Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nb48-market-peek2.log       |  16 +
+ jobs/done/nb50-key-check.done         |   1 +
+ jobs/done/nb50-key-check.log          |  10 +
+ jobs/poke.log                         |   4 +
+ jobs/queue-state.md                   |   2 +-
+ research/dca_paper/out/DCA-pair.md    |  24 +-
+ research/dca_paper/out/DCA-paper.json | 892 +++++++++++++++++-----------------
+ research/dca_paper/out/DCA-paper.md   |  18 +-
+ research/dca_paper/out/DCA-short.json |   2 +-
+ research/dca_paper/out/DCA-short.md   |  32 +-
+ research/s8_loop/out/day_brake.json   |   2 +-
+ 11 files changed, 517 insertions(+), 486 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   834bfb10..0cdd1b35  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
