@@ -849,6 +849,10 @@ for _k, _base in AI_BRANCHES.items():
     BRANCHES[_k] = {"base": _base, "rule": "ai", "value": 1.0, "default": False}
     RULERS[_k] = dict(RULERS[_base])
     RULERS[_k]["title"] = RULERS[_base]["title"] + " · ИИ-судья"
+    # имя для людей — имя КОРНЯ, не режима плеча: по нему сайт собирает корни
+    # дерева, и унаследованное «Depth» положило бы судью в корень Depth
+    RULERS[_k]["title_en"] = AI_ROOT_EN
+    RULERS[_k]["plain_en_short"] = "Depth books; a model vets every entry and watches open positions · paper only"
     RULERS[_k]["branch"] = {"base": _base, "rule": "ai", "value": 1.0, "default": False,
                             "title": AI_TITLE["ru"], "title_en": AI_TITLE["en"]}
     RULERS[_k]["plain"] = RULERS[_base]["plain"] + (

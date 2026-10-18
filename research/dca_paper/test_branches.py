@@ -269,6 +269,7 @@ def test_ai_branch_registry_inherits_base_and_is_paper_only_by_rule():
         a = R.address_of(k)
         assert a["branch"][0]["rule"] == "ai" and a["branch"][0]["title_en"] == "entry + watcher"
         assert a["root"] == "ai" and a["mode"] == "optimal" and R.title_en(k) == "AI judge"
+        assert R.RULERS[k]["title_en"] == "AI judge", "имя в своде — имя корня, не «Depth»"
         assert "AI judge branch" in R.RULERS[k]["plain_en"] and "Paper only" in R.RULERS[k]["plain_en"]
     t = {m["mode"]: {s["side"]: [b["key"] for b in s["branches"]] for s in m["sides"]} for m in R.tree()}
     assert t["ai"] == {"long": ["optimal_ai"], "short": ["optimal_h_ai"], "both": ["pair_optimal_ai"]}
