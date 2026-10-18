@@ -2104,6 +2104,30 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L275 `report(res)`
 - L360 `main(argv=None)`
 
+## research/dca_paper/exit_grid.py · 340 строк
+
+Сетка детерминированных выходов для КОРОТКИХ книг (владелец 2026-10-18: «давай замерим сетку» — после потолка…
+
+- L49 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L50 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L58 `OUT_MD = os.path.join(R.OUT, 'DCA-exit-grid.md')`
+- L59 `OUT_JSON = os.path.join(R.OUT, 'DCA-exit-grid.json…`
+- L60 `DEPS = LG.DEPS`
+- L61 `SINCE = LG.SINCE`
+- L62 `MEM_LIMIT_MB = 3000`
+- L63 `WHY = 'выход сетки'`
+- L66 `GRID = (('T6', 'срок 6 ч', ('term', 6)), ('T12…` — Сетка — объявлена до прогона; порядок — порядок отчёта.
+- L80 `exit_hour(p, last, spec)` — Первый час k ≤ last, в который правило сетки закрывает позицию, — только по пути ДО k включительно. Нет таког…
+- L99 `grid_recs(recs, book, spec)` — Записи под правилом сетки и пары (было, стало, k, K) по позициям с забором.
+- L114 `run(seeds, log)`
+- L190 `mean_final(cells, name, keys, dep=10000)`
+- L196 `select(res)` — Правило отбора, объявленное до прогона: победитель по ПЕРВОЙ половине (средний итог $10k трёх коротких книг),…
+- L224 `WIN_TITLE = {'all': 'Вся запись', 'half1': 'Первая …`
+- L228 `_pp(x)`
+- L232 `_pts(x)`
+- L236 `report(res)`
+- L311 `main(argv=None)`
+
 ## research/dca_paper/fund_check.py · 281 строк
 
 Проверка величины funding: сколько начислений, с каким шагом и почему.

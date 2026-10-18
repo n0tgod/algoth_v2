@@ -1262,6 +1262,17 @@
 - L28 `test_ceiling_picks_best_hour_inside_fence_only()`
 - L70 `test_random_exit_stays_inside_fence_and_stats_count_rule_best()`
 
+## research/dca_paper/test_exit_grid.py · 83 строк
+
+Сетка выходов (`exit_grid.py`): каждое правило решает час выхода ТОЛЬКО по пути до этого часа и не позже забо…
+
+- L8 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L13 `H = 3600.0`
+- L14 `AT = 1789002000.0`
+- L17 `_rec(steps, exit='срок')`
+- L24 `test_rules_decide_on_the_past_only_and_inside_the_fence()`
+- L56 `test_selection_picks_by_first_half_and_judges_on_second()`
+
 ## research/dca_paper/test_fund_check.py · 111 строк
 
 Проверки проверки funding.
