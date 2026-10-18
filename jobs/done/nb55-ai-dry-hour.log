@@ -68,3 +68,19 @@ owd_positioning balanced, no squeeze setup against short; calendar_next_48h and 
 | watch | optimal_h | RLCUSDT | hold | 0.85 | news_on_this_coin_72h empty, no coin-specific event; crowd_positioning shifted little since entry_crowd; pnl_pct_of_margin -0.4 is minor; stop and time limit handle losses |
 | watch | optimal_h | SANDUSDT | hold | 0.8 | news_on_this_coin_72h empty, no coin-specific event; crowd_positioning barely changed vs entry_crowd (still long-leaning, supports short); position_now pnl positive at 1.9h of 24h hold |
 
+ВНИМАНИЕ: 2026-10-18T16:54:47Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nb54-venv-anthropic.log     | 12 ++++++
+ jobs/done/nb55-ai-dry-hour.done       |  1 +
+ jobs/done/nb55-ai-dry-hour.log        | 70 +++++++++++++++++++++++++++++++++++
+ jobs/poke.log                         |  3 ++
+ jobs/queue-state.md                   |  2 +-
+ research/ai_gate/out/AI-dry-hour.json |  1 +
+ research/ai_gate/out/AI-dry-hour.md   | 63 +++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json   |  2 +-
+ 8 files changed, 152 insertions(+), 2 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   fb618a6c..44005db4  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-18T16:54:53Z, код 0
