@@ -2128,6 +2128,33 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L236 `report(res)`
 - L311 `main(argv=None)`
 
+## research/dca_paper/floor_predict.py · 309 строк
+
+Предсказуем ли пол коротких позиций (владелец 2026-10-18: «давай замер»).
+
+- L58 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L59 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L66 `OUT_MD = os.path.join(R.OUT, 'DCA-floor-predict.…`
+- L67 `OUT_JSON = os.path.join(R.OUT, 'DCA-floor-predict.…`
+- L68 `HOUR = 3600.0`
+- L69 `BOOKS = ('safe_h', 'optimal_h')`
+- L70 `HOURS = (1, 2, 4, 8)`
+- L71 `BAD = ('пол', 'ликвидация')`
+- L72 `CUT_SHARE = 0.1`
+- L73 `MEM_LIMIT_MB = 3000`
+- L74 `ENTRY_FEATS = ('lev', '-fav', 'beta', 'pre24', 'wave_…`
+- L75 `PATH_FEATS = ('-cum', '-min', 'wave', 'excess')`
+- L76 `FEAT_TITLE = {'lev': 'плечо', '-fav': 'обещание моде…`
+- L83 `auc(scores, labels)` — P(score у пола > score у остальных), ничьи — пополам. Ранговая формула.
+- L101 `null_band(scores, labels, perms, rng)`
+- L115 `features(recs, mkt, log, book)` — Таблица позиций: метка, исход, путь и признаки. Без пути — мимо.
+- L151 `judge(rows, perms, seeds, rng)` — AUC с полосой нуля и правило «закрыть 10 %» против случайных 10 %.
+- L190 `run(perms, seeds, log)`
+- L229 `_a(x)`
+- L233 `_pts(x)`
+- L237 `report(res)`
+- L285 `main(argv=None)`
+
 ## research/dca_paper/fund_check.py · 281 строк
 
 Проверка величины funding: сколько начислений, с каким шагом и почему.

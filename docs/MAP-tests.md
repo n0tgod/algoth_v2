@@ -1273,6 +1273,15 @@
 - L24 `test_rules_decide_on_the_past_only_and_inside_the_fence()`
 - L56 `test_selection_picks_by_first_half_and_judges_on_second()`
 
+## research/dca_paper/test_floor_predict.py · 59 строк
+
+Предсказуемость пола (`floor_predict.py`): AUC считается правильно (ничьи пополам, известные значения), калиб…
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `test_auc_is_exact_with_ties()`
+- L25 `_rows(n, rng, planted)`
+- L40 `test_calibration_pair_finds_planted_and_stays_silent_on_noise()`
+
 ## research/dca_paper/test_fund_check.py · 111 строк
 
 Проверки проверки funding.
