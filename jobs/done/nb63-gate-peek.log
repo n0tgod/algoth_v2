@@ -23,3 +23,21 @@ optimal_h: записей 5068, последний вход 2026-10-18 18:00 UTC
 train_wait.flag: нет
 сейчас: 2026-10-18 18:23
 конец: 2026-10-18T18:23:01Z, код 0
+ВНИМАНИЕ: 2026-10-18T18:23:01Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nb63-gate-peek.done         |    1 +
+ jobs/done/nb63-gate-peek.log          |   25 +
+ jobs/poke.log                         |    3 +
+ jobs/queue-state.md                   |    2 +-
+ research/ai_gate/out/latest.json      |    2 +-
+ research/dca_paper/out/DCA-pair.md    |   52 +-
+ research/dca_paper/out/DCA-paper.json | 1820 +++++++++++++++++----------------
+ research/dca_paper/out/DCA-paper.md   |   68 +-
+ research/dca_paper/out/DCA-short.json |    2 +-
+ research/dca_paper/out/DCA-short.md   |   76 +-
+ research/s8_loop/out/day_brake.json   |    2 +-
+ 11 files changed, 1078 insertions(+), 975 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   234adbbc..12a050f7  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
