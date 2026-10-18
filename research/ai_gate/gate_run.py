@@ -59,6 +59,7 @@ REPEAT_MOD = 20                    # 1 из 20 входов спрашивает
 BUDGET_DAY_USD = 8.0               # забор: ≈ 2.7 × ожидаемой цены суток (§8)
 CROWD_SHIFT = 0.10                 # сдвиг доли лонгов Bybit для события сторожа
 HEARTBEAT_S = 6 * 3600
+TRAIN_WAIT_STALE_S = 3600        # флаг старше часа — застрял: судья не встаёт молча навсегда
 NEWS_STALE_S = 45 * 60
 MS_STALE_S = 2 * 3600
 H = 3600
@@ -169,8 +170,11 @@ def candidates(log):
 def run(log=print, client=None, dry=False, now=None):
     t0 = time.time()
     now = now or time.time()
-    if os.path.exists(TRAIN_WAIT):
+    wait_age = file_age(TRAIN_WAIT, now)
+    if wait_age is not None and wait_age < TRAIN_WAIT_STALE_S:
         return {"skipped": "обучение S8 ждёт памяти (train_wait.flag) — проход уступает"}
+    if wait_age is not None:
+        log(f"флаг ожидания обучения висит {wait_age / 60:.0f} мин — считаю застрявшим и не уступаю")
     prev = read_decisions(days=3)
     judged = {r["key"] for r in prev if r.get("kind") == "entry" and r.get("branch") in ("ai_news", "ai_plain")}
     entry_ok = {r["key"]: r for r in prev if r.get("kind") == "entry" and r.get("branch") == "ai_news"}

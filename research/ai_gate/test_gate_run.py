@@ -112,8 +112,10 @@ def test_watcher_events_heartbeat_stale_and_yield():
         G.run(log=lambda *a: None, client=c, now=NOW + 7 * H)
         hb2 = [r for r in rows_of() if r["kind"] == "heartbeat" and r["t"] == NOW + 7 * H]
         assert hb2 and all(r["no_verdict"] == "фон не свеж" for r in hb2), "несвежий фон — не «ничего не случилось»"
-        open(G.TRAIN_WAIT, "w").write("1")
+        open(G.TRAIN_WAIT, "w").write("1"); os.utime(G.TRAIN_WAIT, (NOW + 8 * H - 60,) * 2)
         assert G.run(log=lambda *a: None, client=c, now=NOW + 8 * H).get("skipped")
+        os.utime(G.TRAIN_WAIT, (NOW + 8 * H - 2 * H,) * 2)
+        assert not G.run(log=lambda *a: None, client=c, now=NOW + 8 * H).get("skipped"), "застрявший флаг — не уступать"
     print("ok  сторож: модель — по новости и сдвигу толпы; без события heartbeat; несвежий фон назван; обучение — уступает")
 
 

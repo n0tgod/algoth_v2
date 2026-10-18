@@ -628,7 +628,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L191 `report(s)`
 - L217 `main(argv=None)`
 
-## research/ai_gate/gate_run.py · 361 строк
+## research/ai_gate/gate_run.py · 365 строк
 
 Запись вперёд судьи (спека 19, этап N3): решения в реальном времени.
 
@@ -650,23 +650,24 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L59 `BUDGET_DAY_USD = 8.0`
 - L60 `CROWD_SHIFT = 0.1`
 - L61 `HEARTBEAT_S = 6 * 3600`
-- L62 `NEWS_STALE_S = 45 * 60`
-- L63 `MS_STALE_S = 2 * 3600`
-- L64 `H = 3600`
-- L67 `_peak_mb()`
-- L75 `key_of(book, r)`
-- L79 `is_repeat(key)`
-- L83 `day_of(t)`
-- L87 `read_decisions(days=None)`
-- L100 `spent_today(rows, now)`
-- L105 `file_age(path, now)`
-- L112 `pick_new(cands, judged, now)` — Кандидаты без решения, не раньше дня рождения и не старше LATE_H.
-- L123 `watch_triggers(w, sym, now_ms, news, events, crowd_now)` — Событие для сторожа с прошлой проверки → список причин (пусто — нет события).
-- L139 `write_rows(rows, full=None)`
-- L151 `candidates(log)` — Позиции книг Depth так, как они живут (шорты — после возраста и охраны).
-- L169 `run(log=print, client=None, dry=False, now=None)`
-- L300 `summary(rows, now, stats, t0, fresh, news_age, ms_age)`
-- L333 `main(argv=None)`
+- L62 `TRAIN_WAIT_STALE_S = 3600`
+- L63 `NEWS_STALE_S = 45 * 60`
+- L64 `MS_STALE_S = 2 * 3600`
+- L65 `H = 3600`
+- L68 `_peak_mb()`
+- L76 `key_of(book, r)`
+- L80 `is_repeat(key)`
+- L84 `day_of(t)`
+- L88 `read_decisions(days=None)`
+- L101 `spent_today(rows, now)`
+- L106 `file_age(path, now)`
+- L113 `pick_new(cands, judged, now)` — Кандидаты без решения, не раньше дня рождения и не старше LATE_H.
+- L124 `watch_triggers(w, sym, now_ms, news, events, crowd_now)` — Событие для сторожа с прошлой проверки → список причин (пусто — нет события).
+- L140 `write_rows(rows, full=None)`
+- L152 `candidates(log)` — Позиции книг Depth так, как они живут (шорты — после возраста и охраны).
+- L170 `run(log=print, client=None, dry=False, now=None)`
+- L304 `summary(rows, now, stats, t0, fresh, news_age, ms_age)`
+- L337 `main(argv=None)`
 
 ## research/ai_gate/judge.py · 223 строк
 
@@ -10318,7 +10319,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 780 строк
+## tools/watchdog_book.sh · 782 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 

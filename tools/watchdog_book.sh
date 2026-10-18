@@ -726,8 +726,10 @@ fi
 # ключа Anthropic: забор суток в самом прогоне (BUDGET_DAY_USD).
 GATE=research/ai_gate/out/latest.json
 GATE_LOG=research/ai_gate/out/gate.log
+# флаг старше часа — застрял: судья не должен встать молча навсегда
 if ! pgrep -f "ai_gate/gate_run.py" >/dev/null \
-   && [ ! -f research/s8_loop/out/train_wait.flag ]; then
+   && { [ ! -f research/s8_loop/out/train_wait.flag ] \
+        || [ -n "$(find research/s8_loop/out/train_wait.flag -mmin +60 2>/dev/null)" ]; }; then
     gt_age=999999999
     if [ -f "$GATE" ]; then
         gt_ts=$(date -u -r "$GATE" +%s 2>/dev/null || echo 0)
