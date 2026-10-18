@@ -9940,6 +9940,14 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L17 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L23 `main()`
 
+## tools/source_probe.py · 82 строк
+
+Зонд внешних источников для спеки 19 — доступны ли они С СЕРВЕРА.
+
+- L19 `SOURCES = [('bybit account-ratio (лонг/шорт по ак…`
+- L55 `probe(url)`
+- L68 `main()`
+
 ## tools/spill_book.py · 214 строк
 
 Перелив старых часов записи стакана с полного тома на корень — с символьной ссылкой на месте каждого файла.
