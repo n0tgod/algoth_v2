@@ -155,3 +155,22 @@
   optimal_h:100: закрытых 304, открытых 3, cut 1, open.at 10-19 09:16:31
   cells ключи: ['safe_h:100', 'safe_h:100:fixed', 'safe_h:1000', 'safe_h:1000:fixed', 'safe_h:10000', 'safe_h:10000:fixed']
 конец: 2026-10-19T09:25:42Z, код 0
+ВНИМАНИЕ: 2026-10-19T09:25:42Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nb65-peek-ct.done           |    1 +
+ jobs/done/nb65-peek-ct.log            |    4 +
+ jobs/done/nb66-peek-ct.done           |    1 +
+ jobs/done/nb66-peek-ct.log            |  157 +++
+ jobs/poke.log                         |    8 +
+ jobs/queue-state.md                   |    2 +-
+ research/ai_gate/out/latest.json      |    2 +-
+ research/dca_paper/out/DCA-pair.md    |   46 +-
+ research/dca_paper/out/DCA-paper.json | 1682 ++++++++++++++++-----------------
+ research/dca_paper/out/DCA-paper.md   |   20 +-
+ research/dca_paper/out/DCA-short.md   |   60 +-
+ research/s8_loop/out/day_brake.json   |    2 +-
+ 12 files changed, 1078 insertions(+), 907 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   dabb4128..ed6e43b9  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
