@@ -35,12 +35,14 @@ def main():
             if not m:
                 continue
             t = int(m.group(1))
-            if cur is None or t < prev:
+            # Потоки пишут вперемешку, и счётчик идёт назад на секунды;
+            # перезапуск — откат больше чем на десять минут.
+            if cur is None or t < prev - 600:
                 cur = {"ping": 0, "close": 0, "reconn": 0, "ready": [], "t_end": 0,
                        "hours": {}}
                 segs.append(cur)
-            prev = t
-            cur["t_end"] = t
+            prev = max(prev, t) if cur["t_end"] else t
+            cur["t_end"] = max(cur["t_end"], t)
             h = t // 3600
             hb = cur["hours"].setdefault(h, {"ping": 0, "close": 0, "ready": []})
             if "ping/pong timed out" in ln:
@@ -70,7 +72,7 @@ def main():
     if segs:
         s = segs[-1]
         start = end - s["t_end"]
-        print("\nпоследний запуск по часам (UTC):")
+        print("\nпоследний запуск по часам (UTC; начало по времени файла):")
         for h in sorted(s["hours"]):
             hb = s["hours"][h]
             rd = hb["ready"]
