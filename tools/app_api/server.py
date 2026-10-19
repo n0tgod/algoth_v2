@@ -228,6 +228,100 @@ class App:
             return 403, {"error": "operator only"}
         return 200, {"max_accounts": self.max_accounts, "accounts": self.db.accounts_count()}
 
+    # ------------------------------------------------------------ судья спеки 19
+    AI_DIR = os.path.join(ROOT, "research", "ai_gate", "out", "decisions")
+    NEWS_REC = os.path.join(ROOT, "research", "news", "out", "record")
+
+    def ai_log(self, acc, day=None, limit=400):
+        """Оператору: журнал решений судьи за сутки UTC — входы (с новостями,
+        без новостей, повтор) одной строкой на вход, решения сторожа, итоги.
+
+        Только чтение журнала `research/ai_gate/out/decisions/`. Ничего не
+        считает заново: решения, уверенность и причины — как записала модель;
+        заголовки использованных новостей подставляются из записи сборщика
+        новостей, нет записи — id как есть, а не пустота.
+        """
+        if acc["role"] != "operator":
+            return 403, {"error": "operator only"}
+        try:
+            names = sorted(f for f in os.listdir(self.AI_DIR) if f.startswith("decisions-") and f.endswith(".jsonl"))
+        except OSError:
+            return 200, {"days": [], "day": None, "entries": [], "watch": [],
+                         "error": "the judge has not written any decisions on this server yet"}
+        days = [f[len("decisions-"):-len(".jsonl")] for f in names]
+        if not days:
+            return 200, {"days": [], "day": None, "entries": [], "watch": [], "error": "no decisions yet"}
+        day = day if day in days else days[-1]
+        rows = []
+        with open(os.path.join(self.AI_DIR, f"decisions-{day}.jsonl"), encoding="utf-8") as f:
+            for line in f:
+                try:
+                    rows.append(json.loads(line))
+                except ValueError:
+                    continue
+        titles = self._news_titles(day)
+        by = {}
+        for r in rows:
+            if r.get("kind") != "entry":
+                continue
+            e = by.setdefault(r.get("key"), {"key": r.get("key"), "book": r.get("book"), "side": r.get("side"),
+                                             "sym": r.get("sym"), "at": r.get("at"), "t": r.get("t"),
+                                             "late_min": r.get("late_min"), "cost_usd": 0.0})
+            e["cost_usd"] = round(e["cost_usd"] + float(r.get("cost_usd") or 0), 5)
+            br = r.get("branch")
+            part = {"decision": r.get("decision"), "confidence": r.get("confidence"),
+                    "reasons": r.get("reasons") or [], "no_verdict": r.get("no_verdict"),
+                    "news": [{"id": n, "title": titles.get(n)} for n in (r.get("news_used") or [])],
+                    "news_n": r.get("news_n")}
+            if br == "ai_news":
+                e.update(part)
+                e["t"] = r.get("t")
+            elif br == "ai_plain":
+                e["plain"] = part
+            elif br == "ai_news_repeat":
+                e["repeat"] = {"decision": r.get("decision"), "no_verdict": r.get("no_verdict")}
+        entries = sorted(by.values(), key=lambda e: (-(e.get("t") or 0), e.get("sym") or ""))[:int(limit)]
+        watch = [{"t": r.get("t"), "book": r.get("book"), "side": r.get("side"), "sym": r.get("sym"),
+                  "at": r.get("at"), "decision": r.get("decision"), "confidence": r.get("confidence"),
+                  "reasons": r.get("reasons") or [], "no_verdict": r.get("no_verdict"),
+                  "trigger": r.get("trigger") or [],
+                  "news": [{"id": n, "title": titles.get(n)} for n in (r.get("news_used") or [])]}
+                 for r in rows if r.get("kind") == "hold"]
+        watch.sort(key=lambda w: -(w.get("t") or 0))
+        judged = [e for e in by.values() if e.get("decision") and not e.get("no_verdict")]
+        summary = {"entries": len(by), "skipped": sum(1 for e in judged if e["decision"] == "skip"),
+                   "opened": sum(1 for e in judged if e["decision"] == "open"),
+                   "no_verdict": sum(1 for e in by.values() if e.get("no_verdict")),
+                   "plain_disagrees": sum(1 for e in judged if (e.get("plain") or {}).get("decision")
+                                          and e["plain"]["decision"] != e["decision"]),
+                   "watch_calls": len(watch),
+                   "closes": sum(1 for w in watch if w["decision"] == "close" and not w.get("no_verdict")),
+                   "heartbeats": sum(1 for r in rows if r.get("kind") == "heartbeat"),
+                   "cost_usd": round(sum(float(r.get("cost_usd") or 0) for r in rows), 4)}
+        return 200, {"days": days[-14:], "day": day, "summary": summary, "entries": entries, "watch": watch[:200]}
+
+    def _news_titles(self, day):
+        """id новости → заголовок по записи сборщика за сутки решения и двое до них."""
+        out = {}
+        try:
+            import datetime as _dt
+            d0 = _dt.date.fromisoformat(day)
+        except ValueError:
+            return out
+        for k in range(3):
+            p = os.path.join(self.NEWS_REC, f"news-{(d0 - _dt.timedelta(days=k)).isoformat()}.jsonl")
+            try:
+                with open(p, encoding="utf-8") as f:
+                    for line in f:
+                        try:
+                            x = json.loads(line)
+                        except ValueError:
+                            continue
+                        out[x.get("id")] = x.get("title")
+            except OSError:
+                continue
+        return out
+
     # ------------------------------------------------------------ сайт
     TOP_DEPOSIT = 1000.0
 
@@ -1560,6 +1654,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                                                device=body.get("device")))
         if rest == ["operator", "limits"] and method == "GET":
             return self._send(*self.app.limits(acc))
+        if rest == ["operator", "ai_log"] and method == "GET":
+            return self._send(*self.app.ai_log(acc, (q.get("day") or [None])[0]))
         if rest == ["operator", "site"] and method == "POST":
             return self._send(*self.app.set_site(acc, body))
         if rest == ["operator", "overview"] and method == "GET":

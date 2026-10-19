@@ -204,6 +204,50 @@ def test_ai_branch_is_paper_only_and_side_survives_suffix():
     print("ok  ветвь судьи — только бумага: ячейка помечена, подписка отклонена словами; сторона по ключу с суффиксом")
 
 
+def test_ai_log_for_operator_groups_entries_and_names_news():
+    with tempfile.TemporaryDirectory() as tmp:
+        app, _ = _app(tmp, venue=FakeVenue(equity=1100.0, modes={}))
+        acc = _login(app)
+        assert app.ai_log({"role": "user", "id": "x"})[0] == 403, "только оператору"
+        app.AI_DIR = os.path.join(tmp, "dec"); app.NEWS_REC = os.path.join(tmp, "news")
+        st, r = app.ai_log(acc)
+        assert st == 200 and r["entries"] == [] and "not written" in r["error"]
+        os.makedirs(app.AI_DIR); os.makedirs(app.NEWS_REC)
+        k1, k2 = "optimal_h|QUSDT|1792368000", "optimal_h|AIOZUSDT|1792368000"
+        rows = [
+            {"t": 1792368300, "kind": "entry", "branch": "ai_news", "key": k1, "book": "optimal_h", "side": "short",
+             "sym": "QUSDT", "at": 1792368000, "decision": "skip", "confidence": 0.6, "reasons": ["75 % short"],
+             "news_used": ["cd:u1"], "news_n": 1, "cost_usd": 0.02, "no_verdict": None},
+            {"t": 1792368300, "kind": "entry", "branch": "ai_plain", "key": k1, "book": "optimal_h", "side": "short",
+             "sym": "QUSDT", "at": 1792368000, "decision": "open", "confidence": 0.7, "reasons": ["no event"],
+             "cost_usd": 0.01, "no_verdict": None},
+            {"t": 1792368300, "kind": "entry", "branch": "ai_news_repeat", "key": k1, "decision": "skip",
+             "cost_usd": 0.02, "no_verdict": None},
+            {"t": 1792368300, "kind": "entry", "branch": "ai_news", "key": k2, "book": "optimal_h", "side": "short",
+             "sym": "AIOZUSDT", "at": 1792368000, "decision": "open", "confidence": 0.8, "reasons": ["calm"],
+             "news_used": [], "cost_usd": 0.01, "no_verdict": None},
+            {"t": 1792371900, "kind": "hold", "branch": "ai_news_x", "key": k2, "book": "optimal_h", "side": "short",
+             "sym": "AIOZUSDT", "at": 1792368000, "decision": "close", "confidence": 0.7, "reasons": ["hack"],
+             "trigger": ["news:1"], "news_used": ["cd:u9"], "cost_usd": 0.013, "no_verdict": None},
+            {"t": 1792390000, "kind": "heartbeat", "branch": "ai_news_x", "key": k2, "decision": "hold"}]
+        with open(os.path.join(app.AI_DIR, "decisions-2026-10-19.jsonl"), "w") as f:
+            f.write("\n".join(json.dumps(x) for x in rows) + "\n")
+        with open(os.path.join(app.NEWS_REC, "news-2026-10-18.jsonl"), "w") as f:
+            f.write(json.dumps({"id": "cd:u1", "title": "Q token unlock tomorrow"}) + "\n")
+        st, r = app.ai_log(acc)
+        assert st == 200 and r["day"] == "2026-10-19" and r["days"] == ["2026-10-19"]
+        q = next(e for e in r["entries"] if e["sym"] == "QUSDT")
+        assert q["decision"] == "skip" and q["plain"]["decision"] == "open" and q["repeat"]["decision"] == "skip"
+        assert q["news"] == [{"id": "cd:u1", "title": "Q token unlock tomorrow"}], "заголовок из записи новостей"
+        assert abs(q["cost_usd"] - 0.05) < 1e-9
+        w = r["watch"][0]
+        assert w["decision"] == "close" and w["trigger"] == ["news:1"] and w["news"] == [{"id": "cd:u9", "title": None}]
+        sm = r["summary"]
+        assert (sm["entries"], sm["skipped"], sm["opened"], sm["plain_disagrees"], sm["closes"], sm["heartbeats"]) == (2, 1, 1, 1, 1, 1)
+        assert app.ai_log(acc, "1999-01-01")[1]["day"] == "2026-10-19", "неизвестный день — последний"
+    print("ok  журнал судьи оператору: вход одной строкой (с новостями, без, повтор), сторож, заголовки новостей, итоги")
+
+
 def test_subscriptions_cells_hedge_warning_and_state():
     with tempfile.TemporaryDirectory() as tmp:
         app, _ = _app(tmp, venue=FakeVenue(equity=1100.0, modes={"BTCUSDT": "hedge", "ETHUSDT": "oneway"}))
