@@ -2695,14 +2695,14 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L598 `publish(name)`
 - L604 `main(argv=None)`
 
-## research/dca_paper/peek_cell.py · 77 строк
+## research/dca_paper/peek_cell.py · 78 строк
 
 Заглянуть в одну ячейку книг на сервере (только чтение): хвосты логов прогонов, запись имени в кэше коротких,…
 
-- L14 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L18 `ts(t)`
-- L25 `tail(path, n, grep=None)`
-- L36 `main()`
+- L15 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L19 `ts(t)`
+- L26 `tail(path, n, grep=None)`
+- L37 `main()`
 
 ## research/dca_paper/pick_rule.py · 340 строк
 

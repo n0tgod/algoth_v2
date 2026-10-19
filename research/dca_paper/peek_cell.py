@@ -4,7 +4,8 @@
 общего счёта — чтобы «позиции нигде не было, а потом она закрылась»
 разбиралось фактом, а не гипотезой.
 
-    run research/dca_paper/peek_cell.py CTUSDT pair_optimal_g2:100
+    run research/dca_paper/peek_cell.py CTUSDT pair_optimal_g2 100
+(ключ ячейки — двумя словами: двоеточие белый список очереди не пропускает)
 """
 import json
 import os
@@ -35,7 +36,7 @@ def tail(path, n, grep=None):
 
 def main():
     sym = sys.argv[1] if len(sys.argv) > 1 else "CTUSDT"
-    cell = sys.argv[2] if len(sys.argv) > 2 else "pair_optimal_g2:100"
+    cell = (sys.argv[2] if len(sys.argv) > 2 else "pair_optimal_g2") + ":" + (sys.argv[3] if len(sys.argv) > 3 else "100")
     out = os.path.join(HERE, "out")
     tail(os.path.join(out, "short.log"), 70)
     tail(os.path.join(out, "pair.log"), 70)
