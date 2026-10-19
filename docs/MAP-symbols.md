@@ -1122,6 +1122,16 @@ A3 — кандидаты в пары на момент окна.
 - L89 `by_rule(trades)` — Сводка по каждому правилу отдельно.
 - L95 `equity(trades)` — Кривая счёта по времени закрытия: `(момент, б.п., R)`.
 
+## research/b1_book/peek_pings.py · 85 строк
+
+Разрывы соединений сборщика по журналу `out/collect.log` (19.10).
+
+- L18 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L19 `LOG = os.path.join(HERE, 'out', 'collect.log')`
+- L20 `TS = re.compile('^\\[\\s*(\\d+) с\\]')`
+- L21 `READY = re.compile('книг готово (\\d+)/(\\d+)')`
+- L24 `main()`
+
 ## research/b1_book/remote.py · 359 строк
 
 Чтение часа записи из объектного хранилища, когда на диске его нет.
