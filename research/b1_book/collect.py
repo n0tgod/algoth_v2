@@ -991,8 +991,8 @@ class Collector:
         if getattr(self, "_dca_cache", None):
             gone["dca"] = len(self._dca_cache[1]) if isinstance(self._dca_cache, tuple) else 1
             self._dca_cache = (0.0, {})
-        if getattr(self, "_dca_art", None):
-            self._dca_art = (None, None)
+        if isinstance(getattr(self, "_dca_arts", None), dict):
+            self._dca_arts.clear()
         if getattr(self, "_model_cache", None) and self._model_cache[1] is not None:
             gone["model"] = 1
             self._model_cache = (0.0, None, object(), None)
@@ -4138,25 +4138,43 @@ class Collector:
             import ladder as LD
         except Exception as e:                            # noqa: BLE001
             return {"error": f"модуль не читается: {e}", "rows": []}
-        try:
-            mt = os.path.getmtime(DR.ARTIFACT)
-        except OSError:
-            return {"error": "артефакта нет на этой машине", "rows": []}
-        cmt, art = getattr(self, "_dca_art", (None, None))
-        if art is None or cmt != mt:
-            try:
-                with open(DR.ARTIFACT, encoding="utf-8") as f:
-                    art = json.load(f)
-            except (OSError, ValueError) as e:
-                return {"error": f"артефакт не читается: {e}", "rows": []}
-            self._dca_art = (mt, art)
         rk = ruler or DR.DEFAULT_RULER
         d = int(dep or DR.DEP_PAGE)
+        # Артефакт — СВОЙ У СЕМЕЙСТВА (`rules.artifact_of`): у коротких
+        # книг и общего счёта открытые позиции живут в их артефактах, и
+        # чтение артефакта длинных книг для любой книги отвечало «не
+        # считали» (`known: false`) всем коротким и общим ячейкам —
+        # приложение показывало им застывшую отметку прогона вместо
+        # живой, а позицию без законченного часа не показывало вовсе
+        # (владелец 19.10: закрытая на −560 $ «нигде не была»).
+        path = DR.artifact_of(rk) if hasattr(DR, "artifact_of") else DR.ARTIFACT
+        try:
+            mt = os.path.getmtime(path)
+        except OSError:
+            return {"error": "артефакта нет на этой машине", "rows": [],
+                    "known": False}
+        arts = getattr(self, "_dca_arts", None)
+        if not isinstance(arts, dict):
+            arts = self._dca_arts = {}
+        cmt, art = arts.get(path, (None, None))
+        if art is None or cmt != mt:
+            try:
+                with open(path, encoding="utf-8") as f:
+                    art = json.load(f)
+            except (OSError, ValueError) as e:
+                return {"error": f"артефакт не читается: {e}", "rows": [],
+                        "known": False}
+            arts[path] = (mt, art)
         # ключ ячейки несёт формат размера: открытые у сестры свои
         ck = getattr(DR, "cell_key", None)
         cell = (ck(rk, d, sizing or DR.DEFAULT_SIZING) if ck
                 else f"{rk}:{d}")
+        # Открытые — из `live` (длинные книги пишут его отдельно) либо из
+        # `books[ячейка].open` (так их несут все три семейства): одна
+        # дорога чтения на всех, а не своя у каждого артефакта.
         live = (art.get("live") or {}).get(cell)
+        if live is None:
+            live = ((art.get("books") or {}).get(cell) or {}).get("open")
         if live is None:
             # `None` — «не считали», пустой словарь — «считали, и
             # открытых нет». Смешав их, страница показала бы «открытых
@@ -4297,6 +4315,10 @@ class Collector:
                          for k in (order or sorted(rul)) if k in rul]
         out["secs"] = art.get("secs")
         out["window"] = art.get("window")
+        # Слежение за счётом (`account_watch`): находки прогона и хвост
+        # суток — словами, по ячейкам. Поля нет у прогона до 19.10 —
+        # тогда `None`, и читатель видит «не велось», а не «тихо».
+        out["watch"] = art.get("watch")
         try:
             out["age_h"] = round((now - os.path.getmtime(DR.ARTIFACT))
                                  / 3600.0, 1)
@@ -4541,6 +4563,7 @@ class Collector:
                 "costs": art.get("costs"), "error": art.get("error"),
                 "computed_at": art.get("computed_at"),
                 "best": art.get("best"),
+                "watch": art.get("watch"),
                 "age_h": age, "stale": bool(age is not None and age > 3)}
 
     def paper_book(self, at=None):

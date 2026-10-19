@@ -20,3 +20,6 @@ out/*smoke*
 out/daily.log
 out/short.log
 out/pair.log
+
+# Слежение за счётом: временные файлы записи состояния.
+out/watch/*.tmp

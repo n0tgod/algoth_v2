@@ -51,6 +51,7 @@ import run_d10 as D10                                         # noqa: E402
 import run_d11 as D11                                         # noqa: E402
 import tail as TL                                             # noqa: E402
 import ai_branch as AIB                                       # noqa: E402
+import account_watch as AW                                    # noqa: E402
 
 # Ячейка сетки D10, которой торгует семейство: плечо забора, без доливов,
 # цель ×2. Объявлена здесь одним местом — из неё же выводится подпись
@@ -468,6 +469,9 @@ def main(argv=None):
     os.makedirs(R.OUT, exist_ok=True)
     os.makedirs(CACHE_DIR, exist_ok=True)
     s = run(limit=a.limit)
+    if not a.limit:                      # смоук состояние слежения не трогает
+        s["watch"] = AW.safe_check(s, "h24")
+    s.pop("_closed", None)
     art = R.H24_ARTIFACT if not a.limit else R.H24_ARTIFACT.replace(
         ".json", "-smoke.json")
     with open(art + ".tmp", "w", encoding="utf-8") as f:

@@ -2312,11 +2312,14 @@ def test_short_books_are_declared_as_a_mirror():
     не из записи — иначе проверка правила зеркала исчезла бы вместе с
     самим зеркалом.
     """
-    assert len(R.RULER_ORDER_ALL) == 6, R.RULER_ORDER_ALL
-    longs = [k for k in R.RULER_ORDER_ALL if R.side_of(k) == "long"]
-    shorts = [k for k in R.RULER_ORDER_ALL if R.side_of(k) == "short"]
+    # Три длинные, три зеркала и ветви (судья `_ai`, 18.10): ветвь — не
+    # зеркало, её у этой проверки нет.
+    base = [k for k in R.RULER_ORDER_ALL if not R.is_ai(k)]
+    assert len(base) == 6, R.RULER_ORDER_ALL
+    longs = [k for k in base if R.side_of(k) == "long"]
+    shorts = [k for k in base if R.side_of(k) == "short"]
     # живой список — только длинные: зеркала сняты
-    assert R.RULER_ORDER == longs, (R.RULER_ORDER, longs)
+    assert [k for k in R.RULER_ORDER if not R.is_ai(k)] == longs, (R.RULER_ORDER, longs)
     assert len(longs) == 3 and len(shorts) == 3, (longs, shorts)
     for k in longs:
         # Зеркало отличается СТОРОНОЙ и ничем больше: правило и параметр

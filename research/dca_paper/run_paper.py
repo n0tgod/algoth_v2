@@ -49,6 +49,7 @@ import rules as R                                             # noqa: E402
 import wave as WV                                             # noqa: E402
 import instruments_refresh as IR                              # noqa: E402
 import run_d6 as D6                                           # noqa: E402
+import account_watch as AW                                    # noqa: E402
 import tail as TL                                             # noqa: E402
 
 # Линейки плеча объявлены В ПРАВИЛАХ, а не здесь: их читает и страница
@@ -1193,6 +1194,12 @@ def summarize(path=None, live=None, keys=None, ctx=None):
             if op is not None:
                 b["open"] = op
             out["books"][key] = b
+            # Закрытые позиции ячейки ключом «имя:вход» → итог — для
+            # слежения за счётом (`account_watch`), которое сверяет
+            # приращение итога с суммой новых закрытых. Поле служебное:
+            # слежение забирает его из свода до записи артефакта.
+            out.setdefault("_closed", {})[key] = {
+                AW.pos_key(r): r.get("usd") for r in mine}
     # лучшие сделки семейства — из тех же строк НЕТТО, что и книги
     out["best"] = R.best_trades(rows, keys=keys)
     return out
@@ -1957,6 +1964,7 @@ def main():
     s = summarize(live=live, keys=R.order_of("sit"))
     s.update(extra)
     attach_open_dd(s)
+    s["watch"] = AW.safe_check(s, "sit")
     ph.mark("свод")
     s["secs"] = round(time.time() - t0, 1)
     s["timing"] = dict(ph.out)

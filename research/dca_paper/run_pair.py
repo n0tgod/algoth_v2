@@ -53,6 +53,7 @@ import rules as R                                             # noqa: E402
 import instruments_refresh as IR                              # noqa: E402
 import run_paper as RP                                        # noqa: E402
 import ai_branch as AIB                                       # noqa: E402
+import account_watch as AW                                    # noqa: E402
 import run_short as S                                         # noqa: E402
 import run_d13 as D13                                         # noqa: E402
 import arm_book as AB                                         # noqa: E402
@@ -578,6 +579,7 @@ def main(argv=None):
         pass
     os.makedirs(R.OUT, exist_ok=True)
     s = run()
+    s["watch"] = AW.safe_check(s, "pair")
     with open(R.PAIR_ARTIFACT + ".tmp", "w", encoding="utf-8") as f:
         json.dump(s, f, ensure_ascii=False)
     os.replace(R.PAIR_ARTIFACT + ".tmp", R.PAIR_ARTIFACT)
