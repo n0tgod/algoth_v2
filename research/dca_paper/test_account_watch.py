@@ -43,6 +43,7 @@ def test_watch_names_every_jump():
         assert kinds == ["closed_unseen", "open_late", "open_vanished"], kinds
         cu = next(x for x in b2["findings"] if x["kind"] == "closed_unseen")
         assert cu["pos"] == f"CTUSDT:{int(T0)}" and "не взяла касса" in cu["why"], cu
+        assert cu["why_code"] == "unseen" and cu["sym"] == "CTUSDT" and cu["at"] == T0, cu
         assert all(x["cell"] == "pair_optimal_g2:100" for x in b2["findings"])
         assert len(log) == 3 and os.path.exists(os.path.join(d, "log.jsonl"))
         # третий прогон: позиция вошла ПОСЛЕ прошлого прогона и уже закрыта — честная короткая жизнь;
@@ -55,7 +56,7 @@ def test_watch_names_every_jump():
         kinds = sorted(x["kind"] for x in b3["findings"])
         assert kinds == ["closed_unseen", "recount"], kinds
         fast = next(x for x in b3["findings"] if x["kind"] == "closed_unseen")
-        assert "меньше одного такта" in fast["why"]
+        assert "меньше одного такта" in fast["why"] and fast["why_code"] == "short_life"
         rc = next(x for x in b3["findings"] if x["kind"] == "recount")
         assert abs(rc["gap_usd"] - 100.0) < 0.01 and rc["new_closed"] == 1, rc
         assert b3["day"]["n"] == 5 and b3["day"]["by_kind"]["closed_unseen"] == 2
@@ -64,6 +65,13 @@ def test_watch_names_every_jump():
         # четвёртый: ничего не изменилось — тишина
         b4 = AW.check(s3, "pair", now=T0 + 5400, watch_dir=d, log=log.append)
         assert b4["n"] == 0 and b4["prev_at"] == T0 + 4500
+        # сведение семейств для страницы: находки одним списком, семейство
+        # без блока — «не велось» (None), отказ — словами
+        mg = AW.merge([("sit", None), ("h24", {"at": 1.0, "cells": 2, "n": 0, "error": "сломалось"}),
+                       ("pair", b3)])
+        assert mg["families"]["sit"] is None and mg["errors"] == ["h24: сломалось"], mg
+        assert mg["n"] == len(b3["day"]["items"]) and mg["by_kind"]["closed_unseen"] >= 2, mg
+        assert all("cell" in x for x in mg["items"])
     print("ok  слежение: короткая жизнь и «из ниоткуда» различены, пересчёт истории назван суммой, исчезнувшая и поздняя открытые названы")
 
 

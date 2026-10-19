@@ -4350,6 +4350,15 @@ class Collector:
         mb = getattr(DR, "merge_best", None)
         out["best"] = (mb([art.get("best"), sh.pop("best", None), pr.pop("best", None)])
                        if mb else None)
+        # Слежение за счётом всех трёх семейств — ОДНИМ блоком: находки
+        # суток списком с ячейкой у каждой, по семействам — время и отказ.
+        try:
+            import account_watch as AW
+            out["watch"] = AW.merge([("sit", art.get("watch")), ("h24", sh.get("watch")),
+                                     ("pair", pr.get("watch"))])
+        except Exception as e:                            # noqa: BLE001
+            out["watch"] = {"errors": [f"сведение слежения: {e}"], "items": [],
+                            "families": {}, "n": 0}
         fams = [(list(out["rulers"]), art_books, rows, frows)]
         # Порядок вкладок: ОБЩИЙ СЧЁТ первым. Владелец дважды не нашёл
         # общую статистику, стоявшую последней, — место на странице есть

@@ -74,11 +74,13 @@ def compare(prev, cur, prev_at, now, family):
                 continue
             at = float(k.rsplit(":", 1)[1])
             if at >= prev_at:
-                why = "вход позже прошлого прогона: позиция прожила меньше одного такта"
+                why, code = "вход позже прошлого прогона: позиция прожила меньше одного такта", "short_life"
             else:
-                why = "вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик"
+                why, code = ("вход был до прошлого прогона, а в открытых её не было: "
+                             "в тот прогон её не взяла касса или не видел сборщик", "unseen")
             finds.append({"t": now, "family": family, "cell": cell, "kind": "closed_unseen",
-                          "pos": k, "usd": usd, "why": why,
+                          "pos": k, "sym": k.split(":")[0], "at": at, "usd": usd,
+                          "why": why, "why_code": code,
                           "text": f"закрылась, не побывав открытой: {k.split(':')[0]} ({usd:+.2f} $) — {why}"
                           if usd is not None else f"закрылась, не побывав открытой: {k.split(':')[0]} — {why}"})
         if p.get("usd") is not None and c.get("usd") is not None:
@@ -95,11 +97,13 @@ def compare(prev, cur, prev_at, now, family):
         for k, op in p["open"].items():
             if k not in c["open"] and k not in c["closed"]:
                 finds.append({"t": now, "family": family, "cell": cell, "kind": "open_vanished", "pos": k,
+                              "sym": op.get("sym"), "at": op.get("at"), "mark_usd": op.get("mark_usd"),
                               "text": f"открытая исчезла без закрытия: {op.get('sym')} (вход {time.strftime('%m-%d %H:%M', time.gmtime(float(op.get('at') or 0)))} UTC, "
                                       f"отметка была {op.get('mark_usd')})"})
         for k, op in c["open"].items():
             if k not in p["open"] and float(op.get("at") or 0) < prev_at:
                 finds.append({"t": now, "family": family, "cell": cell, "kind": "open_late", "pos": k,
+                              "sym": op.get("sym"), "at": op.get("at"),
                               "text": f"открытая появилась задним числом: {op.get('sym')} (вход "
                                       f"{time.strftime('%m-%d %H:%M', time.gmtime(float(op.get('at') or 0)))} UTC, прошлый прогон её не показывал)"})
     return finds
@@ -158,6 +162,28 @@ def safe_check(s, family, **kw):
         msg = f"слежение за счётом не сработало: {type(e).__name__}: {e}"
         print(msg)
         return {"at": time.time(), "family": family, "error": msg, "n": 0, "findings": []}
+
+
+def merge(blocks):
+    """Свести блоки `watch` семейств в один для страницы и приложения:
+    находки суток одним списком (по ячейке читатель отберёт сам), у каждого
+    семейства — время, число ячеек и отказ словами; семейство без блока —
+    «не велось», и это печатается, а не молчит."""
+    fams, items, errors = {}, [], []
+    for fam, b in blocks:
+        if not isinstance(b, dict):
+            fams[fam] = None
+            continue
+        fams[fam] = {"at": b.get("at"), "cells": b.get("cells"), "n": b.get("n"),
+                     "error": b.get("error")}
+        if b.get("error"):
+            errors.append(f"{fam}: {b['error']}")
+        items.extend((b.get("day") or {}).get("items") or [])
+    items.sort(key=lambda x: float(x.get("t") or 0))
+    ats = [f["at"] for f in fams.values() if f and f.get("at")]
+    return {"at": max(ats) if ats else None, "families": fams, "errors": errors,
+            "n": len(items), "items": items[-120:],
+            "by_kind": _count(items, "kind")}
 
 
 def _load_lines(path):
