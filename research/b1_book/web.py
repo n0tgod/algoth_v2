@@ -12692,6 +12692,10 @@ def serve(collector, port, token, log):
         except Exception as e:                               # noqa: BLE001
             log(f"прогрев свода DCA не прошёл: {e}")
     threading.Thread(target=_warm, name="dca-warm", daemon=True).start()
+    # Ключ в лог НЕ печатается: лог сборщика попадает в хвост заданий
+    # очереди (`jobs/done/*.log`), а тот — в git (замечено 19.10: 47
+    # логов несли ключ). Ключ живёт в `out/token.txt`, и этого слова здесь
+    # достаточно.
     log(f"страница наблюдения: http://<адрес сервера>:{port}/"
-        + (f"?k={token}" if token else ""))
+        + ("?k=<ключ из out/token.txt>" if token else ""))
     return srv
