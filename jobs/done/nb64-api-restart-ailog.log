@@ -1,0 +1,6 @@
+== задание nb64-api-restart-ailog ==
+строка: run tools/app_api/restart.py
+начало: 2026-10-19T08:49:31Z
+запускаю: .venv/bin/python tools/app_api/restart.py 
+порт 443: слушает
+конец: 2026-10-19T08:49:36Z, код 0

@@ -2553,3 +2553,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792347775 ==
 [2026-10-18T18:22:57Z] задание nb63-gate-peek запущено: research/ai_gate/peek.py
+
+== сигнал 1792399769 ==
+[2026-10-19T08:49:31Z] задание nb64-api-restart-ailog запущено: tools/app_api/restart.py
