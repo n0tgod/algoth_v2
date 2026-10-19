@@ -2695,6 +2695,15 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L598 `publish(name)`
 - L604 `main(argv=None)`
 
+## research/dca_paper/peek_cell.py · 77 строк
+
+Заглянуть в одну ячейку книг на сервере (только чтение): хвосты логов прогонов, запись имени в кэше коротких,…
+
+- L14 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L18 `ts(t)`
+- L25 `tail(path, n, grep=None)`
+- L36 `main()`
+
 ## research/dca_paper/pick_rule.py · 340 строк
 
 Правило выбора позиций при полной кассе: кто получает место, когда кандидатов больше, чем денег.
