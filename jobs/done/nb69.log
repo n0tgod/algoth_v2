@@ -24,3 +24,20 @@
 последний запуск по часам (UTC):
   10-19 20:40  таймаутов   37  закрытий   41  готово медиана 1.00 мин 0.45
 конец: 2026-10-19T21:20:07Z, код 0
+ВНИМАНИЕ: 2026-10-19T21:20:08Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ) research/dca_paper/out/watch/pair.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nb69.done                      |   1 +
+ jobs/done/nb69.log                       |  26 ++++++
+ jobs/poke.log                            |   3 +
+ jobs/queue-state.md                      |   2 +-
+ research/dca_paper/out/DCA-pair.md       |  52 +++++------
+ research/dca_paper/out/DCA-short.md      |  66 +++++++-------
+ research/dca_paper/out/watch/h24.json    |   2 +-
+ research/dca_paper/out/watch/latest.json |   2 +-
+ research/dca_paper/out/watch/log.jsonl   | 142 +++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json      |   2 +-
+ 10 files changed, 235 insertions(+), 63 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   2e803b3bd..c23999c54  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
