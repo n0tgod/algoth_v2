@@ -52,6 +52,47 @@ def _art(cell, pos, with_live):
     return a
 
 
+def reconnect_pause_resets_after_open():
+    """Пауза переподключения: после открывшегося соединения — снова 1 с;
+    растёт только у соединений, которые не открылись (отказ площадки).
+    Прежде она доходила до 30 с и не сбрасывалась никогда."""
+    import types
+
+    c = C.Collector(["TEST"], [], tempfile.mkdtemp(), lambda m: None)
+    sh = c.shards[0]
+    plan = [True, True, False, False, False, True, True]   # открылось ли
+    sleeps = []
+
+    class App:
+        def __init__(self, url, on_open=None, **kw):
+            self.on_open = on_open
+
+        def run_forever(self, **kw):
+            ok = plan.pop(0)
+            if ok:
+                self.on_open(self)
+            if not plan:
+                c.stop.set()
+
+    sh.send_sub = lambda ws, topics: None
+    fake = types.ModuleType("websocket")
+    fake.WebSocketApp = App
+    keep_ws, keep_sleep = sys.modules.get("websocket"), C.time.sleep
+    sys.modules["websocket"] = fake
+    C.time.sleep = lambda x: sleeps.append(x)
+    try:
+        sh.run()
+    finally:
+        C.time.sleep = keep_sleep
+        if keep_ws is not None:
+            sys.modules["websocket"] = keep_ws
+        else:
+            sys.modules.pop("websocket", None)
+    check("пауза переподключения: после открытого соединения 1 с, отказы удваивают",
+          sleeps == [1, 1, 2, 4, 8, 1], str(sleeps))
+    check("обрывы считаются", sh.n_drops == 6, str(sh.n_drops))
+
+
 def main():
     keep = (DR.ARTIFACT, DR.H24_ARTIFACT, DR.PAIR_ARTIFACT)
     td = tempfile.mkdtemp()
@@ -103,6 +144,31 @@ def main():
         dn = c.dca_marks(dep=100, ruler="optimal_h")
         check("ячейки нет в артефакте семейства → «не считали»",
               dn.get("known") is False and not dn.get("rows"), str(dn))
+        # Стакан пуст (шард переподключается): берётся последняя
+        # записанная середина не старше MARK_STALE_S, возраст рядом;
+        # старше — прочерк, а не ноль.
+        import time as _t
+        from collections import deque
+
+        class Empty:
+            def best(self):
+                return (None, None)
+        c.books["AAAUSDT"] = Empty()
+        c.mid = {"AAAUSDT": deque([(_t.time() - 30.0, 2.4)])}
+        de = c.dca_marks(dep=dep, ruler="optimal_h")
+        r0 = (de.get("rows") or [{}])[0]
+        check("пустой стакан: отметка по последней середине, возраст рядом",
+              de.get("priced") == 1 and abs((r0.get("mark_frac") or 0) - round(want_s, 6)) < 1e-9
+              and 29 <= (r0.get("stale_s") or 0) <= 40, str(de))
+        c.mid = {"AAAUSDT": deque([(_t.time() - C.MARK_STALE_S - 5, 2.4)])}
+        do = c.dca_marks(dep=dep, ruler="optimal_h")
+        r1 = (do.get("rows") or [{}])[0]
+        check("пустой стакан, середина старше предела: прочерк",
+              do.get("priced") == 0 and r1.get("mark_usd") is None
+              and do.get("mark_usd") is None, str(do))
+        h = c.health()
+        check("статус несёт обрывы и замирания числом",
+              "drops" in h and "stalls_over_5s" in h and "net_minute" in h, str(sorted(h)))
         # артефакта семейства нет — названо, и это тоже «не считали»
         os.remove(DR.PAIR_ARTIFACT)
         dm = c.dca_marks(dep=dep, ruler="pair_optimal_g2")
@@ -110,6 +176,7 @@ def main():
               dm.get("known") is False and "нет" in str(dm.get("error")), str(dm))
     finally:
         DR.ARTIFACT, DR.H24_ARTIFACT, DR.PAIR_ARTIFACT = keep
+    reconnect_pause_resets_after_open()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")

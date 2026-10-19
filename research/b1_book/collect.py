@@ -125,6 +125,9 @@ DEEP = ("BTCUSDT", "ETHUSDT")
 # тогда берём мельче, а не остаёмся без стакана вовсе.
 DEPTH_LADDER = (500, 200, 50)
 PING_SEC = 20
+# Живая отметка открытых DCA берёт последнюю записанную середину, пока
+# стакан пуст на переподключении, — не старше этого (19.10).
+MARK_STALE_S = 120.0
 SAMPLE_SEC = 1
 # Символов на одно соединение. Полный список площадки — это больше
 # тысячи тем, и одно соединение их не унесёт: буфер сокета переполняется
@@ -600,6 +603,12 @@ class Shard:
         self.n_trades = 0
         self.n_resets = 0
         self.last_msg = 0.0
+        # Замер обрывов (19.10): отставание разбора от метки биржи —
+        # максимум за минуту (обнуляет `reporter`), обрывы соединения
+        # счётом и признак «соединение успело открыться» для паузы.
+        self.lag_max = 0.0
+        self.n_drops = 0
+        self.opened = False
 
     def topics(self):
         out = []
@@ -625,6 +634,7 @@ class Shard:
 
     def on_open(self, ws):
         self.live = set()
+        self.opened = True
         self.c.log(f"шард {self.idx}: подключён, подписываюсь на "
                    f"{len(self.topics())} тем")
         self.send_sub(ws, self.topics())
@@ -673,6 +683,13 @@ class Shard:
             return
         self.last_msg = time.time()
         self.n_msg += 1
+        # Насколько разбор отстаёт от биржи: ответ на ping стоит в той же
+        # очереди, и отставание больше таймаута рвёт соединение.
+        bts = msg.get("ts")
+        if bts:
+            lag = self.last_msg - float(bts) / 1000.0
+            if lag > self.lag_max:
+                self.lag_max = lag
         if topic.startswith("orderbook."):
             sym = topic.rsplit(".", 1)[-1]
             b = c.books.get(sym)
@@ -734,6 +751,7 @@ class Shard:
         import websocket                                   # noqa: E402
         delay = 1
         while not self.c.stop.is_set():
+            self.opened = False
             self.ws = websocket.WebSocketApp(
                 WS_URL, on_open=self.on_open,
                 on_message=self.on_message,
@@ -750,6 +768,14 @@ class Shard:
                 self.c.log(f"шард {self.idx}: разрыв: {e}")
             if self.c.stop.is_set():
                 break
+            self.n_drops += 1
+            # Соединение, которое успело открыться, — не отказ площадки:
+            # пауза начинается снова с секунды. Прежде она росла до 30 с
+            # и НЕ сбрасывалась никогда, и каждый обрыв (сотни в час,
+            # 19.10) оставлял стаканы шарда пустыми на полминуты — без
+            # живой цены и без записи снимков.
+            if self.opened:
+                delay = 1
             # Книги шарда после разрыва недействительны: до нового
             # снимка площадки их состояние — вымысел.
             for s in self.symbols:
@@ -859,6 +885,9 @@ class Collector:
         self.n_snap_err = 0
         self.last_snap = 0.0
         self.snap_pass_sec = 0.0
+        self.stall_max = 0.0             # замирание процесса за минуту, с
+        self.n_stall5 = 0                # замираний длиннее 5 с с запуска
+        self.minute_net = None           # сводка сети за прошлую минуту
         self.snap_slow_said = 0.0
         # Живой детектор: те же правила, что в замерах. Сделки бумажные,
         # это наблюдение, а не торговля — замеры T1–T4 показали, что
@@ -1040,6 +1069,11 @@ class Collector:
             "last_snap_age_sec": (round(time.time() - self.last_snap, 1)
                                   if self.last_snap else None),
             "snap_pass_sec": round(self.snap_pass_sec, 3),
+            # обрывы соединений и их причина числом (19.10): последняя
+            # минута — отставание разбора, замирание процесса, обрывы
+            "net_minute": getattr(self, "minute_net", None),
+            "drops": sum(s.n_drops for s in self.shards),
+            "stalls_over_5s": getattr(self, "n_stall5", 0),
             # По каждому виду: сколько записей и сколько секунд назад
             # была последняя. Вид, переставший писаться, обязан быть
             # виден числом, а не выводиться из размера каталога на
@@ -4186,16 +4220,29 @@ class Collector:
             sym = q.get("sym")
             bk = self.books.get(sym)
             bid, ask = bk.best() if bk else (None, None)
+            mid, age = ((bid + ask) / 2.0, 0.0) if (bid and ask) else (None, None)
+            if mid is None:
+                # Стакан пуст на время переподключения шарда (обрывы,
+                # 19.10): берётся последняя записанная середина, если ей
+                # не больше MARK_STALE_S, и её возраст едет рядом. Без
+                # этого сумма открытых прыгала, теряя имя на полминуты.
+                dq = (getattr(self, "mid", None) or {}).get(sym)
+                if dq:
+                    t_last, m_last = dq[-1]
+                    if now - float(t_last) <= MARK_STALE_S:
+                        mid, age = float(m_last), now - float(t_last)
             mk = None
-            if bid and ask:
+            if mid:
                 # Знак хода у шорта зеркален: отметка считается стороной
                 # КНИГИ (`side_of`), иначе рост цены читался бы прибылью
                 # у позиции, которая на нём теряет.
-                mk = LD.open_mark((bid + ask) / 2.0, q.get("avg"),
+                mk = LD.open_mark(mid, q.get("avg"),
                                   q.get("margin"), q.get("lev") or 1.0,
                                   [f[2] for f in (q.get("fills") or [])],
                                   side=DR.row_side(q, rk))
             row = {"sym": sym, "mark_frac": None, "mark_usd": None}
+            if age:
+                row["stale_s"] = round(age, 1)
             if mk is not None:
                 usd = mk * float(q.get("margin") or 0.0)
                 row["mark_frac"] = round(mk, 6)
@@ -6609,10 +6656,27 @@ class Collector:
                 json.dump(st, f, ensure_ascii=False)
             os.replace(tmp, os.path.join(OUT, "status.json"))
 
+    def stall_meter(self):
+        """Замирание процесса (19.10): поток просыпается каждые 0.25 с и
+        меряет, насколько позже обещанного. Опоздание — время, когда
+        Python не давал потокам хода (GIL у тяжёлого запроса, сборка
+        мусора, своп): в эти секунды не читаются и ответы на ping.
+        Максимум за минуту обнуляет `reporter`."""
+        step = 0.25
+        while not self.stop.is_set():
+            t = time.monotonic()
+            time.sleep(step)
+            late = time.monotonic() - t - step
+            if late > self.stall_max:
+                self.stall_max = late
+            if late > 5.0:
+                self.n_stall5 += 1
+
     def reporter(self):
         """Строка в журнал раз в минуту: прогон, который молчит, неотличим
         от повисшего."""
         last = (0, 0)
+        drops0 = 0
         while not self.stop.wait(60):
             try:
                 self.guard.tick()
@@ -6628,14 +6692,28 @@ class Collector:
             if d.get("rate_h") and d["rate_h"] > 0 and d.get("free"):
                 extra += (f", диска на ~"
                           f"{d['free'] / d['rate_h'] / 24:.0f} дн.")
+            lag = max((s.lag_max for s in self.shards), default=0.0)
+            for s in self.shards:
+                s.lag_max = 0.0
+            drops = sum(s.n_drops for s in self.shards)
+            self.minute_net = {"lag_max_s": round(lag, 2),
+                               "stall_max_s": round(self.stall_max, 2),
+                               "drops": drops - drops0,
+                               "ready": ready, "books": len(self.books),
+                               "at": round(time.time(), 1)}
+            self.stall_max = 0.0
             self.log(f"сообщений {self.n_msg:,} (+{self.n_msg - last[0]:,}), "
                      f"сделок {self.n_trades:,} "
                      f"(+{self.n_trades - last[1]:,}), "
                      f"книг готово {ready}/{len(self.books)}, "
                      f"тем принято {self.live_count()}/"
                      f"{self.topics_count()}, "
-                     f"сбросов {self.n_resets}{extra}")
+                     f"сбросов {self.n_resets}, "
+                     f"обрывов {drops - drops0}, "
+                     f"отставание разбора до {lag:.1f} с, "
+                     f"замирание до {self.minute_net['stall_max_s']:.1f} с{extra}")
             last = (self.n_msg, self.n_trades)
+            drops0 = drops
 
     def metrics_poll(self):
         """Funding, открытый интерес и базис — раз в 5 минут, один
@@ -7433,6 +7511,8 @@ class Collector:
         threading.Thread(target=self.sampler, daemon=True).start()
         threading.Thread(target=self.statuser, daemon=True).start()
         threading.Thread(target=self.reporter, daemon=True).start()
+        threading.Thread(target=self.stall_meter, name="stall-meter",
+                         daemon=True).start()
         threading.Thread(target=self.diskstat, daemon=True).start()
         threading.Thread(target=self.sit_watch, daemon=True).start()
         threading.Thread(target=self.brake_watch, daemon=True).start()

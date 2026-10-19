@@ -481,7 +481,7 @@
 - L9229 `test_acme_challenge_served_without_page_key_and_nothing_else()` — L2 спеки 16: проверочный файл Let's Encrypt отдаётся на порту 80 без ключа страниц — только из каталога вызов…
 - L9279 `main()`
 
-## research/b1_book/test_dca_marks_family.py · 121 строк
+## research/b1_book/test_dca_marks_family.py · 188 строк
 
 Живая отметка DCA-книги читается из артефакта ЕЁ семейства.
 
@@ -492,7 +492,8 @@
   - L39 `B.__init__(self, px)`
   - L42 `B.best(self)`
 - L46 `_art(cell, pos, with_live)`
-- L55 `main()`
+- L55 `reconnect_pause_resets_after_open()` — Пауза переподключения: после открывшегося соединения — снова 1 с; растёт только у соединений, которые не откр…
+- L96 `main()`
 
 ## research/b1_book/test_measure_pack.py · 133 строк
 
