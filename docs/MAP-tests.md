@@ -324,6 +324,16 @@
 - L66 `test_reviews()` — Разбор судьёй: только сделки с решением ai_news моделью; один раз на ключ; досье из записи, без досье — помеч…
 - L107 `main()`
 
+## research/ai_gate/test_patterns.py · 52 строк
+
+Паттерны пути (U4b): модель видит сводку путей и уже проверенное; гипотеза вне словаря отвергается формой; по…
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `class Client`
+  - L17 `Client.__init__(self, hyps)`
+  - L21 `Client._create(self, **kw)`
+- L29 `main()`
+
 ## research/ai_gate/test_trade_path.py · 53 строк
 
 Меры пути сделки (§11.2): крайности против и за — стороной позиции; первое касание цели или пола — по порядку…

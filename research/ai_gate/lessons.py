@@ -452,6 +452,17 @@ def main(argv=None):
         print(s["report"])
     if s.get("error"):
         print(s["error"])
+    # Паттерны пути → гипотезы новой ТВХ (§11.7, U4b) — тем же недельным
+    # проходом; проверяет их `entry_shift` следующим шагом сторожа.
+    if not a.dry:
+        try:
+            import patterns as PT                               # noqa: E402
+            pr = PT.run(log=print)
+            s["patterns"] = {k: pr.get(k) for k in ("new", "invalid", "notes", "no_verdict", "cost_usd", "error")}
+            with open(LATEST, "w", encoding="utf-8") as f:
+                json.dump({k: v for k, v in s.items() if k != "report"}, f, ensure_ascii=False)
+        except Exception as e:                                # noqa: BLE001
+            print(f"паттерны пути не прошли: {type(e).__name__}: {e}")
     if not a.no_publish and not a.dry:
         subprocess.run([os.path.join(ROOT, "tools", "publish.sh"), "уроки судьи"], cwd=ROOT, check=False)
     return 0 if not s.get("error") else 1

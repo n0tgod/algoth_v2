@@ -762,7 +762,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L293 `market_news(items, at_ms, hours=24, cap=10)`
 - L300 `dossier(kind, rec, book, side, at_s, *, px=None, crowd=None, ma…` — Досье для судьи. news=None — ветка без новостей (`ai_plain`): блоков новостей нет вовсе.
 
-## research/ai_gate/lessons.py · 461 строк
+## research/ai_gate/lessons.py · 472 строк
 
 Уроки судьи: предложение моделью, приём ЧИСЛОМ (спека 19 §11.4, U2).
 
@@ -823,6 +823,21 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L142 `review(rec, book, src, mkt, R)`
 - L161 `run(log=print, now=None, src=None, mkt=None, books=None, client…`
 - L230 `main(argv=None)`
+
+## research/ai_gate/patterns.py · 159 строк
+
+Поиск паттернов пути моделью → гипотезы новой ТВХ (спека 19 §11.7, U4b).
+
+- L21 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L26 `MAX_HYPS = 5`
+- L27 `SAMPLE = 200`
+- L29 `SYSTEM_PATTERNS = 'You are searching for a better entry t…`
+- L38 `schema()`
+- L47 `parse(stop, text)`
+- L61 `hyp_id(h)`
+- L67 `summary(paths)` — Сводка путей по выходам и формам — медианы и доли, из чисел U0.
+- L86 `propose(client, paths, tested)`
+- L114 `run(log=print, client=None, paths=None, hyps_file=None, shift_f…` — Предложить гипотезы и дописать их в файл гипотез `entry_shift`.
 
 ## research/ai_gate/peek.py · 47 строк
 
