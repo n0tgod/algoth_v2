@@ -78,3 +78,26 @@
   price_moves_to_decision.24h_pct: 151 [-33.82 … 138.7]
   price_moves_to_decision.4h_pct: 151 [-20.29 … 60.66]
 конец: 2026-10-20T17:22:25Z, код 0
+ВНИМАНИЕ: 2026-10-20T17:22:26Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/watch/pair.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nb79.done                                |    1 +
+ jobs/done/nb79.log                                 |   80 +
+ jobs/poke.log                                      |    3 +
+ jobs/queue-state.md                                |    2 +-
+ .../out/decisions/decisions-2026-10-20.jsonl       |    8 +
+ research/ai_gate/out/latest.json                   |    2 +-
+ research/dca_paper/out/DCA-pair.md                 |   52 +-
+ research/dca_paper/out/DCA-paper.json              | 1726 ++++++++++----------
+ research/dca_paper/out/DCA-paper.md                |   20 +-
+ research/dca_paper/out/DCA-short.json              |    2 +-
+ research/dca_paper/out/DCA-short.md                |   66 +-
+ research/dca_paper/out/watch/h24.json              |    2 +-
+ research/dca_paper/out/watch/latest.json           |    2 +-
+ research/dca_paper/out/watch/log.jsonl             |  460 +++---
+ research/dca_paper/out/watch/sit.json              |    2 +-
+ research/s8_loop/out/day_brake.json                |    2 +-
+ 16 files changed, 1255 insertions(+), 1175 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   e8af93710..c2a210589  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
