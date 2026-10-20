@@ -1,0 +1,13 @@
+== задание nb73 ==
+строка: run research/dca_paper/peek_open_dd.py pair_optimal_ai 100
+начало: 2026-10-20T08:00:26Z
+запускаю: .venv/bin/python research/dca_paper/peek_open_dd.py pair_optimal_ai 100
+артефакт DCA-pair.json, посчитан 2026-10-20 07:56
+{'open_dd': 0.0, 'open_dd_share': 0.0, 'open_dd_at': None}
+open_hours: 0 строк
+открыта BTWUSDT 10-19 11:00 mark_usd 8.743 marks []
+открыта 10000NEXUSDT 10-19 11:00 mark_usd 1.7741 marks []
+открыта PHAUSDT 10-20 00:00 mark_usd -0.4963 marks []
+открыта LONGXIAUSDT 10-20 04:00 mark_usd 0.53 marks []
+all {'n': 4, 'usd': 18.59, 'open_dd': 0.0, 'open_dd_share': 0.0}
+конец: 2026-10-20T08:00:26Z, код 0
