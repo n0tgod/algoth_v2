@@ -167,7 +167,12 @@ def run(log=print, since=None, limit=None, now=None, src=None, replay=None, legs
     import run_short as S                                      # noqa: E402
     import gate_books as GB                                    # noqa: E402
     import costs as CO                                         # noqa: E402
-    replay = replay or (lambda need: S.replay(need, src=src, log=lambda *a: None)[0])
+    # Лог реплея — СТОРОЖЕВОЙ (`arm_book.guarded`): предел памяти прогона
+    # проверяется на каждой его строке. 20.10 первый прогон шёл с немым
+    # логом, предел внутри пересчёта не проверялся, и книги на сервере
+    # уступали память часами (урок проекта: тяжёлый прогон рядом с циклом
+    # убивает не себя, а соседей — предел и самоостанов в самом прогоне).
+    replay = replay or (lambda need: S.replay(need, src=src, log=log)[0])
     if legs is None:
         legs = S.legs(log=lambda *a: None)
     lo = since or (now - 30 * 86400)
@@ -231,6 +236,7 @@ def run(log=print, since=None, limit=None, now=None, src=None, replay=None, legs
            "hypotheses": []}
     for h in hyps:
         t1 = time.time()
+        bars_memo.clear()                  # бары окна — на гипотезу, не на весь прогон
         pairs = shifted(legs, h, bars_of)
         new_legs = [ng for _g, ng in pairs if ng is not None]
         rep = replay(new_legs) if new_legs else {}

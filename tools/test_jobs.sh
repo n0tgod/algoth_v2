@@ -18,7 +18,7 @@ has() {   # имя, файл, образец → образец обязан н�
 tmp=$(mktemp -d); cd "$tmp" || exit 1
 git init -q .; git config user.email t@t; git config user.name t
 mkdir -p tools research/probe_x jobs .venv/bin
-cp "$SRC/jobs.sh" tools/
+cp "$SRC/jobs.sh" "$SRC/git_guard.sh" tools/
 # Подставные: питон печатает метку, публикация только отмечается.
 printf '#!/bin/sh\nshift 0\necho "ПРОГОН $*"\n' > .venv/bin/python
 printf '#!/bin/sh\necho "ОПУБЛИКОВАНО $1" >> jobs/publish.log\n' \
@@ -147,7 +147,7 @@ pub=$(mktemp -d)
   # фикстура обязана выглядеть как настоящее дерево, а не как минимум,
   # нужный этой проверке.
   mkdir -p tools research/x/out docs jobs/done
-  cp "$SRC/publish.sh" tools/; chmod +x tools/publish.sh
+  cp "$SRC/publish.sh" "$SRC/git_guard.sh" tools/; chmod +x tools/publish.sh
   echo "журнал" > docs/journal.md
   echo "прогон" > research/x/out/run.log
   echo "отчёт" > research/x/out/X-report.md

@@ -101,6 +101,10 @@ if [ "${JOBS_NO_FETCH:-0}" != "1" ]; then
     # старой ссылке `origin/main`, очередь честно не найдёт новых
     # заданий и промолчит. Отказ, неотличимый от тишины, — поэтому он
     # называется словами.
+    # охрана git (20.10): мёртвый замок индекса снимается, живые большие
+    # файлы переживают сведение (`tools/git_guard.sh`)
+    . tools/git_guard.sh
+    stale_lock_clear >> jobs/queue-state.md
     if ! git fetch -q origin main 2>/dev/null; then
         note "origin/main не получен (сеть или доступ) — задания могут быть не видны"
     fi
@@ -115,13 +119,16 @@ if [ "${JOBS_NO_FETCH:-0}" != "1" ]; then
         # Конфликт на генерируемой карте кода — не расхождение работы:
         # её правит хук на обеих сторонах. Он снимается пересборкой, и
         # только после этого очередь имеет право сдаться.
+        big_save
         if { git pull -q --rebase --autostash origin main 2>/dev/null \
              || { tools/resolve_maps.sh >/dev/null 2>&1 \
                   && GIT_EDITOR=true git rebase --continue >/dev/null 2>&1; }; } \
            && git push -q origin main 2>/dev/null; then
+            big_restore >> jobs/queue-state.md
             note "дерево расходилось с origin/main: застрявший коммит опубликован"
         else
             git rebase --abort 2>/dev/null || true
+            big_restore >> jobs/queue-state.md
             note "дерево разошлось с origin/main и свести не вышло — не трогаю"
             exit 0
         fi

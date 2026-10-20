@@ -15,6 +15,9 @@ set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 msg="${1:-артефакты прогона}"
+# охрана git: мёртвый замок индекса и живые большие файлы (20.10)
+. "$(dirname "$0")/git_guard.sh"
+stale_lock_clear | tee -a jobs/queue-state.md
 branch="$(git rev-parse --abbrev-ref HEAD)"
 
 # --ignore-removal, а не -A: команда публикации не вправе записывать
@@ -189,7 +192,12 @@ for attempt in 1 2 3 4; do
   # unstaged changes». Публикация тогда оставляла коммит локально, а
   # очередь после этого замирала навсегда — она отказывается работать
   # на разошедшемся дереве. Один флаг убирает всю эту цепочку.
-  if ! git pull --rebase --autostash origin "$branch"; then
+  stale_lock_clear | tee -a jobs/queue-state.md
+  big_save
+  pulled=0
+  git pull --rebase --autostash origin "$branch" && pulled=1
+  big_restore | tee -a jobs/queue-state.md
+  if [ "$pulled" != 1 ]; then
     if ! finish_rebase; then
       git rebase --abort 2>/dev/null || true
       echo "ветка разошлась и свести автоматически не вышло."

@@ -628,7 +628,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L191 `report(s)`
 - L217 `main(argv=None)`
 
-## research/ai_gate/entry_shift.py · 331 строк
+## research/ai_gate/entry_shift.py · 337 строк
 
 Новая точка входа из пути цены (спека 19 §11.7, U4): проверка сдвигом.
 
@@ -650,8 +650,8 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L133 `book_chain(recs, log, now)` — Те же правила после реплея, что у книги: возраст имени, охрана рынком.
 - L143 `per_signal(pairs, recs_by_key, halves_at)` — Средний нетто на маржу на сигнал (не сработавший — 0) и на сработавший, по половинам.
 - L164 `run(log=print, since=None, limit=None, now=None, src=None, repl…`
-- L272 `report(r)`
-- L304 `main(argv=None)`
+- L278 `report(r)`
+- L310 `main(argv=None)`
 
 ## research/ai_gate/gate_books.py · 351 строк
 
@@ -10237,6 +10237,14 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L16 `main()`
 
+## tools/git_guard.sh · 62 строк
+
+Охрана git на сервере (20.10): подключается `publish.sh` и `jobs.sh`.
+
+- L20 `stale_lock_clear()`
+- L32 `big_save()`
+- L48 `big_restore()`
+
 ## tools/guard_probe.py · 50 строк
 
 Зонд: что видела охрана рынком — волна прокси-имён с момента входа коротких позиций по часам. Печатает порог,…
@@ -10253,7 +10261,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L17 `REF = ('BTCUSDT', 'DOGEUSDT', 'AMZUUSDT', 'ME…`
 - L21 `main()`
 
-## tools/jobs.sh · 333 строк
+## tools/jobs.sh · 340 строк
 
 Очередь заданий: сессия кладёт задание в git, сервер его выполняет.
 
@@ -10349,11 +10357,11 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L387 `build()`
 - L511 `main(argv)`
 
-## tools/publish.sh · 205 строк
+## tools/publish.sh · 213 строк
 
 Опубликовать артефакты прогона: отчёты и сводки — в git.
 
-- L83 `finish_rebase()` — Конфликт на артефакте разрешается в пользу того, что лежит на диске ЗДЕСЬ, то есть в пользу прогона. Так уже…
+- L86 `finish_rebase()` — Конфликт на артефакте разрешается в пользу того, что лежит на диске ЗДЕСЬ, то есть в пользу прогона. Так уже…
 
 ## tools/publish_doctor.py · 225 строк
 
