@@ -58,3 +58,16 @@ open_hours: 485 строк
 открыта GRVTUSDT 10-20 07:00 mark_usd -0.6061 marks []
 all {'n': 285, 'usd': 232.71, 'open_dd': -53.95, 'open_dd_share': -0.1626}
 конец: 2026-10-20T08:01:12Z, код 0
+ВНИМАНИЕ: 2026-10-20T08:01:13Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/watch/pair.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nb75.done |  1 +
+ jobs/done/nb75.log  | 60 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/done/nb76.done |  1 +
+ jobs/done/nb76.log  | 39 ++++++++++++++++++++++++++++++++++
+ jobs/poke.log       |  4 ++++
+ jobs/queue-state.md |  2 +-
+ 6 files changed, 106 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   e61023deb..52b5fb2ba  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
