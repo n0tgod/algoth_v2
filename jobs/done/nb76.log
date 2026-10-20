@@ -1,0 +1,39 @@
+== задание nb76 ==
+строка: run research/dca_paper/peek_open_dd.py optimal_h_ai 1000
+начало: 2026-10-20T08:01:12Z
+запускаю: .venv/bin/python research/dca_paper/peek_open_dd.py optimal_h_ai 1000
+артефакт DCA-short.json, посчитан 2026-10-20 07:55
+{'open_dd': -1.01, 'open_dd_share': -0.001, 'open_dd_at': 1792472400}
+open_hours: 1 строк
+   10-20 05:00 [-1.01, -0.00101]
+открыта CTUSDT 10-19 09:00 mark_usd 3.5975 marks []
+открыта DGAIUSDT 10-19 09:00 mark_usd -0.0537 marks []
+открыта BTWUSDT 10-19 11:00 mark_usd 8.0593 marks []
+открыта 10000NEXUSDT 10-19 11:00 mark_usd 1.6353 marks []
+открыта XNYUSDT 10-19 15:00 mark_usd 0.0763 marks []
+открыта BRUSDT 10-19 16:00 mark_usd -4.5112 marks []
+открыта STONKUSDT 10-19 16:00 mark_usd 0.43 marks []
+открыта CTRUSDT 10-19 17:00 mark_usd 0.9208 marks []
+открыта BATUSDT 10-19 21:00 mark_usd 0.0185 marks []
+открыта PHAUSDT 10-20 00:00 mark_usd -0.4192 marks []
+открыта LONGXIAUSDT 10-20 04:00 mark_usd 0.4434 marks []
+открыта GRVTUSDT 10-20 07:00 mark_usd -0.0879 marks []
+all {'n': 13, 'usd': -13.9, 'open_dd': -1.01, 'open_dd_share': -0.001}
+конец: 2026-10-20T08:01:12Z, код 0
+git add отказал: fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+git add сказал: fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+нечего публиковать: в индекс не попало ни одного файла.
+что git видит в артефактах (?? не отслеживается, !! погашен
+.gitignore, пусто — файла нет вовсе):
