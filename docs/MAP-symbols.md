@@ -761,6 +761,14 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L19 `ts(t)`
 - L23 `main()`
 
+## research/ai_gate/peek_dossier.py · 50 строк
+
+Одно досье ветки ai_news из записи (только чтение, 20.10): какие поля и в каком виде видит судья — для катало…
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L14 `leaves(d, pre='')`
+- L22 `main()`
+
 ## research/ai_gate/trade_path.py · 134 строк
 
 Путь цены ВНУТРИ сделки числами (спека 19 §11.2, этап U0).
