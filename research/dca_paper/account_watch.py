@@ -44,6 +44,23 @@ def pos_key(p):
     return f"{p.get('sym')}:{int(float(p.get('at') or 0))}"
 
 
+CLOSED_KEEP_S = 14 * 86400     # закрытые в состоянии — за 14 суток входа: дольше 72 ч позиция не живёт
+
+
+def _recent(closed):
+    """Закрытые за окно `CLOSED_KEEP_S` от самого свежего входа ячейки.
+
+    Состояние «все закрытые за всю историю» есть O(запись): у общего счёта
+    оно доросло до 5 МБ (20.10) и перестало публиковаться. Новая закрытая
+    всегда свежая (вход не старше срока); старый ключ, всплывший заново, —
+    пересчёт истории, и его ловит сверка итога (`recount`)."""
+    if not closed:
+        return {}
+    ats = {k: float(k.rsplit(":", 1)[1]) for k in closed}
+    edge = max(ats.values()) - CLOSED_KEEP_S
+    return {k: v for k, v in closed.items() if ats[k] >= edge}
+
+
 def slim(s):
     """Слим-состояние свода: по ячейке — итог, закрытые хвоста, открытые."""
     out = {}
@@ -52,7 +69,7 @@ def slim(s):
         a = b.get("all") or {}
         o = b.get("open") or {}
         out[cell] = {"n": a.get("n"), "usd": a.get("usd"),
-                     "closed": dict(closed_all.get(cell) or {}),
+                     "closed": _recent(dict(closed_all.get(cell) or {})),
                      "open": {pos_key(p): {"sym": p.get("sym"), "at": p.get("at"),
                                            "mark_usd": p.get("mark_usd"), "margin": p.get("margin")}
                               for p in (o.get("positions") or [])}}
@@ -68,7 +85,9 @@ def compare(prev, cur, prev_at, now, family):
         p = prev.get(cell)
         if not p:
             continue
-        new_closed = {k: v for k, v in c["closed"].items() if k not in p["closed"]}
+        p_edge = min((float(k.rsplit(":", 1)[1]) for k in p["closed"]), default=None)
+        new_closed = {k: v for k, v in c["closed"].items() if k not in p["closed"]
+                      and (p_edge is None or float(k.rsplit(":", 1)[1]) >= p_edge or k in p["open"])}
         for k, usd in new_closed.items():
             if k in p["open"]:
                 continue

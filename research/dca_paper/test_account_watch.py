@@ -72,6 +72,11 @@ def test_watch_names_every_jump():
         assert mg["families"]["sit"] is None and mg["errors"] == ["h24: сломалось"], mg
         assert mg["n"] == len(b3["day"]["items"]) and mg["by_kind"]["closed_unseen"] >= 2, mg
         assert all("cell" in x for x in mg["items"])
+    # окно закрытых в состоянии: ключи старше 14 суток от свежего входа не хранятся
+    T = 1_792_400_000.0
+    big = {f"S{i}USDT:{int(T - i * 86400)}": 1.0 for i in range(40)}
+    kept = AW._recent(big)
+    assert len(kept) == 15 and all(float(k.rsplit(":", 1)[1]) >= T - 14 * 86400 for k in kept), len(kept)
     print("ok  слежение: короткая жизнь и «из ниоткуда» различены, пересчёт истории назван суммой, исчезнувшая и поздняя открытые названы")
 
 

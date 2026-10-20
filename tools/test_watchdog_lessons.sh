@@ -17,7 +17,7 @@ fail=0
 run() {  # $1 час UTC, $2 возраст сводки (пусто — нет), $3 занят, $4 флаг обучения
     rm -f "$tmp/ran.log" "$tmp/research/s8_loop/out/train_wait.flag"; rm -rf "$tmp/research/ai_gate"
     if [ -n "$2" ]; then mkdir -p "$tmp/research/ai_gate/out"
-        touch -d "@$(( $(date -u +%s) - $2 ))" "$tmp/research/ai_gate/out/lessons_latest.json"; fi
+        touch -d "@$(( $(date -u +%s) - $2 ))" "$tmp/research/ai_gate/out/lessons.json"; fi
     [ "$4" = 1 ] && echo 1 > "$tmp/research/s8_loop/out/train_wait.flag"
     cat > "$tmp/stubs/date" <<S
 #!/bin/sh

@@ -737,7 +737,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L293 `market_news(items, at_ms, hours=24, cap=10)`
 - L300 `dossier(kind, rec, book, side, at_s, *, px=None, crowd=None, ma…` — Досье для судьи. news=None — ветка без новостей (`ai_plain`): блоков новостей нет вовсе.
 
-## research/ai_gate/lessons.py · 457 строк
+## research/ai_gate/lessons.py · 461 строк
 
 Уроки судьи: предложение моделью, приём ЧИСЛОМ (спека 19 §11.4, U2).
 
@@ -2039,7 +2039,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L68 `build_levels(bars)` — Уровни по последнему бару окна; мало истории — уровней нет.
 - L81 `main()`
 
-## research/dca_paper/account_watch.py · 201 строк
+## research/dca_paper/account_watch.py · 220 строк
 
 Слежение за счётом книг между прогонами (владелец 19.10: «нужно поставить какое-то слежение за счётом, дабы н…
 
@@ -2051,14 +2051,16 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L39 `TOL_ABS = 0.05`
 - L40 `TOL_REL = 0.002`
 - L43 `pos_key(p)`
-- L47 `slim(s)` — Слим-состояние свода: по ячейке — итог, закрытые хвоста, открытые.
-- L62 `compare(prev, cur, prev_at, now, family)` — Находки между двумя слим-состояниями; prev=None — первый срез, находок нет.
-- L112 `_load(path, default)`
-- L120 `check(s, family, now=None, watch_dir=WATCH_DIR, log=print)` — Сверить свод семейства с прошлым, записать состояние и находки. → блок для свода: {at, prev_at, cells, findin…
-- L155 `safe_check(s, family, **kw)` — check(), который не вправе уронить прогон: отказ идёт в свод словами (`error`), а не в тишину — читатель види…
-- L167 `merge(blocks)` — Свести блоки `watch` семейств в один для страницы и приложения: находки суток одним списком (по ячейке читате…
-- L189 `_load_lines(path)`
-- L197 `_count(xs, key)`
+- L47 `CLOSED_KEEP_S = 14 * 86400`
+- L50 `_recent(closed)` — Закрытые за окно `CLOSED_KEEP_S` от самого свежего входа ячейки.
+- L64 `slim(s)` — Слим-состояние свода: по ячейке — итог, закрытые хвоста, открытые.
+- L79 `compare(prev, cur, prev_at, now, family)` — Находки между двумя слим-состояниями; prev=None — первый срез, находок нет.
+- L131 `_load(path, default)`
+- L139 `check(s, family, now=None, watch_dir=WATCH_DIR, log=print)` — Сверить свод семейства с прошлым, записать состояние и находки. → блок для свода: {at, prev_at, cells, findin…
+- L174 `safe_check(s, family, **kw)` — check(), который не вправе уронить прогон: отказ идёт в свод словами (`error`), а не в тишину — читатель види…
+- L186 `merge(blocks)` — Свести блоки `watch` семейств в один для страницы и приложения: находки суток одним списком (по ячейке читате…
+- L208 `_load_lines(path)`
+- L216 `_count(xs, key)`
 
 ## research/dca_paper/agree_book.py · 486 строк
 
@@ -10531,7 +10533,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 854 строк
+## tools/watchdog_book.sh · 855 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 

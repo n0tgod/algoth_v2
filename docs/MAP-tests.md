@@ -1134,7 +1134,7 @@
 - L55 `test_calibration_pair()`
 - L75 `test_report_renders()`
 
-## research/dca_paper/test_account_watch.py · 80 строк
+## research/dca_paper/test_account_watch.py · 85 строк
 
 Слежение за счётом: первый срез молчит; позиция, прожившая меньше такта, названа честно; закрытая без открыты…
 

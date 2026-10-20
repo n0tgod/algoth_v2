@@ -440,11 +440,15 @@ def main(argv=None):
     import arm_book as AB                                     # noqa: E402
     s = run(log=AB.guarded(print, limit=2500), dry=a.dry)
     os.makedirs(OUT, exist_ok=True)
-    with open(LATEST, "w", encoding="utf-8") as f:
-        json.dump({k: v for k, v in s.items() if k != "report"}, f, ensure_ascii=False)
+    # Сухой прогон ничего не пишет: по свежести файлов сторож судит, была ли
+    # недельная сводка (20.10 сухой прогон отложил бы первую настоящую).
+    if not a.dry:
+        with open(LATEST, "w", encoding="utf-8") as f:
+            json.dump({k: v for k, v in s.items() if k != "report"}, f, ensure_ascii=False)
+        if s.get("report"):
+            with open(REPORT, "w", encoding="utf-8") as f:
+                f.write(s["report"])
     if s.get("report"):
-        with open(REPORT, "w", encoding="utf-8") as f:
-            f.write(s["report"])
         print(s["report"])
     if s.get("error"):
         print(s["error"])
