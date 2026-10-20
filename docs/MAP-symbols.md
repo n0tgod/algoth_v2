@@ -2738,6 +2738,13 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L26 `tail(path, n, grep=None)`
 - L37 `main()`
 
+## research/dca_paper/peek_open_dd.py · 43 строк
+
+Почасовой ряд открытых у ячейки (20.10): из чего сложена «просадка открытых». Владелец: у «AI judge · both» $…
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L18 `main(argv)`
+
 ## research/dca_paper/pick_rule.py · 340 строк
 
 Правило выбора позиций при полной кассе: кто получает место, когда кандидатов больше, чем денег.
