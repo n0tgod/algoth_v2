@@ -230,6 +230,7 @@ class App:
 
     # ------------------------------------------------------------ судья спеки 19
     AI_DIR = os.path.join(ROOT, "research", "ai_gate", "out", "decisions")
+    AI_PATHS = os.path.join(ROOT, "research", "ai_gate", "out", "reviews")
     NEWS_REC = os.path.join(ROOT, "research", "news", "out", "record")
 
     def ai_log(self, acc, day=None, limit=400):
@@ -286,6 +287,14 @@ class App:
         held = [e for e in by.values() if e.get("decision") == "held"]
         for e in held:
             by.pop(e["key"], None)
+        # Путь цены внутри сделки (спека 19 §11.2, U0) — по ключу решения из
+        # разбора путей; у открытой или ещё не разобранной — поля нет.
+        paths = self._ai_paths()
+        for e in by.values():
+            pth = paths.get(e.get("key"))
+            if pth:
+                e["path"] = dict(pth.get("path") or {}, words=pth.get("words_en"), exit=pth.get("exit"),
+                                 exit_ts=pth.get("exit_ts"), pnl_frac=pth.get("pnl_frac"))
         entries = sorted(by.values(), key=lambda e: (-(e.get("t") or 0), e.get("sym") or ""))[:int(limit)]
         watch = [{"t": r.get("t"), "book": r.get("book"), "side": r.get("side"), "sym": r.get("sym"),
                   "at": r.get("at"), "decision": r.get("decision"), "confidence": r.get("confidence"),
@@ -305,6 +314,28 @@ class App:
                    "heartbeats": sum(1 for r in rows if r.get("kind") == "heartbeat"),
                    "cost_usd": round(sum(float(r.get("cost_usd") or 0) for r in rows), 4)}
         return 200, {"days": days[-14:], "day": day, "summary": summary, "entries": entries, "watch": watch[:200]}
+
+    def _ai_paths(self):
+        """ключ решения → строка разбора пути (все файлы: позиция закрывается
+        позже дня решения, и файл дня выхода — не файл дня решения)."""
+        out = {}
+        try:
+            names = sorted(f for f in os.listdir(self.AI_PATHS) if f.startswith("paths-") and f.endswith(".jsonl"))
+        except OSError:
+            return out
+        for n in names[-21:]:
+            try:
+                with open(os.path.join(self.AI_PATHS, n), encoding="utf-8") as f:
+                    for line in f:
+                        try:
+                            r = json.loads(line)
+                        except ValueError:
+                            continue
+                        if r.get("key"):
+                            out[r["key"]] = r
+            except OSError:
+                continue
+        return out
 
     def _news_titles(self, day):
         """id новости → заголовок по записи сборщика за сутки решения и двое до них."""

@@ -768,6 +768,30 @@ if ! pgrep -f "ai_gate/gate_books.py" >/dev/null \
     fi
 fi
 
+# --- пути сделок судьи (спека 19 §11.2, U0) ---------------------------
+# Раз в час, минута ≥ 20, когда разбор старше 55 мин; идущий не
+# дублируется; при свежем флаге ожидания обучения не стартует. Читает бары
+# записи закрытых позиций судимых книг; модели не зовёт.
+PATHS=research/ai_gate/out/paths_latest.json
+PATHS_LOG=research/ai_gate/out/paths.log
+if ! pgrep -f "ai_gate/path_review.py" >/dev/null \
+   && { [ ! -f research/s8_loop/out/train_wait.flag ] \
+        || [ -n "$(find research/s8_loop/out/train_wait.flag -mmin +60 2>/dev/null)" ]; }; then
+    pr_age=999999999
+    if [ -f "$PATHS" ]; then
+        pr_ts=$(date -u -r "$PATHS" +%s 2>/dev/null || echo 0)
+        [ "$pr_ts" -gt 0 ] && pr_age=$(( $(date -u +%s) - pr_ts ))
+    fi
+    pr_mm=$(date -u +%M | sed 's/^0//')
+    if [ "${pr_mm:-0}" -ge 20 ] && [ "$pr_age" -gt 3300 ]; then
+        mkdir -p "$(dirname "$PATHS_LOG")"
+        echo "[$(now)] пути сделок судьи: разбор ${pr_age} с назад — прогон"
+        setsid nohup bash -c "
+            nice -n 15 .venv/bin/python research/ai_gate/path_review.py \
+                >> $PATHS_LOG 2>&1" &
+    fi
+fi
+
 # --- очередь заданий (docs/00-INDEX.md) -------------------------------
 # Ассистент кладёт задание файлом в git, сервер его выполняет: прямого
 # доступа к серверу у ассистента нет (наружу открыты только 80 и 443),

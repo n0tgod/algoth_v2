@@ -210,10 +210,17 @@ def test_ai_log_for_operator_groups_entries_and_names_news():
         acc = _login(app)
         assert app.ai_log({"role": "user", "id": "x"})[0] == 403, "только оператору"
         app.AI_DIR = os.path.join(tmp, "dec"); app.NEWS_REC = os.path.join(tmp, "news")
+        app.AI_PATHS = os.path.join(tmp, "paths")
         st, r = app.ai_log(acc)
         assert st == 200 and r["entries"] == [] and "not written" in r["error"]
-        os.makedirs(app.AI_DIR); os.makedirs(app.NEWS_REC)
+        os.makedirs(app.AI_DIR); os.makedirs(app.NEWS_REC); os.makedirs(app.AI_PATHS)
         k1, k2 = "optimal_h|QUSDT|1792368000", "optimal_h|AIOZUSDT|1792368000"
+        # путь сделки (U0) — файл ДНЯ ВЫХОДА, не дня решения
+        with open(os.path.join(app.AI_PATHS, "paths-2026-10-20.jsonl"), "w") as f:
+            f.write(json.dumps({"key": k2, "kind": "path", "exit": "срок", "exit_ts": 1792454400, "pnl_frac": 0.05,
+                                "path": {"mae": 0.031, "mae_h": 1.5, "mfe": 0.08, "shape": "against_then_for",
+                                         "first_touch": "none"},
+                                "words": "сначала против, потом за", "words_en": "against, then in favour"}) + "\n")
         rows = [
             {"t": 1792368300, "kind": "entry", "branch": "ai_news", "key": k1, "book": "optimal_h", "side": "short",
              "sym": "QUSDT", "at": 1792368000, "decision": "skip", "confidence": 0.6, "reasons": ["75 % short"],
@@ -251,6 +258,10 @@ def test_ai_log_for_operator_groups_entries_and_names_news():
         sm = r["summary"]
         assert (sm["entries"], sm["skipped"], sm["opened"], sm["plain_disagrees"], sm["closes"], sm["heartbeats"]) == (2, 1, 1, 1, 1, 1)
         assert sm["held"] == 1 and len(r["entries"]) == 2, "повтор по держимому имени — числом, не строкой"
+        aioz = next(e for e in r["entries"] if e["sym"] == "AIOZUSDT")
+        assert aioz["path"]["shape"] == "against_then_for" and aioz["path"]["words"] == "against, then in favour" \
+            and aioz["path"]["exit"] == "срок" and aioz["path"]["pnl_frac"] == 0.05, aioz.get("path")
+        assert "path" not in q, "позиция без разбора — поля нет, не пустой путь"
         assert app.ai_log(acc, "1999-01-01")[1]["day"] == "2026-10-19", "неизвестный день — последний"
     print("ok  журнал судьи оператору: вход одной строкой (с новостями, без, повтор), сторож, заголовки новостей, итоги")
 
