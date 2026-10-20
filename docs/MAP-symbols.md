@@ -752,19 +752,19 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L19 `ts(t)`
 - L23 `main()`
 
-## research/ai_gate/trade_path.py · 131 строк
+## research/ai_gate/trade_path.py · 134 строк
 
 Путь цены ВНУТРИ сделки числами (спека 19 §11.2, этап U0).
 
-- L24 `HOUR = 3600.0`
-- L27 `SHAPE_STRAIGHT = 1.0 / 3.0` — Форма пути. «Сразу за»: ход против не больше трети хода за; «сразу против» — зеркально; иначе порядок крайнос…
-- L30 `SPIKE_MIN = 15` — Спайк: худший ход против достигнут не позже SPIKE_MIN минут от входа и он не меньше SPIKE_MULT × |итогового х…
-- L31 `SPIKE_MULT = 2.0`
-- L34 `_dir(side)`
-- L38 `metrics(bars, side, entry_px, at, exit_ts, take_px=None, floor_…` — Меры пути по барам `[t, o, h, l, c, v]` в окне [at, exit_ts].
-- L102 `SHAPE_RU = {'straight_for': 'сразу за', 'straight_…`
-- L105 `SHAPE_EN = {'straight_for': 'straight in favour', …`
-- L110 `words(m, lang='ru')` — Одной строкой для досье и приложения — из чисел, не рядом с ними.
+- L27 `HOUR = 3600.0`
+- L30 `SHAPE_STRAIGHT = 1.0 / 3.0` — Форма пути. «Сразу за»: ход против не больше трети хода за; «сразу против» — зеркально; иначе порядок крайнос…
+- L33 `SPIKE_MIN = 15` — Спайк: худший ход против достигнут не позже SPIKE_MIN минут от входа и он не меньше SPIKE_MULT × |итогового х…
+- L34 `SPIKE_MULT = 2.0`
+- L37 `_dir(side)`
+- L41 `metrics(bars, side, entry_px, at, exit_ts, take_px=None, floor_…` — Меры пути по барам `[t, o, h, l, c, v]` в окне [at, exit_ts].
+- L105 `SHAPE_RU = {'straight_for': 'сразу за', 'straight_…`
+- L108 `SHAPE_EN = {'straight_for': 'straight in favour', …`
+- L113 `words(m, lang='ru')` — Одной строкой для досье и приложения — из чисел, не рядом с ними.
 
 ## research/asset_groups/check_coverage.py · 180 строк
 
