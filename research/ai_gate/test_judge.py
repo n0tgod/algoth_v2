@@ -101,8 +101,37 @@ def test_ask_paths():
     print("ok  вызов: модель, усилие, схема и запасная модель заданы; отказ и ответ вне схемы — по умолчанию с пометкой")
 
 
+def test_review():
+    good = {"verdict": "wrong", "confidence": 0.7, "failed": "crowd_positioning", "saved": "",
+            "lesson": {"when": "bybit L/S < 0.3 and 7d > +300 %", "do": "skip", "why": "squeeze running"},
+            "notes": "x" * 500}
+    v, why = J.parse_review("end_turn", json.dumps(good))
+    assert why is None and v["verdict"] == "wrong" and v["lesson"]["do"] == "skip" and len(v["notes"]) == 400
+    v2, _ = J.parse_review("end_turn", json.dumps(dict(good, lesson={"when": "", "do": "", "why": ""})))
+    assert v2["lesson"] is None, "пустой урок — None, не пустые строки"
+    assert J.parse_review("end_turn", '{"verdict": "maybe"}')[1] == "вердикт вне словаря"
+    assert J.parse_review("refusal", "")[1].startswith("отказ модели")
+    d = J.review_dossier({"symbol": "X", "crowd_positioning": {"bybit": 0.3}}, {"decision": "open", "confidence": 0.6,
+                         "reasons": ["calm"], "news_used": [], "cost_usd": 0.02, "request_id": "r"},
+                         {"exit": "пол", "pnl_on_margin": -0.44}, {"mae": 0.1})
+    assert d["kind"] == "review" and d["my_decision"] == {"decision": "open", "confidence": 0.6, "reasons": ["calm"], "news_used": []}
+    assert "cost_usd" not in json.dumps(d["my_decision"]) and d["dossier_at_decision"]["crowd_positioning"] == {"bybit": 0.3}
+    fc = FakeClient(_resp(json.dumps(good)))
+    row = J.ask_review(fc, d)
+    kw = fc.calls[0]
+    assert kw["system"] == J.SYSTEM_REVIEW and kw["output_config"]["format"]["schema"]["properties"]["verdict"]["enum"] == ["right", "wrong", "unclear"]
+    assert row["kind"] == "review" and row["verdict"] == "wrong" and row["no_verdict"] is None and row["cost_usd"] > 0
+    r2 = J.ask_review(FakeClient(_resp("", stop="refusal")), d)
+    assert r2["verdict"] == "unclear" and r2["no_verdict"].startswith("отказ модели"), "отказ — «неясно» с пометкой"
+    # прежняя дорога входа не изменилась
+    r3 = J.ask(FakeClient(_resp('{"decision":"skip","confidence":0.8,"reasons":[],"news_used":[]}')), "entry", {})
+    assert r3["decision"] == "skip" and r3["no_verdict"] is None
+    print("ok  разбор: вердикт по словарю, урок пустой — None, досье разбора без цены и служебного; отказ — «неясно»")
+
+
 if __name__ == "__main__":
     test_parse_and_cost()
     test_dossier_moves_news()
     test_ask_paths()
-    print("\nвсе 3 проверки прошли")
+    test_review()
+    print("\nвсе 4 проверки прошли")

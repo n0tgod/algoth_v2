@@ -242,7 +242,11 @@ def test_ai_log_for_operator_groups_entries_and_names_news():
              "book": "optimal_h", "side": "short", "sym": "QUSDT", "at": 1792371600, "decision": "held",
              "held_by": k1, "cost_usd": 0.0},
             {"t": 1792372000, "kind": "entry", "branch": "ai_plain", "key": "optimal_h|QUSDT|1792371600",
-             "decision": "held", "held_by": k1, "cost_usd": 0.0}]
+             "decision": "held", "held_by": k1, "cost_usd": 0.0},
+            # разбор судьёй своего решения (U1) — в журнале дня разбора
+            {"t": 1792460000, "kind": "review", "branch": "ai_news", "key": k2, "decision": "open", "verdict": "wrong",
+             "confidence": 0.7, "failed": "crowd_positioning", "saved": "", "lesson": {"when": "L/S < 0.3", "do": "skip", "why": "squeeze"},
+             "notes": "n", "no_verdict": None, "dossier_found": True, "cost_usd": 0.02}]
         with open(os.path.join(app.AI_DIR, "decisions-2026-10-19.jsonl"), "w") as f:
             f.write("\n".join(json.dumps(x) for x in rows) + "\n")
         with open(os.path.join(app.NEWS_REC, "news-2026-10-18.jsonl"), "w") as f:
@@ -262,6 +266,9 @@ def test_ai_log_for_operator_groups_entries_and_names_news():
         assert aioz["path"]["shape"] == "against_then_for" and aioz["path"]["words"] == "against, then in favour" \
             and aioz["path"]["exit"] == "срок" and aioz["path"]["pnl_frac"] == 0.05, aioz.get("path")
         assert "path" not in q, "позиция без разбора — поля нет, не пустой путь"
+        assert aioz["review"]["verdict"] == "wrong" and aioz["review"]["lesson"]["do"] == "skip" and "review" not in q
+        assert sm["reviews"] == 1 and sm["review_verdicts"] == {"right": 0, "wrong": 1, "unclear": 0}, sm
+        assert abs(sm["cost_usd"] - (0.05 + 0.01 + 0.013 + 0.02)) < 1e-9, "цена дня включает разборы"
         assert app.ai_log(acc, "1999-01-01")[1]["day"] == "2026-10-19", "неизвестный день — последний"
     print("ok  журнал судьи оператору: вход одной строкой (с новостями, без, повтор), сторож, заголовки новостей, итоги")
 

@@ -12,6 +12,18 @@
 Позиция без баров в окне — строка с `shape: no_bars`: «не измерено»
 записано, а не пропущено молча. Нет сводки часа у `wave.Market` — ход
 рынка None.
+
+**Разбор судьёй (§11.3, U1).** Сделка, по которой ветка `ai_news`
+выносила решение моделью (open/skip с вердиктом), после разбора пути
+отдаётся модели ещё раз: досье на момент входа как было (запись
+`out/record/dossiers-*.jsonl`), решение с причинами, исход и путь — и
+модель пишет, было ли решение верным по тогдашним данным, какой критерий
+подвёл или спас, и один проверяемый урок либо пустой («одного случая
+мало»). Строка `kind: review` ложится в журнал решений того дня, когда
+разбор сделан, — тем же забором суточной цены, что входы
+(`gate_run.BUDGET_DAY_USD`): разбор не вправе съесть деньги судьи. За
+проход — не больше `REVIEW_CAP` разборов, старые первыми; сделка без
+досье в записи разбирается без него, и это записано (`dossier_found`).
 """
 import argparse
 import glob
@@ -32,6 +44,73 @@ OUT = os.path.join(HERE, "out")
 REVIEWS = os.path.join(OUT, "reviews")
 LATEST = os.path.join(OUT, "paths_latest.json")
 NOMINAL_MARGIN = 25.0          # уровни книги при номинальной марже: тиры ставки на малых нотионалах одни
+REVIEW_CAP = 40                # разборов за проход: первый проход не съедает сутки судьи разом
+
+
+def load_dossiers(keys):
+    """ключ → досье ветки ai_news на момент входа из записи (нет записи — нет ключа)."""
+    want, out = set(keys), {}
+    for p in sorted(glob.glob(os.path.join(G.RECORD, "dossiers-*.jsonl"))):
+        try:
+            with open(p, encoding="utf-8") as f:
+                for line in f:
+                    if '"ai_news"' not in line:
+                        continue
+                    try:
+                        r = json.loads(line)
+                    except ValueError:
+                        continue
+                    if r.get("branch") == "ai_news" and r.get("key") in want and r.get("dossier"):
+                        out[r["key"]] = r["dossier"]
+        except OSError:
+            continue
+    return out
+
+
+def reviews(paths, client, log, now, dry=False, cap=REVIEW_CAP):
+    """Разбор судьёй закрытых сделок с решением ai_news, ещё не разобранных."""
+    prev = G.read_decisions()
+    done = {r["key"] for r in prev if r.get("kind") == "review"}
+    dec = {r["key"]: r for r in prev if r.get("kind") == "entry" and r.get("branch") == "ai_news"}
+    todo = [p for p in sorted(paths, key=lambda x: float(x["exit_ts"]))
+            if p["key"] not in done and p["key"] in dec
+            and dec[p["key"]].get("decision") in ("open", "skip") and not dec[p["key"]].get("no_verdict")]
+    todo = todo[:cap]
+    spent = G.spent_today(prev, now)
+    doss = load_dossiers([p["key"] for p in todo])
+    rows, st = [], {"todo": len(todo), "done": 0, "no_dossier": 0, "budget_stop": 0, "cost": 0.0}
+    for p in todo:
+        e = dec[p["key"]]
+        outcome = {"exit": p.get("exit"), "pnl_on_margin": p.get("pnl_frac"),
+                   "lived_hours": (p.get("path") or {}).get("life_h"),
+                   "closed_utc": time.strftime("%Y-%m-%d %H:%M", time.gmtime(float(p["exit_ts"])))}
+        d = G.J.review_dossier(doss.get(p["key"]) or {"missing": "dossier not recorded"}, e, outcome,
+                               dict(p.get("path") or {}, words=p.get("words_en")))
+        if p["key"] not in doss:
+            st["no_dossier"] += 1
+        if client is None or dry:
+            res = {"verdict": "unclear", "no_verdict": "сухой прогон" if dry else "ключа нет", "model": G.J.MODEL}
+        elif spent >= G.BUDGET_DAY_USD:
+            res = {"verdict": "unclear", "no_verdict": "бюджет суток", "model": G.J.MODEL}
+            st["budget_stop"] += 1
+        else:
+            res = G.J.ask_review(client, d)
+            spent += res.get("cost_usd") or 0
+            st["cost"] += res.get("cost_usd") or 0
+        row = {"t": now, "kind": "review", "branch": "ai_news", "key": p["key"], "book": p["book"], "sym": p["sym"],
+               "side": p.get("side"), "at": p["at"], "exit_ts": p["exit_ts"], "exit": p.get("exit"),
+               "pnl_frac": p.get("pnl_frac"), "decision": e.get("decision"), "dossier_found": p["key"] in doss,
+               **{f: res.get(f) for f in ("verdict", "confidence", "failed", "saved", "lesson", "notes", "no_verdict",
+                                          "served_model", "usage", "cost_usd", "latency_s", "request_id",
+                                          "prompt_v", "model", "effort")}}
+        rows.append(row)
+        st["done"] += 1
+        log(f"разбор {p['key']}: решение {e.get('decision')} → {row['verdict']}"
+            + (f" ({row['no_verdict']})" if row.get("no_verdict") else "")
+            + (f"; урок: {row['lesson']['when']} → {row['lesson']['do']}" if row.get("lesson") else ""))
+    if rows:
+        G.write_rows(rows)
+    return st
 
 
 def read_paths(days=None):
@@ -79,7 +158,7 @@ def review(rec, book, src, mkt, R):
             "path": m, "words": TP.words(m), "words_en": TP.words(m, "en")}
 
 
-def run(log=print, now=None, src=None, mkt=None, books=None):
+def run(log=print, now=None, src=None, mkt=None, books=None, client=None, dry=False, do_review=True):
     t0 = time.time()
     now = now or time.time()
     import rules as R                                         # noqa: E402
@@ -123,6 +202,16 @@ def run(log=print, now=None, src=None, mkt=None, books=None):
     if new:
         write_paths(new)
     allp = read_paths()
+    rv = None
+    if do_review:
+        key = G.J.read_key()
+        if client is None and key and not dry:
+            client = G.J.make_client(key)
+        try:
+            rv = reviews(allp, client, log, now, dry=dry)
+        except Exception as e:                                # noqa: BLE001
+            rv = {"error": f"{type(e).__name__}: {e}"[:200]}
+            log(f"разбор судьёй не прошёл: {rv['error']}")
     tot = {"n": len(allp), "no_bars": sum(1 for r in allp if r["path"].get("shape") == "no_bars"),
            "by_shape": {}, "by_touch": {}, "by_exit": {}}
     for r in allp:
@@ -130,25 +219,26 @@ def run(log=print, now=None, src=None, mkt=None, books=None):
                          ("by_exit", r.get("exit"))):
             tot[key][str(fld)] = tot[key].get(str(fld), 0) + 1
     s = {"computed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)), "secs": round(time.time() - t0, 1),
-         "last_pass": stats, "total": tot}
+         "last_pass": stats, "total": tot, "reviews": rv}
     with open(LATEST, "w", encoding="utf-8") as f:
         json.dump(s, f, ensure_ascii=False)
     log(f"разбор путей: закрытых {stats['closed']}, новых {stats['new']} (без баров {stats['no_bars']}); "
-        f"всего {tot['n']}; {s['secs']} с")
+        f"всего {tot['n']}; разборов судьёй {(rv or {}).get('done')} (${(rv or {}).get('cost', 0):.3f}); {s['secs']} с")
     return s
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-publish", action="store_true")
+    ap.add_argument("--dry", action="store_true", help="без вызовов модели")
     a = ap.parse_args(argv)
     try:
         sys.stdout.reconfigure(line_buffering=True)
     except Exception:                                        # noqa: BLE001
         pass
     import arm_book as AB                                     # noqa: E402
-    s = run(log=AB.guarded(print, limit=2500))
-    if not a.no_publish and not s.get("error") and (s.get("last_pass") or {}).get("new"):
+    s = run(log=AB.guarded(print, limit=2500), dry=a.dry)
+    if not a.no_publish and not s.get("error") and ((s.get("last_pass") or {}).get("new") or (s.get("reviews") or {}).get("done")):
         subprocess.run([os.path.join(ROOT, "tools", "publish.sh"), "пути сделок судьи"], cwd=ROOT, check=False)
     return 0 if not s.get("error") else 1
 

@@ -290,11 +290,19 @@ class App:
         # Путь цены внутри сделки (спека 19 §11.2, U0) — по ключу решения из
         # разбора путей; у открытой или ещё не разобранной — поля нет.
         paths = self._ai_paths()
+        # Разбор судьёй своего решения (§11.3, U1) — строка `kind: review` в
+        # журнале того дня, когда разбор сделан (позже дня решения): индекс
+        # по всем дням, как у путей.
+        revs = self._ai_reviews(names)
         for e in by.values():
             pth = paths.get(e.get("key"))
             if pth:
                 e["path"] = dict(pth.get("path") or {}, words=pth.get("words_en"), exit=pth.get("exit"),
                                  exit_ts=pth.get("exit_ts"), pnl_frac=pth.get("pnl_frac"))
+            rv = revs.get(e.get("key"))
+            if rv:
+                e["review"] = {k: rv.get(k) for k in ("verdict", "confidence", "failed", "saved", "lesson", "notes",
+                                                      "no_verdict", "dossier_found", "t", "cost_usd")}
         entries = sorted(by.values(), key=lambda e: (-(e.get("t") or 0), e.get("sym") or ""))[:int(limit)]
         watch = [{"t": r.get("t"), "book": r.get("book"), "side": r.get("side"), "sym": r.get("sym"),
                   "at": r.get("at"), "decision": r.get("decision"), "confidence": r.get("confidence"),
@@ -310,10 +318,32 @@ class App:
                    "plain_disagrees": sum(1 for e in judged if (e.get("plain") or {}).get("decision")
                                           and e["plain"]["decision"] != e["decision"]),
                    "watch_calls": len(watch),
+                   "reviews": sum(1 for r in rows if r.get("kind") == "review"),
+                   "review_verdicts": {v: sum(1 for r in rows if r.get("kind") == "review" and r.get("verdict") == v
+                                              and not r.get("no_verdict")) for v in ("right", "wrong", "unclear")},
                    "closes": sum(1 for w in watch if w["decision"] == "close" and not w.get("no_verdict")),
                    "heartbeats": sum(1 for r in rows if r.get("kind") == "heartbeat"),
                    "cost_usd": round(sum(float(r.get("cost_usd") or 0) for r in rows), 4)}
         return 200, {"days": days[-14:], "day": day, "summary": summary, "entries": entries, "watch": watch[:200]}
+
+    def _ai_reviews(self, names):
+        """ключ решения → строка разбора судьёй (последние 21 день журнала)."""
+        out = {}
+        for n in names[-21:]:
+            try:
+                with open(os.path.join(self.AI_DIR, n), encoding="utf-8") as f:
+                    for line in f:
+                        if '"review"' not in line:
+                            continue
+                        try:
+                            r = json.loads(line)
+                        except ValueError:
+                            continue
+                        if r.get("kind") == "review" and r.get("key"):
+                            out[r["key"]] = r
+            except OSError:
+                continue
+        return out
 
     def _ai_paths(self):
         """ключ решения → строка разбора пути (все файлы: позиция закрывается
