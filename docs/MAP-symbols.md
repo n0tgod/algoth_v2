@@ -628,7 +628,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L191 `report(s)`
 - L217 `main(argv=None)`
 
-## research/ai_gate/entry_shift.py · 319 строк
+## research/ai_gate/entry_shift.py · 331 строк
 
 Новая точка входа из пути цены (спека 19 §11.7, U4): проверка сдвигом.
 
@@ -650,8 +650,8 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L133 `book_chain(recs, log, now)` — Те же правила после реплея, что у книги: возраст имени, охрана рынком.
 - L143 `per_signal(pairs, recs_by_key, halves_at)` — Средний нетто на маржу на сигнал (не сработавший — 0) и на сработавший, по половинам.
 - L164 `run(log=print, since=None, limit=None, now=None, src=None, repl…`
-- L262 `report(r)`
-- L292 `main(argv=None)`
+- L272 `report(r)`
+- L304 `main(argv=None)`
 
 ## research/ai_gate/gate_books.py · 351 строк
 

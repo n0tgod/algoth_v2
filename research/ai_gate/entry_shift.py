@@ -205,12 +205,22 @@ def run(log=print, since=None, limit=None, now=None, src=None, replay=None, legs
     base = recs_of(base_rep, legs)
     cache, _why = S.read_cache(log=lambda *a: None)
     same = tot = 0
+    diffs, by_exit = [], {}
     for r in base:
         c = cache.get((RULER, r["sym"], round(float(r["at"]), 3)))
         if c is not None and c.get("state") == "closed" and r.get("state") == "closed":
             tot += 1
-            same += abs(float(c["pnl"]) - float(r["pnl"])) < 1e-9
-    reproduce = {"compared": tot, "same": same, "share": round(same / tot, 4) if tot else None}
+            if abs(float(c["pnl"]) - float(r["pnl"])) < 1e-9:
+                same += 1
+                continue
+            # расхождение — с примерами: какой выход и где, у кэша и у реплея
+            k = f"{c.get('exit')}→{r.get('exit')}"
+            by_exit[k] = by_exit.get(k, 0) + 1
+            if len(diffs) < 12:
+                diffs.append({"sym": r["sym"], "at": r["at"], "cache": {f: c.get(f) for f in ("exit", "pnl", "exit_ts", "lev")},
+                              "replay": {f: r.get(f) for f in ("exit", "pnl", "exit_ts", "lev")}})
+    reproduce = {"compared": tot, "same": same, "share": round(same / tot, 4) if tot else None,
+                 "diff_by_exit": by_exit, "diff_examples": diffs}
     log(f"проверка проверки: реплей без сдвига совпал с кэшем книги у {same} из {tot}")
     base_pairs = [(g, g) for g in legs]
     base_by = {(r["sym"], round(float(r["at"]), 3)): r for r in book_chain(base, log, now)}
@@ -270,7 +280,9 @@ def report(r):
          f"с {time.strftime('%Y-%m-%d', time.gmtime(r['since']))} по {time.strftime('%Y-%m-%d', time.gmtime(r['until']))}; "
          f"половины по {time.strftime('%Y-%m-%d %H:%M', time.gmtime(r['halves_at']))} UTC; за {r['secs']} с.", "",
          f"**Проверка проверки:** реплей без сдвига совпал с кэшем книги у {rp['same']} из {rp['compared']} "
-         f"закрытых ({share_txt}). Меньше 95 % — числам ниже не верить.", "",
+         f"закрытых ({share_txt}). Меньше 95 % — числам ниже не верить. Расхождения по выходу (кэш→реплей): "
+         + (", ".join(f"{k} {v}" for k, v in sorted((rp.get("diff_by_exit") or {}).items(), key=lambda x: -x[1])) or "нет")
+         + ". Книга и варианты ниже считаются ОДНИМ реплеем в одно время — расхождение с кэшем их сравнение не сдвигает.", "",
          "Средний результат нетто на маржу НА СИГНАЛ (не сработавший — 0) и НА СРАБОТАВШИЙ; «случайный момент» — "
          f"медиана {NULL_SEEDS} зёрен входа в случайную минуту того же окна для тех же сработавших сигналов.", "",
          "| вариант | сработало | на сигнал: 1-я / 2-я | на сработавший: 1-я / 2-я | случайный момент: 1-я / 2-я | касса $10k | вывод |",
