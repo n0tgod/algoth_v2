@@ -1,0 +1,80 @@
+== задание nb79 ==
+строка: run research/ai_gate/peek_dossier.py
+начало: 2026-10-20T17:22:25Z
+запускаю: .venv/bin/python research/ai_gate/peek_dossier.py 
+файлов 3
+{
+ "kind": "entry",
+ "book": "optimal_h",
+ "symbol": "AIOZUSDT",
+ "side": "short",
+ "decision_time_utc": "2026-10-18 18:00",
+ "book_rules": {
+  "lev": 20.00000000098953,
+  "fav_bp": -537.9643141371222,
+  "rr": 0.9315978122032834,
+  "depth": 1,
+  "hold_h": 24.0
+ },
+ "price_moves_to_decision": {
+  "1h_pct": -0.36,
+  "4h_pct": 4.27,
+  "24h_pct": 0.2,
+  "168h_pct": -13.93
+ },
+ "crowd_positioning": {
+  "bybit": {
+   "now": 0.5798,
+   "24h_ago": 0.7053,
+   "as_of": "10-18 17:00"
+  }
+ },
+ "market": {
+  "btc_moves": {
+   "1h_pct": -0.09,
+   "4h_pct": 0.04,
+   "24h_pct": -0.47,
+   "168h_pct": -3.06
+  },
+  "fng": 53,
+  "btc_dom": 60.12,
+  "mcap_24h_pct": -3.88,
+  "insurance_usdt": 530349735
+ },
+ "name_history_in_book": {
+  "positions_before": 6,
+  "hit_floor": 0,
+  "last_entry_utc": "2026-10-16 17:00"
+ },
+ "calendar_next_48h": [],
+ "exchange_events_since_72h": []
+}
+досье ai_news: 151
+  book_rules.depth: 151 [1 … 1]
+  book_rules.fav_bp: 151 [-2296 … 393.1]
+  book_rules.hold_h: 150 [24 … 24]
+  book_rules.lev: 151 [1 … 25]
+  book_rules.rr: 150 [0.3841 … 12.15]
+  crowd_positioning.bn_global.24h_ago: 141 [0.2976 … 0.8042]
+  crowd_positioning.bn_global.now: 141 [0.2963 … 0.7792]
+  crowd_positioning.bn_top.24h_ago: 141 [0.3765 … 0.8639]
+  crowd_positioning.bn_top.now: 141 [0.3474 … 0.8269]
+  crowd_positioning.bybit.24h_ago: 151 [0.258 … 0.7756]
+  crowd_positioning.bybit.now: 151 [0.2616 … 0.7764]
+  crowd_positioning.okx.24h_ago: 20 [0.43 … 2.86]
+  crowd_positioning.okx.now: 20 [0.45 … 2.66]
+  market.btc_dom: 151 [59.51 … 60.28]
+  market.btc_moves.168h_pct: 151 [-3.35 … 0.23]
+  market.btc_moves.1h_pct: 151 [-1 … 1.05]
+  market.btc_moves.24h_pct: 151 [-1.48 … 1.7]
+  market.btc_moves.4h_pct: 151 [-0.79 … 1.79]
+  market.fng: 151 [53 … 59]
+  market.insurance_usdt: 151 [5.303e+08 … 5.307e+08]
+  market.mcap_24h_pct: 151 [-4.96 … -0.3]
+  name_history_in_book.hit_floor: 148 [0 … 27]
+  name_history_in_book.positions_before: 151 [0 … 91]
+  price_moves_to_decision.168h_pct: 151 [-65.21 … 452.4]
+  price_moves_to_decision.1h_pct: 151 [-19.82 … 16.85]
+  price_moves_to_decision.24h_pct: 151 [-33.82 … 138.7]
+  price_moves_to_decision.4h_pct: 151 [-20.29 … 60.66]
+конец: 2026-10-20T17:22:25Z, код 0
