@@ -119,7 +119,51 @@ def test_watcher_events_heartbeat_stale_and_yield():
     print("ok  сторож: модель — по новости и сдвигу толпы; без события heartbeat; несвежий фон назван; обучение — уступает")
 
 
+def test_held_name_is_not_asked():
+    """Повтор по имени, которое ветка держит, модели не показывается: книга
+    выбросит его правилом «одно имя — одна позиция» (владелец 20.10: 89 из
+    105 вызовов были такими). Держит ли — у КАЖДОЙ ветки по её решениям:
+    отклонённый ранний вход освобождает имя в том же проходе."""
+    with tempfile.TemporaryDirectory() as d:
+        t0 = NOW - 4 * H
+
+        def r(sym, at, fwd=-50.0):
+            return {"sym": sym, "at": at, "exit_ts": at + 24 * H, "state": "open", "lev": 5.0, "fwd": fwd}
+        recs = [r("CTUSDT", t0), r("CTUSDT", t0 + H), r("CTUSDT", t0 + 2 * H), r("XNYUSDT", t0 + H)]
+        setup(d, {"optimal": [], "optimal_h": recs})
+        seen = []
+
+        def decide(kind, dd):
+            seen.append((dd["sym"], dd["news"] is not None))
+            # вход CT в t0: ветка с новостями отклоняет, без новостей открывает
+            if dd["sym"] == "CTUSDT" and len([x for x in seen if x[0] == "CTUSDT" and x[1]]) == 1 and dd["news"] is not None:
+                return "skip"
+            return "open"
+        c = Client(decide)
+        st = G.run(log=lambda *a: None, client=c, now=NOW)
+        rs = [x for x in rows_of() if x["kind"] == "entry"]
+        by = {(x["branch"], x["key"]): x for x in rs}
+        k = [G.key_of("optimal_h", x) for x in recs]
+        assert by[("ai_news", k[0])]["decision"] == "skip" and by[("ai_plain", k[0])]["decision"] == "open"
+        # CT t0+H: ветка с новостями имя НЕ держит (отклонила) — модель спрошена;
+        # ветка без новостей держит (t0) — строка «held» без вызова
+        assert by[("ai_news", k[1])]["decision"] == "open" and by[("ai_news", k[1])].get("held_by") is None
+        assert by[("ai_plain", k[1])]["decision"] == "held" and by[("ai_plain", k[1])]["held_by"] == k[0]
+        # CT t0+2H: держат обе ветки (news — с t0+H, plain — с t0)
+        assert by[("ai_news", k[2])]["decision"] == "held" and by[("ai_news", k[2])]["held_by"] == k[1]
+        assert by[("ai_plain", k[2])]["held_by"] == k[0]
+        assert by[("ai_news", k[3])]["decision"] == "open", "другое имя судится"
+        calls = c.n
+        assert calls == 2 + 1 + 2 + sum(1 for x in rs if x["branch"] == "ai_news_repeat"), (calls, seen)
+        assert all(x.get("cost_usd") == 0.0 for x in rs if x["decision"] == "held")
+        assert st["today"]["entries"] == 3 and st["today"]["held"] == 1, st["today"]
+        G.run(log=lambda *a: None, client=c, now=NOW + 60)
+        assert c.n == calls, "второй проход ни решённых, ни «held» не судит"
+    print("ok  повтор по держимому имени не судится: у каждой ветки своё «держит», отказ освобождает имя в том же проходе")
+
+
 if __name__ == "__main__":
     test_entries_once_window_repeat_budget()
     test_watcher_events_heartbeat_stale_and_yield()
-    print("\nвсе 2 проверки прошли")
+    test_held_name_is_not_asked()
+    print("\nвсе 3 проверки прошли")

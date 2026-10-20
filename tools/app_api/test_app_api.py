@@ -229,7 +229,13 @@ def test_ai_log_for_operator_groups_entries_and_names_news():
             {"t": 1792371900, "kind": "hold", "branch": "ai_news_x", "key": k2, "book": "optimal_h", "side": "short",
              "sym": "AIOZUSDT", "at": 1792368000, "decision": "close", "confidence": 0.7, "reasons": ["hack"],
              "trigger": ["news:1"], "news_used": ["cd:u9"], "cost_usd": 0.013, "no_verdict": None},
-            {"t": 1792390000, "kind": "heartbeat", "branch": "ai_news_x", "key": k2, "decision": "hold"}]
+            {"t": 1792390000, "kind": "heartbeat", "branch": "ai_news_x", "key": k2, "decision": "hold"},
+            # повтор по держимому имени — не решение: в список не идёт, считается
+            {"t": 1792372000, "kind": "entry", "branch": "ai_news", "key": "optimal_h|QUSDT|1792371600",
+             "book": "optimal_h", "side": "short", "sym": "QUSDT", "at": 1792371600, "decision": "held",
+             "held_by": k1, "cost_usd": 0.0},
+            {"t": 1792372000, "kind": "entry", "branch": "ai_plain", "key": "optimal_h|QUSDT|1792371600",
+             "decision": "held", "held_by": k1, "cost_usd": 0.0}]
         with open(os.path.join(app.AI_DIR, "decisions-2026-10-19.jsonl"), "w") as f:
             f.write("\n".join(json.dumps(x) for x in rows) + "\n")
         with open(os.path.join(app.NEWS_REC, "news-2026-10-18.jsonl"), "w") as f:
@@ -244,6 +250,7 @@ def test_ai_log_for_operator_groups_entries_and_names_news():
         assert w["decision"] == "close" and w["trigger"] == ["news:1"] and w["news"] == [{"id": "cd:u9", "title": None}]
         sm = r["summary"]
         assert (sm["entries"], sm["skipped"], sm["opened"], sm["plain_disagrees"], sm["closes"], sm["heartbeats"]) == (2, 1, 1, 1, 1, 1)
+        assert sm["held"] == 1 and len(r["entries"]) == 2, "повтор по держимому имени — числом, не строкой"
         assert app.ai_log(acc, "1999-01-01")[1]["day"] == "2026-10-19", "неизвестный день — последний"
     print("ok  журнал судьи оператору: вход одной строкой (с новостями, без, повтор), сторож, заголовки новостей, итоги")
 

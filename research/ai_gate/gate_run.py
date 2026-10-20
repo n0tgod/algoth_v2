@@ -77,6 +77,44 @@ def key_of(book, r):
     return f"{book}|{r['sym']}|{int(float(r['at']))}"
 
 
+def holder_of(recs, book, dec, closes, r):
+    """Ключ позиции ВЕТКИ, которая держит имя `r` в час его входа, или None.
+
+    Владелец 20.10: «судья рассудил десятки входов, хотя по факту мы
+    использовали несколько». 85 % вызовов (89 из 105, 19–20.10) были
+    повторными часовыми сигналами по имени, которое ветка уже держала, —
+    книга выбрасывает их правилом «одно имя — одна позиция» ДО кассы, в
+    любом депозите одинаково, и решение по ним ничего не меняло.
+
+    Здесь то же правило, что у книги (`run_d6.one_per_name` после гейта
+    плеча, `run_paper.build_rows`), над записями ветки: отклонённые
+    судьёй убраны, ещё не рассуженные стоят (книга открывает их по
+    умолчанию), закрытия сторожа укорачивают позицию (`dec`/`closes` —
+    решения этой ветки). Порядок — как у книги: час, затем |прогноз|.
+    """
+    import gate_books as GB                                    # noqa: E402
+    sys.path.insert(0, os.path.join(ROOT, "research", "dca_paper"))
+    import rules as R                                          # noqa: E402
+    t = int(float(r["at"]))
+    kr = key_of(book, r)
+    same = [x for x in recs if x.get("sym") == r.get("sym") and int(float(x["at"])) <= t]
+    ml = R.min_lev_of(book)
+    if ml is not None:
+        same = [x for x in same if float(x["lev"]) >= ml]
+    kept, _cut, _unj = GB.filt(same, book, dec)
+    if closes:
+        kept, _n, _h = GB.apply_closes(kept, book, closes, R.JUDGE_EXIT)
+    until, who = None, None
+    for x in sorted(kept, key=lambda x: (int(float(x["at"])), -float(x.get("fwd") or 0))):
+        kx = key_of(book, x)
+        if kx == kr:
+            return who if (until is not None and until > t) else None
+        if until is not None and until > int(float(x["at"])):
+            continue                                           # повтор — выброшен книгой
+        until, who = int(float(x["exit_ts"])), kx
+    return None
+
+
 def is_repeat(key):
     return int(hashlib.sha256(key.encode()).hexdigest(), 16) % REPEAT_MOD == 0
 
@@ -204,10 +242,36 @@ def run(log=print, client=None, dry=False, now=None):
         return row
 
     cands = [(b, s, r) for b, s in BOOKS for r in books.get(b) or []]
+    # решения веток к этому проходу — обновляются по ходу: отклонённый
+    # ранний вход освобождает имя для позднего в том же проходе
+    import gate_books as GB                                    # noqa: E402
+    dec_by = {b: dict(v) for b, v in GB.entry_index(prev).items()}
+    closes_news = GB.close_index(prev)
+    stats["held"] = 0
     for book, side, r, k in pick_new(cands, judged, now):
         recs = books[book]
+        held = {br: holder_of(recs, book, dec_by.setdefault(br, {}),
+                              closes_news if br == "ai_news" else {}, r)
+                for br in ("ai_news", "ai_plain")}
+        variants = [(br, w) for br, w in (("ai_news", True), ("ai_plain", False)) if held[br] is None]
+        for br in ("ai_news", "ai_plain"):
+            if held[br] is not None:
+                # имя держит ранний вход ветки — книга выбросит и этот;
+                # модель не спрашивается, строка честно говорит почему
+                row = {"t": now, "kind": "entry", "branch": br, "key": k, "book": book, "sym": r["sym"],
+                       "side": side, "at": float(r["at"]), "late_min": round((now - float(r["at"])) / 60, 1),
+                       "decision": "held", "held_by": held[br], "cost_usd": 0.0}
+                out_rows.append(row)
+                full.append(row)
+                dec_by[br][k] = "held"
+                stats["held"] += 1
+        if not variants:
+            log(f"вход {k}: имя держат обе ветки ({held['ai_news']}) — не судится")
+            continue
         kw, nw, cov = CTX.build("entry", r, book, side, now, recs, state, market_rows, events, news)
-        variants = [("ai_news", nw), ("ai_plain", None)] + ([("ai_news_repeat", nw)] if is_repeat(k) else [])
+        variants = [(br, nw if w else None) for br, w in variants]
+        if held["ai_news"] is None and is_repeat(k):
+            variants.append(("ai_news_repeat", nw))
         for branch, with_news in variants:
             d = J.dossier("entry", r, book, side, float(r["at"]), news=with_news, **kw)
             res = call("entry", d)
@@ -219,6 +283,8 @@ def run(log=print, client=None, dry=False, now=None):
                                               "prompt_v", "model", "effort")}}
             out_rows.append(row)
             full.append(dict(row, dossier=d))
+            if branch in dec_by:
+                dec_by[branch][k] = row.get("decision")
             if branch == "ai_news":
                 entry_ok[k] = row
         stats["entry_new"] += 1
@@ -244,6 +310,8 @@ def run(log=print, client=None, dry=False, now=None):
             e = entry_ok.get(k)
             if not e or e.get("decision") != "open":
                 continue                                  # ветка ai_news эту позицию не открывала
+            if holder_of(recs, book, dec_by.get("ai_news", {}), closes_news, r) is not None:
+                continue                                  # повтор по держимому имени: книга его выбросила
             w = watch.setdefault(k, {"last_check_ms": int(float(r["at"]) * 1000), "last_hb": float(r["at"])})
             if w.get("closed"):
                 continue
@@ -304,7 +372,10 @@ def run(log=print, client=None, dry=False, now=None):
 def summary(rows, now, stats, t0, fresh, news_age, ms_age):
     d = day_of(now)
     today = [r for r in rows if day_of(r.get("t", 0)) == d]
-    ent = [r for r in today if r.get("kind") == "entry" and r.get("branch") == "ai_news"]
+    allent = [r for r in today if r.get("kind") == "entry" and r.get("branch") == "ai_news"]
+    # «held» — повтор по держимому имени, модели не показан (20.10): в доле
+    # отказов его нет, он считается отдельно
+    ent = [r for r in allent if r.get("decision") != "held"]
     ok = [r for r in ent if not r.get("no_verdict")]
     skip = sum(1 for r in ok if r.get("decision") == "skip")
     pairs = {}
@@ -318,7 +389,7 @@ def summary(rows, now, stats, t0, fresh, news_age, ms_age):
             "news_age_s": None if news_age is None else round(news_age),
             "state_age_s": None if ms_age is None else round(ms_age),
             "today": {"usd": round(sum(r.get("cost_usd") or 0 for r in today), 4), "budget_usd": BUDGET_DAY_USD,
-                      "entries": len(ent), "skips": skip, "skip_pct": skip_pct,
+                      "entries": len(ent), "held": len(allent) - len(ent), "skips": skip, "skip_pct": skip_pct,
                       "skip_alarm": bool(skip_pct is not None and skip_pct > 60),
                       "no_verdict": sum(1 for r in ent if r.get("no_verdict")),
                       "plain_skips": sum(1 for r in today if r.get("branch") == "ai_plain" and r.get("decision") == "skip"

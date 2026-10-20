@@ -96,14 +96,28 @@ def cut_by_hour(recs, book, dec):
     return n
 
 
-def rand_cut(recs, n_by_hour, rng):
+def rand_cut(recs, n_by_hour, rng, pool=None):
+    """Жребий той же формы, что судья: столько же отказов в тот же час.
+
+    `pool` — ключи входов, которые судья РЕШАЛ моделью (open/skip). С 20.10
+    повторы по имени, которое ветка держит, модели не показываются
+    (`gate_run.holder_of`, решение «held»): книга выбрасывает их сама, и
+    отказ жребия по такому повтору ничего не менял бы — контроль был бы
+    слабее судьи. Записи вне пула жребий не трогает. `None` — прежний
+    пул (все записи часа)."""
     by = {}
+    keep = []
     for r in recs:
+        if pool is not None and r.get("_key") not in pool:
+            keep.append(r)
+            continue
         by.setdefault(int(float(r["at"])), []).append(r)
-    out = []
+    out = list(keep)
     for h, xs in by.items():
         drop = set(id(x) for x in rng.sample(xs, min(len(xs), n_by_hour.get(h, 0))))
         out += [x for x in xs if id(x) not in drop]
+    if pool is not None:                 # служебный ключ в кассу не едет
+        out = [{k: v for k, v in x.items() if k != "_key"} for x in out]
     return out
 
 
@@ -228,7 +242,10 @@ def run(log=print):
             b["branches"][name] = c
             res["cost_error"] = res["cost_error"] or err
         nbh = cut_by_hour(recs, book, news_dec)
-        for name, make, ref in (("rand", lambda rng: rand_cut(recs, nbh, rng), "ai_news"),
+        pool = {k for k, v in news_dec.items() if v in ("open", "skip")}
+        keyed = [dict(r, _key=G.key_of(book, r)) for r in recs]
+        b["counts"]["held"] = sum(1 for v in news_dec.values() if v == "held")
+        for name, make, ref in (("rand", lambda rng: rand_cut(keyed, nbh, rng, pool), "ai_news"),
                                 ("rand_x", lambda rng: rand_closes(kept_n, ks, rng, R.JUDGE_EXIT), "ai_news_x")):
             draws = []
             for s in range(SEEDS):

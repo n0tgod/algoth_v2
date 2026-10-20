@@ -42,7 +42,16 @@ def test_index_filter_rand():
     for s in range(5):
         rr = GB.rand_cut(recs, nbh, random.Random(s))
         assert len(rr) == 4 and sum(1 for r in rr if r["at"] == T0) == 1, "в том же часе убрано столько же"
-    print("ok  индекс решений, фильтр (не судили — остаются), жребий той же формы по часам")
+    # пул жребия — только входы, которые судья решал моделью: повтор вне
+    # пула («held») жребий не трогает, и отказ жребия всегда что-то меняет
+    keyed = [dict(r, _key=G.key_of("b", r)) for r in recs]
+    pool = {G.key_of("b", recs[i]) for i in (0, 2, 4)}            # все три — час T0
+    for s in range(5):
+        rr = GB.rand_cut(keyed, nbh, random.Random(s), pool)
+        gone = {r["sym"] for r in recs} - {r["sym"] for r in rr}
+        assert len(rr) == 4 and gone <= {"S0USDT", "S2USDT", "S4USDT"}, gone
+        assert all("_key" not in r for r in rr), "служебный ключ в кассу не едет"
+    print("ok  индекс решений, фильтр (не судили — остаются), жребий той же формы по часам и только из пула судьи")
 
 
 def test_closes_judge_rand_delist():

@@ -280,6 +280,12 @@ class App:
                 e["plain"] = part
             elif br == "ai_news_repeat":
                 e["repeat"] = {"decision": r.get("decision"), "no_verdict": r.get("no_verdict")}
+        # Повтор по имени, которое ветка уже держит, модели не показывается
+        # (`gate_run.holder_of`, 20.10): книга выбрасывает его сама. В списке
+        # его нет — это не решение; число таких — в итогах (`held`).
+        held = [e for e in by.values() if e.get("decision") == "held"]
+        for e in held:
+            by.pop(e["key"], None)
         entries = sorted(by.values(), key=lambda e: (-(e.get("t") or 0), e.get("sym") or ""))[:int(limit)]
         watch = [{"t": r.get("t"), "book": r.get("book"), "side": r.get("side"), "sym": r.get("sym"),
                   "at": r.get("at"), "decision": r.get("decision"), "confidence": r.get("confidence"),
@@ -289,7 +295,7 @@ class App:
                  for r in rows if r.get("kind") == "hold"]
         watch.sort(key=lambda w: -(w.get("t") or 0))
         judged = [e for e in by.values() if e.get("decision") and not e.get("no_verdict")]
-        summary = {"entries": len(by), "skipped": sum(1 for e in judged if e["decision"] == "skip"),
+        summary = {"entries": len(by), "held": len(held), "skipped": sum(1 for e in judged if e["decision"] == "skip"),
                    "opened": sum(1 for e in judged if e["decision"] == "open"),
                    "no_verdict": sum(1 for e in by.values() if e.get("no_verdict")),
                    "plain_disagrees": sum(1 for e in judged if (e.get("plain") or {}).get("decision")
