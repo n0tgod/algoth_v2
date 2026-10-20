@@ -11,3 +11,16 @@ open_hours: 0 строк
 открыта LONGXIAUSDT 10-20 04:00 mark_usd 0.53 marks []
 all {'n': 4, 'usd': 18.59, 'open_dd': 0.0, 'open_dd_share': 0.0}
 конец: 2026-10-20T08:00:26Z, код 0
+ВНИМАНИЕ: 2026-10-20T08:00:27Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/watch/pair.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nb73.done |  1 +
+ jobs/done/nb73.log  | 13 +++++++++++++
+ jobs/done/nb74.done |  1 +
+ jobs/done/nb74.log  | 36 ++++++++++++++++++++++++++++++++++++
+ jobs/poke.log       |  4 ++++
+ jobs/queue-state.md |  2 +-
+ 6 files changed, 56 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   77f494a65..98e972d0b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
