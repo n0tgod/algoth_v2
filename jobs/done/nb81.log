@@ -2,3 +2,5 @@
 строка: run tools/app_api/restart.py
 начало: 2026-10-20T17:28:34Z
 запускаю: .venv/bin/python tools/app_api/restart.py 
+порт 443: слушает
+конец: 2026-10-20T17:28:39Z, код 0

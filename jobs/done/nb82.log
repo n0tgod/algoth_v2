@@ -21,3 +21,24 @@
 
 
 конец: 2026-10-20T17:28:35Z, код 0
+ВНИМАНИЕ: 2026-10-20T17:28:35Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/watch/pair.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nb79.log                       |  23 +
+ jobs/done/nb80.done                      |   1 +
+ jobs/done/nb80.log                       |   6 +
+ jobs/done/nb81.done                      |   1 +
+ jobs/done/nb81.log                       |   4 +
+ jobs/done/nb82.done                      |   1 +
+ jobs/done/nb82.log                       |  23 +
+ jobs/poke.log                            |   5 +
+ jobs/queue-state.md                      |   2 +-
+ research/ai_gate/out/LESSONS.md          |  16 +
+ research/ai_gate/out/lessons_latest.json |   1 +
+ research/dca_paper/out/DCA-pair.md       |  26 +-
+ research/dca_paper/out/DCA-paper.json    | 982 +++++++++++++++----------------
+ research/dca_paper/out/DCA-paper.md      |  20 +-
+ research/dca_paper/out/watch/latest.json |   2 +-
+ research/dca_paper/out/watch/log.jsonl   |  12 +-
+ research/dca_paper/out/watch/sit.json    |   2 +-
+ research/s8_loop/out/day_brake.json      |   2 +-
+ 18 files changed, 605 insertions(+), 524 deletions(-)
