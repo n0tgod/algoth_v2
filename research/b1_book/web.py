@@ -12190,6 +12190,18 @@ function renderGate(g){
         h += `<tr><td>${n} <span class="dim">median of ${b.seeds}</span></td><td class="mono">${pp(a.median_final)}</td><td class="mono">${pp(c.median_final)}</td><td class="dim" colspan="2">not worse than model: ${c.not_worse_share == null ? "&mdash;" : c.not_worse_share}</td></tr>`;
       }
       h += "</tbody></table>";
+      // учащаяся ветка (спека 19 §11.4) — своим окном с её дня рождения
+      const sl = x.since_learn || {};
+      h += `<div class="dim" style="font-size:12px;margin-top:4px">ai_learn — own window since ${sl.since ? new Date(sl.since * 1000).toISOString().slice(5, 16).replace("T", " ") : "&mdash;"} UTC · ${sl.positions || 0} positions${sl.learn_cut == null ? "" : ", cut " + sl.learn_cut}</div>`;
+      if (sl.why) { h += `<div class="dim">${esc(sl.why)}</div>`; }
+      else if (sl.branches) {
+        h += `<table><thead><tr><th>branch</th><th>$1k</th><th>$10k</th><th>positions $10k</th></tr></thead><tbody>`;
+        for (const n of ["book", "ai_news", "ai_learn"]){
+          const v = sl.branches[n] || {}; const a = v[1000] || v["1000"] || {}, c = v[10000] || v["10000"] || {};
+          h += `<tr><td>${n}</td><td class="mono">${pp(a.final)}</td><td class="mono">${pp(c.final)}</td><td class="mono">${c.n == null ? "&mdash;" : c.n}</td></tr>`;
+        }
+        h += "</tbody></table>";
+      }
     }
     document.getElementById("gbooks").innerHTML = h;
   }

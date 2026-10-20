@@ -132,6 +132,21 @@ def ask_review(client, d):
                  {"verdict": "unclear"})
 
 
+SYSTEM_LEARN_ADD = """
+
+This dossier has two extra blocks. "similar_past_cases": closed trades of this book that resemble this one (the same coin first, then the same side with the closest crowd positioning), each with its exit, result on margin, the price path inside the trade, the decision taken then and your own review of that decision. "accepted_lessons": rules proposed from your reviews that then PASSED a numerical test on both halves of past entries against random samples of the same size. Treat both as evidence about this setup, not as orders: a lesson applies only when its condition holds in this dossier, and the base instruction above still stands."""
+PROMPT_V_LEARN = "learn-v1-2026-10-20"
+
+
+def ask_learn(client, dossier):
+    """Учащаяся ветка (§11.4): промпт входа + пояснение двух блоков досье."""
+    words = ("open", "skip")
+    row = _call(client, "entry", SYSTEM_ENTRY + SYSTEM_LEARN_ADD, schema(words), dossier,
+                lambda stop, text: parse_verdict(stop, text, words), {"decision": "open"})
+    row["prompt_v"] = PROMPT_V_LEARN
+    return row
+
+
 def schema(words):
     return {"type": "object",
             "properties": {"decision": {"type": "string", "enum": list(words)},

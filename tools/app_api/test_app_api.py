@@ -211,6 +211,7 @@ def test_ai_log_for_operator_groups_entries_and_names_news():
         assert app.ai_log({"role": "user", "id": "x"})[0] == 403, "только оператору"
         app.AI_DIR = os.path.join(tmp, "dec"); app.NEWS_REC = os.path.join(tmp, "news")
         app.AI_PATHS = os.path.join(tmp, "paths")
+        app.AI_LESSONS = os.path.join(tmp, "lessons.json")
         st, r = app.ai_log(acc)
         assert st == 200 and r["entries"] == [] and "not written" in r["error"]
         os.makedirs(app.AI_DIR); os.makedirs(app.NEWS_REC); os.makedirs(app.AI_PATHS)
@@ -269,6 +270,14 @@ def test_ai_log_for_operator_groups_entries_and_names_news():
         assert aioz["review"]["verdict"] == "wrong" and aioz["review"]["lesson"]["do"] == "skip" and "review" not in q
         assert sm["reviews"] == 1 and sm["review_verdicts"] == {"right": 0, "wrong": 1, "unclear": 0}, sm
         assert abs(sm["cost_usd"] - (0.05 + 0.01 + 0.013 + 0.02)) < 1e-9, "цена дня включает разборы"
+        assert r["lessons"] is None, "сводки уроков не было — None, не пустой список"
+        json.dump({"version": 1, "updated": "u", "accepted": [{"text": "crowded short", "status": "accepted", "why": "w",
+                   "when": [{"field": "crowd_positioning.bybit.now", "op": "<", "value": 0.3}],
+                   "test": {"all": {"matched": 30, "mean_matched": -0.2, "mean_rest": 0.05},
+                            "first": {"p_random": 0.02}, "second": {"p_random": 0.05}}}], "proposed": [], "revoked": []},
+                  open(app.AI_LESSONS, "w"))
+        ls = app.ai_log(acc)[1]["lessons"]
+        assert ls["accepted"][0]["when"] == "crowd_positioning.bybit.now < 0.3" and ls["accepted"][0]["halves"] == [0.02, 0.05]
         assert app.ai_log(acc, "1999-01-01")[1]["day"] == "2026-10-19", "неизвестный день — последний"
     print("ok  журнал судьи оператору: вход одной строкой (с новостями, без, повтор), сторож, заголовки новостей, итоги")
 

@@ -57,7 +57,7 @@ def entry_index(rows):
     """{ветка: {ключ: решение}} по строкам входа; повтор — не ветка."""
     out = {}
     for r in rows:
-        if r.get("kind") == "entry" and r.get("branch") in ("ai_news", "ai_plain"):
+        if r.get("kind") == "entry" and r.get("branch") in ("ai_news", "ai_plain", "ai_learn"):
             out.setdefault(r["branch"], {})[r["key"]] = r.get("decision")
     return out
 
@@ -229,12 +229,14 @@ def run(log=print):
             res["books"][book] = b
             continue
         news_dec, plain_dec = eidx.get("ai_news", {}), eidx.get("ai_plain", {})
+        learn_dec = eidx.get("ai_learn", {})
         kept_n, cut_n, unj_n = filt(recs, book, news_dec)
         kept_p, cut_p, unj_p = filt(recs, book, plain_dec)
+        kept_l, cut_l, _unj_l = filt(recs, book, learn_dec)
         x_recs, n_close, ks = apply_closes(kept_n, book, closes, R.JUDGE_EXIT)
         dl = delist_closes(recs, book, events)
         d_recs, n_dl, _ = apply_closes(recs, book, dl, R.DELIST_EXIT)
-        b["counts"] = {"ai_news_cut": cut_n, "ai_plain_cut": cut_p, "unjudged": unj_n,
+        b["counts"] = {"ai_news_cut": cut_n, "ai_plain_cut": cut_p, "ai_learn_cut": cut_l, "unjudged": unj_n,
                        "judge_closes": n_close, "delist_closes": n_dl}
         for name, rr in (("book", recs), ("ai_news", kept_n), ("ai_plain", kept_p),
                          ("ai_news_x", x_recs), ("delist", d_recs)):
@@ -259,6 +261,21 @@ def run(log=print):
                           "not_worse_share": (round(sum(1 for f in fs if mine is not None and f >= mine) / len(fs), 2)
                                               if fs and mine is not None else None)}
             b["branches"][name] = agg
+        # Учащаяся ветка (§11.4) судится СВОИМ окном — с её дня рождения: до
+        # него она по построению равна книге, и общее окно разбавило бы
+        # разность. На том же окне — книга и ai_news.
+        lw = [r for r in recs if float(r["at"]) >= G.LEARN_SINCE]
+        if lw:
+            sl = {}
+            for name, rr in (("book", lw), ("ai_news", filt(lw, book, news_dec)[0]),
+                             ("ai_learn", filt(lw, book, learn_dec)[0])):
+                c, err = cash_net(book, rr, now, ctx)
+                sl[name] = c
+                res["cost_error"] = res["cost_error"] or err
+            b["since_learn"] = {"since": G.LEARN_SINCE, "positions": len(lw), "branches": sl,
+                                "learn_cut": sum(1 for r in lw if learn_dec.get(G.key_of(book, r)) == "skip")}
+        else:
+            b["since_learn"] = {"since": G.LEARN_SINCE, "positions": 0, "why": "позиций с дня рождения ai_learn ещё нет"}
         res["books"][book] = b
         log(f"{book}: позиций {len(recs)}, судья убрал {cut_n}, без новостей {cut_p}, без решения {unj_n}, "
             f"закрыл сторож {n_close}, делистинг {n_dl} ({time.time() - t0:.0f} с)")
@@ -295,6 +312,17 @@ def report(r):
             L.append(f"| {name} (медиана {r['seeds']} зёрен) | {pp(x[1000]['median_final'])} | — | "
                      f"{pp(x[10000]['median_final'])} | — | не хуже модели: {x[10000]['not_worse_share']} |")
         L.append("")
+        sl = b.get("since_learn") or {}
+        L += [f"**Учащаяся ветка ai_learn — своё окно с {time.strftime('%Y-%m-%d %H:%M', time.gmtime(sl.get('since') or 0))} UTC**"
+              f" (позиций {sl.get('positions', 0)}; ai_learn убрала {sl.get('learn_cut', 0)}):", ""]
+        if sl.get("why"):
+            L += [sl["why"], ""]
+        else:
+            L += ["| ветка | $1k итог | $10k итог | позиций $10k |", "|---|---|---|---|"]
+            for name in ("book", "ai_news", "ai_learn"):
+                x = sl["branches"][name]
+                L.append(f"| {name} | {pp(x[1000]['final'])} | {pp(x[10000]['final'])} | {x[10000]['n']} |")
+            L.append("")
     return "\n".join(L) + "\n"
 
 

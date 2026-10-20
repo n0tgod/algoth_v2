@@ -279,6 +279,9 @@ class App:
                 e["t"] = r.get("t")
             elif br == "ai_plain":
                 e["plain"] = part
+            elif br == "ai_learn":
+                # учащаяся ветка (§11.4): то же решение с похожими случаями и уроками
+                e["learn"] = part
             elif br == "ai_news_repeat":
                 e["repeat"] = {"decision": r.get("decision"), "no_verdict": r.get("no_verdict")}
         # Повтор по имени, которое ветка уже держит, модели не показывается
@@ -324,7 +327,33 @@ class App:
                    "closes": sum(1 for w in watch if w["decision"] == "close" and not w.get("no_verdict")),
                    "heartbeats": sum(1 for r in rows if r.get("kind") == "heartbeat"),
                    "cost_usd": round(sum(float(r.get("cost_usd") or 0) for r in rows), 4)}
-        return 200, {"days": days[-14:], "day": day, "summary": summary, "entries": entries, "watch": watch[:200]}
+        summary["learn_disagrees"] = sum(1 for e in judged if (e.get("learn") or {}).get("decision")
+                                         and e["learn"]["decision"] != e["decision"])
+        return 200, {"days": days[-14:], "day": day, "summary": summary, "entries": entries, "watch": watch[:200],
+                     "lessons": self._ai_lessons()}
+
+    AI_LESSONS = os.path.join(ROOT, "research", "ai_gate", "out", "lessons.json")
+
+    def _ai_lessons(self):
+        """Уроки судьи (§11.4): действующие и ждущие, с числами проверки.
+        Файла нет — None («сводка ещё не делалась»), не пустой список."""
+        try:
+            with open(self.AI_LESSONS, encoding="utf-8") as f:
+                st = json.load(f)
+        except (OSError, ValueError):
+            return None
+
+        def one(r):
+            t = r.get("test") or {}
+            return {"text": r.get("text"), "status": r.get("status"), "why": r.get("why"),
+                    "when": " and ".join(f"{c.get('field')} {c.get('op')} {c.get('value')}" for c in (r.get("when") or [])),
+                    "matched": (t.get("all") or {}).get("matched"), "mean_matched": (t.get("all") or {}).get("mean_matched"),
+                    "mean_rest": (t.get("all") or {}).get("mean_rest"),
+                    "halves": [(t.get(h) or {}).get("p_random") for h in ("first", "second")], "not_passed": t.get("why")}
+        return {"version": st.get("version"), "updated": st.get("updated"),
+                "accepted": [one(r) for r in st.get("accepted") or []],
+                "proposed": [one(r) for r in (st.get("proposed") or [])[:30]],
+                "revoked": len(st.get("revoked") or [])}
 
     def _ai_reviews(self, names):
         """ключ решения → строка разбора судьёй (последние 21 день журнала)."""

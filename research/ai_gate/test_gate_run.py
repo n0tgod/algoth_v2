@@ -162,8 +162,47 @@ def test_held_name_is_not_asked():
     print("ok  повтор по держимому имени не судится: у каждой ветки своё «держит», отказ освобождает имя в том же проходе")
 
 
+def test_learn_branch():
+    """ai_learn — только с её дня рождения; в досье — похожие закрытые случаи
+    ДО момента входа и принятые уроки; своё «держит имя»; прежние ветки
+    решаются как прежде."""
+    import lessons as LS
+    with tempfile.TemporaryDirectory() as d:
+        now = G.LEARN_SINCE + 3 * H
+        recs = [{"sym": "OLDUSDT", "at": G.LEARN_SINCE - H, "state": "open", "exit_ts": G.LEARN_SINCE + 23 * H, "lev": 5.0},
+                {"sym": "NEWUSDT", "at": G.LEARN_SINCE + H, "state": "open", "exit_ts": G.LEARN_SINCE + 25 * H, "lev": 5.0}]
+        setup(d, {"optimal": [], "optimal_h": recs})
+        G.CTX.build = lambda kind, r, book, side, now, recs, st, mr, ev, nw: (
+            {"px": None, "crowd": {"bybit": {"now": 0.31}}}, [], {"px": False})
+        seen = []
+        G.J.ask_learn = lambda c, dd: (seen.append(dd), fake_ask(c, "entry", dd))[1]
+        past = [{"key": "k1", "sym": "NEWUSDT", "side": "short", "at": G.LEARN_SINCE - 30 * H, "decision": "open",
+                 "pnl": -0.44, "exit": "пол", "exit_ts": G.LEARN_SINCE - 28 * H, "path_words": "straight against",
+                 "f": {"crowd_positioning.bybit.now": 0.3}, "review": {"verdict": "unclear", "failed": "", "saved": ""}},
+                {"key": "k2", "sym": "FUTUSDT", "side": "short", "at": G.LEARN_SINCE, "decision": "open",
+                 "pnl": 0.2, "exit": "тейк", "exit_ts": G.LEARN_SINCE + 2 * H + 1800, "path_words": "x",
+                 "f": {"crowd_positioning.bybit.now": 0.31}, "review": None}]
+        LS.cases = lambda decisions=None, dossiers=None, paths=None: past
+        LS.LESSONS = os.path.join(d, "lessons.json")
+        json.dump({"accepted": [{"text": "crowded short", "when": [{"field": "crowd_positioning.bybit.now", "op": "<", "value": 0.3}],
+                                 "why": "w", "test": {"all": {"matched": 30, "mean_matched": -0.2, "mean_rest": 0.05}}}]},
+                  open(LS.LESSONS, "w"))
+        c = Client(lambda k, dd: "open")
+        G.run(log=lambda *a: None, client=c, now=now)
+        rs = [x for x in rows_of() if x["kind"] == "entry"]
+        learn = [x for x in rs if x["branch"] == "ai_learn"]
+        assert [x["sym"] for x in learn] == ["NEWUSDT"], "до дня рождения ai_learn не судит"
+        assert len(seen) == 1 and seen[0]["accepted_lessons"][0]["rule"] == "crowded short"
+        sim = seen[0]["similar_past_cases"]
+        assert [x["symbol"] for x in sim] == ["NEWUSDT"], ("случай, вышедший ПОСЛЕ входа, не виден", sim)
+        assert sim[0]["exit"] == "пол" and sim[0]["own_review"]["verdict"] == "unclear"
+        assert {x["branch"] for x in rs if x["sym"] == "OLDUSDT"} == {"ai_news", "ai_plain"}
+    print("ok  ai_learn: с дня рождения; похожие случаи только вышедшие до входа; уроки в досье; прежние ветки как прежде")
+
+
 if __name__ == "__main__":
     test_entries_once_window_repeat_budget()
     test_watcher_events_heartbeat_stale_and_yield()
     test_held_name_is_not_asked()
-    print("\nвсе 3 проверки прошли")
+    test_learn_branch()
+    print("\nвсе 4 проверки прошли")

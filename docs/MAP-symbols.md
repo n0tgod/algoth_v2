@@ -628,7 +628,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L191 `report(s)`
 - L217 `main(argv=None)`
 
-## research/ai_gate/gate_books.py · 323 строк
+## research/ai_gate/gate_books.py · 351 строк
 
 Ветки судьи спеки 19 кассой (этап N3): из журнала решений и позиций книг.
 
@@ -652,11 +652,11 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L171 `delist_closes(recs, book, events)` — {ключ: момент объявления} — позиции, открытые в момент объявления Bybit о делистинге имени.
 - L188 `cash_net(book, recs, now, ctx)` — Касса книги НЕТТО: тот же путь, что у книг — строки, издержки, свод.
 - L204 `run(log=print)`
-- L269 `pp(x)`
-- L273 `report(r)`
-- L301 `main(argv=None)`
+- L286 `pp(x)`
+- L290 `report(r)`
+- L329 `main(argv=None)`
 
-## research/ai_gate/gate_run.py · 436 строк
+## research/ai_gate/gate_run.py · 458 строк
 
 Запись вперёд судьи (спека 19, этап N3): решения в реальном времени.
 
@@ -672,33 +672,34 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L52 `MS_LATEST = os.path.join(ROOT, 'research', 'market_…`
 - L53 `TRAIN_WAIT = os.path.join(ROOT, 'research', 's8_loop…`
 - L55 `GATE_SINCE = 1792346400`
-- L56 `BOOKS = (('optimal', 'long'), ('optimal_h', 'sh…`
-- L57 `LATE_H = 6`
-- L58 `REPEAT_MOD = 20`
-- L59 `BUDGET_DAY_USD = 8.0`
-- L60 `CROWD_SHIFT = 0.1`
-- L61 `HEARTBEAT_S = 6 * 3600`
-- L62 `TRAIN_WAIT_STALE_S = 3600`
-- L63 `NEWS_STALE_S = 45 * 60`
-- L64 `MS_STALE_S = 2 * 3600`
-- L65 `H = 3600`
-- L68 `_peak_mb()`
-- L76 `key_of(book, r)`
-- L80 `holder_of(recs, book, dec, closes, r)` — Ключ позиции ВЕТКИ, которая держит имя `r` в час его входа, или None.
-- L118 `is_repeat(key)`
-- L122 `day_of(t)`
-- L126 `read_decisions(days=None)`
-- L139 `spent_today(rows, now)`
-- L144 `file_age(path, now)`
-- L151 `pick_new(cands, judged, now)` — Кандидаты без решения, не раньше дня рождения и не старше LATE_H.
-- L162 `watch_triggers(w, sym, now_ms, news, events, crowd_now)` — Событие для сторожа с прошлой проверки → список причин (пусто — нет события).
-- L178 `write_rows(rows, full=None)`
-- L190 `candidates(log)` — Позиции книг Depth так, как они живут (шорты — после возраста и охраны).
-- L208 `run(log=print, client=None, dry=False, now=None)`
-- L372 `summary(rows, now, stats, t0, fresh, news_age, ms_age)`
-- L408 `main(argv=None)`
+- L56 `LEARN_SINCE = 1792522800`
+- L57 `BOOKS = (('optimal', 'long'), ('optimal_h', 'sh…`
+- L58 `LATE_H = 6`
+- L59 `REPEAT_MOD = 20`
+- L60 `BUDGET_DAY_USD = 8.0`
+- L61 `CROWD_SHIFT = 0.1`
+- L62 `HEARTBEAT_S = 6 * 3600`
+- L63 `TRAIN_WAIT_STALE_S = 3600`
+- L64 `NEWS_STALE_S = 45 * 60`
+- L65 `MS_STALE_S = 2 * 3600`
+- L66 `H = 3600`
+- L69 `_peak_mb()`
+- L77 `key_of(book, r)`
+- L81 `holder_of(recs, book, dec, closes, r)` — Ключ позиции ВЕТКИ, которая держит имя `r` в час его входа, или None.
+- L119 `is_repeat(key)`
+- L123 `day_of(t)`
+- L127 `read_decisions(days=None)`
+- L140 `spent_today(rows, now)`
+- L145 `file_age(path, now)`
+- L152 `pick_new(cands, judged, now)` — Кандидаты без решения, не раньше дня рождения и не старше LATE_H.
+- L163 `watch_triggers(w, sym, now_ms, news, events, crowd_now)` — Событие для сторожа с прошлой проверки → список причин (пусто — нет события).
+- L179 `write_rows(rows, full=None)`
+- L191 `candidates(log)` — Позиции книг Depth так, как они живут (шорты — после возраста и охраны).
+- L209 `run(log=print, client=None, dry=False, now=None)`
+- L390 `summary(rows, now, stats, t0, fresh, news_age, ms_age)`
+- L430 `main(argv=None)`
 
-## research/ai_gate/judge.py · 299 строк
+## research/ai_gate/judge.py · 314 строк
 
 Ядро судьи спеки 19: досье решения, вызов модели, разбор ответа, цена.
 
@@ -719,19 +720,65 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L93 `parse_review(stop_reason, text)` — → (разбор | None, why): ответ вне схемы — отказ, не мнение.
 - L118 `review_dossier(entry_dossier, decision_row, outcome, path)` — Досье разбора (§11.3): досье на момент входа КАК БЫЛО, решение с причинами, исход и путь. Ничего из будущего…
 - L128 `ask_review(client, d)` — Один вызов разбора → строка журнала (`kind: review`); та же дорога, что `ask`.
-- L135 `schema(words)`
-- L145 `KINDS = {'entry': (SYSTEM_ENTRY, ('open', 'skip…`
-- L149 `read_key(path=KEY_PATH)`
-- L158 `cost_usd(usage, model)` — Цена вызова по прайсу модели, которая ОТВЕТИЛА; неизвестная модель — None.
-- L168 `parse_verdict(stop_reason, text, words)` — → (verdict | None, why). Ответ вне схемы — не мнение, а отказ.
-- L189 `make_client(key)`
-- L194 `ask(client, kind, dossier)` — Один вызов → строка журнала: решение, причины, модель, токены, цена, задержка.
-- L201 `_call(client, kind, system, out_schema, payload, parse, default)` — Общая дорога вызова: модель, усилие, схема, запасная модель; отказ и ответ вне схемы — умолчание с пометкой `…
-- L248 `REC_KEYS = ('lev', 'fav_bp', 'arm', 'hand', 'rr', …`
-- L251 `moves(closes_by_hour, at_s)` — Ход цены к часу решения: 1/4/24/168 ч, в %. closes_by_hour — {начало часа с: close}.
-- L268 `news_for(items, sym, at_ms, hours=72, cap=10)` — Новости по имени до момента решения (за `hours`), свежие первыми.
-- L278 `market_news(items, at_ms, hours=24, cap=10)`
-- L285 `dossier(kind, rec, book, side, at_s, *, px=None, crowd=None, ma…` — Досье для судьи. news=None — ветка без новостей (`ai_plain`): блоков новостей нет вовсе.
+- L135 `SYSTEM_LEARN_ADD = <текст, 3 строк>`
+- L138 `PROMPT_V_LEARN = 'learn-v1-2026-10-20'`
+- L141 `ask_learn(client, dossier)` — Учащаяся ветка (§11.4): промпт входа + пояснение двух блоков досье.
+- L150 `schema(words)`
+- L160 `KINDS = {'entry': (SYSTEM_ENTRY, ('open', 'skip…`
+- L164 `read_key(path=KEY_PATH)`
+- L173 `cost_usd(usage, model)` — Цена вызова по прайсу модели, которая ОТВЕТИЛА; неизвестная модель — None.
+- L183 `parse_verdict(stop_reason, text, words)` — → (verdict | None, why). Ответ вне схемы — не мнение, а отказ.
+- L204 `make_client(key)`
+- L209 `ask(client, kind, dossier)` — Один вызов → строка журнала: решение, причины, модель, токены, цена, задержка.
+- L216 `_call(client, kind, system, out_schema, payload, parse, default)` — Общая дорога вызова: модель, усилие, схема, запасная модель; отказ и ответ вне схемы — умолчание с пометкой `…
+- L263 `REC_KEYS = ('lev', 'fav_bp', 'arm', 'hand', 'rr', …`
+- L266 `moves(closes_by_hour, at_s)` — Ход цены к часу решения: 1/4/24/168 ч, в %. closes_by_hour — {начало часа с: close}.
+- L283 `news_for(items, sym, at_ms, hours=72, cap=10)` — Новости по имени до момента решения (за `hours`), свежие первыми.
+- L293 `market_news(items, at_ms, hours=24, cap=10)`
+- L300 `dossier(kind, rec, book, side, at_s, *, px=None, crowd=None, ma…` — Досье для судьи. news=None — ветка без новостей (`ai_plain`): блоков новостей нет вовсе.
+
+## research/ai_gate/lessons.py · 457 строк
+
+Уроки судьи: предложение моделью, приём ЧИСЛОМ (спека 19 §11.4, U2).
+
+- L40 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L41 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L46 `LESSONS = os.path.join(HERE, 'out', 'lessons.json…`
+- L47 `OUT = os.path.join(HERE, 'out')`
+- L48 `LATEST = os.path.join(OUT, 'lessons_latest.json')`
+- L49 `REPORT = os.path.join(OUT, 'LESSONS.md')`
+- L50 `PATHS = os.path.join(OUT, 'reviews')`
+- L52 `MIN_CASES = 20`
+- L53 `MIN_HALF = 8`
+- L54 `P_MAX = 0.1`
+- L55 `DRAWS = 400`
+- L56 `MAX_RULES = 20`
+- L57 `REVIEW_DAYS = 7`
+- L58 `OPS = ('<', '<=', '>', '>=')`
+- L59 `SKIP_KEYS = ('news_on_this_coin_72h', 'market_headl…`
+- L64 `leaves(d, pre='')`
+- L72 `fields_of(dossier)` — Числовые поля досье плоско + два производных (объявлены здесь).
+- L85 `catalog(cases)`
+- L96 `load_dossiers()`
+- L115 `load_paths()`
+- L127 `cases(decisions=None, dossiers=None, paths=None)` — Входы ai_news, решённые моделью, с досье и закрытым путём.
+- L153 `rule_id(rule)`
+- L158 `valid(rule, cat)` — → причина отказа или None. Поле — из каталога, знак — из словаря, число — число.
+- L177 `matches(rule, f)`
+- L188 `_half(xs, rule, rng)`
+- L202 `test_rule(rule, cs, seed=0)` — Обе половины по времени; всего; вердикт по объявленным порогам.
+- L227 `SYSTEM_LESSONS = 'You are improving the entry judge of a…`
+- L236 `schema_lessons()`
+- L247 `parse_lessons(stop, text)`
+- L261 `propose(client, cs, cat, state, now)`
+- L279 `SIMILAR_K = 5`
+- L280 `SIMILAR_SAME = 3`
+- L283 `similar(cs, sym, side, crowd_now, at_s, k=SIMILAR_K)` — Похожие закрытые случаи ДО момента решения: то же имя (свежие, до `SIMILAR_SAME`), затем та же сторона с ближ…
+- L305 `load_state(path=None)`
+- L314 `lessons_text(state)` — Принятые уроки словами — для досье и промпта учащейся ветки.
+- L326 `run(log=print, now=None, client=None, dry=False, cs=None, path=…`
+- L403 `report(state, out)`
+- L430 `main(argv=None)`
 
 ## research/ai_gate/path_review.py · 247 строк
 
@@ -1310,7 +1357,7 @@ A3 — кандидаты в пары на момент окна.
 - L279 `_parse(f, parse=json.loads)` — Разобрать построчно. Возвращает `(записи, дочитано ли до конца)`.
 - L298 `_salvage(path, log, parse=json.loads)` — Разобрать сжатый файл по членам, пропуская испорченные.
 
-## research/b1_book/web.py · 12701 строк
+## research/b1_book/web.py · 12713 строк
 
 Страница наблюдения: стакан, лента, глубина и журнал живьём.
 
@@ -1351,12 +1398,12 @@ A3 — кандидаты в пары на момент окна.
 - L11985 `news_state_json(path=NEWS_LATEST, now=None)` — Срез новостного фона (спека 19 §4): тот же читатель, порог 45 мин.
 - L11990 `market_state_json(path=MARKET_LATEST, now=None, stale_s=None)` — Срез сборщика состояния рынка (спека 19 §3b) с возрастом и вердиктом.
 - L12016 `MARKETPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L12212 `slim_dca(d, focus)` — Свод `/dca` для экрана одной книги: у книг, кроме `focus`, нет списка сделок (`trades`; `trades_omitted: true…
-- L12237 `SITE_HOST = 'algoth.trade'`
-- L12238 `ACME_PREFIX = '/.well-known/acme-challenge/'`
-- L12239 `ACME_NAME = re.compile('^[A-Za-z0-9_-]{16,128}$')`
-- L12240 `ACME_DIR = os.path.join(os.path.dirname(os.path.di…`
-- L12244 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
+- L12224 `slim_dca(d, focus)` — Свод `/dca` для экрана одной книги: у книг, кроме `focus`, нет списка сделок (`trades`; `trades_omitted: true…
+- L12249 `SITE_HOST = 'algoth.trade'`
+- L12250 `ACME_PREFIX = '/.well-known/acme-challenge/'`
+- L12251 `ACME_NAME = re.compile('^[A-Za-z0-9_-]{16,128}$')`
+- L12252 `ACME_DIR = os.path.join(os.path.dirname(os.path.di…`
+- L12256 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
 
 ## research/d1_seconds/detect.py · 367 строк
 
@@ -9853,7 +9900,7 @@ Sign in with Apple: проверка identity token (JWT RS256) ключами A
 - L17 `call(base, path, body=None, token=None, ctx=None)`
 - L26 `main()`
 
-## tools/app_api/server.py · 1862 строк
+## tools/app_api/server.py · 1891 строк
 
 HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 
@@ -9889,88 +9936,89 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
   - L210 `App.set_limits(self, acc, max_accounts)`
   - L226 `App.limits(self, acc)`
   - L236 `App.ai_log(self, acc, day=None, limit=400)` — Оператору: журнал решений судьи за сутки UTC — входы (с новостями, без новостей, повтор) одной строкой на вхо…
-  - L329 `App._ai_reviews(self, names)` — ключ решения → строка разбора судьёй (последние 21 день журнала).
-  - L348 `App._ai_paths(self)` — ключ решения → строка разбора пути (все файлы: позиция закрывается позже дня решения, и файл дня выхода — не…
-  - L370 `App._news_titles(self, day)` — id новости → заголовок по записи сборщика за сутки решения и двое до них.
-  - L395 `App.top(self, deposit=None)` — Главная сайта: лучшая стратегия и рейтинг на одном депозите.
-  - L457 `App.site(self)`
-  - L463 `App.set_site(self, acc, body)`
-  - L483 `App.overview(self, acc)` — Оператору: аккаунты с числом ключей и подписок, согласие; ёмкость по ячейкам (спека 15 §7a.5 — измеритель ёмк…
-  - L503 `App.consent_state(self, acc)`
-  - L511 `App.accept(self, acc, version, ip=None, device=None)`
-  - L523 `App.need_consent(self, acc)` — Отказ словами, если клиент не принял ТЕКУЩИЕ документы. Оператор — владелец сервиса, а не клиент: гейт к нему…
-  - L534 `App.add_key(self, acc, venue, key, secret)` — ------------------------------------------------------------ ключи
-  - L580 `App._key_view(self, r)`
-  - L587 `App.list_keys(self, acc)`
-  - L590 `App.delete_key(self, acc, kid)`
-  - L603 `App.dca(self)` — ------------------------------------------------------------ книги и ячейки
-  - L609 `App.strategies(self)`
-  - L655 `App.cell_key(book, deposit, sizing=None)` — Ключ книги в своде `/dca`: та же схема, что у `rules.cell_key` — `книга:депозит`, у фиксированного билета с х…
-  - L662 `App.paper_cash(book, deposit)` — Касса БУМАЖНОЙ книги сейчас: депозит плюс её накопленный нетто.
-  - L672 `App.ticket_of(book, deposit)` — Билет ячейки (маржа одной позиции на стартовом депозите), $.
-  - L683 `App.sub_cash(s, st)` — Касса ПОДПИСКИ: стартовый депозит плюс реализованный нетто её собственных живых позиций (`realized_usd` в сос…
-  - L691 `App.add_subscription(self, acc, key_id, book, deposit, sizing=None)` — ------------------------------------------------------------ подписки
-  - L737 `App.venue_modes(self, k)` — Режим позиций по ключу. Секрет открыть этот процесс НЕ может: режим читается ключом только при добавлении (см…
-  - L744 `App._sub_view(self, s)`
-  - L752 `App.list_subscriptions(self, acc)`
-  - L755 `App.delete_subscription(self, acc, sid)`
-  - L782 `App.live_enabled(self)` — ------------------------------------------------------------ живой режим
-  - L785 `App.set_live_enabled(self, acc, on)` — Рубильник оператора (§7a.5): без него ни одна подписка в live не переводится. Выключение НЕ останавливает раб…
-  - L800 `App.sub_dir(self, sid)`
-  - L803 `App.exec_status(self, sid)`
-  - L810 `App.arm(self, acc, sid, confirm)`
-  - L859 `App.disarm(self, acc, sid)` — Входы выключены, открытые позиции исполнитель ведёт дальше (цель, пол, срок, охрана рынком). Режим остаётся l…
-  - L874 `App.to_dry(self, acc, sid)` — Обратно в сухой режим — только без открытых позиций.
-  - L886 `App.close_position(self, acc, sid, sym, pos_at)` — Ручное закрытие ОДНОЙ позиции кнопкой владельца (11.10).
-  - L924 `App.kill(self, acc, sid, on)` — KILL подписки: исполнитель не делает НИЧЕГО (ни заявок, ни отмен).
-  - L942 `App.check_account(self, acc, sid, runner=None)` — Предполётная проверка счёта по кнопке владельца: ключ открывает отдельный процесс (`preflight.py`), сюда прих…
-  - L960 `App.state(self, acc)` — ------------------------------------------------------------ состояние
-  - L1044 `App.events(self, acc, since)`
-  - L1047 `App.books(self, full=None)`
-  - L1055 `App.add_device(self, acc, token, env='prod', build=None)` — ------------------------------------------------------------ устройства и пуши (§7.5)
-  - L1063 `App.list_devices(self, acc)`
-  - L1069 `App.delete_device(self, acc, token)`
-  - L1073 `App.push_config(self, acc, team_id, key_id, p8, topic=None)`
-  - L1084 `App.push_test(self, acc)` — Пробный пуш на устройства аккаунта — без записи сделки.
-  - L1102 `App.list_trades(self, acc, since=0, limit=200, mode='live')` — Записи журнала исполнителя. По умолчанию — только ЖИВЫЕ (решение владельца 10.10: «на вкладке Trades — реальн…
-  - L1132 `App.live_positions(self, acc)` — Живые позиции — в ФОРМЕ строки бумажной книги (`sym, side, at, lev, margin, entry_px, avg, fills, walk, exit,…
-  - L1230 `App.attach_paper(self, rows, subs)` — Та же сделка в бумажной книге — СЫРОЙ сигнал (журнал книги без издержек): строка ячейки подписки с тем же име…
-  - L1307 `App.live_pnl(rows, subs)` — Общий результат живых сделок (владелец 10.10: «на странице trades общий пнл по всем сделкам»): реализованное…
-  - L1360 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
-  - L1370 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
-  - L1385 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
-  - L1402 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
-- L1427 `top_series(days_rows, open_days, dep)` — Кривая витрины и просадка открытых на ОДНОЙ оси дней.
-- L1456 `computed_at_of(d)` — Момент последнего пересчёта длинных книг для витрины: свод сборщика несёт возраст артефакта в часах (`age_h`)…
-- L1467 `PUB_ROUTES = {'dca': ('full', 'focus', 'dep', 'ruler…`
-- L1473 `PUB_VALUE = re.compile('^[A-Za-z0-9._:\\-]{1,64}$')`
-- L1479 `SITE_DIR = os.path.join(HERE, 'site')` — Сайт (спека 16 L4): главная, документы, кабинет — файлы `site/`, те же ответы API, что у приложения. Настройк…
-- L1480 `SITE_HOST = 'algoth.trade'`
-- L1481 `SITE_PAGES = {'/': ('index.html', 'text/html; charse…`
-- L1494 `SITE_KEYS = ('apple_client_id', 'company', 'ios_url…`
-- L1495 `SITE_ID = re.compile('^[A-Za-z0-9._-]{0,120}$')`
-- L1498 `site_settings(out)`
-- L1507 `site_page(path)` — (тело, тип) страницы сайта или None; файлы читаются с диска каждый раз — их пять, они маленькие, а правка вид…
-- L1520 `pub_query(name, q)` — Параметры публичного запроса: (dict, None) или (None, слова отказа).
-- L1536 `fetch_pub(name, params, gzip_ok=False)` — Ответ сборщика байтами: (код, тело, Content-Encoding или None).
-- L1553 `fetch_dca(full=None)`
-- L1566 `class Handler`
-  - L1573 `Handler.log_message(self, fmt, *a)`
-  - L1577 `Handler._send(self, code, obj)`
-  - L1586 `Handler._send_raw(self, body, encoding=None)`
-  - L1596 `Handler._pub(self, name, q)`
-  - L1611 `Handler._body(self)`
-  - L1621 `Handler._acc(self)`
-  - L1629 `Handler._site(self, u, method)` — Страницы сайта: www → без www, пять файлов, остальное 404.
-  - L1651 `Handler._route(self, method)`
-  - L1766 `Handler.do_GET(self)`
-  - L1769 `Handler.do_POST(self)`
-  - L1772 `Handler.do_DELETE(self)`
-- L1776 `class Server` — TLS-рукопожатие — в ПОТОКЕ соединения и с пределом времени.
-  - L1793 `Server.finish_request(self, request, client_address)`
-- L1807 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
-- L1818 `read_operator_token(path)`
-- L1826 `main(argv=None)`
+  - L337 `App._ai_lessons(self)` — Уроки судьи (§11.4): действующие и ждущие, с числами проверки. Файла нет — None («сводка ещё не делалась»), н…
+  - L358 `App._ai_reviews(self, names)` — ключ решения → строка разбора судьёй (последние 21 день журнала).
+  - L377 `App._ai_paths(self)` — ключ решения → строка разбора пути (все файлы: позиция закрывается позже дня решения, и файл дня выхода — не…
+  - L399 `App._news_titles(self, day)` — id новости → заголовок по записи сборщика за сутки решения и двое до них.
+  - L424 `App.top(self, deposit=None)` — Главная сайта: лучшая стратегия и рейтинг на одном депозите.
+  - L486 `App.site(self)`
+  - L492 `App.set_site(self, acc, body)`
+  - L512 `App.overview(self, acc)` — Оператору: аккаунты с числом ключей и подписок, согласие; ёмкость по ячейкам (спека 15 §7a.5 — измеритель ёмк…
+  - L532 `App.consent_state(self, acc)`
+  - L540 `App.accept(self, acc, version, ip=None, device=None)`
+  - L552 `App.need_consent(self, acc)` — Отказ словами, если клиент не принял ТЕКУЩИЕ документы. Оператор — владелец сервиса, а не клиент: гейт к нему…
+  - L563 `App.add_key(self, acc, venue, key, secret)` — ------------------------------------------------------------ ключи
+  - L609 `App._key_view(self, r)`
+  - L616 `App.list_keys(self, acc)`
+  - L619 `App.delete_key(self, acc, kid)`
+  - L632 `App.dca(self)` — ------------------------------------------------------------ книги и ячейки
+  - L638 `App.strategies(self)`
+  - L684 `App.cell_key(book, deposit, sizing=None)` — Ключ книги в своде `/dca`: та же схема, что у `rules.cell_key` — `книга:депозит`, у фиксированного билета с х…
+  - L691 `App.paper_cash(book, deposit)` — Касса БУМАЖНОЙ книги сейчас: депозит плюс её накопленный нетто.
+  - L701 `App.ticket_of(book, deposit)` — Билет ячейки (маржа одной позиции на стартовом депозите), $.
+  - L712 `App.sub_cash(s, st)` — Касса ПОДПИСКИ: стартовый депозит плюс реализованный нетто её собственных живых позиций (`realized_usd` в сос…
+  - L720 `App.add_subscription(self, acc, key_id, book, deposit, sizing=None)` — ------------------------------------------------------------ подписки
+  - L766 `App.venue_modes(self, k)` — Режим позиций по ключу. Секрет открыть этот процесс НЕ может: режим читается ключом только при добавлении (см…
+  - L773 `App._sub_view(self, s)`
+  - L781 `App.list_subscriptions(self, acc)`
+  - L784 `App.delete_subscription(self, acc, sid)`
+  - L811 `App.live_enabled(self)` — ------------------------------------------------------------ живой режим
+  - L814 `App.set_live_enabled(self, acc, on)` — Рубильник оператора (§7a.5): без него ни одна подписка в live не переводится. Выключение НЕ останавливает раб…
+  - L829 `App.sub_dir(self, sid)`
+  - L832 `App.exec_status(self, sid)`
+  - L839 `App.arm(self, acc, sid, confirm)`
+  - L888 `App.disarm(self, acc, sid)` — Входы выключены, открытые позиции исполнитель ведёт дальше (цель, пол, срок, охрана рынком). Режим остаётся l…
+  - L903 `App.to_dry(self, acc, sid)` — Обратно в сухой режим — только без открытых позиций.
+  - L915 `App.close_position(self, acc, sid, sym, pos_at)` — Ручное закрытие ОДНОЙ позиции кнопкой владельца (11.10).
+  - L953 `App.kill(self, acc, sid, on)` — KILL подписки: исполнитель не делает НИЧЕГО (ни заявок, ни отмен).
+  - L971 `App.check_account(self, acc, sid, runner=None)` — Предполётная проверка счёта по кнопке владельца: ключ открывает отдельный процесс (`preflight.py`), сюда прих…
+  - L989 `App.state(self, acc)` — ------------------------------------------------------------ состояние
+  - L1073 `App.events(self, acc, since)`
+  - L1076 `App.books(self, full=None)`
+  - L1084 `App.add_device(self, acc, token, env='prod', build=None)` — ------------------------------------------------------------ устройства и пуши (§7.5)
+  - L1092 `App.list_devices(self, acc)`
+  - L1098 `App.delete_device(self, acc, token)`
+  - L1102 `App.push_config(self, acc, team_id, key_id, p8, topic=None)`
+  - L1113 `App.push_test(self, acc)` — Пробный пуш на устройства аккаунта — без записи сделки.
+  - L1131 `App.list_trades(self, acc, since=0, limit=200, mode='live')` — Записи журнала исполнителя. По умолчанию — только ЖИВЫЕ (решение владельца 10.10: «на вкладке Trades — реальн…
+  - L1161 `App.live_positions(self, acc)` — Живые позиции — в ФОРМЕ строки бумажной книги (`sym, side, at, lev, margin, entry_px, avg, fills, walk, exit,…
+  - L1259 `App.attach_paper(self, rows, subs)` — Та же сделка в бумажной книге — СЫРОЙ сигнал (журнал книги без издержек): строка ячейки подписки с тем же име…
+  - L1336 `App.live_pnl(rows, subs)` — Общий результат живых сделок (владелец 10.10: «на странице trades общий пнл по всем сделкам»): реализованное…
+  - L1389 `App.trade_test(self, acc, text=None)` — Пробная строка журнала → приём → запись → пуш: весь канал одной кнопкой.
+  - L1399 `App.intents_tick(self, force=False)` — Намерения исполнителя по новым выборам источников (L1) — раз в `INTENTS_TICK_S`; падение пишется в состояние…
+  - L1414 `App.list_intents(self, acc, sub_id=None, limit=50)` — Намерения и отказы по подпискам аккаунта — хвост файлов.
+  - L1431 `App.push_tick(self)` — Такт фонового потока: намерения по новым выборам (раз в минуту), следователь пишет события ячеек подписок (су…
+- L1456 `top_series(days_rows, open_days, dep)` — Кривая витрины и просадка открытых на ОДНОЙ оси дней.
+- L1485 `computed_at_of(d)` — Момент последнего пересчёта длинных книг для витрины: свод сборщика несёт возраст артефакта в часах (`age_h`)…
+- L1496 `PUB_ROUTES = {'dca': ('full', 'focus', 'dep', 'ruler…`
+- L1502 `PUB_VALUE = re.compile('^[A-Za-z0-9._:\\-]{1,64}$')`
+- L1508 `SITE_DIR = os.path.join(HERE, 'site')` — Сайт (спека 16 L4): главная, документы, кабинет — файлы `site/`, те же ответы API, что у приложения. Настройк…
+- L1509 `SITE_HOST = 'algoth.trade'`
+- L1510 `SITE_PAGES = {'/': ('index.html', 'text/html; charse…`
+- L1523 `SITE_KEYS = ('apple_client_id', 'company', 'ios_url…`
+- L1524 `SITE_ID = re.compile('^[A-Za-z0-9._-]{0,120}$')`
+- L1527 `site_settings(out)`
+- L1536 `site_page(path)` — (тело, тип) страницы сайта или None; файлы читаются с диска каждый раз — их пять, они маленькие, а правка вид…
+- L1549 `pub_query(name, q)` — Параметры публичного запроса: (dict, None) или (None, слова отказа).
+- L1565 `fetch_pub(name, params, gzip_ok=False)` — Ответ сборщика байтами: (код, тело, Content-Encoding или None).
+- L1582 `fetch_dca(full=None)`
+- L1595 `class Handler`
+  - L1602 `Handler.log_message(self, fmt, *a)`
+  - L1606 `Handler._send(self, code, obj)`
+  - L1615 `Handler._send_raw(self, body, encoding=None)`
+  - L1625 `Handler._pub(self, name, q)`
+  - L1640 `Handler._body(self)`
+  - L1650 `Handler._acc(self)`
+  - L1658 `Handler._site(self, u, method)` — Страницы сайта: www → без www, пять файлов, остальное 404.
+  - L1680 `Handler._route(self, method)`
+  - L1795 `Handler.do_GET(self)`
+  - L1798 `Handler.do_POST(self)`
+  - L1801 `Handler.do_DELETE(self)`
+- L1805 `class Server` — TLS-рукопожатие — в ПОТОКЕ соединения и с пределом времени.
+  - L1822 `Server.finish_request(self, request, client_address)`
+- L1836 `make_server(app, host='0.0.0.0', port=443, tls_dir=None)`
+- L1847 `read_operator_token(path)`
+- L1855 `main(argv=None)`
 
 ## tools/app_api/set_site.py · 45 строк
 
@@ -10483,7 +10531,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 830 строк
+## tools/watchdog_book.sh · 854 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 

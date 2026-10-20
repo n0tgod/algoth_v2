@@ -53,6 +53,7 @@ MS_LATEST = os.path.join(ROOT, "research", "market_state", "out", "latest.json")
 TRAIN_WAIT = os.path.join(ROOT, "research", "s8_loop", "out", "train_wait.flag")
 
 GATE_SINCE = 1792346400            # 2026-10-18 18:00 UTC — день рождения веток (§9 N3)
+LEARN_SINCE = 1792522800           # 2026-10-20 19:00 UTC — день рождения учащейся ветки ai_learn (§11.4 U2)
 BOOKS = (("optimal", "long"), ("optimal_h", "short"))
 LATE_H = 6                         # кандидат старше — не судится (досье на момент входа уже бы не собрать честно)
 REPEAT_MOD = 20                    # 1 из 20 входов спрашивается повторно (5 %)
@@ -228,14 +229,14 @@ def run(log=print, client=None, dry=False, now=None):
     out_rows, full = [], []
     stats = {"entry_new": 0, "calls": 0, "cost": 0.0, "watched": 0, "watch_calls": 0, "closes": 0, "heartbeats": 0}
 
-    def call(kind, d):
+    def call(kind, d, learn=False):
         nonlocal spent
         if client is None:
             return {"decision": "open" if kind == "entry" else "hold",
                     "no_verdict": "ключа нет" if not key else "сухой прогон", "model": J.MODEL}
         if spent >= BUDGET_DAY_USD:
             return {"decision": "open" if kind == "entry" else "hold", "no_verdict": "бюджет суток", "model": J.MODEL}
-        row = J.ask(client, kind, d)
+        row = J.ask_learn(client, d) if learn else J.ask(client, kind, d)
         spent += row.get("cost_usd") or 0
         stats["calls"] += 1
         stats["cost"] += row.get("cost_usd") or 0
@@ -248,13 +249,16 @@ def run(log=print, client=None, dry=False, now=None):
     dec_by = {b: dict(v) for b, v in GB.entry_index(prev).items()}
     closes_news = GB.close_index(prev)
     stats["held"] = 0
+    learn_cs, learn_lessons = None, None
     for book, side, r, k in pick_new(cands, judged, now):
         recs = books[book]
+        brs = ("ai_news", "ai_plain") + (("ai_learn",) if float(r["at"]) >= LEARN_SINCE else ())
         held = {br: holder_of(recs, book, dec_by.setdefault(br, {}),
                               closes_news if br == "ai_news" else {}, r)
-                for br in ("ai_news", "ai_plain")}
-        variants = [(br, w) for br, w in (("ai_news", True), ("ai_plain", False)) if held[br] is None]
-        for br in ("ai_news", "ai_plain"):
+                for br in brs}
+        variants = [(br, w) for br, w in (("ai_news", True), ("ai_plain", False), ("ai_learn", True))
+                    if br in brs and held[br] is None]
+        for br in brs:
             if held[br] is not None:
                 # имя держит ранний вход ветки — книга выбросит и этот;
                 # модель не спрашивается, строка честно говорит почему
@@ -274,7 +278,21 @@ def run(log=print, client=None, dry=False, now=None):
             variants.append(("ai_news_repeat", nw))
         for branch, with_news in variants:
             d = J.dossier("entry", r, book, side, float(r["at"]), news=with_news, **kw)
-            res = call("entry", d)
+            if branch == "ai_learn":
+                # похожие закрытые случаи до момента входа и принятые уроки (§11.4)
+                if learn_cs is None:
+                    import lessons as LS                       # noqa: E402
+                    try:
+                        learn_cs = LS.cases(decisions=prev)
+                    except Exception as e:                     # noqa: BLE001
+                        log(f"похожие случаи не собраны: {type(e).__name__}: {e}")
+                        learn_cs = []
+                    learn_lessons = LS.lessons_text(LS.load_state())
+                import lessons as LS                           # noqa: E402
+                crowd_now = ((kw.get("crowd") or {}).get("bybit") or {}).get("now")
+                d = dict(d, similar_past_cases=LS.similar(learn_cs, r["sym"], side, crowd_now, float(r["at"])),
+                         accepted_lessons=learn_lessons or [])
+            res = call("entry", d, learn=(branch == "ai_learn"))
             row = {"t": now, "kind": "entry", "branch": branch, "key": k, "book": book, "sym": r["sym"],
                    "side": side, "at": float(r["at"]), "late_min": round((now - float(r["at"])) / 60, 1),
                    "news_n": len(with_news) if with_news is not None else None, "cov": cov,
@@ -393,6 +411,10 @@ def summary(rows, now, stats, t0, fresh, news_age, ms_age):
                       "skip_alarm": bool(skip_pct is not None and skip_pct > 60),
                       "no_verdict": sum(1 for r in ent if r.get("no_verdict")),
                       "plain_skips": sum(1 for r in today if r.get("branch") == "ai_plain" and r.get("decision") == "skip"
+                                         and not r.get("no_verdict")),
+                      "learn_entries": sum(1 for r in today if r.get("kind") == "entry" and r.get("branch") == "ai_learn"
+                                           and r.get("decision") != "held"),
+                      "learn_skips": sum(1 for r in today if r.get("branch") == "ai_learn" and r.get("decision") == "skip"
                                          and not r.get("no_verdict")),
                       "repeat_pairs": len(both), "repeat_same": sum(1 for p in both if p["ai_news"] == p["ai_news_repeat"]),
                       "watch_calls": sum(1 for r in today if r.get("kind") == "hold"),

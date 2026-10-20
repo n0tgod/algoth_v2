@@ -792,6 +792,30 @@ if ! pgrep -f "ai_gate/path_review.py" >/dev/null \
     fi
 fi
 
+# --- уроки судьи (спека 19 §11.4, U2) ----------------------------------
+# Раз в неделю, в час 07 UTC: модель предлагает уроки по разборам недели,
+# код принимает их ЧИСЛОМ на двух половинах. Сводка старше 6.5 суток;
+# идущий не дублируется; свежий флаг обучения — не стартует.
+LESS=research/ai_gate/out/lessons_latest.json
+LESS_LOG=research/ai_gate/out/lessons.log
+if ! pgrep -f "ai_gate/lessons.py" >/dev/null \
+   && { [ ! -f research/s8_loop/out/train_wait.flag ] \
+        || [ -n "$(find research/s8_loop/out/train_wait.flag -mmin +60 2>/dev/null)" ]; }; then
+    ls_age=999999999
+    if [ -f "$LESS" ]; then
+        ls_ts=$(date -u -r "$LESS" +%s 2>/dev/null || echo 0)
+        [ "$ls_ts" -gt 0 ] && ls_age=$(( $(date -u +%s) - ls_ts ))
+    fi
+    ls_hh=$(date -u +%H)
+    if [ "$ls_hh" = "07" ] && [ "$ls_age" -gt 561600 ]; then
+        mkdir -p "$(dirname "$LESS_LOG")"
+        echo "[$(now)] уроки судьи: сводка ${ls_age} с назад — прогон"
+        setsid nohup bash -c "
+            nice -n 15 .venv/bin/python research/ai_gate/lessons.py \
+                >> $LESS_LOG 2>&1" &
+    fi
+fi
+
 # --- очередь заданий (docs/00-INDEX.md) -------------------------------
 # Ассистент кладёт задание файлом в git, сервер его выполняет: прямого
 # доступа к серверу у ассистента нет (наружу открыты только 80 и 443),
