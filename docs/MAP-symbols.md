@@ -628,6 +628,31 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L191 `report(s)`
 - L217 `main(argv=None)`
 
+## research/ai_gate/entry_shift.py · 319 строк
+
+Новая точка входа из пути цены (спека 19 §11.7, U4): проверка сдвигом.
+
+- L46 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L47 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L52 `OUT = os.path.join(HERE, 'out')`
+- L53 `REPORT = os.path.join(OUT, 'ENTRY-SHIFT.md')`
+- L54 `LATEST = os.path.join(OUT, 'entry_shift.json')`
+- L55 `HYPS_FILE = os.path.join(OUT, 'entry_hyps.json')`
+- L57 `H = 3600.0`
+- L58 `MIN_HALF = 30`
+- L59 `NULL_SEEDS = 3`
+- L61 `GRID = [{'id': 'pullback_2pct_3h', 'kind': 'pu…` — Сетка объявлена ДО первого прогона (20.10) и по результатам не меняется.
+- L65 `KINDS = ('pullback', 'confirm', 'delay')`
+- L68 `valid(h)`
+- L80 `trigger(h, bars, at, side='short')` — Момент нового входа или None. `bars` — минутные [t,o,h,l,c,v] от `at`.
+- L109 `shifted(legs, h, bars_of, rng=None)` — → [(нога, новая нога | None)]. rng — случайный момент в окне (нуль).
+- L123 `recs_of(replayed, legs)` — Записи линейки книги из ответа реплея по ногам (ключ — имя и момент).
+- L133 `book_chain(recs, log, now)` — Те же правила после реплея, что у книги: возраст имени, охрана рынком.
+- L143 `per_signal(pairs, recs_by_key, halves_at)` — Средний нетто на маржу на сигнал (не сработавший — 0) и на сработавший, по половинам.
+- L164 `run(log=print, since=None, limit=None, now=None, src=None, repl…`
+- L262 `report(r)`
+- L292 `main(argv=None)`
+
 ## research/ai_gate/gate_books.py · 351 строк
 
 Ветки судьи спеки 19 кассой (этап N3): из журнала решений и позиций книг.

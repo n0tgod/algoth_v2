@@ -238,6 +238,16 @@
   - L225 `Summary.test_half_life_filter_narrows_selection(self)`
   - L232 `Summary.test_off_grid_window_is_refused_not_averaged(self)` — Окно не по сетке ломает смысл «соседнего» — и должно падать.
 
+## research/ai_gate/test_entry_shift.py · 93 строк
+
+Сдвиг точки входа (U4): срабатывание по свече после опоры (против шорта — рост, в пользу — падение), конец ми…
+
+- L12 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `T0 = 1792000800.0`
+- L17 `H = 3600.0`
+- L20 `bars(prices, t0=T0)`
+- L27 `main()`
+
 ## research/ai_gate/test_gate_books.py · 82 строк
 
 Ветки судьи: «не судили» остаётся во всех ветках и считается числом; жребий убирает ровно столько же входов в…
