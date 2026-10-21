@@ -628,7 +628,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L191 `report(s)`
 - L217 `main(argv=None)`
 
-## research/ai_gate/entry_search.py · 429 строк
+## research/ai_gate/entry_search.py · 442 строк
 
 Поиск новой ТВХ по состоянию рынка (спека 19 §11.8, U4c).
 
@@ -652,20 +652,21 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L78 `_f(x)`
 - L86 `_move(a, b)`
 - L90 `features(g, k, hours, mkt, state, market_rows, hist, crowd_of, …` — Параметры состояния на час k после сигнала `g` (закрытые часы ≤ t).
-- L140 `build_table(legs, out_by_k, get_features)` — → (names, F[n, K+1, f], O[n, K+1]) — O NaN, где входа нет.
-- L163 `first_k(F, names, rule)` — Первый час k ≤ W, где выполнены ВСЕ условия; −1 — не наступил.
-- L176 `score(O, ks, idx)` — Средний на сигнал (не вошедший — 0) и число вошедших на подмножестве idx.
-- L190 `null_p(O, ks, idx, W, mean_rule, rng)` — Доля случайных часов входа (k ~ U[0, W]) для тех же вошедших, не хуже правила.
-- L206 `cells(F, names, idx_train)` — Одиночные ячейки: поле × квантиль (по обучающей половине) × знак × окно.
-- L224 `select(F, O, names, idx_train, extra=())` — Лучшая ячейка обучающей половины по приросту к книге на сигнал.
-- L253 `fold(F, O, names, train, test, extra, seed)`
-- L269 `search(F, O, names, at, extra=(), seed=0)`
-- L278 `shuffled(F, seed)` — Отрицательный контроль: строки состояния (по сигналам) переставлены.
-- L286 `rule_text(rule)`
-- L292 `run(log=print, since=None, now=None, legs=None, table=None, see…`
-- L326 `make_table(log, since, now, legs=None)` — Семь реплеев (вход через k = 0…6 ч) и параметры на каждом часе.
-- L374 `report(r)`
-- L404 `main(argv=None)`
+- L141 `build_table(legs, out_by_k, get_features)` — → (names, F[n, K+1, f], O[n, K+1]) — O NaN, где входа нет.
+- L164 `first_k(F, names, rule)` — Первый час k ≤ W, где выполнены ВСЕ условия; −1 — не наступил.
+- L177 `score(O, ks, idx)` — Средний на сигнал (не вошедший — 0) и число вошедших на подмножестве idx.
+- L191 `null_p(O, ks, idx, W, mean_rule, rng)` — Доля случайных часов входа (k ~ U[0, W]) для тех же вошедших, не хуже правила.
+- L207 `cells(F, names, idx_train)` — Одиночные ячейки: поле × квантиль (по обучающей половине) × знак × окно.
+- L225 `select(F, O, names, idx_train, extra=())` — Лучшая ячейка обучающей половины по приросту к книге на сигнал.
+- L254 `fold(F, O, names, train, test, extra, seed)`
+- L270 `search(F, O, names, at, extra=(), seed=0)`
+- L279 `shuffled(F, seed)` — Отрицательный контроль: строки состояния (по сигналам) переставлены.
+- L287 `rule_text(rule)`
+- L293 `run(log=print, since=None, now=None, legs=None, table=None, see…`
+- L327 `make_table(log, since, now, legs=None)` — Семь реплеев (вход через k = 0…6 ч) и параметры на каждом часе.
+- L375 `load_table(path=None)` — Таблица исходов прошлого прогона (`make_table` её сохраняет).
+- L384 `report(r)`
+- L414 `main(argv=None)`
 
 ## research/ai_gate/entry_shift.py · 337 строк
 
@@ -863,7 +864,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L161 `run(log=print, now=None, src=None, mkt=None, books=None, client…`
 - L230 `main(argv=None)`
 
-## research/ai_gate/patterns.py · 193 строк
+## research/ai_gate/patterns.py · 220 строк
 
 Поиск паттернов моделью → правила новой ТВХ по состоянию рынка (спека 19 §11.7–11.8, U4b).
 
@@ -879,6 +880,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L97 `summary(paths)` — Сводка путей по выходам и формам — медианы, из чисел U0.
 - L116 `catalog_from_table(path=None)` — Каталог полей с диапазонами — из таблицы поиска (`entry_search`).
 - L133 `run(log=print, client=None, paths=None, rules_file=None, catalo…` — Предложить правила входа по состоянию и дописать их в файл правил поиска.
+- L196 `main()` — Отдельный проход (по заданию): недельный идёт из `lessons.py`.
 
 ## research/ai_gate/peek.py · 47 строк
 

@@ -97,7 +97,8 @@ def features(g, k, hours, mkt, state, market_rows, hist, crowd_of, at_or_before)
     p_now = px(sym, tm)
     for n in (1, 4, 24, 168):
         out[f"px_{n}h"] = _move(px(sym, tm - n * H), p_now)
-        out[f"btc_{n}h"] = _move(px("BTCUSDT", tm - n * H), px("BTCUSDT", tm)) if n <= 24 else None
+        if n <= 24:
+            out[f"btc_{n}h"] = _move(px("BTCUSDT", tm - n * H), px("BTCUSDT", tm))
     out["since_signal"] = _move(px(sym, float(g["at"]) - 1.0), p_now) if k > 0 else 0.0
     # микроструктура записи B1 — сводка последнего закрытого часа и 24 ч до него
     r = hours.row(sym, tm) or {}
@@ -371,6 +372,15 @@ def make_table(log, since, now, legs=None):
     return {"names": names, "F": F, "O": O, "at": np.array([float(g["at"]) for g in legs]), "n": len(legs)}
 
 
+def load_table(path=None):
+    """Таблица исходов прошлого прогона (`make_table` её сохраняет)."""
+    try:
+        z = np.load(path or TABLE, allow_pickle=False)
+    except OSError as e:
+        return {"error": f"таблицы нет ({type(e).__name__}) — нужен полный прогон"}
+    return {"names": [str(x) for x in z["names"]], "F": z["F"], "O": z["O"], "at": z["at"], "n": len(z["at"])}
+
+
 def report(r):
     if r.get("error"):
         return f"# Поиск ТВХ по состоянию рынка\n\nНЕ ПОСЧИТАНО: {r['error']}\n"
@@ -405,6 +415,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--since", default=None)
     ap.add_argument("--no-publish", action="store_true")
+    ap.add_argument("--from-table", action="store_true",
+                    help="без реплея: таблица исходов прошлого прогона (новые правила модели на тех же сигналах)")
     a = ap.parse_args(argv)
     try:
         sys.stdout.reconfigure(line_buffering=True)
@@ -412,7 +424,8 @@ def main(argv=None):
         pass
     import arm_book as AB                                     # noqa: E402
     since = calendar.timegm(time.strptime(a.since, "%Y-%m-%d")) if a.since else None
-    r = run(log=AB.guarded(print, limit=2500), since=since)
+    table = load_table() if a.from_table else None
+    r = run(log=AB.guarded(print, limit=2500), since=since, table=table)
     os.makedirs(OUT, exist_ok=True)
     with open(LATEST, "w", encoding="utf-8") as f:
         json.dump(r, f, ensure_ascii=False, default=str)

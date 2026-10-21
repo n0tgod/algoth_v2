@@ -47,7 +47,17 @@ def main():
     assert r["procedure_holds"] and r["candidate"]["rule"]["when"][0]["field"] == "crowd_bybit", r.get("candidate")
     assert "держит" in ES.report(r) or "**да**" in ES.report(r)
     print("ok  поиск ТВХ: подсаженный параметр найден и держит на проверке в обе стороны; перемешанные и шум — молчат")
-    print("\nвсе 1 проверки прошли")
+    # --from-table: таблица, сохранённая полным прогоном, читается тем же видом
+    import tempfile
+    pth = os.path.join(tempfile.mkdtemp(), "t.npz")
+    np.savez_compressed(pth, F=F, O=O, at=at, names=np.array(names))
+    t = ES.load_table(pth)
+    assert t["names"] == names and t["n"] == len(at) and np.array_equal(t["O"], O, equal_nan=True)
+    r2 = ES.run(log=lambda *a: None, table=t)
+    assert r2["fold_1to2"]["rule"] == r["fold_1to2"]["rule"], "та же таблица — тот же отбор"
+    assert "error" in ES.load_table(pth + ".нет"), "нет таблицы — названная ошибка, не пустой поиск"
+    print("ok  поиск ТВХ по сохранённой таблице: тот же отбор; без таблицы — ошибка с причиной")
+    print("\nвсе 2 проверки прошли")
 
 
 if __name__ == "__main__":

@@ -191,3 +191,30 @@ def run(log=print, client=None, paths=None, rules_file=None, catalog=None, last_
         + (f" ({row.get('no_verdict')})" if row.get("no_verdict") else ""))
     return {"new": new, "invalid": invalid, "notes": row.get("notes"), "no_verdict": row.get("no_verdict"),
             "cost_usd": row.get("cost_usd")}
+
+
+def main():
+    """Отдельный проход (по заданию): недельный идёт из `lessons.py`."""
+    import subprocess
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except Exception:                                        # noqa: BLE001
+        pass
+    r = run(log=print)
+    if r.get("error"):
+        print(f"правила модели НЕ предложены: {r['error']}")
+        return 1
+    for x in r.get("new") or []:
+        print(" и ".join(f"{c['field']} {c['op']} {c['value']:g}" for c in x["when"]) + f", окно {x['W']} ч — {x['why']}")
+    for x in r.get("invalid") or []:
+        print(f"отвергнуто формой: {x['why']}")
+    if r.get("notes"):
+        print(f"модель: {r['notes']}")
+    print(f"стоимость: {r.get('cost_usd')} $")
+    root = os.path.dirname(os.path.dirname(HERE))
+    subprocess.run([os.path.join(root, "tools", "publish.sh"), "правила входа от модели"], cwd=root, check=False)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
