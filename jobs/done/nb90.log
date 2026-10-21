@@ -1,0 +1,41 @@
+== задание nb90 ==
+строка: run research/ai_gate/model_books.py --dry
+начало: 2026-10-21T07:49:17Z
+запускаю: .venv/bin/python research/ai_gate/model_books.py --dry
+длинные книги: aggr 6882, optimal 6882, optimal_ai 6882, safe 6882
+короткие книги: aggr_h 6367, aggr_h_g0 6367, aggr_h_g2 6367, aggr_h_g4i2 6367, aggr_h_g6 6367, optimal_h 6367, optimal_h_ai 6367, optimal_h_g0 6367, optimal_h_g2 6367, optimal_h_g4i2 6367, optimal_h_g6 6367, safe_h 6367, safe_h_g0 6367, safe_h_g2 6367, safe_h_g4i2 6367, safe_h_g6 6367
+кэш книг ТВХ модели не используется: кэша нет
+родилась m01 (entry): crowd_bybit_shift <= -0.06 и px_1h >= 0.005, окно 4 ч
+родилась m02 (entry): oi_1h <= -0.02 и since_signal >= 0.01, окно 5 ч
+# Книги, которые заводит модель (спека 19 §12)
+
+Посчитано 2026-10-21T07:49:18Z; живых 2 из 10; порог рождения мягкий (≥ 10 случаев, случайные не хуже ≤ 20 %); новых ≤ 2 за 7 суток; отставка — 10 суток ниже основной книги или 30 суток простоя. Только бумага.
+
+**Родились в этом проходе:** m01 (entry) — `crowd_bybit_shift <= -0.06 и px_1h >= 0.005, окно 4 ч`; m02 (entry) — `oi_1h <= -0.02 и since_signal >= 0.01, окно 5 ч`
+
+| книга | вид | правило | с рождения, сут | позиций | итог $10k | основная на том же окне | нуль книги | статус |
+|---|---|---|---|---|---|---|---|---|
+| — | | книг ещё нет | | | | | | |
+
+**Группой:** лучше основной книги 0 из 0 живых с позициями; без эджа ожидается около половины — это не вердикт.
+
+
+## Наблюдения недели и порог
+
+| вид | правило | случаев | случайные не хуже | вердикт |
+|---|---|---|---|---|
+| фильтр | `price_moves_to_decision.4h_pct >= 10 и price_moves_to_decision.1h_pct >= 1` | 17 | 0.003 | проходит |
+| фильтр | `book_rules.lev >= 10 и derived.name_floor_share >= 0.35` | 14 | 0.0 | проходит |
+| фильтр | `derived.crowd_bybit_shift_24h <= -0.15 и price_moves_to_decision.4h_pct >= 3` | 12 | 0.0 | проходит |
+| фильтр | `book_rules.lev >= 20 и price_moves_to_decision.24h_pct >= 15` | 20 | 0.0 | проходит |
+| фильтр | `book_rules.lev >= 20 и price_moves_to_decision.4h_pct >= 5` | 15 | 0.0 | проходит |
+| фильтр | `price_moves_to_decision.1h_pct >= 3 и crowd_positioning.bybit.now < 0.45` | 10 | 0.072 | проходит |
+| ТВХ | `since_signal >= 0.03 и buy_share <= 0.47, окно 4 ч` | 235 | 0.03 | проходит |
+| ТВХ | `crowd_bybit_shift <= -0.06 и px_1h >= 0.005, окно 4 ч` | 869 | 0.0 | проходит |
+| ТВХ | `oi_1h <= -0.02 и since_signal >= 0.01, окно 5 ч` | 416 | 0.0 | проходит |
+| ТВХ | `burst_ratio >= 2 и depth_eat_ask >= 1000 и px_1h >= 0.01, окно 3 ч` | 128 | 0.775 | случайный час не хуже в 0.775 > 0.2 |
+| ТВХ | `funding >= 0.0001 и since_signal >= 0, окно 6 ч` | 609 | 0.065 | проходит |
+
+Прошли порог, ждут места: `book_rules.lev >= 20 и price_moves_to_decision.24h_pct >= 15` — предел 2 новых за 7 суток; `book_rules.lev >= 20 и price_moves_to_decision.4h_pct >= 5` — предел 2 новых за 7 суток; `book_rules.lev >= 10 и derived.name_floor_share >= 0.35` — предел 2 новых за 7 суток; `derived.crowd_bybit_shift_24h <= -0.15 и price_moves_to_decision.4h_pct >= 3` — предел 2 новых за 7 суток; `price_moves_to_decision.4h_pct >= 10 и price_moves_to_decision.1h_pct >= 1` — предел 2 новых за 7 суток; `since_signal >= 0.03 и buy_share <= 0.47, окно 4 ч` — предел 2 новых за 7 суток; `funding >= 0.0001 и since_signal >= 0, окно 6 ч` — предел 2 новых за 7 суток; `price_moves_to_decision.1h_pct >= 3 и crowd_positioning.bybit.now < 0.45` — предел 2 новых за 7 суток
+
+конец: 2026-10-21T07:49:21Z, код 0
