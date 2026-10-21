@@ -35,8 +35,10 @@ def klines(sym, at_s):
         return None
 
 
-def load_state(days):
-    """Запись состояния рынка → {sym: {src: [(t, row)]}}, рынок и события."""
+def load_state(days, syms=None):
+    """Запись состояния рынка → {sym: {src: [(t, row)]}}, рынок и события.
+    `syms` — только эти имена (поиск ТВХ, 21.10: 40 суток всех имён — гигабайты)."""
+    want = set(syms) if syms is not None else None
     by, market, events = {}, [], []
     for p in sorted(glob.glob(os.path.join(MS_RECORD, "state-*.jsonl")))[-days:]:
         with open(p, encoding="utf-8") as f:
@@ -49,7 +51,7 @@ def load_state(days):
                     market.append(r)
                 elif r.get("src") == "event":
                     events.append(r)
-                else:
+                elif want is None or r.get("sym") in want:
                     by.setdefault(r.get("sym"), {}).setdefault(r["src"], []).append(r)
     for d in by.values():
         for v in d.values():

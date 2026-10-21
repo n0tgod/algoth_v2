@@ -590,7 +590,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L285 `summarize(rows, where=None)`
 - L372 `main()`
 
-## research/ai_gate/context.py · 153 строк
+## research/ai_gate/context.py · 155 строк
 
 Контекст для досье судьи (спека 19): запись состояния рынка, новости, ход цены с площадки, история имени в кн…
 
@@ -601,13 +601,13 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L24 `KLINE = 'https://api.bybit.com/v5/market/kline?…`
 - L25 `H = 3600`
 - L28 `klines(sym, at_s)` — {начало часа с: close} за 7 суток до решения; отказ — None.
-- L38 `load_state(days)` — Запись состояния рынка → {sym: {src: [(t, row)]}}, рынок и события.
-- L61 `at_or_before(rows, t_ms)`
-- L71 `crowd_of(state, sym, t_ms)`
-- L83 `events_for(events, sym, t_ms, since_ms=None)` — События площадок и взломы с именем — в (since, t]; по умолчанию 72 ч до t.
-- L96 `load_news()`
-- L108 `history_of(recs, sym, at_s)`
-- L118 `build(kind, r, book, side, now, recs, state, market_rows, event…` — Досье и счёт покрытия: вход — на момент решения `at`, держание — на `now`.
+- L38 `load_state(days, syms=None)` — Запись состояния рынка → {sym: {src: [(t, row)]}}, рынок и события. `syms` — только эти имена (поиск ТВХ, 21.…
+- L63 `at_or_before(rows, t_ms)`
+- L73 `crowd_of(state, sym, t_ms)`
+- L85 `events_for(events, sym, t_ms, since_ms=None)` — События площадок и взломы с именем — в (since, t]; по умолчанию 72 ч до t.
+- L98 `load_news()`
+- L110 `history_of(recs, sym, at_s)`
+- L120 `build(kind, r, book, side, now, recs, state, market_rows, event…` — Досье и счёт покрытия: вход — на момент решения `at`, держание — на `now`.
 
 ## research/ai_gate/dry_hour.py · 251 строк
 
@@ -627,6 +627,45 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L149 `summarize(rows, cov, per_day, data, t0)`
 - L191 `report(s)`
 - L217 `main(argv=None)`
+
+## research/ai_gate/entry_search.py · 429 строк
+
+Поиск новой ТВХ по состоянию рынка (спека 19 §11.8, U4c).
+
+- L53 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L54 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L59 `OUT = os.path.join(HERE, 'out')`
+- L60 `REPORT = os.path.join(OUT, 'ENTRY-SEARCH.md')`
+- L61 `LATEST = os.path.join(OUT, 'entry_search.json')`
+- L62 `TABLE = os.path.join(OUT, 'record', 'entry_tabl…`
+- L63 `RULES_FILE = os.path.join(OUT, 'entry_rules.json')`
+- L64 `H = 3600.0`
+- L65 `KMAX = 6`
+- L66 `WINDOWS = (3, 6)`
+- L67 `QUANTS = (0.2, 0.4, 0.6, 0.8)`
+- L68 `MIN_COVER = 0.9`
+- L69 `MIN_DISTINCT = 10`
+- L70 `MIN_TRIG = 30`
+- L71 `TOP_PAIRS = 20`
+- L72 `NULL_DRAWS = 400`
+- L73 `P_MAX = 0.1`
+- L78 `_f(x)`
+- L86 `_move(a, b)`
+- L90 `features(g, k, hours, mkt, state, market_rows, hist, crowd_of, …` — Параметры состояния на час k после сигнала `g` (закрытые часы ≤ t).
+- L140 `build_table(legs, out_by_k, get_features)` — → (names, F[n, K+1, f], O[n, K+1]) — O NaN, где входа нет.
+- L163 `first_k(F, names, rule)` — Первый час k ≤ W, где выполнены ВСЕ условия; −1 — не наступил.
+- L176 `score(O, ks, idx)` — Средний на сигнал (не вошедший — 0) и число вошедших на подмножестве idx.
+- L190 `null_p(O, ks, idx, W, mean_rule, rng)` — Доля случайных часов входа (k ~ U[0, W]) для тех же вошедших, не хуже правила.
+- L206 `cells(F, names, idx_train)` — Одиночные ячейки: поле × квантиль (по обучающей половине) × знак × окно.
+- L224 `select(F, O, names, idx_train, extra=())` — Лучшая ячейка обучающей половины по приросту к книге на сигнал.
+- L253 `fold(F, O, names, train, test, extra, seed)`
+- L269 `search(F, O, names, at, extra=(), seed=0)`
+- L278 `shuffled(F, seed)` — Отрицательный контроль: строки состояния (по сигналам) переставлены.
+- L286 `rule_text(rule)`
+- L292 `run(log=print, since=None, now=None, legs=None, table=None, see…`
+- L326 `make_table(log, since, now, legs=None)` — Семь реплеев (вход через k = 0…6 ч) и параметры на каждом часе.
+- L374 `report(r)`
+- L404 `main(argv=None)`
 
 ## research/ai_gate/entry_shift.py · 337 строк
 

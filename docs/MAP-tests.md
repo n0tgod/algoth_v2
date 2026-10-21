@@ -238,6 +238,14 @@
   - L225 `Summary.test_half_life_filter_narrows_selection(self)`
   - L232 `Summary.test_off_grid_window_is_refused_not_averaged(self)` — Окно не по сетке ломает смысл «соседнего» — и должно падать.
 
+## research/ai_gate/test_entry_search.py · 54 строк
+
+Поиск ТВХ по состоянию (U4c): калибровочная пара — подсаженный параметр (вход, когда доля лонгов упала ниже п…
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L18 `synth(n=600, seed=3, planted=True)`
+- L31 `main()`
+
 ## research/ai_gate/test_entry_shift.py · 93 строк
 
 Сдвиг точки входа (U4): срабатывание по свече после опоры (против шорта — рост, в пользу — падение), конец ми…
