@@ -10,3 +10,21 @@ burst_ratio >= 2 и depth_eat_ask >= 1000 и px_1h >= 0.01, окно 3 ч — A 
 funding >= 0.0001 и since_signal >= 0, окно 6 ч — Funding has turned positive and longs are paying while the price is at or above the signal price. Longs are getting crowded, and a short collects funding and gets in at a no-worse price than the signal.
 модель: These rules target the adverse excursion that comes before favourable moves: the against_then_for paths have a median MAE of about 7% at about 3h. Wait-for-squeeze conditions use since_signal, px_1h, positioning, open-interest and flow exhaustion. They avoid the btc_1h, px_24h and buy_share/depth_eat_bid grid pairs that were already in the last search.
 стоимость: 0.03396 $
+ВНИМАНИЕ: 2026-10-21T07:13:35Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nb85.log                       |  9 +++
+ jobs/done/nb86.done                      |  1 +
+ jobs/done/nb86.log                       | 12 ++++
+ jobs/poke.log                            |  3 +
+ jobs/queue-state.md                      |  2 +-
+ research/ai_gate/out/entry_rules.json    | 95 ++++++++++++++++++++++++++++++++
+ research/dca_paper/out/DCA-pair.md       | 46 ++++++++--------
+ research/dca_paper/out/watch/latest.json |  2 +-
+ research/dca_paper/out/watch/pair.json   |  2 +-
+ research/s8_loop/out/day_brake.json      |  2 +-
+ 10 files changed, 147 insertions(+), 27 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   b49e835c8..d46e782ab  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-21T07:13:42Z, код 0
