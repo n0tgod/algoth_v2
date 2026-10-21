@@ -1483,7 +1483,7 @@
     ],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "compound"
    }
   },
@@ -1497,10 +1497,10 @@
    "ticket": 25.0,
    "parts": null,
    "all": {
-    "n": 91,
+    "n": 92,
     "days": 48,
-    "usd": 33.97,
-    "final": 0.3397,
+    "usd": 34.11,
+    "final": 0.3411,
     "max_dd": -0.0518,
     "max_dd_usd": -5.88,
     "day_median": 0.00154,
@@ -1509,19 +1509,19 @@
     "day_worst_usd": -2.86,
     "day_worst_d": "2026-09-01",
     "day_green": 0.625,
-    "win": 0.648,
-    "hold_h": 51.1,
+    "win": 0.652,
+    "hold_h": 51.4,
     "hold_med_h": 72.0,
     "bite": 5.1,
     "top_sym": "CAKEUSDT",
-    "usd_wo_top": 30.04,
+    "usd_wo_top": 30.17,
     "top_day": "2026-09-18",
-    "usd_wo_top3d": 16.33,
+    "usd_wo_top3d": 16.46,
     "worst_day": "2026-09-01",
     "max_dd_wo_worst": -0.0276,
     "max_dd_wo_top3d": -0.0548,
-    "names": 80,
-    "fills": 118,
+    "names": 81,
+    "fills": 119,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -1995,17 +1995,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 3.16,
-      "n": 3,
+      "usd": 3.29,
+      "n": 4,
       "bt": 0,
-      "long": 3.16,
+      "long": 3.29,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 79,
-    "n_tail": 13,
+    "n_tail": 14,
     "open_dd": -4.37,
     "open_dd_share": -0.0398,
     "open_days": [
@@ -2328,10 +2328,10 @@
     "open_dd_at": 1787457600
    },
    "forward": {
-    "n": 12,
+    "n": 13,
     "days": 4,
-    "usd": 1.62,
-    "final": 0.0162,
+    "usd": 1.75,
+    "final": 0.0175,
     "max_dd": -0.0085,
     "max_dd_usd": -1.87,
     "day_median": -0.0026,
@@ -2340,19 +2340,19 @@
     "day_worst_usd": -1.02,
     "day_worst_d": "2026-10-14",
     "day_green": 0.5,
-    "win": 0.417,
-    "hold_h": 62.5,
+    "win": 0.462,
+    "hold_h": 63.2,
     "hold_med_h": 72.0,
     "bite": 0.6,
     "top_sym": "DOODUSDT",
-    "usd_wo_top": -1.51,
+    "usd_wo_top": -1.38,
     "top_day": "2026-10-21",
     "usd_wo_top3d": -1.02,
     "worst_day": "2026-10-14",
     "max_dd_wo_worst": 0.0,
     "max_dd_wo_top3d": 0.0,
-    "names": 12,
-    "fills": 13,
+    "names": 13,
+    "fills": 14,
     "days_rows": [
      {
       "d": "2026-10-14",
@@ -2386,17 +2386,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 3.16,
-      "n": 3,
+      "usd": 3.29,
+      "n": 4,
       "bt": 0,
-      "long": 3.16,
+      "long": 3.29,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 1,
+    "n_tail": 2,
     "open_dd": -1.6,
     "open_dd_share": -0.0124,
     "open_dd_since": 1791677563.2
@@ -2874,16 +2874,16 @@
    },
    "forward_since": 1791677563.2,
    "costs": {
-    "n": 91,
-    "applied": 91,
+    "n": 92,
+    "applied": 92,
     "not_measured": 0,
-    "no_funding": 2,
-    "fee_usd": 1.36,
-    "slip_usd": 0.59,
+    "no_funding": 3,
+    "fee_usd": 1.37,
+    "slip_usd": 0.6,
     "fund_usd": 2.78,
-    "gross_usd": 33.15,
-    "net_usd": 33.97,
-    "fee_bp": 4.6,
+    "gross_usd": 33.3,
+    "net_usd": 34.11,
+    "fee_bp": 4.5,
     "fee_mean_bp": 6.0,
     "fee_worst_bp": 2.3,
     "slip_bp": 2.2,
@@ -2892,13 +2892,13 @@
     "fund_bp": -1.0,
     "fund_mean_bp": 12.5,
     "fund_worst_bp": -17.8,
-    "cost_usd": -0.83
+    "cost_usd": -0.81
    },
-   "n_forward": 12,
+   "n_forward": 13,
    "n_restored": 79,
    "dups": {
-    "names": 80,
-    "positions": 91,
+    "names": 81,
+    "positions": 92,
     "overlaps": 0,
     "repeats": 11,
     "max_per_name": 3,
@@ -2906,44 +2906,7 @@
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "KSMUSDT",
-      "at": 1792329117.5,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 25.0,
-      "mark_frac": 0.004924,
-      "mark_usd": 0.1231,
-      "entry_px": 4.214,
-      "avg": 4.214,
-      "depth": 1,
-      "fills": [
-       [
-        1792329120.0,
-        4.214,
-        0.25
-       ]
-      ],
-      "fav_bp": 162.46,
-      "last_ts": 1792587540.0,
-      "sched_end": 1792588317.5,
-      "cut_why": null,
-      "book_end": null,
-      "levels": {
-       "avg": 4.214,
-       "take_px": 4.350921288,
-       "liq_px": 0.0,
-       "floor_px": 0.42140000000000005,
-       "term_ts": 1792588317.5,
-       "depth": 1,
-       "side": "long",
-       "floor_frac": 0.1
-      },
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -3018,9 +2981,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": 0.12,
-    "priced": 1,
-    "at": 1792587606.5060523,
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1792588235.6089845,
     "sizing": "fixed"
    }
   },
@@ -3034,10 +2997,10 @@
    "ticket": 25.0,
    "parts": null,
    "all": {
-    "n": 450,
+    "n": 451,
     "days": 59,
-    "usd": 159.84,
-    "final": 0.1598,
+    "usd": 160.0,
+    "final": 0.16,
     "max_dd": -0.0295,
     "max_dd_usd": -29.83,
     "day_median": 0.00026,
@@ -3046,19 +3009,19 @@
     "day_worst_usd": -25.05,
     "day_worst_d": "2026-08-12",
     "day_green": 0.627,
-    "win": 0.709,
-    "hold_h": 39.4,
-    "hold_med_h": 34.2,
+    "win": 0.71,
+    "hold_h": 39.5,
+    "hold_med_h": 34.6,
     "bite": 14.5,
     "top_sym": "CCUSDT",
-    "usd_wo_top": 154.66,
+    "usd_wo_top": 154.82,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 43.77,
+    "usd_wo_top3d": 43.93,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.022,
     "max_dd_wo_top3d": -0.0295,
     "names": 270,
-    "fills": 652,
+    "fills": 653,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -3642,17 +3605,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 3.68,
-      "n": 3,
+      "usd": 3.84,
+      "n": 4,
       "bt": 0,
-      "long": 3.68,
+      "long": 3.84,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 412,
-    "n_tail": 51,
+    "n_tail": 52,
     "open_dd": -118.28,
     "open_dd_share": -0.1067,
     "open_days": [
@@ -3980,10 +3943,10 @@
     "open_dd_at": 1787461200
    },
    "forward": {
-    "n": 38,
+    "n": 39,
     "days": 8,
-    "usd": 4.62,
-    "final": 0.0046,
+    "usd": 4.78,
+    "final": 0.0048,
     "max_dd": -0.0048,
     "max_dd_usd": -4.83,
     "day_median": 0.00026,
@@ -3992,19 +3955,19 @@
     "day_worst_usd": -3.18,
     "day_worst_d": "2026-10-18",
     "day_green": 0.5,
-    "win": 0.658,
-    "hold_h": 40.1,
-    "hold_med_h": 39.7,
+    "win": 0.667,
+    "hold_h": 40.9,
+    "hold_med_h": 50.0,
     "bite": 1.3,
     "top_sym": "DOODUSDT",
-    "usd_wo_top": 0.97,
+    "usd_wo_top": 1.13,
     "top_day": "2026-10-15",
     "usd_wo_top3d": -5.3,
     "worst_day": "2026-10-18",
     "max_dd_wo_worst": -0.0016,
     "max_dd_wo_top3d": -0.0048,
-    "names": 37,
-    "fills": 40,
+    "names": 38,
+    "fills": 41,
     "days_rows": [
      {
       "d": "2026-10-14",
@@ -4078,17 +4041,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 3.68,
-      "n": 3,
+      "usd": 3.84,
+      "n": 4,
       "bt": 0,
-      "long": 3.68,
+      "long": 3.84,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 2,
+    "n_tail": 3,
     "open_dd": -4.7,
     "open_dd_share": -0.004,
     "open_dd_since": 1791677563.2
@@ -4636,15 +4599,15 @@
    },
    "forward_since": 1791677563.2,
    "costs": {
-    "n": 450,
-    "applied": 450,
+    "n": 451,
+    "applied": 451,
     "not_measured": 0,
-    "no_funding": 2,
-    "fee_usd": 9.61,
+    "no_funding": 3,
+    "fee_usd": 9.62,
     "slip_usd": 3.8,
     "fund_usd": 3.46,
-    "gross_usd": 169.79,
-    "net_usd": 159.84,
+    "gross_usd": 169.96,
+    "net_usd": 160.0,
     "fee_bp": 5.9,
     "fee_mean_bp": 8.1,
     "fee_worst_bp": 2.3,
@@ -4654,58 +4617,21 @@
     "fund_bp": -1.1,
     "fund_mean_bp": 2.6,
     "fund_worst_bp": -33.5,
-    "cost_usd": 9.95
+    "cost_usd": 9.96
    },
-   "n_forward": 38,
+   "n_forward": 39,
    "n_restored": 412,
    "dups": {
     "names": 270,
-    "positions": 450,
+    "positions": 451,
     "overlaps": 0,
-    "repeats": 180,
+    "repeats": 181,
     "max_per_name": 6,
     "pause_median_h": 199.0
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "KSMUSDT",
-      "at": 1792329117.5,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 29.2222,
-      "mark_frac": 0.004924,
-      "mark_usd": 0.1439,
-      "entry_px": 4.214,
-      "avg": 4.214,
-      "depth": 1,
-      "fills": [
-       [
-        1792329120.0,
-        4.214,
-        0.25
-       ]
-      ],
-      "fav_bp": 162.46,
-      "last_ts": 1792587540.0,
-      "sched_end": 1792588317.5,
-      "cut_why": null,
-      "book_end": null,
-      "levels": {
-       "avg": 4.214,
-       "take_px": 4.350921288,
-       "liq_px": 0.0,
-       "floor_px": 0.42140000000000005,
-       "term_ts": 1792588317.5,
-       "depth": 1,
-       "side": "long",
-       "floor_frac": 0.1
-      },
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -4780,9 +4706,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": 0.14,
-    "priced": 1,
-    "at": 1792587606.5060523,
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1792588235.6089845,
     "sizing": "compound"
    }
   },
@@ -4796,10 +4722,10 @@
    "ticket": 25.0,
    "parts": null,
    "all": {
-    "n": 462,
+    "n": 463,
     "days": 59,
-    "usd": 158.52,
-    "final": 0.1585,
+    "usd": 158.65,
+    "final": 0.1587,
     "max_dd": -0.0294,
     "max_dd_usd": -29.68,
     "day_median": 0.00025,
@@ -4809,18 +4735,18 @@
     "day_worst_d": "2026-08-12",
     "day_green": 0.627,
     "win": 0.708,
-    "hold_h": 39.5,
+    "hold_h": 39.6,
     "hold_med_h": 34.6,
     "bite": 14.1,
     "top_sym": "CCUSDT",
-    "usd_wo_top": 153.3,
+    "usd_wo_top": 153.44,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 44.51,
+    "usd_wo_top3d": 44.64,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0196,
     "max_dd_wo_top3d": -0.0294,
     "names": 272,
-    "fills": 671,
+    "fills": 672,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -5404,17 +5330,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 3.16,
-      "n": 3,
+      "usd": 3.29,
+      "n": 4,
       "bt": 0,
-      "long": 3.16,
+      "long": 3.29,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 424,
-    "n_tail": 51,
+    "n_tail": 52,
     "open_dd": -112.61,
     "open_dd_share": -0.1017,
     "open_days": [
@@ -5742,10 +5668,10 @@
     "open_dd_at": 1787461200
    },
    "forward": {
-    "n": 38,
+    "n": 39,
     "days": 8,
-    "usd": 3.98,
-    "final": 0.004,
+    "usd": 4.11,
+    "final": 0.0041,
     "max_dd": -0.0041,
     "max_dd_usd": -4.13,
     "day_median": 0.00022,
@@ -5754,19 +5680,19 @@
     "day_worst_usd": -2.73,
     "day_worst_d": "2026-10-18",
     "day_green": 0.5,
-    "win": 0.658,
-    "hold_h": 40.1,
-    "hold_med_h": 39.7,
+    "win": 0.667,
+    "hold_h": 40.9,
+    "hold_med_h": 50.0,
     "bite": 1.3,
     "top_sym": "DOODUSDT",
-    "usd_wo_top": 0.85,
+    "usd_wo_top": 0.98,
     "top_day": "2026-10-15",
     "usd_wo_top3d": -4.54,
     "worst_day": "2026-10-18",
     "max_dd_wo_worst": -0.0014,
     "max_dd_wo_top3d": -0.0041,
-    "names": 37,
-    "fills": 40,
+    "names": 38,
+    "fills": 41,
     "days_rows": [
      {
       "d": "2026-10-14",
@@ -5840,17 +5766,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 3.16,
-      "n": 3,
+      "usd": 3.29,
+      "n": 4,
       "bt": 0,
-      "long": 3.16,
+      "long": 3.29,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 2,
+    "n_tail": 3,
     "open_dd": -4.02,
     "open_dd_share": -0.0034,
     "open_dd_since": 1791677563.2
@@ -6398,15 +6324,15 @@
    },
    "forward_since": 1791677563.2,
    "costs": {
-    "n": 462,
-    "applied": 462,
+    "n": 463,
+    "applied": 463,
     "not_measured": 0,
-    "no_funding": 2,
-    "fee_usd": 9.31,
-    "slip_usd": 3.64,
+    "no_funding": 3,
+    "fee_usd": 9.32,
+    "slip_usd": 3.65,
     "fund_usd": 2.86,
-    "gross_usd": 168.61,
-    "net_usd": 158.52,
+    "gross_usd": 168.76,
+    "net_usd": 158.65,
     "fee_bp": 5.9,
     "fee_mean_bp": 8.1,
     "fee_worst_bp": 2.3,
@@ -6416,58 +6342,21 @@
     "fund_bp": -1.0,
     "fund_mean_bp": 2.5,
     "fund_worst_bp": -33.5,
-    "cost_usd": 10.09
+    "cost_usd": 10.11
    },
-   "n_forward": 38,
+   "n_forward": 39,
    "n_restored": 424,
    "dups": {
     "names": 272,
-    "positions": 462,
+    "positions": 463,
     "overlaps": 0,
-    "repeats": 190,
+    "repeats": 191,
     "max_per_name": 6,
     "pause_median_h": 184.3
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "KSMUSDT",
-      "at": 1792329117.5,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 25.0,
-      "mark_frac": 0.004924,
-      "mark_usd": 0.1231,
-      "entry_px": 4.214,
-      "avg": 4.214,
-      "depth": 1,
-      "fills": [
-       [
-        1792329120.0,
-        4.214,
-        0.25
-       ]
-      ],
-      "fav_bp": 162.46,
-      "last_ts": 1792587540.0,
-      "sched_end": 1792588317.5,
-      "cut_why": null,
-      "book_end": null,
-      "levels": {
-       "avg": 4.214,
-       "take_px": 4.350921288,
-       "liq_px": 0.0,
-       "floor_px": 0.42140000000000005,
-       "term_ts": 1792588317.5,
-       "depth": 1,
-       "side": "long",
-       "floor_frac": 0.1
-      },
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -6542,9 +6431,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": 0.12,
-    "priced": 1,
-    "at": 1792587606.5060523,
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1792588235.6089845,
     "sizing": "fixed"
    }
   },
@@ -6558,10 +6447,10 @@
    "ticket": 25.0,
    "parts": null,
    "all": {
-    "n": 1543,
+    "n": 1544,
     "days": 59,
-    "usd": 870.35,
-    "final": 0.087,
+    "usd": 870.5,
+    "final": 0.0871,
     "max_dd": -0.003,
     "max_dd_usd": -29.85,
     "day_median": 3e-05,
@@ -6575,14 +6464,14 @@
     "hold_med_h": 21.5,
     "bite": 14.2,
     "top_sym": "SANDUSDT",
-    "usd_wo_top": 861.99,
+    "usd_wo_top": 862.13,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 80.8,
+    "usd_wo_top3d": 80.95,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0024,
     "max_dd_wo_top3d": -0.003,
     "names": 464,
-    "fills": 2145,
+    "fills": 2146,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -7166,17 +7055,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 3.45,
-      "n": 3,
+      "usd": 3.59,
+      "n": 4,
       "bt": 0,
-      "long": 3.45,
+      "long": 3.59,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 1505,
-    "n_tail": 73,
+    "n_tail": 74,
     "open_dd": -379.44,
     "open_dd_share": -0.0351,
     "open_days": [
@@ -7504,9 +7393,9 @@
     "open_dd_at": 1787461200
    },
    "forward": {
-    "n": 38,
+    "n": 39,
     "days": 8,
-    "usd": 4.34,
+    "usd": 4.49,
     "final": 0.0004,
     "max_dd": -0.0005,
     "max_dd_usd": -4.51,
@@ -7516,19 +7405,19 @@
     "day_worst_usd": -2.98,
     "day_worst_d": "2026-10-18",
     "day_green": 0.5,
-    "win": 0.658,
-    "hold_h": 40.1,
-    "hold_med_h": 39.7,
+    "win": 0.667,
+    "hold_h": 40.9,
+    "hold_med_h": 50.0,
     "bite": 1.3,
     "top_sym": "DOODUSDT",
-    "usd_wo_top": 0.92,
+    "usd_wo_top": 1.07,
     "top_day": "2026-10-15",
     "usd_wo_top3d": -4.96,
     "worst_day": "2026-10-18",
     "max_dd_wo_worst": -0.0002,
     "max_dd_wo_top3d": -0.0005,
-    "names": 37,
-    "fills": 40,
+    "names": 38,
+    "fills": 41,
     "days_rows": [
      {
       "d": "2026-10-14",
@@ -7602,17 +7491,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 3.45,
-      "n": 3,
+      "usd": 3.59,
+      "n": 4,
       "bt": 0,
-      "long": 3.45,
+      "long": 3.59,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 2,
+    "n_tail": 3,
     "open_dd": -4.39,
     "open_dd_share": -0.0004,
     "open_dd_since": 1791677563.2
@@ -8160,15 +8049,15 @@
    },
    "forward_since": 1791677563.2,
    "costs": {
-    "n": 1543,
-    "applied": 1543,
+    "n": 1544,
+    "applied": 1544,
     "not_measured": 0,
-    "no_funding": 2,
+    "no_funding": 3,
     "fee_usd": 33.49,
-    "slip_usd": 12.12,
+    "slip_usd": 12.13,
     "fund_usd": -3.72,
-    "gross_usd": 919.68,
-    "net_usd": 870.35,
+    "gross_usd": 919.85,
+    "net_usd": 870.5,
     "fee_bp": 6.5,
     "fee_mean_bp": 8.4,
     "fee_worst_bp": 2.3,
@@ -8178,58 +8067,21 @@
     "fund_bp": -1.3,
     "fund_mean_bp": -1.0,
     "fund_worst_bp": -40.0,
-    "cost_usd": 49.33
+    "cost_usd": 49.34
    },
-   "n_forward": 38,
+   "n_forward": 39,
    "n_restored": 1505,
    "dups": {
     "names": 464,
-    "positions": 1543,
+    "positions": 1544,
     "overlaps": 0,
-    "repeats": 1079,
+    "repeats": 1080,
     "max_per_name": 8,
     "pause_median_h": 7.2
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "KSMUSDT",
-      "at": 1792329117.5,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 27.2971,
-      "mark_frac": 0.004924,
-      "mark_usd": 0.1344,
-      "entry_px": 4.214,
-      "avg": 4.214,
-      "depth": 1,
-      "fills": [
-       [
-        1792329120.0,
-        4.214,
-        0.25
-       ]
-      ],
-      "fav_bp": 162.46,
-      "last_ts": 1792587540.0,
-      "sched_end": 1792588317.5,
-      "cut_why": null,
-      "book_end": null,
-      "levels": {
-       "avg": 4.214,
-       "take_px": 4.350921288,
-       "liq_px": 0.0,
-       "floor_px": 0.42140000000000005,
-       "term_ts": 1792588317.5,
-       "depth": 1,
-       "side": "long",
-       "floor_frac": 0.1
-      },
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -8304,9 +8156,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": 0.13,
-    "priced": 1,
-    "at": 1792587606.5060523,
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1792588235.6089845,
     "sizing": "compound"
    }
   },
@@ -8320,10 +8172,10 @@
    "ticket": 25.0,
    "parts": null,
    "all": {
-    "n": 1543,
+    "n": 1544,
     "days": 59,
-    "usd": 847.47,
-    "final": 0.0847,
+    "usd": 847.6,
+    "final": 0.0848,
     "max_dd": -0.003,
     "max_dd_usd": -29.83,
     "day_median": 2e-05,
@@ -8337,14 +8189,14 @@
     "hold_med_h": 21.5,
     "bite": 14.1,
     "top_sym": "SANDUSDT",
-    "usd_wo_top": 839.36,
+    "usd_wo_top": 839.49,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 72.85,
+    "usd_wo_top3d": 72.99,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0022,
     "max_dd_wo_top3d": -0.003,
     "names": 464,
-    "fills": 2145,
+    "fills": 2146,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -8928,17 +8780,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 3.16,
-      "n": 3,
+      "usd": 3.29,
+      "n": 4,
       "bt": 0,
-      "long": 3.16,
+      "long": 3.29,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 1505,
-    "n_tail": 73,
+    "n_tail": 74,
     "open_dd": -356.18,
     "open_dd_share": -0.033,
     "open_days": [
@@ -9266,9 +9118,9 @@
     "open_dd_at": 1787461200
    },
    "forward": {
-    "n": 38,
+    "n": 39,
     "days": 8,
-    "usd": 3.98,
+    "usd": 4.11,
     "final": 0.0004,
     "max_dd": -0.0004,
     "max_dd_usd": -4.14,
@@ -9278,19 +9130,19 @@
     "day_worst_usd": -2.73,
     "day_worst_d": "2026-10-18",
     "day_green": 0.5,
-    "win": 0.658,
-    "hold_h": 40.1,
-    "hold_med_h": 39.7,
+    "win": 0.667,
+    "hold_h": 40.9,
+    "hold_med_h": 50.0,
     "bite": 1.3,
     "top_sym": "DOODUSDT",
-    "usd_wo_top": 0.85,
+    "usd_wo_top": 0.98,
     "top_day": "2026-10-15",
     "usd_wo_top3d": -4.54,
     "worst_day": "2026-10-18",
     "max_dd_wo_worst": -0.0001,
     "max_dd_wo_top3d": -0.0004,
-    "names": 37,
-    "fills": 40,
+    "names": 38,
+    "fills": 41,
     "days_rows": [
      {
       "d": "2026-10-14",
@@ -9364,17 +9216,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 3.16,
-      "n": 3,
+      "usd": 3.29,
+      "n": 4,
       "bt": 0,
-      "long": 3.16,
+      "long": 3.29,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 2,
+    "n_tail": 3,
     "open_dd": -4.02,
     "open_dd_share": -0.0004,
     "open_dd_since": 1791677563.2
@@ -9922,15 +9774,15 @@
    },
    "forward_since": 1791677563.2,
    "costs": {
-    "n": 1543,
-    "applied": 1543,
+    "n": 1544,
+    "applied": 1544,
     "not_measured": 0,
-    "no_funding": 2,
-    "fee_usd": 32.34,
-    "slip_usd": 11.65,
+    "no_funding": 3,
+    "fee_usd": 32.35,
+    "slip_usd": 11.66,
     "fund_usd": -3.8,
-    "gross_usd": 895.26,
-    "net_usd": 847.47,
+    "gross_usd": 895.41,
+    "net_usd": 847.6,
     "fee_bp": 6.5,
     "fee_mean_bp": 8.4,
     "fee_worst_bp": 2.3,
@@ -9940,58 +9792,21 @@
     "fund_bp": -1.3,
     "fund_mean_bp": -1.0,
     "fund_worst_bp": -40.0,
-    "cost_usd": 47.79
+    "cost_usd": 47.81
    },
-   "n_forward": 38,
+   "n_forward": 39,
    "n_restored": 1505,
    "dups": {
     "names": 464,
-    "positions": 1543,
+    "positions": 1544,
     "overlaps": 0,
-    "repeats": 1079,
+    "repeats": 1080,
     "max_per_name": 8,
     "pause_median_h": 7.2
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "KSMUSDT",
-      "at": 1792329117.5,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 25.0,
-      "mark_frac": 0.004924,
-      "mark_usd": 0.1231,
-      "entry_px": 4.214,
-      "avg": 4.214,
-      "depth": 1,
-      "fills": [
-       [
-        1792329120.0,
-        4.214,
-        0.25
-       ]
-      ],
-      "fav_bp": 162.46,
-      "last_ts": 1792587540.0,
-      "sched_end": 1792588317.5,
-      "cut_why": null,
-      "book_end": null,
-      "levels": {
-       "avg": 4.214,
-       "take_px": 4.350921288,
-       "liq_px": 0.0,
-       "floor_px": 0.42140000000000005,
-       "term_ts": 1792588317.5,
-       "depth": 1,
-       "side": "long",
-       "floor_frac": 0.1
-      },
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -10066,9 +9881,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": 0.12,
-    "priced": 1,
-    "at": 1792587606.5060523,
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1792588235.6089845,
     "sizing": "fixed"
    }
   },
@@ -10082,9 +9897,9 @@
    "ticket": 145.0,
    "parts": null,
    "all": {
-    "n": 1598,
+    "n": 1599,
     "days": 60,
-    "usd": 5191.21,
+    "usd": 5192.04,
     "final": 0.0519,
     "max_dd": -0.0017,
     "max_dd_usd": -174.07,
@@ -10094,19 +9909,19 @@
     "day_worst_usd": -145.63,
     "day_worst_d": "2026-08-12",
     "day_green": 0.633,
-    "win": 0.81,
+    "win": 0.811,
     "hold_h": 33.3,
     "hold_med_h": 21.5,
     "bite": 15.5,
     "top_sym": "SANDUSDT",
-    "usd_wo_top": 5143.24,
+    "usd_wo_top": 5144.07,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 427.79,
+    "usd_wo_top3d": 428.62,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0014,
     "max_dd_wo_top3d": -0.0017,
     "names": 477,
-    "fills": 2223,
+    "fills": 2224,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -10700,17 +10515,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 19.31,
-      "n": 3,
+      "usd": 20.14,
+      "n": 4,
       "bt": 0,
-      "long": 19.31,
+      "long": 20.14,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 1558,
-    "n_tail": 74,
+    "n_tail": 75,
     "open_dd": -2189.93,
     "open_dd_share": -0.0209,
     "open_days": [
@@ -11043,9 +10858,9 @@
     "open_dd_at": 1787461200
    },
    "forward": {
-    "n": 40,
+    "n": 41,
     "days": 8,
-    "usd": 25.89,
+    "usd": 26.72,
     "final": 0.0003,
     "max_dd": -0.0003,
     "max_dd_usd": -25.29,
@@ -11055,19 +10870,19 @@
     "day_worst_usd": -16.69,
     "day_worst_d": "2026-10-18",
     "day_green": 0.5,
-    "win": 0.675,
-    "hold_h": 39.3,
-    "hold_med_h": 33.6,
+    "win": 0.683,
+    "hold_h": 40.1,
+    "hold_med_h": 37.8,
     "bite": 1.3,
     "top_sym": "DOODUSDT",
-    "usd_wo_top": 6.74,
+    "usd_wo_top": 7.57,
     "top_day": "2026-10-15",
     "usd_wo_top3d": -27.79,
     "worst_day": "2026-10-18",
     "max_dd_wo_worst": -0.0001,
     "max_dd_wo_top3d": -0.0003,
-    "names": 39,
-    "fills": 42,
+    "names": 40,
+    "fills": 43,
     "days_rows": [
      {
       "d": "2026-10-14",
@@ -11141,17 +10956,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 19.31,
-      "n": 3,
+      "usd": 20.14,
+      "n": 4,
       "bt": 0,
-      "long": 19.31,
+      "long": 20.14,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 2,
+    "n_tail": 3,
     "open_dd": -24.61,
     "open_dd_share": -0.0002,
     "open_dd_since": 1791677563.2
@@ -11709,15 +11524,15 @@
    },
    "forward_since": 1791677563.2,
    "costs": {
-    "n": 1598,
-    "applied": 1598,
+    "n": 1599,
+    "applied": 1599,
     "not_measured": 0,
-    "no_funding": 2,
-    "fee_usd": 197.97,
-    "slip_usd": 71.0,
+    "no_funding": 3,
+    "fee_usd": 198.01,
+    "slip_usd": 71.04,
     "fund_usd": -22.89,
-    "gross_usd": 5483.07,
-    "net_usd": 5191.21,
+    "gross_usd": 5483.97,
+    "net_usd": 5192.04,
     "fee_bp": 6.5,
     "fee_mean_bp": 8.4,
     "fee_worst_bp": 2.3,
@@ -11727,58 +11542,21 @@
     "fund_bp": -1.3,
     "fund_mean_bp": -1.0,
     "fund_worst_bp": -40.0,
-    "cost_usd": 291.86
+    "cost_usd": 291.94
    },
-   "n_forward": 40,
+   "n_forward": 41,
    "n_restored": 1558,
    "dups": {
     "names": 477,
-    "positions": 1598,
+    "positions": 1599,
     "overlaps": 0,
-    "repeats": 1121,
+    "repeats": 1122,
     "max_per_name": 8,
-    "pause_median_h": 7.2
+    "pause_median_h": 7.3
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "KSMUSDT",
-      "at": 1792329117.5,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 152.9434,
-      "mark_frac": 0.004924,
-      "mark_usd": 0.7531,
-      "entry_px": 4.214,
-      "avg": 4.214,
-      "depth": 1,
-      "fills": [
-       [
-        1792329120.0,
-        4.214,
-        0.25
-       ]
-      ],
-      "fav_bp": 162.46,
-      "last_ts": 1792587540.0,
-      "sched_end": 1792588317.5,
-      "cut_why": null,
-      "book_end": null,
-      "levels": {
-       "avg": 4.214,
-       "take_px": 4.350921288,
-       "liq_px": 0.0,
-       "floor_px": 0.42140000000000005,
-       "term_ts": 1792588317.5,
-       "depth": 1,
-       "side": "long",
-       "floor_frac": 0.1
-      },
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -11853,9 +11631,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": 0.75,
-    "priced": 1,
-    "at": 1792587606.5060523,
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1792588235.6089845,
     "sizing": "compound"
    }
   },
@@ -11869,9 +11647,9 @@
    "ticket": 145.0,
    "parts": null,
    "all": {
-    "n": 1598,
+    "n": 1599,
     "days": 60,
-    "usd": 5109.73,
+    "usd": 5110.52,
     "final": 0.0511,
     "max_dd": -0.0017,
     "max_dd_usd": -174.02,
@@ -11881,19 +11659,19 @@
     "day_worst_usd": -145.59,
     "day_worst_d": "2026-08-12",
     "day_green": 0.633,
-    "win": 0.81,
+    "win": 0.811,
     "hold_h": 33.3,
     "hold_med_h": 21.5,
     "bite": 15.8,
     "top_sym": "SANDUSDT",
-    "usd_wo_top": 5062.67,
+    "usd_wo_top": 5063.46,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 399.9,
+    "usd_wo_top3d": 400.68,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0013,
     "max_dd_wo_top3d": -0.0017,
     "names": 477,
-    "fills": 2223,
+    "fills": 2224,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -12487,17 +12265,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 18.31,
-      "n": 3,
+      "usd": 19.09,
+      "n": 4,
       "bt": 0,
-      "long": 18.31,
+      "long": 19.09,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 1558,
-    "n_tail": 74,
+    "n_tail": 75,
     "open_dd": -2107.89,
     "open_dd_share": -0.0201,
     "open_days": [
@@ -12830,10 +12608,10 @@
     "open_dd_at": 1787461200
    },
    "forward": {
-    "n": 40,
+    "n": 41,
     "days": 8,
-    "usd": 24.55,
-    "final": 0.0002,
+    "usd": 25.34,
+    "final": 0.0003,
     "max_dd": -0.0002,
     "max_dd_usd": -23.98,
     "day_median": 1e-05,
@@ -12842,19 +12620,19 @@
     "day_worst_usd": -15.82,
     "day_worst_d": "2026-10-18",
     "day_green": 0.5,
-    "win": 0.675,
-    "hold_h": 39.3,
-    "hold_med_h": 33.6,
+    "win": 0.683,
+    "hold_h": 40.1,
+    "hold_med_h": 37.8,
     "bite": 1.3,
     "top_sym": "DOODUSDT",
-    "usd_wo_top": 6.39,
+    "usd_wo_top": 7.18,
     "top_day": "2026-10-15",
     "usd_wo_top3d": -26.35,
     "worst_day": "2026-10-18",
     "max_dd_wo_worst": -0.0001,
     "max_dd_wo_top3d": -0.0002,
-    "names": 39,
-    "fills": 42,
+    "names": 40,
+    "fills": 43,
     "days_rows": [
      {
       "d": "2026-10-14",
@@ -12928,17 +12706,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 18.31,
-      "n": 3,
+      "usd": 19.09,
+      "n": 4,
       "bt": 0,
-      "long": 18.31,
+      "long": 19.09,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 2,
+    "n_tail": 3,
     "open_dd": -23.34,
     "open_dd_share": -0.0002,
     "open_dd_since": 1791677563.2
@@ -13496,15 +13274,15 @@
    },
    "forward_since": 1791677563.2,
    "costs": {
-    "n": 1598,
-    "applied": 1598,
+    "n": 1599,
+    "applied": 1599,
     "not_measured": 0,
-    "no_funding": 2,
-    "fee_usd": 193.91,
-    "slip_usd": 69.34,
+    "no_funding": 3,
+    "fee_usd": 193.95,
+    "slip_usd": 69.37,
     "fund_usd": -23.09,
-    "gross_usd": 5396.07,
-    "net_usd": 5109.73,
+    "gross_usd": 5396.93,
+    "net_usd": 5110.52,
     "fee_bp": 6.5,
     "fee_mean_bp": 8.4,
     "fee_worst_bp": 2.3,
@@ -13514,58 +13292,21 @@
     "fund_bp": -1.3,
     "fund_mean_bp": -1.0,
     "fund_worst_bp": -40.0,
-    "cost_usd": 286.34
+    "cost_usd": 286.41
    },
-   "n_forward": 40,
+   "n_forward": 41,
    "n_restored": 1558,
    "dups": {
     "names": 477,
-    "positions": 1598,
+    "positions": 1599,
     "overlaps": 0,
-    "repeats": 1121,
+    "repeats": 1122,
     "max_per_name": 8,
-    "pause_median_h": 7.2
+    "pause_median_h": 7.3
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "KSMUSDT",
-      "at": 1792329117.5,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 145.0,
-      "mark_frac": 0.004924,
-      "mark_usd": 0.714,
-      "entry_px": 4.214,
-      "avg": 4.214,
-      "depth": 1,
-      "fills": [
-       [
-        1792329120.0,
-        4.214,
-        0.25
-       ]
-      ],
-      "fav_bp": 162.46,
-      "last_ts": 1792587540.0,
-      "sched_end": 1792588317.5,
-      "cut_why": null,
-      "book_end": null,
-      "levels": {
-       "avg": 4.214,
-       "take_px": 4.350921288,
-       "liq_px": 0.0,
-       "floor_px": 0.42140000000000005,
-       "term_ts": 1792588317.5,
-       "depth": 1,
-       "side": "long",
-       "floor_frac": 0.1
-      },
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -13640,9 +13381,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": 0.71,
-    "priced": 1,
-    "at": 1792587606.5060523,
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1792588235.6089845,
     "sizing": "fixed"
    }
   },
@@ -15091,7 +14832,7 @@
     ],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "compound"
    }
   },
@@ -15105,10 +14846,10 @@
    "ticket": 25.0,
    "parts": null,
    "all": {
-    "n": 95,
+    "n": 96,
     "days": 50,
-    "usd": 141.46,
-    "final": 1.4146,
+    "usd": 141.6,
+    "final": 1.416,
     "max_dd": -0.2704,
     "max_dd_usd": -30.4,
     "day_median": 0.00113,
@@ -15117,19 +14858,19 @@
     "day_worst_usd": -21.96,
     "day_worst_d": "2026-08-22",
     "day_green": 0.62,
-    "win": 0.642,
-    "hold_h": 48.8,
-    "hold_med_h": 61.8,
+    "win": 0.646,
+    "hold_h": 49.0,
+    "hold_med_h": 63.1,
     "bite": 32.0,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 40.15,
+    "usd_wo_top": 40.28,
     "top_day": "2026-09-19",
-    "usd_wo_top3d": -11.06,
+    "usd_wo_top3d": -10.92,
     "worst_day": "2026-08-22",
     "max_dd_wo_worst": -0.1051,
     "max_dd_wo_top3d": -0.2924,
-    "names": 84,
-    "fills": 145,
+    "names": 85,
+    "fills": 146,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -15623,17 +15364,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 5.53,
-      "n": 3,
+      "usd": 5.67,
+      "n": 4,
       "bt": 0,
-      "long": 5.53,
+      "long": 5.67,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 76,
-    "n_tail": 11,
+    "n_tail": 12,
     "open_dd": -18.13,
     "open_dd_share": -0.1601,
     "open_days": [
@@ -15961,10 +15702,10 @@
     "open_dd_at": 1789632000
    },
    "forward": {
-    "n": 19,
+    "n": 20,
     "days": 8,
-    "usd": -17.14,
-    "final": -0.1714,
+    "usd": -17.0,
+    "final": -0.17,
     "max_dd": -0.0528,
     "max_dd_usd": -23.0,
     "day_median": -0.00022,
@@ -15973,19 +15714,19 @@
     "day_worst_usd": -19.5,
     "day_worst_d": "2026-10-12",
     "day_green": 0.5,
-    "win": 0.474,
-    "hold_h": 54.0,
+    "win": 0.5,
+    "hold_h": 54.9,
     "hold_med_h": 72.0,
     "bite": 33.2,
     "top_sym": "DOODUSDT",
-    "usd_wo_top": -22.65,
+    "usd_wo_top": -22.51,
     "top_day": "2026-10-21",
     "usd_wo_top3d": -23.85,
     "worst_day": "2026-10-12",
     "max_dd_wo_worst": -0.0426,
     "max_dd_wo_top3d": -0.058,
-    "names": 19,
-    "fills": 24,
+    "names": 20,
+    "fills": 25,
     "days_rows": [
      {
       "d": "2026-10-12",
@@ -16059,17 +15800,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 5.53,
-      "n": 3,
+      "usd": 5.67,
+      "n": 4,
       "bt": 0,
-      "long": 5.53,
+      "long": 5.67,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 0,
+    "n_tail": 1,
     "open_dd": -21.72,
     "open_dd_share": -0.0847,
     "open_dd_since": 1791677563.2
@@ -16527,17 +16268,17 @@
    },
    "forward_since": 1791677563.2,
    "costs": {
-    "n": 95,
-    "applied": 95,
+    "n": 96,
+    "applied": 96,
     "not_measured": 0,
-    "no_funding": 2,
-    "fee_usd": 3.3,
-    "slip_usd": 1.16,
+    "no_funding": 3,
+    "fee_usd": 3.31,
+    "slip_usd": 1.17,
     "fund_usd": 14.03,
-    "gross_usd": 131.91,
-    "net_usd": 141.46,
+    "gross_usd": 132.05,
+    "net_usd": 141.6,
     "fee_bp": 5.6,
-    "fee_mean_bp": 13.9,
+    "fee_mean_bp": 13.8,
     "fee_worst_bp": 2.5,
     "slip_bp": 2.2,
     "slip_mean_bp": 4.9,
@@ -16545,13 +16286,13 @@
     "fund_bp": -0.5,
     "fund_mean_bp": 60.3,
     "fund_worst_bp": -51.2,
-    "cost_usd": -9.57
+    "cost_usd": -9.55
    },
-   "n_forward": 19,
+   "n_forward": 20,
    "n_restored": 76,
    "dups": {
-    "names": 84,
-    "positions": 95,
+    "names": 85,
+    "positions": 96,
     "overlaps": 0,
     "repeats": 11,
     "max_per_name": 2,
@@ -16559,44 +16300,7 @@
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "KSMUSDT",
-      "at": 1792329117.5,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 25.0,
-      "mark_frac": 0.004924,
-      "mark_usd": 0.1231,
-      "entry_px": 4.214,
-      "avg": 4.214,
-      "depth": 1,
-      "fills": [
-       [
-        1792329120.0,
-        4.214,
-        0.25
-       ]
-      ],
-      "fav_bp": 162.46,
-      "last_ts": 1792587540.0,
-      "sched_end": 1792588317.5,
-      "cut_why": null,
-      "book_end": null,
-      "levels": {
-       "avg": 4.214,
-       "take_px": 4.350921288,
-       "liq_px": 0.0,
-       "floor_px": 0.42140000000000005,
-       "term_ts": 1792588317.5,
-       "depth": 1,
-       "side": "long",
-       "floor_frac": 0.1
-      },
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -16635,9 +16339,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": 0.12,
-    "priced": 1,
-    "at": 1792587606.5060523,
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1792588235.6089845,
     "sizing": "fixed"
    }
   },
@@ -16651,10 +16355,10 @@
    "ticket": 25.0,
    "parts": null,
    "all": {
-    "n": 460,
+    "n": 461,
     "days": 60,
-    "usd": 298.67,
-    "final": 0.2987,
+    "usd": 298.85,
+    "final": 0.2988,
     "max_dd": -0.0532,
     "max_dd_usd": -61.4,
     "day_median": 0.00015,
@@ -16664,18 +16368,18 @@
     "day_worst_d": "2026-08-12",
     "day_green": 0.55,
     "win": 0.707,
-    "hold_h": 38.3,
-    "hold_med_h": 33.1,
+    "hold_h": 38.4,
+    "hold_med_h": 33.2,
     "bite": 18.4,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 212.37,
+    "usd_wo_top": 212.55,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": -17.6,
+    "usd_wo_top3d": -17.43,
     "worst_day": "2026-08-25",
     "max_dd_wo_worst": -0.0501,
     "max_dd_wo_top3d": -0.0606,
     "names": 272,
-    "fills": 706,
+    "fills": 707,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -17269,17 +16973,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 7.16,
-      "n": 3,
+      "usd": 7.34,
+      "n": 4,
       "bt": 0,
-      "long": 7.16,
+      "long": 7.34,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 422,
-    "n_tail": 47,
+    "n_tail": 48,
     "open_dd": -290.08,
     "open_dd_share": -0.2598,
     "open_days": [
@@ -17612,10 +17316,10 @@
     "open_dd_at": 1787457600
    },
    "forward": {
-    "n": 38,
+    "n": 39,
     "days": 9,
-    "usd": -17.66,
-    "final": -0.0177,
+    "usd": -17.48,
+    "final": -0.0175,
     "max_dd": -0.0062,
     "max_dd_usd": -26.41,
     "day_median": -0.00023,
@@ -17624,19 +17328,19 @@
     "day_worst_usd": -25.91,
     "day_worst_d": "2026-10-12",
     "day_green": 0.444,
-    "win": 0.658,
-    "hold_h": 38.9,
-    "hold_med_h": 27.5,
+    "win": 0.667,
+    "hold_h": 39.7,
+    "hold_med_h": 29.4,
     "bite": 7.5,
     "top_sym": "DOODUSDT",
-    "usd_wo_top": -24.78,
+    "usd_wo_top": -24.61,
     "top_day": "2026-10-21",
     "usd_wo_top3d": -31.75,
     "worst_day": "2026-10-12",
     "max_dd_wo_worst": -0.0061,
     "max_dd_wo_top3d": -0.0063,
-    "names": 37,
-    "fills": 43,
+    "names": 38,
+    "fills": 44,
     "days_rows": [
      {
       "d": "2026-10-12",
@@ -17720,17 +17424,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 7.16,
-      "n": 3,
+      "usd": 7.34,
+      "n": 4,
       "bt": 0,
-      "long": 7.16,
+      "long": 7.34,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 1,
+    "n_tail": 2,
     "open_dd": -28.86,
     "open_dd_share": -0.0217,
     "open_dd_since": 1791677563.2
@@ -18278,17 +17982,17 @@
    },
    "forward_since": 1791677563.2,
    "costs": {
-    "n": 460,
-    "applied": 460,
+    "n": 461,
+    "applied": 461,
     "not_measured": 0,
-    "no_funding": 2,
-    "fee_usd": 21.98,
+    "no_funding": 3,
+    "fee_usd": 21.99,
     "slip_usd": 8.08,
     "fund_usd": 27.04,
-    "gross_usd": 301.69,
-    "net_usd": 298.67,
+    "gross_usd": 301.89,
+    "net_usd": 298.85,
     "fee_bp": 9.2,
-    "fee_mean_bp": 17.5,
+    "fee_mean_bp": 17.4,
     "fee_worst_bp": 2.5,
     "slip_bp": 3.4,
     "slip_mean_bp": 6.4,
@@ -18296,58 +18000,21 @@
     "fund_bp": -1.6,
     "fund_mean_bp": 20.0,
     "fund_worst_bp": -92.7,
-    "cost_usd": 3.02
+    "cost_usd": 3.03
    },
-   "n_forward": 38,
+   "n_forward": 39,
    "n_restored": 422,
    "dups": {
     "names": 272,
-    "positions": 460,
+    "positions": 461,
     "overlaps": 0,
-    "repeats": 188,
+    "repeats": 189,
     "max_per_name": 6,
     "pause_median_h": 184.3
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "KSMUSDT",
-      "at": 1792329117.5,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 32.4554,
-      "mark_frac": 0.004924,
-      "mark_usd": 0.1598,
-      "entry_px": 4.214,
-      "avg": 4.214,
-      "depth": 1,
-      "fills": [
-       [
-        1792329120.0,
-        4.214,
-        0.25
-       ]
-      ],
-      "fav_bp": 162.46,
-      "last_ts": 1792587540.0,
-      "sched_end": 1792588317.5,
-      "cut_why": null,
-      "book_end": null,
-      "levels": {
-       "avg": 4.214,
-       "take_px": 4.350921288,
-       "liq_px": 0.0,
-       "floor_px": 0.42140000000000005,
-       "term_ts": 1792588317.5,
-       "depth": 1,
-       "side": "long",
-       "floor_frac": 0.1
-      },
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -18422,9 +18089,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": 0.16,
-    "priced": 1,
-    "at": 1792587606.5060523,
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1792588235.6089845,
     "sizing": "compound"
    }
   },
@@ -18438,10 +18105,10 @@
    "ticket": 25.0,
    "parts": null,
    "all": {
-    "n": 471,
+    "n": 472,
     "days": 60,
-    "usd": 286.52,
-    "final": 0.2865,
+    "usd": 286.66,
+    "final": 0.2867,
     "max_dd": -0.0498,
     "max_dd_usd": -51.05,
     "day_median": 0.00013,
@@ -18455,14 +18122,14 @@
     "hold_med_h": 33.4,
     "bite": 19.4,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 210.5,
+    "usd_wo_top": 210.63,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": -2.93,
+    "usd_wo_top3d": -2.79,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0422,
     "max_dd_wo_top3d": -0.0499,
     "names": 275,
-    "fills": 722,
+    "fills": 723,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -19056,17 +18723,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 5.53,
-      "n": 3,
+      "usd": 5.67,
+      "n": 4,
       "bt": 0,
-      "long": 5.53,
+      "long": 5.67,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 433,
-    "n_tail": 49,
+    "n_tail": 50,
     "open_dd": -240.84,
     "open_dd_share": -0.2126,
     "open_days": [
@@ -19399,10 +19066,10 @@
     "open_dd_at": 1787457600
    },
    "forward": {
-    "n": 38,
+    "n": 39,
     "days": 9,
-    "usd": -13.1,
-    "final": -0.0131,
+    "usd": -12.96,
+    "final": -0.013,
     "max_dd": -0.0048,
     "max_dd_usd": -19.88,
     "day_median": -0.00017,
@@ -19411,19 +19078,19 @@
     "day_worst_usd": -19.5,
     "day_worst_d": "2026-10-12",
     "day_green": 0.444,
-    "win": 0.658,
-    "hold_h": 38.9,
-    "hold_med_h": 27.5,
+    "win": 0.667,
+    "hold_h": 39.7,
+    "hold_med_h": 29.4,
     "bite": 7.3,
     "top_sym": "DOODUSDT",
-    "usd_wo_top": -18.61,
+    "usd_wo_top": -18.47,
     "top_day": "2026-10-21",
     "usd_wo_top3d": -24.0,
     "worst_day": "2026-10-12",
     "max_dd_wo_worst": -0.0047,
     "max_dd_wo_top3d": -0.0048,
-    "names": 37,
-    "fills": 43,
+    "names": 38,
+    "fills": 44,
     "days_rows": [
      {
       "d": "2026-10-12",
@@ -19507,17 +19174,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 5.53,
-      "n": 3,
+      "usd": 5.67,
+      "n": 4,
       "bt": 0,
-      "long": 5.53,
+      "long": 5.67,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 1,
+    "n_tail": 2,
     "open_dd": -21.72,
     "open_dd_share": -0.0166,
     "open_dd_since": 1791677563.2
@@ -20065,15 +19732,15 @@
    },
    "forward_since": 1791677563.2,
    "costs": {
-    "n": 471,
-    "applied": 471,
+    "n": 472,
+    "applied": 472,
     "not_measured": 0,
-    "no_funding": 2,
-    "fee_usd": 20.06,
+    "no_funding": 3,
+    "fee_usd": 20.07,
     "slip_usd": 7.41,
     "fund_usd": 22.95,
-    "gross_usd": 291.04,
-    "net_usd": 286.52,
+    "gross_usd": 291.18,
+    "net_usd": 286.66,
     "fee_bp": 9.2,
     "fee_mean_bp": 17.0,
     "fee_worst_bp": 2.5,
@@ -20083,58 +19750,21 @@
     "fund_bp": -1.6,
     "fund_mean_bp": 19.6,
     "fund_worst_bp": -92.7,
-    "cost_usd": 4.52
+    "cost_usd": 4.53
    },
-   "n_forward": 38,
+   "n_forward": 39,
    "n_restored": 433,
    "dups": {
     "names": 275,
-    "positions": 471,
+    "positions": 472,
     "overlaps": 0,
-    "repeats": 196,
+    "repeats": 197,
     "max_per_name": 6,
     "pause_median_h": 170.2
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "KSMUSDT",
-      "at": 1792329117.5,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 25.0,
-      "mark_frac": 0.004924,
-      "mark_usd": 0.1231,
-      "entry_px": 4.214,
-      "avg": 4.214,
-      "depth": 1,
-      "fills": [
-       [
-        1792329120.0,
-        4.214,
-        0.25
-       ]
-      ],
-      "fav_bp": 162.46,
-      "last_ts": 1792587540.0,
-      "sched_end": 1792588317.5,
-      "cut_why": null,
-      "book_end": null,
-      "levels": {
-       "avg": 4.214,
-       "take_px": 4.350921288,
-       "liq_px": 0.0,
-       "floor_px": 0.42140000000000005,
-       "term_ts": 1792588317.5,
-       "depth": 1,
-       "side": "long",
-       "floor_frac": 0.1
-      },
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -20209,9 +19839,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": 0.12,
-    "priced": 1,
-    "at": 1792587606.5060523,
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1792588235.6089845,
     "sizing": "fixed"
    }
   },
@@ -20225,9 +19855,9 @@
    "ticket": 25.0,
    "parts": null,
    "all": {
-    "n": 1559,
+    "n": 1560,
     "days": 60,
-    "usd": 1897.67,
+    "usd": 1897.83,
     "final": 0.1898,
     "max_dd": -0.0063,
     "max_dd_usd": -66.46,
@@ -20237,19 +19867,19 @@
     "day_worst_usd": -43.95,
     "day_worst_d": "2026-08-12",
     "day_green": 0.567,
-    "win": 0.809,
+    "win": 0.81,
     "hold_h": 33.0,
     "hold_med_h": 21.4,
     "bite": 19.7,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 1807.87,
+    "usd_wo_top": 1808.04,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 250.08,
+    "usd_wo_top3d": 250.24,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0036,
     "max_dd_wo_top3d": -0.0063,
     "names": 465,
-    "fills": 2230,
+    "fills": 2231,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -20843,17 +20473,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 6.63,
-      "n": 3,
+      "usd": 6.79,
+      "n": 4,
       "bt": 0,
-      "long": 6.63,
+      "long": 6.79,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 1521,
-    "n_tail": 71,
+    "n_tail": 72,
     "open_dd": -914.54,
     "open_dd_share": -0.079,
     "open_days": [
@@ -21186,9 +20816,9 @@
     "open_dd_at": 1787461200
    },
    "forward": {
-    "n": 38,
+    "n": 39,
     "days": 9,
-    "usd": -15.76,
+    "usd": -15.59,
     "final": -0.0016,
     "max_dd": -0.0006,
     "max_dd_usd": -23.88,
@@ -21198,19 +20828,19 @@
     "day_worst_usd": -23.42,
     "day_worst_d": "2026-10-12",
     "day_green": 0.444,
-    "win": 0.658,
-    "hold_h": 38.9,
-    "hold_med_h": 27.5,
+    "win": 0.667,
+    "hold_h": 39.7,
+    "hold_med_h": 29.4,
     "bite": 7.3,
     "top_sym": "DOODUSDT",
-    "usd_wo_top": -22.35,
+    "usd_wo_top": -22.19,
     "top_day": "2026-10-21",
     "usd_wo_top3d": -28.81,
     "worst_day": "2026-10-12",
     "max_dd_wo_worst": -0.0006,
     "max_dd_wo_top3d": -0.0006,
-    "names": 37,
-    "fills": 43,
+    "names": 38,
+    "fills": 44,
     "days_rows": [
      {
       "d": "2026-10-12",
@@ -21294,17 +20924,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 6.63,
-      "n": 3,
+      "usd": 6.79,
+      "n": 4,
       "bt": 0,
-      "long": 6.63,
+      "long": 6.79,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 1,
+    "n_tail": 2,
     "open_dd": -26.09,
     "open_dd_share": -0.0022,
     "open_dd_since": 1791677563.2
@@ -21852,15 +21482,15 @@
    },
    "forward_since": 1791677563.2,
    "costs": {
-    "n": 1559,
-    "applied": 1559,
+    "n": 1560,
+    "applied": 1560,
     "not_measured": 0,
-    "no_funding": 2,
-    "fee_usd": 75.71,
+    "no_funding": 3,
+    "fee_usd": 75.72,
     "slip_usd": 26.49,
     "fund_usd": 14.28,
-    "gross_usd": 1985.59,
-    "net_usd": 1897.67,
+    "gross_usd": 1985.77,
+    "net_usd": 1897.83,
     "fee_bp": 9.9,
     "fee_mean_bp": 18.0,
     "fee_worst_bp": 2.5,
@@ -21870,58 +21500,21 @@
     "fund_bp": -2.2,
     "fund_mean_bp": 2.7,
     "fund_worst_bp": -110.9,
-    "cost_usd": 87.92
+    "cost_usd": 87.93
    },
-   "n_forward": 38,
+   "n_forward": 39,
    "n_restored": 1521,
    "dups": {
     "names": 465,
-    "positions": 1559,
+    "positions": 1560,
     "overlaps": 0,
-    "repeats": 1094,
+    "repeats": 1095,
     "max_per_name": 8,
     "pause_median_h": 7.2
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "KSMUSDT",
-      "at": 1792329117.5,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 29.9558,
-      "mark_frac": 0.004924,
-      "mark_usd": 0.1475,
-      "entry_px": 4.214,
-      "avg": 4.214,
-      "depth": 1,
-      "fills": [
-       [
-        1792329120.0,
-        4.214,
-        0.25
-       ]
-      ],
-      "fav_bp": 162.46,
-      "last_ts": 1792587540.0,
-      "sched_end": 1792588317.5,
-      "cut_why": null,
-      "book_end": null,
-      "levels": {
-       "avg": 4.214,
-       "take_px": 4.350921288,
-       "liq_px": 0.0,
-       "floor_px": 0.42140000000000005,
-       "term_ts": 1792588317.5,
-       "depth": 1,
-       "side": "long",
-       "floor_frac": 0.1
-      },
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -21996,9 +21589,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": 0.15,
-    "priced": 1,
-    "at": 1792587606.5060523,
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1792588235.6089845,
     "sizing": "compound"
    }
   },
@@ -22012,9 +21605,9 @@
    "ticket": 25.0,
    "parts": null,
    "all": {
-    "n": 1557,
+    "n": 1558,
     "days": 60,
-    "usd": 1790.66,
+    "usd": 1790.8,
     "final": 0.1791,
     "max_dd": -0.0063,
     "max_dd_usd": -66.43,
@@ -22029,14 +21622,14 @@
     "hold_med_h": 21.4,
     "bite": 19.4,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 1714.64,
+    "usd_wo_top": 1714.77,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 201.44,
+    "usd_wo_top3d": 201.58,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.003,
     "max_dd_wo_top3d": -0.0063,
     "names": 465,
-    "fills": 2227,
+    "fills": 2228,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -22630,17 +22223,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 5.53,
-      "n": 3,
+      "usd": 5.67,
+      "n": 4,
       "bt": 0,
-      "long": 5.53,
+      "long": 5.67,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 1519,
-    "n_tail": 71,
+    "n_tail": 72,
     "open_dd": -806.06,
     "open_dd_share": -0.0699,
     "open_days": [
@@ -22978,9 +22571,9 @@
     "open_dd_at": 1787461200
    },
    "forward": {
-    "n": 38,
+    "n": 39,
     "days": 9,
-    "usd": -13.1,
+    "usd": -12.96,
     "final": -0.0013,
     "max_dd": -0.0005,
     "max_dd_usd": -19.88,
@@ -22990,19 +22583,19 @@
     "day_worst_usd": -19.5,
     "day_worst_d": "2026-10-12",
     "day_green": 0.444,
-    "win": 0.658,
-    "hold_h": 38.9,
-    "hold_med_h": 27.5,
+    "win": 0.667,
+    "hold_h": 39.7,
+    "hold_med_h": 29.4,
     "bite": 7.3,
     "top_sym": "DOODUSDT",
-    "usd_wo_top": -18.61,
+    "usd_wo_top": -18.47,
     "top_day": "2026-10-21",
     "usd_wo_top3d": -24.0,
     "worst_day": "2026-10-12",
     "max_dd_wo_worst": -0.0005,
     "max_dd_wo_top3d": -0.0005,
-    "names": 37,
-    "fills": 43,
+    "names": 38,
+    "fills": 44,
     "days_rows": [
      {
       "d": "2026-10-12",
@@ -23086,17 +22679,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 5.53,
-      "n": 3,
+      "usd": 5.67,
+      "n": 4,
       "bt": 0,
-      "long": 5.53,
+      "long": 5.67,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 1,
+    "n_tail": 2,
     "open_dd": -21.72,
     "open_dd_share": -0.0018,
     "open_dd_since": 1791677563.2
@@ -23644,17 +23237,17 @@
    },
    "forward_since": 1791677563.2,
    "costs": {
-    "n": 1557,
-    "applied": 1557,
+    "n": 1558,
+    "applied": 1558,
     "not_measured": 0,
-    "no_funding": 2,
+    "no_funding": 3,
     "fee_usd": 70.27,
     "slip_usd": 24.4,
     "fund_usd": 10.62,
-    "gross_usd": 1874.71,
-    "net_usd": 1790.66,
-    "fee_bp": 9.9,
-    "fee_mean_bp": 18.1,
+    "gross_usd": 1874.86,
+    "net_usd": 1790.8,
+    "fee_bp": 9.8,
+    "fee_mean_bp": 18.0,
     "fee_worst_bp": 2.5,
     "slip_bp": 3.5,
     "slip_mean_bp": 6.3,
@@ -23664,56 +23257,19 @@
     "fund_worst_bp": -110.9,
     "cost_usd": 84.05
    },
-   "n_forward": 38,
+   "n_forward": 39,
    "n_restored": 1519,
    "dups": {
     "names": 465,
-    "positions": 1557,
+    "positions": 1558,
     "overlaps": 0,
-    "repeats": 1092,
+    "repeats": 1093,
     "max_per_name": 8,
     "pause_median_h": 7.2
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "KSMUSDT",
-      "at": 1792329117.5,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 25.0,
-      "mark_frac": 0.004924,
-      "mark_usd": 0.1231,
-      "entry_px": 4.214,
-      "avg": 4.214,
-      "depth": 1,
-      "fills": [
-       [
-        1792329120.0,
-        4.214,
-        0.25
-       ]
-      ],
-      "fav_bp": 162.46,
-      "last_ts": 1792587540.0,
-      "sched_end": 1792588317.5,
-      "cut_why": null,
-      "book_end": null,
-      "levels": {
-       "avg": 4.214,
-       "take_px": 4.350921288,
-       "liq_px": 0.0,
-       "floor_px": 0.42140000000000005,
-       "term_ts": 1792588317.5,
-       "depth": 1,
-       "side": "long",
-       "floor_frac": 0.1
-      },
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -23788,9 +23344,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": 0.12,
-    "priced": 1,
-    "at": 1792587606.5060523,
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1792588235.6089845,
     "sizing": "fixed"
    }
   },
@@ -23804,9 +23360,9 @@
    "ticket": 145.0,
    "parts": null,
    "all": {
-    "n": 1610,
+    "n": 1611,
     "days": 61,
-    "usd": 11150.68,
+    "usd": 11151.55,
     "final": 0.1115,
     "max_dd": -0.0036,
     "max_dd_usd": -386.13,
@@ -23817,18 +23373,18 @@
     "day_worst_d": "2026-08-12",
     "day_green": 0.574,
     "win": 0.81,
-    "hold_h": 32.9,
-    "hold_med_h": 21.3,
+    "hold_h": 33.0,
+    "hold_med_h": 21.4,
     "bite": 26.2,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 10662.47,
+    "usd_wo_top": 10663.35,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 1297.42,
+    "usd_wo_top3d": 1298.3,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0021,
     "max_dd_wo_top3d": -0.0036,
     "names": 477,
-    "fills": 2303,
+    "fills": 2304,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -24432,17 +23988,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 35.82,
-      "n": 3,
+      "usd": 36.7,
+      "n": 4,
       "bt": 0,
-      "long": 35.82,
+      "long": 36.7,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 1570,
-    "n_tail": 72,
+    "n_tail": 73,
     "open_dd": -5115.82,
     "open_dd_share": -0.0467,
     "open_days": [
@@ -24785,9 +24341,9 @@
     "open_dd_at": 1787461200
    },
    "forward": {
-    "n": 40,
+    "n": 41,
     "days": 9,
-    "usd": -83.36,
+    "usd": -82.48,
     "final": -0.0008,
     "max_dd": -0.0003,
     "max_dd_usd": -128.91,
@@ -24797,19 +24353,19 @@
     "day_worst_usd": -126.47,
     "day_worst_d": "2026-10-12",
     "day_green": 0.444,
-    "win": 0.675,
-    "hold_h": 38.1,
-    "hold_med_h": 27.5,
+    "win": 0.683,
+    "hold_h": 38.9,
+    "hold_med_h": 29.4,
     "bite": 7.0,
     "top_sym": "DOODUSDT",
-    "usd_wo_top": -119.02,
+    "usd_wo_top": -118.14,
     "top_day": "2026-10-21",
     "usd_wo_top3d": -155.57,
     "worst_day": "2026-10-12",
     "max_dd_wo_worst": -0.0003,
     "max_dd_wo_top3d": -0.0003,
-    "names": 39,
-    "fills": 45,
+    "names": 40,
+    "fills": 46,
     "days_rows": [
      {
       "d": "2026-10-12",
@@ -24893,17 +24449,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 35.82,
-      "n": 3,
+      "usd": 36.7,
+      "n": 4,
       "bt": 0,
-      "long": 35.82,
+      "long": 36.7,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 1,
+    "n_tail": 2,
     "open_dd": -140.86,
     "open_dd_share": -0.0013,
     "open_dd_since": 1791677563.2
@@ -25461,16 +25017,16 @@
    },
    "forward_since": 1791677563.2,
    "costs": {
-    "n": 1610,
-    "applied": 1610,
+    "n": 1611,
+    "applied": 1611,
     "not_measured": 0,
-    "no_funding": 2,
-    "fee_usd": 439.23,
-    "slip_usd": 152.06,
+    "no_funding": 3,
+    "fee_usd": 439.27,
+    "slip_usd": 152.1,
     "fund_usd": 71.82,
-    "gross_usd": 11670.15,
-    "net_usd": 11150.68,
-    "fee_bp": 9.8,
+    "gross_usd": 11671.11,
+    "net_usd": 11151.55,
+    "fee_bp": 9.7,
     "fee_mean_bp": 18.0,
     "fee_worst_bp": 2.5,
     "slip_bp": 3.5,
@@ -25479,58 +25035,21 @@
     "fund_bp": -2.1,
     "fund_mean_bp": 2.5,
     "fund_worst_bp": -110.9,
-    "cost_usd": 519.47
+    "cost_usd": 519.55
    },
-   "n_forward": 40,
+   "n_forward": 41,
    "n_restored": 1570,
    "dups": {
     "names": 477,
-    "positions": 1610,
+    "positions": 1611,
     "overlaps": 0,
-    "repeats": 1133,
+    "repeats": 1134,
     "max_per_name": 8,
-    "pause_median_h": 7.2
+    "pause_median_h": 7.3
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "KSMUSDT",
-      "at": 1792329117.5,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 161.896,
-      "mark_frac": 0.004924,
-      "mark_usd": 0.7972,
-      "entry_px": 4.214,
-      "avg": 4.214,
-      "depth": 1,
-      "fills": [
-       [
-        1792329120.0,
-        4.214,
-        0.25
-       ]
-      ],
-      "fav_bp": 162.46,
-      "last_ts": 1792587540.0,
-      "sched_end": 1792588317.5,
-      "cut_why": null,
-      "book_end": null,
-      "levels": {
-       "avg": 4.214,
-       "take_px": 4.350921288,
-       "liq_px": 0.0,
-       "floor_px": 0.42140000000000005,
-       "term_ts": 1792588317.5,
-       "depth": 1,
-       "side": "long",
-       "floor_frac": 0.1
-      },
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -25605,9 +25124,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": 0.8,
-    "priced": 1,
-    "at": 1792587606.5060523,
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1792588235.6089845,
     "sizing": "compound"
    }
   },
@@ -25621,9 +25140,9 @@
    "ticket": 145.0,
    "parts": null,
    "all": {
-    "n": 1610,
+    "n": 1611,
     "days": 61,
-    "usd": 10779.37,
+    "usd": 10780.16,
     "final": 0.1078,
     "max_dd": -0.0036,
     "max_dd_usd": -386.03,
@@ -25634,18 +25153,18 @@
     "day_worst_d": "2026-08-12",
     "day_green": 0.557,
     "win": 0.81,
-    "hold_h": 32.9,
-    "hold_med_h": 21.3,
+    "hold_h": 33.0,
+    "hold_med_h": 21.4,
     "bite": 23.0,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 10338.44,
+    "usd_wo_top": 10339.22,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 1129.13,
+    "usd_wo_top3d": 1129.91,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0019,
     "max_dd_wo_top3d": -0.0036,
     "names": 477,
-    "fills": 2303,
+    "fills": 2304,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -26249,17 +25768,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 32.09,
-      "n": 3,
+      "usd": 32.87,
+      "n": 4,
       "bt": 0,
-      "long": 32.09,
+      "long": 32.87,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 1570,
-    "n_tail": 72,
+    "n_tail": 73,
     "open_dd": -4736.06,
     "open_dd_share": -0.0433,
     "open_days": [
@@ -26602,9 +26121,9 @@
     "open_dd_at": 1787461200
    },
    "forward": {
-    "n": 40,
+    "n": 41,
     "days": 9,
-    "usd": -74.5,
+    "usd": -73.71,
     "final": -0.0007,
     "max_dd": -0.0003,
     "max_dd_usd": -115.31,
@@ -26614,19 +26133,19 @@
     "day_worst_usd": -113.12,
     "day_worst_d": "2026-10-12",
     "day_green": 0.444,
-    "win": 0.675,
-    "hold_h": 38.1,
-    "hold_med_h": 27.5,
+    "win": 0.683,
+    "hold_h": 38.9,
+    "hold_med_h": 29.4,
     "bite": 6.9,
     "top_sym": "DOODUSDT",
-    "usd_wo_top": -106.44,
+    "usd_wo_top": -105.65,
     "top_day": "2026-10-21",
     "usd_wo_top3d": -139.19,
     "worst_day": "2026-10-12",
     "max_dd_wo_worst": -0.0003,
     "max_dd_wo_top3d": -0.0003,
-    "names": 39,
-    "fills": 45,
+    "names": 40,
+    "fills": 46,
     "days_rows": [
      {
       "d": "2026-10-12",
@@ -26710,17 +26229,17 @@
      },
      {
       "d": "2026-10-21",
-      "usd": 32.09,
-      "n": 3,
+      "usd": 32.87,
+      "n": 4,
       "bt": 0,
-      "long": 32.09,
+      "long": 32.87,
       "short": null,
-      "n_long": 3,
+      "n_long": 4,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 1,
+    "n_tail": 2,
     "open_dd": -126.0,
     "open_dd_share": -0.0011,
     "open_dd_since": 1791677563.2
@@ -27278,16 +26797,16 @@
    },
    "forward_since": 1791677563.2,
    "costs": {
-    "n": 1610,
-    "applied": 1610,
+    "n": 1611,
+    "applied": 1611,
     "not_measured": 0,
-    "no_funding": 2,
-    "fee_usd": 420.31,
-    "slip_usd": 144.81,
+    "no_funding": 3,
+    "fee_usd": 420.35,
+    "slip_usd": 144.84,
     "fund_usd": 59.35,
-    "gross_usd": 11285.14,
-    "net_usd": 10779.37,
-    "fee_bp": 9.8,
+    "gross_usd": 11286.0,
+    "net_usd": 10780.16,
+    "fee_bp": 9.7,
     "fee_mean_bp": 18.0,
     "fee_worst_bp": 2.5,
     "slip_bp": 3.5,
@@ -27296,58 +26815,21 @@
     "fund_bp": -2.1,
     "fund_mean_bp": 2.5,
     "fund_worst_bp": -110.9,
-    "cost_usd": 505.77
+    "cost_usd": 505.84
    },
-   "n_forward": 40,
+   "n_forward": 41,
    "n_restored": 1570,
    "dups": {
     "names": 477,
-    "positions": 1610,
+    "positions": 1611,
     "overlaps": 0,
-    "repeats": 1133,
+    "repeats": 1134,
     "max_per_name": 8,
-    "pause_median_h": 7.2
+    "pause_median_h": 7.3
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "KSMUSDT",
-      "at": 1792329117.5,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 145.0,
-      "mark_frac": 0.004924,
-      "mark_usd": 0.714,
-      "entry_px": 4.214,
-      "avg": 4.214,
-      "depth": 1,
-      "fills": [
-       [
-        1792329120.0,
-        4.214,
-        0.25
-       ]
-      ],
-      "fav_bp": 162.46,
-      "last_ts": 1792587540.0,
-      "sched_end": 1792588317.5,
-      "cut_why": null,
-      "book_end": null,
-      "levels": {
-       "avg": 4.214,
-       "take_px": 4.350921288,
-       "liq_px": 0.0,
-       "floor_px": 0.42140000000000005,
-       "term_ts": 1792588317.5,
-       "depth": 1,
-       "side": "long",
-       "floor_frac": 0.1
-      },
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -27422,9 +26904,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": 0.71,
-    "priced": 1,
-    "at": 1792587606.5060523,
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1792588235.6089845,
     "sizing": "fixed"
    }
   },
@@ -28195,8 +27677,8 @@
       "book": null,
       "lev": 4.323,
       "margin": 6.9271,
-      "mark_frac": 0.352738,
-      "mark_usd": 2.4434,
+      "mark_frac": 0.303115,
+      "mark_usd": 2.0997,
       "entry_px": 0.003419,
       "avg": 0.003419,
       "depth": 1,
@@ -28208,7 +27690,7 @@
        ]
       ],
       "fav_bp": 2837.53,
-      "last_ts": 1792587600.0,
+      "last_ts": 1792588200.0,
       "sched_end": 1792843881.4,
       "cut_why": null,
       "book_end": null,
@@ -28226,9 +27708,9 @@
      }
     ],
     "cut": [],
-    "mark_usd": 2.44,
+    "mark_usd": 2.1,
     "priced": 1,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "compound"
    }
   },
@@ -28999,8 +28481,8 @@
       "book": null,
       "lev": 4.323,
       "margin": 6.25,
-      "mark_frac": 0.352738,
-      "mark_usd": 2.2046,
+      "mark_frac": 0.303115,
+      "mark_usd": 1.8945,
       "entry_px": 0.003419,
       "avg": 0.003419,
       "depth": 1,
@@ -29012,7 +28494,7 @@
        ]
       ],
       "fav_bp": 2837.53,
-      "last_ts": 1792587600.0,
+      "last_ts": 1792588200.0,
       "sched_end": 1792843881.4,
       "cut_why": null,
       "book_end": null,
@@ -29030,9 +28512,9 @@
      }
     ],
     "cut": [],
-    "mark_usd": 2.2,
+    "mark_usd": 1.89,
     "priced": 1,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "fixed"
    }
   },
@@ -29808,8 +29290,8 @@
       "book": null,
       "lev": 4.323,
       "margin": 8.2546,
-      "mark_frac": 0.352738,
-      "mark_usd": 2.9117,
+      "mark_frac": 0.303115,
+      "mark_usd": 2.5021,
       "entry_px": 0.003419,
       "avg": 0.003419,
       "depth": 1,
@@ -29821,7 +29303,7 @@
        ]
       ],
       "fav_bp": 2837.53,
-      "last_ts": 1792587600.0,
+      "last_ts": 1792588200.0,
       "sched_end": 1792843881.4,
       "cut_why": null,
       "book_end": null,
@@ -29839,9 +29321,9 @@
      }
     ],
     "cut": [],
-    "mark_usd": 2.91,
+    "mark_usd": 2.5,
     "priced": 1,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "compound"
    }
   },
@@ -30617,8 +30099,8 @@
       "book": null,
       "lev": 4.323,
       "margin": 6.25,
-      "mark_frac": 0.352738,
-      "mark_usd": 2.2046,
+      "mark_frac": 0.303115,
+      "mark_usd": 1.8945,
       "entry_px": 0.003419,
       "avg": 0.003419,
       "depth": 1,
@@ -30630,7 +30112,7 @@
        ]
       ],
       "fav_bp": 2837.53,
-      "last_ts": 1792587600.0,
+      "last_ts": 1792588200.0,
       "sched_end": 1792843881.4,
       "cut_why": null,
       "book_end": null,
@@ -30648,9 +30130,9 @@
      }
     ],
     "cut": [],
-    "mark_usd": 2.2,
+    "mark_usd": 1.89,
     "priced": 1,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "fixed"
    }
   },
@@ -31431,8 +30913,8 @@
       "book": null,
       "lev": 4.323,
       "margin": 33.8179,
-      "mark_frac": 0.352738,
-      "mark_usd": 11.9289,
+      "mark_frac": 0.303115,
+      "mark_usd": 10.2507,
       "entry_px": 0.003419,
       "avg": 0.003419,
       "depth": 1,
@@ -31444,7 +30926,7 @@
        ]
       ],
       "fav_bp": 2837.53,
-      "last_ts": 1792587600.0,
+      "last_ts": 1792588200.0,
       "sched_end": 1792843881.4,
       "cut_why": null,
       "book_end": null,
@@ -31462,9 +30944,9 @@
      }
     ],
     "cut": [],
-    "mark_usd": 11.93,
+    "mark_usd": 10.25,
     "priced": 1,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "compound"
    }
   },
@@ -32245,8 +31727,8 @@
       "book": null,
       "lev": 4.323,
       "margin": 28.0,
-      "mark_frac": 0.352738,
-      "mark_usd": 9.8767,
+      "mark_frac": 0.303115,
+      "mark_usd": 8.4872,
       "entry_px": 0.003419,
       "avg": 0.003419,
       "depth": 1,
@@ -32258,7 +31740,7 @@
        ]
       ],
       "fav_bp": 2837.53,
-      "last_ts": 1792587600.0,
+      "last_ts": 1792588200.0,
       "sched_end": 1792843881.4,
       "cut_why": null,
       "book_end": null,
@@ -32276,9 +31758,9 @@
      }
     ],
     "cut": [],
-    "mark_usd": 9.88,
+    "mark_usd": 8.49,
     "priced": 1,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "fixed"
    }
   },
@@ -33059,8 +32541,8 @@
       "book": null,
       "lev": 4.323,
       "margin": 339.6042,
-      "mark_frac": 0.352738,
-      "mark_usd": 119.7914,
+      "mark_frac": 0.303115,
+      "mark_usd": 102.939,
       "entry_px": 0.003419,
       "avg": 0.003419,
       "depth": 1,
@@ -33072,7 +32554,7 @@
        ]
       ],
       "fav_bp": 2837.53,
-      "last_ts": 1792587600.0,
+      "last_ts": 1792588200.0,
       "sched_end": 1792843881.4,
       "cut_why": null,
       "book_end": null,
@@ -33090,9 +32572,9 @@
      }
     ],
     "cut": [],
-    "mark_usd": 119.79,
+    "mark_usd": 102.94,
     "priced": 1,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "compound"
    }
   },
@@ -33873,8 +33355,8 @@
       "book": null,
       "lev": 4.323,
       "margin": 281.0,
-      "mark_frac": 0.352738,
-      "mark_usd": 99.1195,
+      "mark_frac": 0.303115,
+      "mark_usd": 85.1752,
       "entry_px": 0.003419,
       "avg": 0.003419,
       "depth": 1,
@@ -33886,7 +33368,7 @@
        ]
       ],
       "fav_bp": 2837.53,
-      "last_ts": 1792587600.0,
+      "last_ts": 1792588200.0,
       "sched_end": 1792843881.4,
       "cut_why": null,
       "book_end": null,
@@ -33904,9 +33386,9 @@
      }
     ],
     "cut": [],
-    "mark_usd": 99.12,
+    "mark_usd": 85.18,
     "priced": 1,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "fixed"
    }
   },
@@ -34047,7 +33529,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "compound"
    }
   },
@@ -34188,7 +33670,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "fixed"
    }
   },
@@ -34329,7 +33811,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "compound"
    }
   },
@@ -34470,7 +33952,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "fixed"
    }
   },
@@ -34611,7 +34093,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "compound"
    }
   },
@@ -34752,7 +34234,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "fixed"
    }
   },
@@ -34893,7 +34375,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "compound"
    }
   },
@@ -35034,7 +34516,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1792587606.5060523,
+    "at": 1792588235.6089845,
     "sizing": "fixed"
    }
   }
@@ -35064,7 +34546,7 @@
   "fixed": "маржа позиции — билет в долларах от стартового депозита, всегда одна; мест столько, сколько билетов влезает в свободные деньги"
  },
  "costs": {
-  "n": 18671,
+  "n": 18685,
   "slip_bp": 4.4,
   "slip_source": "X3: медиана входа 22 заполнений, 2026-08-22…25, потолок 30",
   "market_exits": [
@@ -35077,15 +34559,15 @@
    "судья",
    "делистинг"
   ],
-  "applied": 18671,
+  "applied": 18685,
   "no_fills": 0,
-  "no_funding": 40,
-  "fee_usd": 3261.23,
-  "slip_usd": 1108.7,
+  "no_funding": 54,
+  "fee_usd": 3261.47,
+  "slip_usd": 1108.9,
   "fund_usd": 173.2,
   "n_funding_rows": 18631,
   "taker_fallback": 94,
-  "cost_usd": 4196.73,
+  "cost_usd": 4197.16,
   "cover": 1.0,
   "error": null,
   "n_funding": 1110
@@ -38098,7 +37580,7 @@
    ]
   },
   "1000": {
-   "n": 1418,
+   "n": 1420,
    "n_loss": 323,
    "top": [
     {
@@ -41104,7 +40586,7 @@
    ]
   },
   "10000": {
-   "n": 3746,
+   "n": 3748,
    "n_loss": 652,
    "top": [
     {
@@ -44110,7 +43592,7 @@
    ]
   },
   "100000": {
-   "n": 3852,
+   "n": 3854,
    "n_loss": 671,
    "top": [
     {
@@ -52148,7 +51630,7 @@
    "no_cash": 1487,
    "too_small": 26,
    "take_share": 0.0585,
-   "final": 0.3293,
+   "final": 0.3296,
    "max_dd": -0.0524,
    "day_median": 0.00104,
    "day_worst": -0.0283,
@@ -57226,13 +56708,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "bbde6ce6ef99",
-   "pnl_taken": 1.3172,
+   "pnl_taken": 1.3183,
    "names": 82,
    "top_sym": "CAKEUSDT",
    "top_pnl": 4.04,
-   "final_wo_top": 0.2889,
+   "final_wo_top": 0.2891,
    "top_trade": 4.04,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 2
   },
   "safe:1000": {
@@ -57241,7 +56723,7 @@
    "no_cash": 1129,
    "too_small": 25,
    "take_share": 0.2819,
-   "final": 0.1695,
+   "final": 0.1696,
    "max_dd": -0.1148,
    "day_median": 0.00014,
    "day_worst": -0.0314,
@@ -62734,13 +62216,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "6e8915ef2bfd",
-   "pnl_taken": 6.4266,
+   "pnl_taken": 6.4276,
    "names": 271,
    "top_sym": "STRKUSDT",
    "top_pnl": 7.15,
    "final_wo_top": 0.1624,
    "top_trade": 5.3,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 2
   },
   "safe:1000:fixed": {
@@ -68197,13 +67679,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "23be28d5a036",
-   "pnl_taken": 6.7356,
+   "pnl_taken": 6.7366,
    "names": 273,
    "top_sym": "SUPERUSDT",
    "top_pnl": 7.09,
    "final_wo_top": 0.1613,
    "top_trade": 5.34,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 2
   },
   "safe:10000": {
@@ -73645,13 +73127,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "892d0f5af047",
-   "pnl_taken": 35.8017,
+   "pnl_taken": 35.8027,
    "names": 464,
    "top_sym": "SKLUSDT",
    "top_pnl": 9.96,
-   "final_wo_top": 0.0909,
+   "final_wo_top": 0.091,
    "top_trade": 6.92,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 2
   },
   "safe:10000:fixed": {
@@ -79093,13 +78575,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "892d0f5af047",
-   "pnl_taken": 35.8017,
+   "pnl_taken": 35.8027,
    "names": 464,
    "top_sym": "SKLUSDT",
    "top_pnl": 9.5,
    "final_wo_top": 0.0886,
    "top_trade": 6.63,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 2
   },
   "safe:100000": {
@@ -79114,7 +78596,7 @@
    "day_worst": -0.0051,
    "day_green": 0.603,
    "days": 73,
-   "open_mean": 33.4,
+   "open_mean": 33.3,
    "open_median": 5.0,
    "open_max": 444,
    "open_dd": -2189.93,
@@ -84636,13 +84118,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "8f56b913a346",
-   "pnl_taken": 37.2054,
+   "pnl_taken": 37.2064,
    "names": 477,
    "top_sym": "SKLUSDT",
    "top_pnl": 56.72,
-   "final_wo_top": 0.0542,
+   "final_wo_top": 0.0543,
    "top_trade": 39.48,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 2
   },
   "safe:100000:fixed": {
@@ -84657,7 +84139,7 @@
    "day_worst": -0.0049,
    "day_green": 0.603,
    "days": 73,
-   "open_mean": 33.4,
+   "open_mean": 33.3,
    "open_median": 5.0,
    "open_max": 444,
    "open_dd": -2107.89,
@@ -90179,13 +89661,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "8f56b913a346",
-   "pnl_taken": 37.2054,
+   "pnl_taken": 37.2064,
    "names": 477,
    "top_sym": "SKLUSDT",
    "top_pnl": 55.12,
    "final_wo_top": 0.0534,
    "top_trade": 38.47,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 2
   },
   "optimal:100": {
@@ -95247,7 +94729,7 @@
    "no_cash": 1499,
    "too_small": 23,
    "take_share": 0.0599,
-   "final": 1.3211,
+   "final": 1.3213,
    "max_dd": -0.3061,
    "day_median": 0.00041,
    "day_worst": -0.2211,
@@ -100090,13 +99572,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "8d57fd4514c2",
-   "pnl_taken": 5.2843,
+   "pnl_taken": 5.2853,
    "names": 86,
    "top_sym": "BRUSDT",
    "top_pnl": 101.84,
-   "final_wo_top": 0.3027,
+   "final_wo_top": 0.3029,
    "top_trade": 89.64,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 1
   },
   "optimal:1000": {
@@ -105318,13 +104800,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "a025df4fec69",
-   "pnl_taken": 11.7668,
+   "pnl_taken": 11.7678,
    "names": 273,
    "top_sym": "BRUSDT",
    "top_pnl": 87.23,
-   "final_wo_top": 0.2142,
+   "final_wo_top": 0.2143,
    "top_trade": 102.23,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 2
   },
   "optimal:1000:fixed": {
@@ -110531,13 +110013,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "436f89aa81d6",
-   "pnl_taken": 11.6325,
+   "pnl_taken": 11.6336,
    "names": 276,
    "top_sym": "BRUSDT",
    "top_pnl": 76.84,
    "final_wo_top": 0.214,
    "top_trade": 89.64,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 2
   },
   "optimal:10000": {
@@ -115719,13 +115201,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "46c17b738a09",
-   "pnl_taken": 75.0834,
+   "pnl_taken": 75.0844,
    "names": 465,
    "top_sym": "BRUSDT",
    "top_pnl": 90.76,
    "final_wo_top": 0.1895,
    "top_trade": 105.92,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 2
   },
   "optimal:10000:fixed": {
@@ -115734,7 +115216,7 @@
    "no_cash": 36,
    "too_small": 23,
    "take_share": 0.9636,
-   "final": 0.1874,
+   "final": 0.1875,
    "max_dd": -0.0859,
    "day_median": 1e-05,
    "day_worst": -0.0239,
@@ -120907,13 +120389,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "86fac6050201",
-   "pnl_taken": 74.9794,
+   "pnl_taken": 74.9804,
    "names": 465,
    "top_sym": "BRUSDT",
    "top_pnl": 76.84,
    "final_wo_top": 0.1798,
    "top_trade": 89.64,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 2
   },
   "optimal:100000": {
@@ -126195,13 +125677,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "73b20733941b",
-   "pnl_taken": 77.8197,
+   "pnl_taken": 77.8207,
    "names": 477,
    "top_sym": "BRUSDT",
    "top_pnl": 493.46,
    "final_wo_top": 0.1118,
    "top_trade": 575.77,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 2
   },
   "optimal:100000:fixed": {
@@ -131483,13 +130965,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "73b20733941b",
-   "pnl_taken": 77.8197,
+   "pnl_taken": 77.8207,
    "names": 477,
    "top_sym": "BRUSDT",
    "top_pnl": 445.68,
    "final_wo_top": 0.1084,
    "top_trade": 519.88,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 2
   },
   "aggr:100": {
@@ -131498,7 +130980,7 @@
    "no_cash": 525,
    "too_small": 0,
    "take_share": 0.1848,
-   "final": 0.1328,
+   "final": 0.1293,
    "max_dd": -0.5776,
    "day_median": 0.01218,
    "day_worst": -0.3034,
@@ -132926,11 +132408,11 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "f969cf232f8c",
-   "pnl_taken": 3.608,
+   "pnl_taken": 3.5583,
    "names": 97,
    "top_sym": "RLCUSDT",
    "top_pnl": 11.79,
-   "final_wo_top": 0.0149,
+   "final_wo_top": 0.0115,
    "top_trade": 8.53,
    "open_n": 1,
    "cut_n": 0
@@ -132941,7 +132423,7 @@
    "no_cash": 526,
    "too_small": 0,
    "take_share": 0.1832,
-   "final": 0.0937,
+   "final": 0.0906,
    "max_dd": -0.595,
    "day_median": 0.01085,
    "day_worst": -0.3012,
@@ -134364,11 +133846,11 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "ff8b54b6fd9d",
-   "pnl_taken": 1.4991,
+   "pnl_taken": 1.4495,
    "names": 97,
    "top_sym": "RLCUSDT",
    "top_pnl": 10.7,
-   "final_wo_top": -0.0133,
+   "final_wo_top": -0.0164,
    "top_trade": 7.91,
    "open_n": 1,
    "cut_n": 0
@@ -134379,7 +133861,7 @@
    "no_cash": 136,
    "too_small": 0,
    "take_share": 0.7888,
-   "final": 0.3236,
+   "final": 0.3232,
    "max_dd": -0.2028,
    "day_median": 0.00143,
    "day_worst": -0.0717,
@@ -135772,11 +135254,11 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "76ca3d09829d",
-   "pnl_taken": 48.466,
+   "pnl_taken": 48.4164,
    "names": 274,
    "top_sym": "RLCUSDT",
    "top_pnl": 14.73,
-   "final_wo_top": 0.3089,
+   "final_wo_top": 0.3085,
    "top_trade": 10.41,
    "open_n": 1,
    "cut_n": 0
@@ -135787,7 +135269,7 @@
    "no_cash": 114,
    "too_small": 0,
    "take_share": 0.823,
-   "final": 0.3223,
+   "final": 0.322,
    "max_dd": -0.1682,
    "day_median": 0.00109,
    "day_worst": -0.0586,
@@ -137180,11 +136662,11 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "ebf22b84d409",
-   "pnl_taken": 51.5745,
+   "pnl_taken": 51.5248,
    "names": 282,
    "top_sym": "RLCUSDT",
    "top_pnl": 11.24,
-   "final_wo_top": 0.3111,
+   "final_wo_top": 0.3108,
    "top_trade": 7.91,
    "open_n": 1,
    "cut_n": 0
@@ -137195,7 +136677,7 @@
    "no_cash": 0,
    "too_small": 0,
    "take_share": 1.0,
-   "final": 0.209,
+   "final": 0.2088,
    "max_dd": -0.105,
    "day_median": 0.00059,
    "day_worst": -0.0308,
@@ -138593,11 +138075,11 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "dc1dfd799240",
-   "pnl_taken": 71.3642,
+   "pnl_taken": 71.3146,
    "names": 326,
    "top_sym": "RLCUSDT",
    "top_pnl": 60.52,
-   "final_wo_top": 0.2029,
+   "final_wo_top": 0.2028,
    "top_trade": 42.73,
    "open_n": 1,
    "cut_n": 0
@@ -138608,7 +138090,7 @@
    "no_cash": 0,
    "too_small": 0,
    "take_share": 1.0,
-   "final": 0.1998,
+   "final": 0.1997,
    "max_dd": -0.091,
    "day_median": 0.00049,
    "day_worst": -0.0261,
@@ -140006,11 +139488,11 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "dc1dfd799240",
-   "pnl_taken": 71.3642,
+   "pnl_taken": 71.3146,
    "names": 326,
    "top_sym": "RLCUSDT",
    "top_pnl": 50.35,
-   "final_wo_top": 0.1948,
+   "final_wo_top": 0.1946,
    "top_trade": 35.43,
    "open_n": 1,
    "cut_n": 0
@@ -140021,7 +139503,7 @@
    "no_cash": 0,
    "too_small": 0,
    "take_share": 1.0,
-   "final": 0.2098,
+   "final": 0.2096,
    "max_dd": -0.1054,
    "day_median": 0.00059,
    "day_worst": -0.0309,
@@ -141419,11 +140901,11 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "dc1dfd799240",
-   "pnl_taken": 71.3642,
+   "pnl_taken": 71.3146,
    "names": 326,
    "top_sym": "RLCUSDT",
    "top_pnl": 607.72,
-   "final_wo_top": 0.2037,
+   "final_wo_top": 0.2035,
    "top_trade": 429.11,
    "open_n": 1,
    "cut_n": 0
@@ -141434,7 +140916,7 @@
    "no_cash": 0,
    "too_small": 0,
    "take_share": 1.0,
-   "final": 0.2005,
+   "final": 0.2004,
    "max_dd": -0.0913,
    "day_median": 0.00049,
    "day_worst": -0.0262,
@@ -142832,11 +142314,11 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "dc1dfd799240",
-   "pnl_taken": 71.3642,
+   "pnl_taken": 71.3146,
    "names": 326,
    "top_sym": "RLCUSDT",
    "top_pnl": 505.29,
-   "final_wo_top": 0.1955,
+   "final_wo_top": 0.1953,
    "top_trade": 355.52,
    "open_n": 1,
    "cut_n": 0
@@ -143177,11 +142659,11 @@
   }
  },
  "states": {
-  "closed": 0,
-  "open": 8,
+  "closed": 2,
+  "open": 6,
   "cut": 4
  },
- "data_end": 1792587600.0,
+ "data_end": 1792588200.0,
  "live": {
   "safe:100": {
    "positions": [],
@@ -143261,48 +142743,11 @@
    ],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "compound"
   },
   "safe:100:fixed": {
-   "positions": [
-    {
-     "sym": "KSMUSDT",
-     "at": 1792329117.5,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 25.0,
-     "mark_frac": 0.004924,
-     "mark_usd": 0.1231,
-     "entry_px": 4.214,
-     "avg": 4.214,
-     "depth": 1,
-     "fills": [
-      [
-       1792329120.0,
-       4.214,
-       0.25
-      ]
-     ],
-     "fav_bp": 162.46,
-     "last_ts": 1792587540.0,
-     "sched_end": 1792588317.5,
-     "cut_why": null,
-     "book_end": null,
-     "levels": {
-      "avg": 4.214,
-      "take_px": 4.350921288,
-      "liq_px": 0.0,
-      "floor_px": 0.42140000000000005,
-      "term_ts": 1792588317.5,
-      "depth": 1,
-      "side": "long",
-      "floor_frac": 0.1
-     },
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -143377,50 +142822,13 @@
      "state": "cut"
     }
    ],
-   "mark_usd": 0.12,
-   "priced": 1,
-   "at": 1792587606.5060523,
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1792588235.6089845,
    "sizing": "fixed"
   },
   "safe:1000": {
-   "positions": [
-    {
-     "sym": "KSMUSDT",
-     "at": 1792329117.5,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 29.2222,
-     "mark_frac": 0.004924,
-     "mark_usd": 0.1439,
-     "entry_px": 4.214,
-     "avg": 4.214,
-     "depth": 1,
-     "fills": [
-      [
-       1792329120.0,
-       4.214,
-       0.25
-      ]
-     ],
-     "fav_bp": 162.46,
-     "last_ts": 1792587540.0,
-     "sched_end": 1792588317.5,
-     "cut_why": null,
-     "book_end": null,
-     "levels": {
-      "avg": 4.214,
-      "take_px": 4.350921288,
-      "liq_px": 0.0,
-      "floor_px": 0.42140000000000005,
-      "term_ts": 1792588317.5,
-      "depth": 1,
-      "side": "long",
-      "floor_frac": 0.1
-     },
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -143495,50 +142903,13 @@
      "state": "cut"
     }
    ],
-   "mark_usd": 0.14,
-   "priced": 1,
-   "at": 1792587606.5060523,
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1792588235.6089845,
    "sizing": "compound"
   },
   "safe:1000:fixed": {
-   "positions": [
-    {
-     "sym": "KSMUSDT",
-     "at": 1792329117.5,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 25.0,
-     "mark_frac": 0.004924,
-     "mark_usd": 0.1231,
-     "entry_px": 4.214,
-     "avg": 4.214,
-     "depth": 1,
-     "fills": [
-      [
-       1792329120.0,
-       4.214,
-       0.25
-      ]
-     ],
-     "fav_bp": 162.46,
-     "last_ts": 1792587540.0,
-     "sched_end": 1792588317.5,
-     "cut_why": null,
-     "book_end": null,
-     "levels": {
-      "avg": 4.214,
-      "take_px": 4.350921288,
-      "liq_px": 0.0,
-      "floor_px": 0.42140000000000005,
-      "term_ts": 1792588317.5,
-      "depth": 1,
-      "side": "long",
-      "floor_frac": 0.1
-     },
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -143613,50 +142984,13 @@
      "state": "cut"
     }
    ],
-   "mark_usd": 0.12,
-   "priced": 1,
-   "at": 1792587606.5060523,
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1792588235.6089845,
    "sizing": "fixed"
   },
   "safe:10000": {
-   "positions": [
-    {
-     "sym": "KSMUSDT",
-     "at": 1792329117.5,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 27.2971,
-     "mark_frac": 0.004924,
-     "mark_usd": 0.1344,
-     "entry_px": 4.214,
-     "avg": 4.214,
-     "depth": 1,
-     "fills": [
-      [
-       1792329120.0,
-       4.214,
-       0.25
-      ]
-     ],
-     "fav_bp": 162.46,
-     "last_ts": 1792587540.0,
-     "sched_end": 1792588317.5,
-     "cut_why": null,
-     "book_end": null,
-     "levels": {
-      "avg": 4.214,
-      "take_px": 4.350921288,
-      "liq_px": 0.0,
-      "floor_px": 0.42140000000000005,
-      "term_ts": 1792588317.5,
-      "depth": 1,
-      "side": "long",
-      "floor_frac": 0.1
-     },
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -143731,50 +143065,13 @@
      "state": "cut"
     }
    ],
-   "mark_usd": 0.13,
-   "priced": 1,
-   "at": 1792587606.5060523,
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1792588235.6089845,
    "sizing": "compound"
   },
   "safe:10000:fixed": {
-   "positions": [
-    {
-     "sym": "KSMUSDT",
-     "at": 1792329117.5,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 25.0,
-     "mark_frac": 0.004924,
-     "mark_usd": 0.1231,
-     "entry_px": 4.214,
-     "avg": 4.214,
-     "depth": 1,
-     "fills": [
-      [
-       1792329120.0,
-       4.214,
-       0.25
-      ]
-     ],
-     "fav_bp": 162.46,
-     "last_ts": 1792587540.0,
-     "sched_end": 1792588317.5,
-     "cut_why": null,
-     "book_end": null,
-     "levels": {
-      "avg": 4.214,
-      "take_px": 4.350921288,
-      "liq_px": 0.0,
-      "floor_px": 0.42140000000000005,
-      "term_ts": 1792588317.5,
-      "depth": 1,
-      "side": "long",
-      "floor_frac": 0.1
-     },
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -143849,50 +143146,13 @@
      "state": "cut"
     }
    ],
-   "mark_usd": 0.12,
-   "priced": 1,
-   "at": 1792587606.5060523,
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1792588235.6089845,
    "sizing": "fixed"
   },
   "safe:100000": {
-   "positions": [
-    {
-     "sym": "KSMUSDT",
-     "at": 1792329117.5,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 152.9434,
-     "mark_frac": 0.004924,
-     "mark_usd": 0.7531,
-     "entry_px": 4.214,
-     "avg": 4.214,
-     "depth": 1,
-     "fills": [
-      [
-       1792329120.0,
-       4.214,
-       0.25
-      ]
-     ],
-     "fav_bp": 162.46,
-     "last_ts": 1792587540.0,
-     "sched_end": 1792588317.5,
-     "cut_why": null,
-     "book_end": null,
-     "levels": {
-      "avg": 4.214,
-      "take_px": 4.350921288,
-      "liq_px": 0.0,
-      "floor_px": 0.42140000000000005,
-      "term_ts": 1792588317.5,
-      "depth": 1,
-      "side": "long",
-      "floor_frac": 0.1
-     },
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -143967,50 +143227,13 @@
      "state": "cut"
     }
    ],
-   "mark_usd": 0.75,
-   "priced": 1,
-   "at": 1792587606.5060523,
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1792588235.6089845,
    "sizing": "compound"
   },
   "safe:100000:fixed": {
-   "positions": [
-    {
-     "sym": "KSMUSDT",
-     "at": 1792329117.5,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 145.0,
-     "mark_frac": 0.004924,
-     "mark_usd": 0.714,
-     "entry_px": 4.214,
-     "avg": 4.214,
-     "depth": 1,
-     "fills": [
-      [
-       1792329120.0,
-       4.214,
-       0.25
-      ]
-     ],
-     "fav_bp": 162.46,
-     "last_ts": 1792587540.0,
-     "sched_end": 1792588317.5,
-     "cut_why": null,
-     "book_end": null,
-     "levels": {
-      "avg": 4.214,
-      "take_px": 4.350921288,
-      "liq_px": 0.0,
-      "floor_px": 0.42140000000000005,
-      "term_ts": 1792588317.5,
-      "depth": 1,
-      "side": "long",
-      "floor_frac": 0.1
-     },
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -144085,9 +143308,9 @@
      "state": "cut"
     }
    ],
-   "mark_usd": 0.71,
-   "priced": 1,
-   "at": 1792587606.5060523,
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1792588235.6089845,
    "sizing": "fixed"
   },
   "optimal:100": {
@@ -144132,48 +143355,11 @@
    ],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "compound"
   },
   "optimal:100:fixed": {
-   "positions": [
-    {
-     "sym": "KSMUSDT",
-     "at": 1792329117.5,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 25.0,
-     "mark_frac": 0.004924,
-     "mark_usd": 0.1231,
-     "entry_px": 4.214,
-     "avg": 4.214,
-     "depth": 1,
-     "fills": [
-      [
-       1792329120.0,
-       4.214,
-       0.25
-      ]
-     ],
-     "fav_bp": 162.46,
-     "last_ts": 1792587540.0,
-     "sched_end": 1792588317.5,
-     "cut_why": null,
-     "book_end": null,
-     "levels": {
-      "avg": 4.214,
-      "take_px": 4.350921288,
-      "liq_px": 0.0,
-      "floor_px": 0.42140000000000005,
-      "term_ts": 1792588317.5,
-      "depth": 1,
-      "side": "long",
-      "floor_frac": 0.1
-     },
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -144212,50 +143398,13 @@
      "state": "cut"
     }
    ],
-   "mark_usd": 0.12,
-   "priced": 1,
-   "at": 1792587606.5060523,
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1792588235.6089845,
    "sizing": "fixed"
   },
   "optimal:1000": {
-   "positions": [
-    {
-     "sym": "KSMUSDT",
-     "at": 1792329117.5,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 32.4554,
-     "mark_frac": 0.004924,
-     "mark_usd": 0.1598,
-     "entry_px": 4.214,
-     "avg": 4.214,
-     "depth": 1,
-     "fills": [
-      [
-       1792329120.0,
-       4.214,
-       0.25
-      ]
-     ],
-     "fav_bp": 162.46,
-     "last_ts": 1792587540.0,
-     "sched_end": 1792588317.5,
-     "cut_why": null,
-     "book_end": null,
-     "levels": {
-      "avg": 4.214,
-      "take_px": 4.350921288,
-      "liq_px": 0.0,
-      "floor_px": 0.42140000000000005,
-      "term_ts": 1792588317.5,
-      "depth": 1,
-      "side": "long",
-      "floor_frac": 0.1
-     },
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -144330,50 +143479,13 @@
      "state": "cut"
     }
    ],
-   "mark_usd": 0.16,
-   "priced": 1,
-   "at": 1792587606.5060523,
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1792588235.6089845,
    "sizing": "compound"
   },
   "optimal:1000:fixed": {
-   "positions": [
-    {
-     "sym": "KSMUSDT",
-     "at": 1792329117.5,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 25.0,
-     "mark_frac": 0.004924,
-     "mark_usd": 0.1231,
-     "entry_px": 4.214,
-     "avg": 4.214,
-     "depth": 1,
-     "fills": [
-      [
-       1792329120.0,
-       4.214,
-       0.25
-      ]
-     ],
-     "fav_bp": 162.46,
-     "last_ts": 1792587540.0,
-     "sched_end": 1792588317.5,
-     "cut_why": null,
-     "book_end": null,
-     "levels": {
-      "avg": 4.214,
-      "take_px": 4.350921288,
-      "liq_px": 0.0,
-      "floor_px": 0.42140000000000005,
-      "term_ts": 1792588317.5,
-      "depth": 1,
-      "side": "long",
-      "floor_frac": 0.1
-     },
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -144448,50 +143560,13 @@
      "state": "cut"
     }
    ],
-   "mark_usd": 0.12,
-   "priced": 1,
-   "at": 1792587606.5060523,
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1792588235.6089845,
    "sizing": "fixed"
   },
   "optimal:10000": {
-   "positions": [
-    {
-     "sym": "KSMUSDT",
-     "at": 1792329117.5,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 29.9558,
-     "mark_frac": 0.004924,
-     "mark_usd": 0.1475,
-     "entry_px": 4.214,
-     "avg": 4.214,
-     "depth": 1,
-     "fills": [
-      [
-       1792329120.0,
-       4.214,
-       0.25
-      ]
-     ],
-     "fav_bp": 162.46,
-     "last_ts": 1792587540.0,
-     "sched_end": 1792588317.5,
-     "cut_why": null,
-     "book_end": null,
-     "levels": {
-      "avg": 4.214,
-      "take_px": 4.350921288,
-      "liq_px": 0.0,
-      "floor_px": 0.42140000000000005,
-      "term_ts": 1792588317.5,
-      "depth": 1,
-      "side": "long",
-      "floor_frac": 0.1
-     },
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -144566,50 +143641,13 @@
      "state": "cut"
     }
    ],
-   "mark_usd": 0.15,
-   "priced": 1,
-   "at": 1792587606.5060523,
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1792588235.6089845,
    "sizing": "compound"
   },
   "optimal:10000:fixed": {
-   "positions": [
-    {
-     "sym": "KSMUSDT",
-     "at": 1792329117.5,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 25.0,
-     "mark_frac": 0.004924,
-     "mark_usd": 0.1231,
-     "entry_px": 4.214,
-     "avg": 4.214,
-     "depth": 1,
-     "fills": [
-      [
-       1792329120.0,
-       4.214,
-       0.25
-      ]
-     ],
-     "fav_bp": 162.46,
-     "last_ts": 1792587540.0,
-     "sched_end": 1792588317.5,
-     "cut_why": null,
-     "book_end": null,
-     "levels": {
-      "avg": 4.214,
-      "take_px": 4.350921288,
-      "liq_px": 0.0,
-      "floor_px": 0.42140000000000005,
-      "term_ts": 1792588317.5,
-      "depth": 1,
-      "side": "long",
-      "floor_frac": 0.1
-     },
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -144684,50 +143722,13 @@
      "state": "cut"
     }
    ],
-   "mark_usd": 0.12,
-   "priced": 1,
-   "at": 1792587606.5060523,
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1792588235.6089845,
    "sizing": "fixed"
   },
   "optimal:100000": {
-   "positions": [
-    {
-     "sym": "KSMUSDT",
-     "at": 1792329117.5,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 161.896,
-     "mark_frac": 0.004924,
-     "mark_usd": 0.7972,
-     "entry_px": 4.214,
-     "avg": 4.214,
-     "depth": 1,
-     "fills": [
-      [
-       1792329120.0,
-       4.214,
-       0.25
-      ]
-     ],
-     "fav_bp": 162.46,
-     "last_ts": 1792587540.0,
-     "sched_end": 1792588317.5,
-     "cut_why": null,
-     "book_end": null,
-     "levels": {
-      "avg": 4.214,
-      "take_px": 4.350921288,
-      "liq_px": 0.0,
-      "floor_px": 0.42140000000000005,
-      "term_ts": 1792588317.5,
-      "depth": 1,
-      "side": "long",
-      "floor_frac": 0.1
-     },
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -144802,50 +143803,13 @@
      "state": "cut"
     }
    ],
-   "mark_usd": 0.8,
-   "priced": 1,
-   "at": 1792587606.5060523,
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1792588235.6089845,
    "sizing": "compound"
   },
   "optimal:100000:fixed": {
-   "positions": [
-    {
-     "sym": "KSMUSDT",
-     "at": 1792329117.5,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 145.0,
-     "mark_frac": 0.004924,
-     "mark_usd": 0.714,
-     "entry_px": 4.214,
-     "avg": 4.214,
-     "depth": 1,
-     "fills": [
-      [
-       1792329120.0,
-       4.214,
-       0.25
-      ]
-     ],
-     "fav_bp": 162.46,
-     "last_ts": 1792587540.0,
-     "sched_end": 1792588317.5,
-     "cut_why": null,
-     "book_end": null,
-     "levels": {
-      "avg": 4.214,
-      "take_px": 4.350921288,
-      "liq_px": 0.0,
-      "floor_px": 0.42140000000000005,
-      "term_ts": 1792588317.5,
-      "depth": 1,
-      "side": "long",
-      "floor_frac": 0.1
-     },
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -144920,9 +143884,9 @@
      "state": "cut"
     }
    ],
-   "mark_usd": 0.71,
-   "priced": 1,
-   "at": 1792587606.5060523,
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1792588235.6089845,
    "sizing": "fixed"
   },
   "aggr:100": {
@@ -144934,8 +143898,8 @@
      "book": null,
      "lev": 4.323,
      "margin": 6.9271,
-     "mark_frac": 0.352738,
-     "mark_usd": 2.4434,
+     "mark_frac": 0.303115,
+     "mark_usd": 2.0997,
      "entry_px": 0.003419,
      "avg": 0.003419,
      "depth": 1,
@@ -144947,7 +143911,7 @@
       ]
      ],
      "fav_bp": 2837.53,
-     "last_ts": 1792587600.0,
+     "last_ts": 1792588200.0,
      "sched_end": 1792843881.4,
      "cut_why": null,
      "book_end": null,
@@ -144965,9 +143929,9 @@
     }
    ],
    "cut": [],
-   "mark_usd": 2.44,
+   "mark_usd": 2.1,
    "priced": 1,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "compound"
   },
   "aggr:100:fixed": {
@@ -144979,8 +143943,8 @@
      "book": null,
      "lev": 4.323,
      "margin": 6.25,
-     "mark_frac": 0.352738,
-     "mark_usd": 2.2046,
+     "mark_frac": 0.303115,
+     "mark_usd": 1.8945,
      "entry_px": 0.003419,
      "avg": 0.003419,
      "depth": 1,
@@ -144992,7 +143956,7 @@
       ]
      ],
      "fav_bp": 2837.53,
-     "last_ts": 1792587600.0,
+     "last_ts": 1792588200.0,
      "sched_end": 1792843881.4,
      "cut_why": null,
      "book_end": null,
@@ -145010,9 +143974,9 @@
     }
    ],
    "cut": [],
-   "mark_usd": 2.2,
+   "mark_usd": 1.89,
    "priced": 1,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "fixed"
   },
   "aggr:1000": {
@@ -145024,8 +143988,8 @@
      "book": null,
      "lev": 4.323,
      "margin": 8.2546,
-     "mark_frac": 0.352738,
-     "mark_usd": 2.9117,
+     "mark_frac": 0.303115,
+     "mark_usd": 2.5021,
      "entry_px": 0.003419,
      "avg": 0.003419,
      "depth": 1,
@@ -145037,7 +144001,7 @@
       ]
      ],
      "fav_bp": 2837.53,
-     "last_ts": 1792587600.0,
+     "last_ts": 1792588200.0,
      "sched_end": 1792843881.4,
      "cut_why": null,
      "book_end": null,
@@ -145055,9 +144019,9 @@
     }
    ],
    "cut": [],
-   "mark_usd": 2.91,
+   "mark_usd": 2.5,
    "priced": 1,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "compound"
   },
   "aggr:1000:fixed": {
@@ -145069,8 +144033,8 @@
      "book": null,
      "lev": 4.323,
      "margin": 6.25,
-     "mark_frac": 0.352738,
-     "mark_usd": 2.2046,
+     "mark_frac": 0.303115,
+     "mark_usd": 1.8945,
      "entry_px": 0.003419,
      "avg": 0.003419,
      "depth": 1,
@@ -145082,7 +144046,7 @@
       ]
      ],
      "fav_bp": 2837.53,
-     "last_ts": 1792587600.0,
+     "last_ts": 1792588200.0,
      "sched_end": 1792843881.4,
      "cut_why": null,
      "book_end": null,
@@ -145100,9 +144064,9 @@
     }
    ],
    "cut": [],
-   "mark_usd": 2.2,
+   "mark_usd": 1.89,
    "priced": 1,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "fixed"
   },
   "aggr:10000": {
@@ -145114,8 +144078,8 @@
      "book": null,
      "lev": 4.323,
      "margin": 33.8179,
-     "mark_frac": 0.352738,
-     "mark_usd": 11.9289,
+     "mark_frac": 0.303115,
+     "mark_usd": 10.2507,
      "entry_px": 0.003419,
      "avg": 0.003419,
      "depth": 1,
@@ -145127,7 +144091,7 @@
       ]
      ],
      "fav_bp": 2837.53,
-     "last_ts": 1792587600.0,
+     "last_ts": 1792588200.0,
      "sched_end": 1792843881.4,
      "cut_why": null,
      "book_end": null,
@@ -145145,9 +144109,9 @@
     }
    ],
    "cut": [],
-   "mark_usd": 11.93,
+   "mark_usd": 10.25,
    "priced": 1,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "compound"
   },
   "aggr:10000:fixed": {
@@ -145159,8 +144123,8 @@
      "book": null,
      "lev": 4.323,
      "margin": 28.0,
-     "mark_frac": 0.352738,
-     "mark_usd": 9.8767,
+     "mark_frac": 0.303115,
+     "mark_usd": 8.4872,
      "entry_px": 0.003419,
      "avg": 0.003419,
      "depth": 1,
@@ -145172,7 +144136,7 @@
       ]
      ],
      "fav_bp": 2837.53,
-     "last_ts": 1792587600.0,
+     "last_ts": 1792588200.0,
      "sched_end": 1792843881.4,
      "cut_why": null,
      "book_end": null,
@@ -145190,9 +144154,9 @@
     }
    ],
    "cut": [],
-   "mark_usd": 9.88,
+   "mark_usd": 8.49,
    "priced": 1,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "fixed"
   },
   "aggr:100000": {
@@ -145204,8 +144168,8 @@
      "book": null,
      "lev": 4.323,
      "margin": 339.6042,
-     "mark_frac": 0.352738,
-     "mark_usd": 119.7914,
+     "mark_frac": 0.303115,
+     "mark_usd": 102.939,
      "entry_px": 0.003419,
      "avg": 0.003419,
      "depth": 1,
@@ -145217,7 +144181,7 @@
       ]
      ],
      "fav_bp": 2837.53,
-     "last_ts": 1792587600.0,
+     "last_ts": 1792588200.0,
      "sched_end": 1792843881.4,
      "cut_why": null,
      "book_end": null,
@@ -145235,9 +144199,9 @@
     }
    ],
    "cut": [],
-   "mark_usd": 119.79,
+   "mark_usd": 102.94,
    "priced": 1,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "compound"
   },
   "aggr:100000:fixed": {
@@ -145249,8 +144213,8 @@
      "book": null,
      "lev": 4.323,
      "margin": 281.0,
-     "mark_frac": 0.352738,
-     "mark_usd": 99.1195,
+     "mark_frac": 0.303115,
+     "mark_usd": 85.1752,
      "entry_px": 0.003419,
      "avg": 0.003419,
      "depth": 1,
@@ -145262,7 +144226,7 @@
       ]
      ],
      "fav_bp": 2837.53,
-     "last_ts": 1792587600.0,
+     "last_ts": 1792588200.0,
      "sched_end": 1792843881.4,
      "cut_why": null,
      "book_end": null,
@@ -145280,9 +144244,9 @@
     }
    ],
    "cut": [],
-   "mark_usd": 99.12,
+   "mark_usd": 85.18,
    "priced": 1,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "fixed"
   },
   "optimal_ai:100": {
@@ -145290,7 +144254,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "compound"
   },
   "optimal_ai:100:fixed": {
@@ -145298,7 +144262,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "fixed"
   },
   "optimal_ai:1000": {
@@ -145306,7 +144270,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "compound"
   },
   "optimal_ai:1000:fixed": {
@@ -145314,7 +144278,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "fixed"
   },
   "optimal_ai:10000": {
@@ -145322,7 +144286,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "compound"
   },
   "optimal_ai:10000:fixed": {
@@ -145330,7 +144294,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "fixed"
   },
   "optimal_ai:100000": {
@@ -145338,7 +144302,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "compound"
   },
   "optimal_ai:100000:fixed": {
@@ -145346,7 +144310,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1792587606.5060523,
+   "at": 1792588235.6089845,
    "sizing": "fixed"
   }
  },
@@ -145360,33 +144324,33 @@
   }
  },
  "tail": {
-  "syms": 2,
-  "minutes": 6,
-  "dry": 3,
-  "span_med_h": 25.32,
+  "syms": 3,
+  "minutes": 7,
+  "dry": 2,
+  "span_med_h": 0.06,
   "zero_vol_tape": 0,
   "remote": {
    "fetched": 0,
    "prefetched": 0,
    "hits": 2,
-   "misses": 46,
+   "misses": 45,
    "bad_md5": 0,
    "errors": 0,
    "retries": 0,
    "cache_gb": 1.955
   },
   "entry_dropped": 0,
-  "marked": 4,
+  "marked": 6,
   "cut_why": {
    "книга кончилась раньше планового конца": 4
   },
-  "closed_tail": 900,
-  "closed_all": 18671
+  "closed_tail": 914,
+  "closed_all": 18685
  },
- "computed_at": "2026-10-21 13:00",
+ "computed_at": "2026-10-21 13:10",
  "watch": {
-  "at": 1792587609.244593,
-  "prev_at": 1792587309.5618303,
+  "at": 1792588237.8910656,
+  "prev_at": 1792587609.244593,
   "cells": 32,
   "findings": [],
   "n": 0,
@@ -145397,86 +144361,6 @@
     "open_vanished": 32
    },
    "items": [
-    {
-     "t": 1792585272.5713794,
-     "family": "pair",
-     "cell": "pair_optimal_g6:10000",
-     "kind": "open_late",
-     "pos": "BMTUSDT:1792584000",
-     "sym": "BMTUSDT",
-     "at": 1792584000.0,
-     "text": "открытая появилась задним числом: BMTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1792585272.5713794,
-     "family": "pair",
-     "cell": "pair_optimal_g6:10000:fixed",
-     "kind": "open_late",
-     "pos": "BMTUSDT:1792584000",
-     "sym": "BMTUSDT",
-     "at": 1792584000.0,
-     "text": "открытая появилась задним числом: BMTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1792585272.5713794,
-     "family": "pair",
-     "cell": "pair_optimal_g6:100000",
-     "kind": "open_late",
-     "pos": "BMTUSDT:1792584000",
-     "sym": "BMTUSDT",
-     "at": 1792584000.0,
-     "text": "открытая появилась задним числом: BMTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1792585272.5713794,
-     "family": "pair",
-     "cell": "pair_optimal_g6:100000:fixed",
-     "kind": "open_late",
-     "pos": "BMTUSDT:1792584000",
-     "sym": "BMTUSDT",
-     "at": 1792584000.0,
-     "text": "открытая появилась задним числом: BMTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1792585272.5713794,
-     "family": "pair",
-     "cell": "pair_aggr_g0:100",
-     "kind": "open_late",
-     "pos": "IOSTUSDT:1792584000",
-     "sym": "IOSTUSDT",
-     "at": 1792584000.0,
-     "text": "открытая появилась задним числом: IOSTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1792585272.5713794,
-     "family": "pair",
-     "cell": "pair_aggr_g0:100",
-     "kind": "open_late",
-     "pos": "JCTUSDT:1792584000",
-     "sym": "JCTUSDT",
-     "at": 1792584000.0,
-     "text": "открытая появилась задним числом: JCTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1792585272.5713794,
-     "family": "pair",
-     "cell": "pair_aggr_g0:100:fixed",
-     "kind": "open_late",
-     "pos": "IOSTUSDT:1792584000",
-     "sym": "IOSTUSDT",
-     "at": 1792584000.0,
-     "text": "открытая появилась задним числом: IOSTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1792585272.5713794,
-     "family": "pair",
-     "cell": "pair_aggr_g0:100:fixed",
-     "kind": "open_late",
-     "pos": "JCTUSDT:1792584000",
-     "sym": "JCTUSDT",
-     "at": 1792584000.0,
-     "text": "открытая появилась задним числом: JCTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
-    },
     {
      "t": 1792585272.5713794,
      "family": "pair",
@@ -145996,22 +144880,102 @@
      "sym": "JCTUSDT",
      "at": 1792584000.0,
      "text": "открытая появилась задним числом: JCTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1792587939.1051257,
+     "family": "h24",
+     "cell": "optimal_h_m02:100",
+     "kind": "open_late",
+     "pos": "JCTUSDT:1792584000",
+     "sym": "JCTUSDT",
+     "at": 1792584000.0,
+     "text": "открытая появилась задним числом: JCTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1792587939.1051257,
+     "family": "h24",
+     "cell": "optimal_h_m02:100:fixed",
+     "kind": "open_late",
+     "pos": "JCTUSDT:1792584000",
+     "sym": "JCTUSDT",
+     "at": 1792584000.0,
+     "text": "открытая появилась задним числом: JCTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1792587939.1051257,
+     "family": "h24",
+     "cell": "optimal_h_m02:1000",
+     "kind": "open_late",
+     "pos": "JCTUSDT:1792584000",
+     "sym": "JCTUSDT",
+     "at": 1792584000.0,
+     "text": "открытая появилась задним числом: JCTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1792587939.1051257,
+     "family": "h24",
+     "cell": "optimal_h_m02:1000:fixed",
+     "kind": "open_late",
+     "pos": "JCTUSDT:1792584000",
+     "sym": "JCTUSDT",
+     "at": 1792584000.0,
+     "text": "открытая появилась задним числом: JCTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1792587939.1051257,
+     "family": "h24",
+     "cell": "optimal_h_m02:10000",
+     "kind": "open_late",
+     "pos": "JCTUSDT:1792584000",
+     "sym": "JCTUSDT",
+     "at": 1792584000.0,
+     "text": "открытая появилась задним числом: JCTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1792587939.1051257,
+     "family": "h24",
+     "cell": "optimal_h_m02:10000:fixed",
+     "kind": "open_late",
+     "pos": "JCTUSDT:1792584000",
+     "sym": "JCTUSDT",
+     "at": 1792584000.0,
+     "text": "открытая появилась задним числом: JCTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1792587939.1051257,
+     "family": "h24",
+     "cell": "optimal_h_m02:100000",
+     "kind": "open_late",
+     "pos": "JCTUSDT:1792584000",
+     "sym": "JCTUSDT",
+     "at": 1792584000.0,
+     "text": "открытая появилась задним числом: JCTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1792587939.1051257,
+     "family": "h24",
+     "cell": "optimal_h_m02:100000:fixed",
+     "kind": "open_late",
+     "pos": "JCTUSDT:1792584000",
+     "sym": "JCTUSDT",
+     "at": 1792584000.0,
+     "text": "открытая появилась задним числом: JCTUSDT (вход 10-21 12:00 UTC, прошлый прогон её не показывал)"
     }
    ]
   }
  },
- "secs": 7.3,
+ "secs": 35.7,
  "timing": {
-  "кэш": 1.11,
-  "решения": 0.03,
-  "реплей": 2.44,
+  "кэш": 0.95,
+  "решения": 30.56,
+  "реплей": 1.32,
   "хвост и fav": 0.02,
-  "запись кэша": 0.91,
-  "касса": 0.99,
-  "журнал": 0.23,
-  "свод": 1.57
+  "запись кэша": 0.57,
+  "касса": 0.94,
+  "журнал": 0.25,
+  "свод": 1.13
  },
- "peak_rss_mb": 405,
+ "peak_rss_mb": 2192,
  "rules": {
   "RULES": 7,
   "TICKET": 25.0,
