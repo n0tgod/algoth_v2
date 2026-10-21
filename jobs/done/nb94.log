@@ -13,3 +13,15 @@ m02: новых решений о часе входа 0
 досчитано записей 1 по 1 решениям, ячеек 1
 {"books": 2, "legs": 6, "new_decisions": 1, "replayed": 1}
 конец: 2026-10-21T08:23:03Z, код 0
+ВНИМАНИЕ: 2026-10-21T08:23:04Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nb93.log  | 17 +++++++++++++++++
+ jobs/done/nb94.done |  1 +
+ jobs/done/nb94.log  | 15 +++++++++++++++
+ jobs/poke.log       |  3 +++
+ jobs/queue-state.md |  2 +-
+ 5 files changed, 37 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   849427a26..5be028dc9  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
