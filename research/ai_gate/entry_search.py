@@ -276,6 +276,31 @@ def search(F, O, names, at, extra=(), seed=0):
     return f1, f2
 
 
+def model_scores(F, O, names, at, extra, seed=0):
+    """Каждое правило модели на каждой половине: прирост к книге на сигнал и случайный час.
+
+    Описание, не отбор: модель видела сводку тех же сделок, так что честная
+    проверка её правил — вперёд; здесь видно, где они стоят рядом с сеткой.
+    """
+    order = np.argsort(at)
+    half = len(order) // 2
+    halves = (list(order[:half]), list(order[half:]))
+    out = []
+    for n, rule in enumerate(extra):
+        if not all(c["field"] in names for c in rule["when"]):
+            out.append({"rule": rule, "why": "поле вне таблицы"})
+            continue
+        ks = first_k(F, names, rule)
+        row = {"rule": {k: rule[k] for k in ("when", "W")}, "halves": []}
+        for h, idx in enumerate(halves):
+            m, trig = score(O, ks, idx)
+            base, _ = score(O, np.zeros(len(O), dtype=int), idx)
+            p = null_p(O, ks, idx, int(rule["W"]), m, random.Random(seed + 101 + 2 * n + h)) if trig else None
+            row["halves"].append({"gain": None if m is None else round(m - base, 5), "trig": trig, "p_random_hour": p})
+        out.append(row)
+    return out
+
+
 def shuffled(F, seed):
     """Отрицательный контроль: строки состояния (по сигналам) переставлены."""
     rng = np.random.default_rng(seed)
@@ -309,6 +334,7 @@ def run(log=print, since=None, now=None, legs=None, table=None, seed=0):
     c1, c2 = search(shuffled(F, seed + 7), O, names, at, extra=(), seed=seed + 11)
     control_silent = not (c1.get("held") and c2.get("held"))
     procedure = bool(f1.get("held") and f2.get("held") and control_silent)
+    mine = model_scores(F, O, names, at, extra, seed)
     final = None
     if procedure:
         pool, base_all, _ = select(F, O, names, list(range(len(O))), extra)
@@ -317,7 +343,7 @@ def run(log=print, since=None, now=None, legs=None, table=None, seed=0):
            "fields": names, "cover": cover, "kmax": KMAX, "windows": list(WINDOWS),
            "book_mean": round(float(np.nanmean(np.where(np.isnan(O[:, 0]), 0.0, O[:, 0]))), 5),
            "fold_1to2": f1, "fold_2to1": f2, "control": {"fold_1to2": c1, "fold_2to1": c2, "silent": control_silent},
-           "procedure_holds": procedure, "candidate": final, "model_rules": len(extra),
+           "procedure_holds": procedure, "candidate": final, "model_rules": len(extra), "model": mine,
            "secs": round(time.time() - t0, 1)}
     log(f"поиск ТВХ: сигналов {n_legs}, полей {len(names)}; 1→2 {'держит' if f1.get('held') else 'нет'}, "
         f"2→1 {'держит' if f2.get('held') else 'нет'}, контроль {'молчит' if control_silent else 'НЕ молчит'}")
@@ -402,6 +428,16 @@ def report(r):
                  f"{pct(f['test_mean'])} / {pct(f['test_book'])} | {f['test_trig']} | {f['p_random_hour']} | "
                  f"{'**да**' if f['held'] else 'нет'} |")
     L += ["", f"**Отбор держит в обоих направлениях и контроль молчит:** {'ДА' if r['procedure_holds'] else 'нет'}."]
+    if r.get("model"):
+        L += ["", "Правила модели — каждое на обеих половинах (описание, не отбор: модель видела сводку тех же сделок, "
+              "честная проверка — вперёд):", "",
+              "| правило | 1-я: прирост к книге / вошло / случайный час не хуже | 2-я: то же |", "|---|---|---|"]
+        for m in r["model"]:
+            if m.get("why"):
+                L.append(f"| `{rule_text(m['rule'])}` | {m['why']} | |")
+                continue
+            cell = lambda h: f"{pct(h['gain'])} / {h['trig']} / {h['p_random_hour'] if h['p_random_hour'] is not None else '—'}"  # noqa: E731
+            L.append(f"| `{rule_text(m['rule'])}` | {cell(m['halves'][0])} | {cell(m['halves'][1])} |")
     if r.get("candidate"):
         c = r["candidate"]
         L += [f"Кандидат (выбран на всём окне): `{rule_text(c['rule'])}`, прирост {pct(c['gain_all'])} на сигнал, вошло {c['trig']}. "

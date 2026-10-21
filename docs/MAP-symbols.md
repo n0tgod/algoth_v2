@@ -628,7 +628,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L191 `report(s)`
 - L217 `main(argv=None)`
 
-## research/ai_gate/entry_search.py · 442 строк
+## research/ai_gate/entry_search.py · 478 строк
 
 Поиск новой ТВХ по состоянию рынка (спека 19 §11.8, U4c).
 
@@ -660,13 +660,14 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L225 `select(F, O, names, idx_train, extra=())` — Лучшая ячейка обучающей половины по приросту к книге на сигнал.
 - L254 `fold(F, O, names, train, test, extra, seed)`
 - L270 `search(F, O, names, at, extra=(), seed=0)`
-- L279 `shuffled(F, seed)` — Отрицательный контроль: строки состояния (по сигналам) переставлены.
-- L287 `rule_text(rule)`
-- L293 `run(log=print, since=None, now=None, legs=None, table=None, see…`
-- L327 `make_table(log, since, now, legs=None)` — Семь реплеев (вход через k = 0…6 ч) и параметры на каждом часе.
-- L375 `load_table(path=None)` — Таблица исходов прошлого прогона (`make_table` её сохраняет).
-- L384 `report(r)`
-- L414 `main(argv=None)`
+- L279 `model_scores(F, O, names, at, extra, seed=0)` — Каждое правило модели на каждой половине: прирост к книге на сигнал и случайный час.
+- L304 `shuffled(F, seed)` — Отрицательный контроль: строки состояния (по сигналам) переставлены.
+- L312 `rule_text(rule)`
+- L318 `run(log=print, since=None, now=None, legs=None, table=None, see…`
+- L353 `make_table(log, since, now, legs=None)` — Семь реплеев (вход через k = 0…6 ч) и параметры на каждом часе.
+- L401 `load_table(path=None)` — Таблица исходов прошлого прогона (`make_table` её сохраняет).
+- L410 `report(r)`
+- L450 `main(argv=None)`
 
 ## research/ai_gate/entry_shift.py · 337 строк
 

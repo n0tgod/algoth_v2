@@ -56,6 +56,10 @@ def main():
     r2 = ES.run(log=lambda *a: None, table=t)
     assert r2["fold_1to2"]["rule"] == r["fold_1to2"]["rule"], "та же таблица — тот же отбор"
     assert "error" in ES.load_table(pth + ".нет"), "нет таблицы — названная ошибка, не пустой поиск"
+    planted = {"when": [{"field": "crowd_bybit", "op": "<=", "value": 0.25}], "W": 3}
+    ms = ES.model_scores(F, O, names, at, [planted, {"when": [{"field": "нет_поля", "op": ">=", "value": 1}], "W": 3}])
+    assert all(h["gain"] > 0 for h in ms[0]["halves"]) and ms[1]["why"], ms
+    assert "Правила модели" in ES.report(dict(r, model=ms))
     print("ok  поиск ТВХ по сохранённой таблице: тот же отбор; без таблицы — ошибка с причиной")
     print("\nвсе 2 проверки прошли")
 
