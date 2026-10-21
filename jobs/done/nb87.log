@@ -20,3 +20,17 @@
 
 Покрытие полей (доля сигнало-часов с числом): btc_168h 0%, btc_dom 8%, fng 8%, mcap_24h 8%, crowd_bn_global 67%, crowd_bn_top 67%, px_168h 82%, crowd_bybit_shift 92%, oi_24h 94%, crowd_bybit 95%, px_24h 95%, name_floor_share 97%, btc_24h 98%, oi_1h 99%, basis_bp 99%, funding 99%, buy_share 99%, px_4h 100%, btc_1h 100%, btc_4h 100%, burst_ratio 100%, depth_eat_ask 100%, depth_eat_bid 100%, px_1h 100%, since_signal 100%, spread_bp 100%, trades_ratio 100%, name_positions 100%, signal_fav_bp 100%, signal_rr 100%
 
+ВНИМАНИЕ: 2026-10-21T07:14:29Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nb87.done                    |  1 +
+ jobs/done/nb87.log                     | 22 ++++++++++++++++++++++
+ jobs/poke.log                          |  3 +++
+ jobs/queue-state.md                    |  2 +-
+ research/ai_gate/out/ENTRY-SEARCH.md   |  6 +++---
+ research/ai_gate/out/entry_search.json |  2 +-
+ 6 files changed, 31 insertions(+), 5 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   3c9946d57..6453b52e9  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-21T07:14:35Z, код 0
