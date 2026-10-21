@@ -10396,6 +10396,16 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L49 `big_save()`
 - L65 `big_restore()`
 
+## tools/graphify_guard.sh · 9 строк
+
+Хук PreToolUse Claude Code (graphify, 21.10): перед Bash/Grep/Read/Glob
+
+
+## tools/graphify_setup.sh · 27 строк
+
+Хук SessionStart Claude Code (graphify, 21.10; правила — .claude/CLAUDE.md).
+
+
 ## tools/guard_probe.py · 50 строк
 
 Зонд: что видела охрана рынком — волна прокси-имён с момента входа коротких позиций по часам. Печатает порог,…

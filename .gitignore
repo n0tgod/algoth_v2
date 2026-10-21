@@ -46,3 +46,8 @@ research/news/out/collect.log
 research/ai_gate/out/record/
 research/ai_gate/out/gate.log
 research/ai_gate/out/gate_books.log
+
+# graphify (21.10): граф кода (`graphify-out/`, 14 МБ) в git НЕ идёт — сервер
+# тянет main каждую минуту, а граф пересобирается хуком начала сессии за
+# 2 мин из кода (tools/graphify_setup.sh); правила — .claude/CLAUDE.md
+graphify-out/

@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {"hooks": [{"type": "command", "command": "bash tools/graphify_setup.sh", "timeout": 200}]}
+    ],
+    "PreToolUse": [
+      {"matcher": "Bash|Grep",
+       "hooks": [{"type": "command", "command": "bash tools/graphify_guard.sh search", "timeout": 10}]},
+      {"matcher": "Read|Glob",
+       "hooks": [{"type": "command", "command": "bash tools/graphify_guard.sh read", "timeout": 10}]}
+    ]
+  }
+}

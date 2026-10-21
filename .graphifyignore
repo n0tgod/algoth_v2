@@ -1,0 +1,17 @@
+# graphify (спека: .claude/CLAUDE.md «graphify»): в граф идёт КОД и спеки,
+# не запись и не артефакты прогонов — они весят сотни мегабайт и
+# архитектуры не несут. Формат — как .gitignore.
+research/*/out/
+research/*/cache/
+research/b1_book/out/
+tools/app_api/out/
+jobs/
+docs/memory/
+docs/journal/
+docs/MAP-symbols.md
+docs/MAP-tests.md
+site/
+*.jsonl
+*.npz
+*.pkl
+*.log

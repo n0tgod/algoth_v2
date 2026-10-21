@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 688, строк: 271258, каталогов: 89.
+Модулей кода: 690, строк: 271294, каталогов: 90.
 
 
 ## корень — память проекта, идеи, README
@@ -870,6 +870,11 @@
 
 - тесты: `e1.rs` (333), `e2.rs` (357), `gen_parity.py` (256), `ladder.rs` (898), `live_x1.rs` (1429), `watchdog.rs` (382)
 
+## .claude
+
+- документы: `CLAUDE.md` — graphify — граф кода вместо чтения файлов (решение владельца 2026-10-21), `skills/graphify/SKILL.md` — /graphify, `skills/graphify/references/add-watch.md` — graphify reference: add a URL and watch a folder, `skills/graphify/references/exports.md` — graphify reference: extra exports and benchmark, `skills/graphify/references/extraction-spec.md` — graphify reference: extraction subagent prompt, `skills/graphify/references/github-and-merge.md` — graphify reference: GitHub clone and cross-repo merge, `skills/graphify/references/hooks.md` — graphify reference: commit hook and native CLAUDE.md integration, `skills/graphify/references/query.md` — graphify reference: query, path, explain, `skills/graphify/references/transcribe.md` — graphify reference: transcribe video and audio, `skills/graphify/references/update.md` — graphify reference: incremental update and cluster-only
+- прочее: `settings.json`
+
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
 - документы: `README.md` — Очередь заданий, `queue-state.md` — 
@@ -920,6 +925,8 @@
 - `freeze_weights.py` · 77 строк — Заморозить текущие веса S8: копия в `out/model/frozen/`.
 - `frozen_probe.py` · 53 строк — Зонд: пишет ли цикл лист замороженной модели и ложится ли архив весов.
 - `git_guard.sh` · 79 строк — Охрана git на сервере (20.10): подключается `publish.sh` и `jobs.sh`.
+- `graphify_guard.sh` · 9 строк — Хук PreToolUse Claude Code (graphify, 21.10): перед Bash/Grep/Read/Glob
+- `graphify_setup.sh` · 27 строк — Хук SessionStart Claude Code (graphify, 21.10; правила — .claude/CLAUDE.md).
 - `guard_probe.py` · 50 строк — Зонд: что видела охрана рынком — волна прокси-имён с момента входа коротких позиций по часам. Печатает порог,…
 - `instr_fields.py` · 47 строк — Зонд: какие поля справочника Bybit отличают перпы на акции от крипты.
 - `jobs.sh` · 341 строк — Очередь заданий: сессия кладёт задание в git, сервер его выполняет.
