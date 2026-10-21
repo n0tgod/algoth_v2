@@ -1,4 +1,3 @@
-2026-10-21T04:40:05Z · дерево разошлось с origin/main и свести не вышло — не трогаю
 2026-10-21T04:45:03Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
 2026-10-21T04:50:04Z · дерево разошлось с origin/main и свести не вышло — не трогаю
 2026-10-21T04:55:04Z · дерево разошлось с origin/main и свести не вышло — не трогаю
@@ -18,3 +17,4 @@
 2026-10-21T05:30:03Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
 2026-10-21T05:30:06Z · дерево расходилось с origin/main: застрявший коммит опубликован
 2026-10-21T05:45:04Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+2026-10-21T06:00:05Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
