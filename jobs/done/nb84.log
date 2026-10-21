@@ -178,3 +178,14 @@
   cells ключи: ['pair_safe:100', 'pair_safe:100:fixed', 'pair_safe:1000', 'pair_safe:1000:fixed', 'pair_safe:10000', 'pair_safe:10000:fixed']
 == DCA-short.json: 5.3 МБ, изменён 10-21 05:13:00, computed_at 2026-10-21 05:05
 конец: 2026-10-21T05:13:50Z, код 0
+ВНИМАНИЕ: 2026-10-21T05:13:52Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nb84.done |   1 +
+ jobs/done/nb84.log  | 180 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log       |   3 +
+ jobs/queue-state.md |   2 +-
+ 4 files changed, 185 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   aa1f3f6bb..cacbf97e5  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
