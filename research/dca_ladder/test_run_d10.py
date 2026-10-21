@@ -570,6 +570,45 @@ def test_cell_policy_floor_and_sink_do_not_retain_records():
           f"sink отдал {len(sunk)} записей, в памяти 0")
 
 
+def test_cell_stop_and_equal_risk_leverage_go_into_the_record():
+    """Ячейка со стопом (спека 19 §11.9): рост к 106 режет стопом 2 % в
+    небольшой минус там, где книга доезжает до тейка; плечо равного риска
+    выше книжного, убыток на стопе ≈ убытку книги на её полу; стоп в записи."""
+    lo, at = T9._rise_then_fall()
+    src = T3._Src({"SSSUSDT": lo})
+    legs = _legs(at, "SSSUSDT", n=1)
+    base = ("fence:none:t2", "fence", "none", "t2")
+    cells = [base, (base[0] + "#s2", *base[1:]), (base[0] + "#s2eq", *base[1:])]
+
+    def adds_of(g, key):
+        if key.endswith("#s2"):
+            return {"adds": [], "stop_frac": 0.02}
+        if key.endswith("#s2eq"):
+            return {"adds": [], "stop_frac": 0.02, "lev_risk": True}
+        return None
+    got = _with_levels(lambda: D10.collect(src=src, legs=legs, cells=cells, raw=True, rich=True,
+                                           log=lambda *a: None, rulers=["optimal_s"], adds_of=adds_of))
+    rec = got["recs"]["optimal_s"]
+    a, b, c = rec[base[0]][0], rec[base[0] + "#s2"][0], rec[base[0] + "#s2eq"]
+    assert a["exit"] == "тейк" and a["stop_frac"] is None
+    assert b["exit"] == "стоп" and b["stop_frac"] == 0.02 and b["pnl"] < 0 and b["lev"] == a["lev"]
+    if c:
+        c = c[0]
+        assert c["lev"] > a["lev"] and c["exit"] == "стоп", (c["lev"], a["lev"], c["exit"])
+    else:
+        c = None                                   # ликвидация ближе 1.5 стопа — ячейки нет, и это честно
+    le = D10.eq_leverage(100.0, 5.0, 0.5, 0.02, lambda n: 0.005)
+    p_liq = D10.L.liq_price(100.0, 5.0 / 100.0, 1.0, 0.005, "short")
+    loss_floor = ((p_liq + 0.5 * (100.0 - p_liq)) / 100.0 - 1.0) * 5.0
+    assert le is not None and abs(le * 0.02 - loss_floor) < 1e-9 and le > 5.0, (le, loss_floor)
+    # высокая поддерживающая маржа (3 %): плечо 14× ставит ликвидацию в 4 % — ближе 1.5 стопа 3 %
+    assert D10.eq_leverage(100.0, 5.0, 0.5, 0.03, lambda n: 0.03) is None, "ликвидация ближе 1.5 стопа"
+    assert D10.eq_leverage(100.0, 5.0, 0.5, 0.001, lambda n: 0.005) == D10.EQ_LEV_CAP, "потолок 25×"
+    print(f"ok  ячейка со стопом 2 %: {a['exit']} → {b['exit']} ({b['pnl']:+.3f}); равный риск: плечо {le:.1f}× "
+          f"при книжном 5×, убыток на стопе {le * 0.02:.3f} = на полу {loss_floor:.3f}"
+          + ("" if c else "; на пути фикстуры ячейки eq нет (ликвидация близко)"))
+
+
 def test_cell_hold_inside_a_longer_window_matches_the_short_window_bit_for_bit():
     """Ячейка со сроком 24 ч внутри окна 48 ч считает те же бары, что проход
     с окном 24 ч: исход, отметки, конец окна и плановый конец совпадают; ячейка
@@ -618,6 +657,7 @@ def test_cell_hold_inside_a_longer_window_matches_the_short_window_bit_for_bit()
 
 
 TESTS = [
+    test_cell_stop_and_equal_risk_leverage_go_into_the_record,
     test_cell_hold_inside_a_longer_window_matches_the_short_window_bit_for_bit,
     test_cell_policy_floor_and_sink_do_not_retain_records,
     test_collect_rulers_subset_is_bit_for_bit_and_only_those,

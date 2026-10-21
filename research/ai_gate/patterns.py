@@ -37,6 +37,8 @@ You are given: the catalog of market-state fields computed at every hour after a
 
 Look for a COMBINATION of conditions with a mechanism: for example, a crowded short squeeze that has already happened, a burst of buying exhausting itself, funding flipping, open interest unwinding. Propose at most %d rules, each with 1 to 3 conditions ("field" from the catalog, "op" <= or >=, numeric "value" inside the observed range) and a window W of 1 to 6 hours, plus the mechanism in "why".
 
+Each rule also chooses its EXIT ("exit"): one cell of the declared exit grid — a price stop from the average entry (none, 1, 2, 3, 5 or 8 %%), a take of the model's promised move ×1, ×2 (the book) or ×3, and leverage "book" (the book's own) or "eq" (equal risk: the loss at the stop equals the book's loss at its floor). The owner's long-term goal is a SHORT stop: look for entry states after which the price rarely goes far against the position (small adverse excursion of the winners), so that a short stop does not cut them; the path summary and the last search's best rule per stop show where that stands today. Use "s0:t2:book" for the book's own exit.
+
 Every rule is tested by numbers, not by your judgement: chosen on one half of the period and checked on the other half, against the book's own entry and against entering at a random hour of the same window for the same signals. Rules that only skip signals without improving the entry moment fail. Do not repeat a rule already in the search results. Returning fewer rules is a valid answer.
 
 Return only the JSON object required by the schema.""" % MAX_HYPS
@@ -47,9 +49,11 @@ def schema():
     cond = {"type": "object", "properties": {"field": {"type": "string"}, "op": {"type": "string", "enum": list(OPS)},
                                              "value": {"type": "number"}},
             "required": ["field", "op", "value"], "additionalProperties": False}
+    import entry_search as ES                                  # noqa: E402
     r = {"type": "object", "properties": {"when": {"type": "array", "items": cond}, "W": {"type": "integer"},
+                                          "exit": {"type": "string", "enum": [e["name"] for e in ES.EXITS]},
                                           "why": {"type": "string"}},
-         "required": ["when", "W", "why"], "additionalProperties": False}
+         "required": ["when", "W", "exit", "why"], "additionalProperties": False}
     return {"type": "object", "properties": {"rules": {"type": "array", "items": r}, "notes": {"type": "string"}},
             "required": ["rules", "notes"], "additionalProperties": False}
 
@@ -87,11 +91,17 @@ def valid(rule, catalog):
             float(c.get("value"))
         except (TypeError, ValueError):
             return "порог не число"
+    import entry_search as ES                                  # noqa: E402
+    if rule.get("exit") is not None and rule.get("exit") not in ES.EXIT_BY:
+        return f"выхода {rule.get('exit')!r} нет в сетке"
     return None
 
 
 def sig(rule):
-    return json.dumps([sorted((c["field"], c["op"], round(float(c["value"]), 6)) for c in rule["when"]), int(rule["W"])])
+    """Подпись правила: условия, окно и выход (выход книги — без поля, как до §11.9)."""
+    base = [sorted((c["field"], c["op"], round(float(c["value"]), 6)) for c in rule["when"]), int(rule["W"])]
+    ex = rule.get("exit")
+    return json.dumps(base + ([ex] if ex and ex != "s0:t2:book" else []))
 
 
 def summary(paths):
@@ -110,6 +120,15 @@ def summary(paths):
                         "mfe_med": med([(x["path"] or {}).get("mfe") for x in xs]),
                         "mfe_h_med": med([(x["path"] or {}).get("mfe_h") for x in xs]),
                         "result_med": med([x.get("pnl_frac") for x in xs])} for g, xs in groups.items()}
+    # §11.9: какую долю плюсовых и минусовых сделок задел бы стоп s — цель
+    # владельца (короткий стоп) упирается именно в это число у плюсовых
+    win = [p for p in paths if (p.get("pnl_frac") or 0) > 0 and (p.get("path") or {}).get("mae") is not None]
+    los = [p for p in paths if (p.get("pnl_frac") or 0) <= 0 and (p.get("path") or {}).get("mae") is not None]
+    out["stop_would_cut"] = {
+        f"{round(s_ * 100)}%": {"winners": round(sum(1 for p in win if p["path"]["mae"] >= s_) / len(win), 3) if win else None,
+                                "losers": round(sum(1 for p in los if p["path"]["mae"] >= s_) / len(los), 3) if los else None}
+        for s_ in (0.01, 0.02, 0.03, 0.05, 0.08)}
+    out["stop_would_cut"]["n"] = {"winners": len(win), "losers": len(los)}
     return out
 
 
@@ -147,8 +166,9 @@ def run(log=print, client=None, paths=None, rules_file=None, catalog=None, last_
             with open(ES.LATEST, encoding="utf-8") as f:
                 ls = json.load(f)
             last_search = {k: {kk: ls[k].get(kk) for kk in ("rule", "train_gain", "test_mean", "test_book", "held",
-                                                              "top5_train")}
+                                                              "top5_train", "by_stop")}
                            for k in ("fold_1to2", "fold_2to1") if isinstance(ls.get(k), dict)}
+            last_search["shortest_stop_holding"] = ls.get("shortest_stop")
         except (OSError, ValueError):
             last_search = None
     if client is None:
@@ -176,6 +196,7 @@ def run(log=print, client=None, paths=None, rules_file=None, catalog=None, last_
             continue
         r = {"when": [{"field": c["field"], "op": c["op"], "value": float(c["value"])} for c in r["when"]],
              "W": int(r["W"]), "why": str(r.get("why") or "")[:300],
+             **({"exit": r["exit"]} if r.get("exit") and r["exit"] != "s0:t2:book" else {}),
              "proposed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
         if sig(r) in seen:
             continue

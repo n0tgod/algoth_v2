@@ -292,6 +292,26 @@ def take_for(g, tk):
     return {"anchor": R.TAKE_ANCHOR, "frac": abs(fav) * TAKE_MULT[tk]}
 
 
+EQ_LEV_CAP = 25.0          # потолок плеча равного риска (§11.9)
+EQ_LIQ_MULT = 1.5          # ликвидация не ближе 1.5 стопа от входа
+
+
+def eq_leverage(entry, lev, floor, stop, look):
+    """Плечо равного риска шорта (§11.9): убыток на стопе = убытку книги на
+    её полу при плече `lev` (доля маржи). None — ячейки нет: ликвидация при
+    таком плече ближе `EQ_LIQ_MULT`·стопа."""
+    p_liq = L.liq_price(entry, lev / entry, 1.0, look(1.0 * lev), "short")
+    floor_px = p_liq + floor * (entry - p_liq)
+    loss = (floor_px / entry - 1.0) * lev
+    if not (loss > 0 and stop > 0):
+        return None
+    le = min(EQ_LEV_CAP, loss / stop)
+    p_eq = L.liq_price(entry, le / entry, 1.0, look(1.0 * le), "short")
+    if not p_eq > entry * (1.0 + EQ_LIQ_MULT * stop):
+        return None
+    return le
+
+
 def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
                  rich=False, checkpoints=None, adds_of=None):
     """Исход одного КОРОТКОГО решения во всех ячейках. None — нечем мерить.
@@ -378,6 +398,17 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
                "take_events": list(pol.get("take_events") or ())} if pol else {})
         floor = (float(pol["floor_frac"]) if pol and pol.get("floor_frac") is not None
                  else D2.FLOOR_FRAC)
+        # Стоп и плечо равного риска (спека 19 §11.9): стоп — доля цены от
+        # средней; `eq` — плечо, при котором убыток на стопе равен убытку
+        # книги на её полу при её плече; потолок `EQ_LEV_CAP`, ликвидация
+        # не ближе `EQ_LIQ_MULT`·стопа — иначе ячейки у позиции нет.
+        stop = float(pol["stop_frac"]) if pol and pol.get("stop_frac") is not None else None
+        if stop is not None and pol.get("lev_risk"):
+            lev = eq_leverage(entry, lev, floor, stop, look)
+            if lev is None:
+                continue
+        if stop is not None:
+            kw["stop_frac"] = stop
         hold_h = (float(pol["hold_h"]) if pol and pol.get("hold_h") is not None
                   else float(D2.HOLD_H))
         hold_c = hold
@@ -413,6 +444,7 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
             "sched_end": float(g["at"]) + hold_h * HOUR,
             "depth": int(r["depth"]), "n_rungs": len(rungs),
             "adds": int(r.get("adds") or 0), "floor_frac": float(floor),
+            "stop_frac": stop,
             "hold_h": hold_h, "take_moves": int(r.get("take_moves") or 0),
             "avg": float(r["avg"]), "entry_px": entry,
             "exit_px": float(r["exit_px"]), "filled": filled,

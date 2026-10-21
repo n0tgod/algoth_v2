@@ -139,7 +139,7 @@ def features(g, k, hours, mkt, state, market_rows, hist, crowd_of, at_or_before)
 
 
 def build_table(legs, out_by_k, get_features):
-    """→ (names, F[n, K+1, f], O[n, K+1]) — O NaN, где входа нет."""
+    """→ (names, F[n, K+1, f], O[n, K+1(, ячейки)], ячейки выхода) — O NaN, где входа нет."""
     n, K = len(legs), KMAX + 1
     rows = [[get_features(g, k) for k in range(K)] for g in legs]
     names = sorted({x for r in rows for d in r for x in d})
@@ -150,16 +150,71 @@ def build_table(legs, out_by_k, get_features):
                 v = d.get(nm)
                 if v is not None:
                     F[i, k, j] = v
-    O = np.full((n, K), np.nan)
+    # исходы: число (одна ячейка — выход книги) или {ячейка выхода: число}
+    exits = sorted({e for d in out_by_k for v in d.values() if isinstance(v, dict) for e in v}) or [BOOK_EXIT]
+    O = np.full((n, K, len(exits)), np.nan)
     for i, g in enumerate(legs):
         for k in range(K):
             v = out_by_k[k].get(i)
-            if v is not None:
-                O[i, k] = v
-    return names, F, O
+            if v is None:
+                continue
+            for c, ex in enumerate(exits):
+                x = v.get(ex) if isinstance(v, dict) else (v if ex == BOOK_EXIT else None)
+                if x is not None:
+                    O[i, k, c] = x
+    return names, F, (O if len(exits) > 1 else O[:, :, 0]), exits
+
+
+# ------------------------------------------------------------ выходы (§11.9)
+
+# Сетка выхода, объявленная 21.10 ДО первого прогона: стоп в доле цены от
+# средней (нет — только пол книги), тейк — обещание модели ×1/×2/×3, плечо
+# книги (`book`) или равного риска (`eq`, только со стопом). Ячейка книги —
+# `s0:t2:book`, ровно `run_short.CELL` без политики.
+STOPS = (None, 0.01, 0.02, 0.03, 0.05, 0.08)
+TAKES = ("t1", "t2", "t3")
+BOOK_EXIT = "s0:t2:book"
+
+
+def _exits():
+    out = []
+    for st_ in STOPS:
+        for tk in TAKES:
+            for lev in ("book", "eq"):
+                if lev == "eq" and st_ is None:
+                    continue
+                out.append({"name": f"s{0 if st_ is None else round(st_ * 100)}:{tk}:{lev}",
+                            "stop": st_, "take": tk, "lev": lev})
+    return out
+
+
+EXITS = _exits()
+EXIT_BY = {e["name"]: e for e in EXITS}
+assert BOOK_EXIT in EXIT_BY
+
+
+def exit_cell(name):
+    """→ (ячейка ядра D10, политика ячейки или None). Ячейка книги — та же,
+    что у книги (`run_short.CELL`), без политики: исход бит в бит."""
+    e = EXIT_BY[name]
+    tk = e["take"]
+    key = f"fence:none:{tk}" if (e["stop"] is None and e["lev"] == "book") else f"fence:none:{tk}#{name}"
+    pol = ({"adds": [], "stop_frac": e["stop"], "lev_risk": e["lev"] == "eq"}
+           if e["stop"] is not None else None)
+    return (key, "fence", "none", tk), pol
+
+
+def exit_text(name):
+    e = EXIT_BY.get(name) or {}
+    st_ = "без стопа" if e.get("stop") is None else f"стоп {100 * e['stop']:g} %"
+    lev = "плечо книги" if e.get("lev") == "book" else "равный риск"
+    return f"{st_}, тейк обещание ×{str(e.get('take', 't2'))[1:]}, {lev}"
 
 
 # ------------------------------------------------------------ правила
+
+ALWAYS = {"when": [], "W": 0, "by": "grid"}     # вход книги (k = 0): только выход
+
 
 def first_k(F, names, rule):
     """Первый час k ≤ W, где выполнены ВСЕ условия; −1 — не наступил."""
@@ -174,18 +229,21 @@ def first_k(F, names, rule):
     return np.where(any_, ok.argmax(axis=1), -1)
 
 
+def as3(O):
+    """Таблица исходов O[сигнал, k, ячейка выхода]; прежняя двумерная — одна ячейка."""
+    return O[:, :, None] if O.ndim == 2 else O
+
+
 def score(O, ks, idx):
-    """Средний на сигнал (не вошедший — 0) и число вошедших на подмножестве idx."""
-    v = []
-    trig = 0
-    for i in idx:
-        k = ks[i]
-        if k < 0 or np.isnan(O[i, k]):
-            v.append(0.0)
-        else:
-            v.append(float(O[i, k]))
-            trig += 1
-    return (float(np.mean(v)) if v else None), trig
+    """Средний на сигнал (не вошедший — 0) и число вошедших на подмножестве idx.
+    `O` — исходы одной ячейки выхода O[сигнал, k]."""
+    idx = np.asarray(list(idx), dtype=int)
+    if not len(idx):
+        return None, 0
+    k = ks[idx]
+    v = np.where(k >= 0, O[idx, np.maximum(k, 0)], np.nan)
+    trig = int(np.sum(~np.isnan(v)))
+    return float(np.mean(np.nan_to_num(v, nan=0.0))), trig
 
 
 def null_p(O, ks, idx, W, mean_rule, rng):
@@ -222,100 +280,159 @@ def cells(F, names, idx_train):
     return out
 
 
-def select(F, O, names, idx_train, extra=()):
-    """Лучшая ячейка обучающей половины по приросту к книге на сигнал."""
-    base, _ = score(O, np.zeros(len(O), dtype=int), idx_train)
-    singles = []
-    for rule in cells(F, names, idx_train):
-        m, trig = score(O, first_k(F, names, rule), idx_train)
-        if m is not None and trig >= MIN_TRIG:
-            singles.append((m - base, rule, trig))
-    singles.sort(key=lambda x: -x[0])
-    pool = list(singles)
-    top = singles[:TOP_PAIRS]
-    for a in range(len(top)):
-        for b in range(a + 1, len(top)):
-            ra, rb = top[a][1], top[b][1]
-            if ra["W"] != rb["W"] or ra["when"][0]["field"] == rb["when"][0]["field"]:
-                continue
-            rule = {"when": ra["when"] + rb["when"], "W": ra["W"], "by": "grid"}
-            m, trig = score(O, first_k(F, names, rule), idx_train)
+def _jb(exits):
+    return exits.index(BOOK_EXIT) if BOOK_EXIT in exits else 0
+
+
+def select(F, O, names, idx_train, extra=(), exits=None, always=True):
+    """Лучшие пары «правило входа + ячейка выхода» обучающей половины по
+    приросту к КНИГЕ (её вход, её выход) на сигнал."""
+    O = as3(O)
+    exits = list(exits or [BOOK_EXIT])
+    jb = _jb(exits)
+    n = len(O)
+    base, _ = score(O[:, :, jb], np.zeros(n, dtype=int), idx_train)
+    singles = cells(F, names, idx_train)
+    ks_of = [(r, first_k(F, names, r)) for r in singles]
+    pool, n_single = [], 0
+    for c, ex in enumerate(exits):
+        Oc = O[:, :, c]
+        mine = []
+        for rule, ks in ks_of:
+            m, trig = score(Oc, ks, idx_train)
             if m is not None and trig >= MIN_TRIG:
-                pool.append((m - base, rule, trig))
+                mine.append((m - base, dict(rule, exit=ex), trig))
+        n_single += len(mine)
+        mine.sort(key=lambda x: -x[0])
+        pool += mine
+        top = mine[:TOP_PAIRS]
+        for a in range(len(top)):
+            for b in range(a + 1, len(top)):
+                ra, rb = top[a][1], top[b][1]
+                if ra["W"] != rb["W"] or ra["when"][0]["field"] == rb["when"][0]["field"]:
+                    continue
+                rule = {"when": ra["when"] + rb["when"], "W": ra["W"], "by": "grid", "exit": ex}
+                m, trig = score(Oc, first_k(F, names, rule), idx_train)
+                if m is not None and trig >= MIN_TRIG:
+                    pool.append((m - base, rule, trig))
+        if always:
+            m, trig = score(Oc, np.zeros(n, dtype=int), idx_train)
+            if m is not None and trig >= MIN_TRIG:
+                pool.append((m - base, dict(ALWAYS, exit=ex), trig))
     for rule in extra:
-        if all(c["field"] in names for c in rule["when"]):
-            m, trig = score(O, first_k(F, names, rule), idx_train)
+        ex = rule.get("exit") or BOOK_EXIT
+        if ex in exits and all(c["field"] in names for c in rule["when"]):
+            m, trig = score(O[:, :, exits.index(ex)], first_k(F, names, rule), idx_train)
             if m is not None and trig >= MIN_TRIG:
-                pool.append((m - base, rule, trig))
+                pool.append((m - base, dict(rule, exit=ex), trig))
     pool.sort(key=lambda x: -x[0])
-    return pool, base, len(singles)
+    return pool, base, n_single
 
 
-def fold(F, O, names, train, test, extra, seed):
-    pool, base_tr, n_single = select(F, O, names, train, extra)
+def judge(F, O, names, rule, test, exits, seed):
+    """Правило на проверочной половине: среднее на сигнал против книги и
+    доля случайных часов того же окна С ТОЙ ЖЕ ячейкой выхода, не хуже.
+    У правила «всегда, k = 0» случайного часа нет — судит только книга."""
+    O = as3(O)
+    c = exits.index(rule.get("exit") or BOOK_EXIT)
+    ks = first_k(F, names, rule)
+    m, trig = score(O[:, :, c], ks, test)
+    base_te, _ = score(O[:, :, _jb(exits)], np.zeros(len(O), dtype=int), test)
+    W = int(rule["W"])
+    p = (null_p(O[:, :, c], ks, test, W, m, random.Random(seed)) if (m is not None and W > 0) else None)
+    held = (m is not None and trig >= MIN_TRIG and m > base_te and (W == 0 or (p is not None and p <= P_MAX)))
+    return {"test_mean": None if m is None else round(m, 5), "test_book": round(base_te, 5), "test_trig": trig,
+            "p_random_hour": p, "held": held}
+
+
+def fold(F, O, names, train, test, extra, seed, exits=None, always=True):
+    exits = list(exits or [BOOK_EXIT])
+    pool, base_tr, n_single = select(F, O, names, train, extra, exits, always)
     if not pool:
         return {"why": "ни одна ячейка не набрала вошедших", "cells": 0}
     gain_tr, rule, trig_tr = pool[0]
-    ks = first_k(F, names, rule)
-    m, trig = score(O, ks, test)
-    base_te, _ = score(O, np.zeros(len(O), dtype=int), test)
-    p = null_p(O, ks, test, int(rule["W"]), m, random.Random(seed)) if m is not None else None
-    held = (m is not None and trig >= MIN_TRIG and m > base_te and p is not None and p <= P_MAX)
-    return {"rule": rule, "train_gain": round(gain_tr, 5), "train_trig": trig_tr, "cells": len(pool),
-            "singles": n_single, "test_mean": None if m is None else round(m, 5), "test_book": round(base_te, 5),
-            "test_trig": trig, "p_random_hour": p, "held": held,
-            "top5_train": [{"rule": r, "gain": round(gn, 5), "trig": tg} for gn, r, tg in pool[:5]]}
+    out = {"rule": rule, "train_gain": round(gain_tr, 5), "train_trig": trig_tr, "cells": len(pool),
+           "singles": n_single, **judge(F, O, names, rule, test, exits, seed),
+           "top5_train": [{"rule": r, "gain": round(gn, 5), "trig": tg} for gn, r, tg in pool[:5]]}
+    # мера цели владельца (§11.9): лучшее правило С КАЖДЫМ стопом — на проверке
+    by_stop = {}
+    for gn, r, tg in pool:
+        st_ = (EXIT_BY.get(r.get("exit")) or {}).get("stop")
+        k = "нет" if st_ is None else f"{100 * st_:g}"
+        if k not in by_stop:
+            by_stop[k] = {"rule": r, "train_gain": round(gn, 5), "train_trig": tg,
+                          **judge(F, O, names, r, test, exits, seed + 101)}
+    out["by_stop"] = by_stop
+    return out
 
 
-def search(F, O, names, at, extra=(), seed=0):
+def search(F, O, names, at, extra=(), seed=0, exits=None, always=True):
     order = np.argsort(at)
     half = len(order) // 2
     a, b = list(order[:half]), list(order[half:])
-    f1 = fold(F, O, names, a, b, extra, seed)
-    f2 = fold(F, O, names, b, a, extra, seed + 1)
+    f1 = fold(F, O, names, a, b, extra, seed, exits, always)
+    f2 = fold(F, O, names, b, a, extra, seed + 1, exits, always)
     return f1, f2
 
 
-def trig_stats(O, ks, W, rng):
+def shortest_stop(f1, f2):
+    """Самый короткий стоп, чьё лучшее правило держится в обоих направлениях."""
+    held = [k for k in (f1.get("by_stop") or {}) if k != "нет"
+            and (f1["by_stop"][k].get("held") and (f2.get("by_stop") or {}).get(k, {}).get("held"))]
+    return min(held, key=float) if held else None
+
+
+def trig_stats(O, ks, W, rng, Ob=None):
     """Порог рождения книги ТВХ (§12.2) на всём окне: сработавшие сигналы —
-    средний в час правила, у тех же в час сигнала (вход книги) и доля
-    случайных часов окна, не хуже правила (400 зёрен)."""
+    средний в час правила (своя ячейка выхода `O`), у тех же в час сигнала
+    с выходом книги (`Ob`, умолчание — та же ячейка) и доля случайных часов
+    окна той же ячейки, не хуже правила (400 зёрен)."""
+    Ob = O if Ob is None else Ob
     T = [i for i in range(len(ks)) if ks[i] >= 0 and not np.isnan(O[i, ks[i]])]
     if not T:
         return {"trig": 0, "rule_mean": None, "book_mean": None, "p_random_hour": None}
     rule_mean = float(np.mean([O[i, ks[i]] for i in T]))
-    b = [O[i, 0] for i in T if not np.isnan(O[i, 0])]
+    b = [Ob[i, 0] for i in T if not np.isnan(Ob[i, 0])]
     ge = 0
     for _ in range(NULL_DRAWS):
         v = [O[i, rng.randint(0, W)] for i in T]
         v = [0.0 if np.isnan(x) else float(x) for x in v]
         ge += float(np.mean(v)) >= rule_mean
     return {"trig": len(T), "rule_mean": round(rule_mean, 5), "book_mean": round(float(np.mean(b)), 5) if b else None,
-            "p_random_hour": round(ge / NULL_DRAWS, 4)}
+            "p_random_hour": round(ge / NULL_DRAWS, 4) if W > 0 else None}
 
 
-def model_scores(F, O, names, at, extra, seed=0):
+def model_scores(F, O, names, at, extra, seed=0, exits=None):
     """Каждое правило модели на каждой половине: прирост к книге на сигнал и случайный час.
 
     Описание, не отбор: модель видела сводку тех же сделок, так что честная
     проверка её правил — вперёд; здесь видно, где они стоят рядом с сеткой.
     """
+    O = as3(O)
+    exits = list(exits or [BOOK_EXIT])
+    jb = _jb(exits)
     order = np.argsort(at)
     half = len(order) // 2
     halves = (list(order[:half]), list(order[half:]))
     out = []
     for n, rule in enumerate(extra):
+        ex = rule.get("exit") or BOOK_EXIT
         if not all(c["field"] in names for c in rule["when"]):
             out.append({"rule": rule, "why": "поле вне таблицы"})
             continue
+        if ex not in exits:
+            out.append({"rule": rule, "why": f"ячейки выхода {ex} нет в таблице"})
+            continue
+        Oc = O[:, :, exits.index(ex)]
         ks = first_k(F, names, rule)
-        row = {"rule": {k: rule[k] for k in ("when", "W")}, "halves": []}
+        row = {"rule": {k: rule[k] for k in ("when", "W")} | ({"exit": ex} if rule.get("exit") else {}),
+               "halves": []}
         for h, idx in enumerate(halves):
-            m, trig = score(O, ks, idx)
-            base, _ = score(O, np.zeros(len(O), dtype=int), idx)
-            p = null_p(O, ks, idx, int(rule["W"]), m, random.Random(seed + 101 + 2 * n + h)) if trig else None
+            m, trig = score(Oc, ks, idx)
+            base, _ = score(O[:, :, jb], np.zeros(len(O), dtype=int), idx)
+            p = null_p(Oc, ks, idx, int(rule["W"]), m, random.Random(seed + 101 + 2 * n + h)) if trig else None
             row["halves"].append({"gain": None if m is None else round(m - base, 5), "trig": trig, "p_random_hour": p})
-        row["all"] = trig_stats(O, ks, int(rule["W"]), random.Random(seed + 7))
+        row["all"] = trig_stats(Oc, ks, int(rule["W"]), random.Random(seed + 7), O[:, :, jb])
         out.append(row)
     return out
 
@@ -329,7 +446,10 @@ def shuffled(F, seed):
 
 
 def rule_text(rule):
-    return " и ".join(f"{c['field']} {c['op']} {c['value']:g}" for c in rule["when"]) + f", окно {rule['W']} ч"
+    w = " и ".join(f"{c['field']} {c['op']} {c['value']:g}" for c in rule["when"])
+    w = (w + f", окно {rule['W']} ч") if rule["when"] else "вход книги (час сигнала)"
+    ex = rule.get("exit")
+    return w + (f"; {exit_text(ex)}" if ex and ex != BOOK_EXIT else "")
 
 
 # ------------------------------------------------------------ прогон
@@ -341,7 +461,9 @@ def run(log=print, since=None, now=None, legs=None, table=None, seed=0):
         table = make_table(log, since, now, legs)
     if table.get("error"):
         return table
-    names, F, O, at, n_legs = table["names"], table["F"], table["O"], table["at"], table["n"]
+    names, F, O, at, n_legs = table["names"], table["F"], as3(table["O"]), table["at"], table["n"]
+    exits = list(table.get("exits") or [BOOK_EXIT])
+    jb = _jb(exits)
     extra = []
     try:
         with open(RULES_FILE, encoding="utf-8") as f:
@@ -349,18 +471,20 @@ def run(log=print, since=None, now=None, legs=None, table=None, seed=0):
     except (OSError, ValueError):
         pass
     cover = {nm: round(float(np.mean(~np.isnan(F[:, :, j]))), 3) for j, nm in enumerate(names)}
-    f1, f2 = search(F, O, names, at, extra, seed)
-    c1, c2 = search(shuffled(F, seed + 7), O, names, at, extra=(), seed=seed + 11)
+    f1, f2 = search(F, O, names, at, extra, seed, exits)
+    # контроль — правила по параметрам; «вход книги + выход» перестановка не меняет
+    c1, c2 = search(shuffled(F, seed + 7), O, names, at, extra=(), seed=seed + 11, exits=exits, always=False)
     control_silent = not (c1.get("held") and c2.get("held"))
     procedure = bool(f1.get("held") and f2.get("held") and control_silent)
-    mine = model_scores(F, O, names, at, extra, seed)
+    mine = model_scores(F, O, names, at, extra, seed, exits)
     final = None
     if procedure:
-        pool, base_all, _ = select(F, O, names, list(range(len(O))), extra)
+        pool, base_all, _ = select(F, O, names, list(range(len(O))), extra, exits)
         final = {"rule": pool[0][1], "gain_all": round(pool[0][0], 5), "trig": pool[0][2]}
     res = {"computed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)), "signals": n_legs,
            "fields": names, "cover": cover, "kmax": KMAX, "windows": list(WINDOWS),
-           "book_mean": round(float(np.nanmean(np.where(np.isnan(O[:, 0]), 0.0, O[:, 0]))), 5),
+           "book_mean": round(float(np.nanmean(np.where(np.isnan(O[:, 0, jb]), 0.0, O[:, 0, jb]))), 5),
+           "exits": exits, "shortest_stop": shortest_stop(f1, f2),
            "fold_1to2": f1, "fold_2to1": f2, "control": {"fold_1to2": c1, "fold_2to1": c2, "silent": control_silent},
            "procedure_holds": procedure, "candidate": final, "model_rules": len(extra), "model": mine,
            "secs": round(time.time() - t0, 1)}
@@ -379,25 +503,35 @@ def make_table(log, since, now, legs=None):
     legs = [g for g in legs if lo <= float(g["at"]) <= hi]
     if len(legs) < 4 * MIN_TRIG:
         return {"error": f"сигналов {len(legs)} < {4 * MIN_TRIG}"}
-    log(f"сигналов {len(legs)}; реплей со входом через 0…{KMAX} ч")
+    log(f"сигналов {len(legs)}; реплей со входом через 0…{KMAX} ч, ячеек выхода {len(EXITS)}")
+    cell_of = {e["name"]: exit_cell(e["name"]) for e in EXITS}
+    cell_list = [c for c, _p in cell_of.values()]
+    pol_by_key = {c[0]: p for c, p in cell_of.values()}
+
+    def adds_of(g, key):
+        return pol_by_key.get(key)
     out_by_k = []
     for k in range(KMAX + 1):
         t1 = time.time()
         lk = [dict(g, at=float(g["at"]) + k * H, at_signal=float(g["at"])) for g in legs]
-        rep = S.replay(lk, log=log)[0]
-        recs = E.book_chain(E.recs_of(rep, lk), log, now)
-        by = {(r["sym"], round(float(r["at"]), 3)): r for r in recs}
+        out, _tail = S.replay_cells(lk, cell_list, log=log, rulers=[E.RULER], adds_of=adds_of)
         d = {}
-        for i, g in enumerate(lk):
-            r = by.get((g["sym"], round(float(g["at"]), 3)))
-            if r is not None:
-                d[i] = float(r.get("pnl_net", r.get("pnl", 0.0)))
+        for name, (cell, _pol) in cell_of.items():
+            recs = E.book_chain(E.recs_of(out.get(cell[0]) or {}, lk), lambda *a: None, now)
+            by = {(r["sym"], round(float(r["at"]), 3)): r for r in recs}
+            for i, g in enumerate(lk):
+                r = by.get((g["sym"], round(float(g["at"]), 3)))
+                if r is not None:
+                    d.setdefault(i, {})[name] = float(r.get("pnl_net", r.get("pnl", 0.0)))
+        del out
         out_by_k.append(d)
-        log(f"  k={k}: позиций {len(d)} ({time.time() - t1:.0f} с)")
-    names, F, O = build_table(legs, out_by_k, feature_env(legs, days=45))
+        log(f"  k={k}: позиций {len(d)}, ячеек выхода {len(cell_of)} ({time.time() - t1:.0f} с)")
+    names, F, O, exits = build_table(legs, out_by_k, feature_env(legs, days=45))
     os.makedirs(os.path.dirname(TABLE), exist_ok=True)
-    np.savez_compressed(TABLE, F=F, O=O, at=np.array([float(g["at"]) for g in legs]), names=np.array(names))
-    return {"names": names, "F": F, "O": O, "at": np.array([float(g["at"]) for g in legs]), "n": len(legs)}
+    np.savez_compressed(TABLE, F=F, O=O, at=np.array([float(g["at"]) for g in legs]), names=np.array(names),
+                        exits=np.array(exits))
+    return {"names": names, "F": F, "O": O, "at": np.array([float(g["at"]) for g in legs]), "n": len(legs),
+            "exits": exits}
 
 
 def load_table(path=None):
@@ -406,7 +540,9 @@ def load_table(path=None):
         z = np.load(path or TABLE, allow_pickle=False)
     except OSError as e:
         return {"error": f"таблицы нет ({type(e).__name__}) — нужен полный прогон"}
-    return {"names": [str(x) for x in z["names"]], "F": z["F"], "O": z["O"], "at": z["at"], "n": len(z["at"])}
+    exits = [str(x) for x in z["exits"]] if "exits" in z.files else [BOOK_EXIT]
+    return {"names": [str(x) for x in z["names"]], "F": z["F"], "O": z["O"], "at": z["at"], "n": len(z["at"]),
+            "exits": exits}
 
 
 def feature_env(legs, days=45):
@@ -455,6 +591,20 @@ def report(r):
                  f"{pct(f['test_mean'])} / {pct(f['test_book'])} | {f['test_trig']} | {f['p_random_hour']} | "
                  f"{'**да**' if f['held'] else 'нет'} |")
     L += ["", f"**Отбор держит в обоих направлениях и контроль молчит:** {'ДА' if r['procedure_holds'] else 'нет'}."]
+    b1, b2 = r["fold_1to2"].get("by_stop") or {}, r["fold_2to1"].get("by_stop") or {}
+    if b1 or b2:
+        L += ["", "## Стоп: лучшее правило с каждым стопом (спека 19 §11.9)", "",
+              "Мера цели владельца — самый короткий стоп, чьё лучшее правило держится на проверке в обоих "
+              "направлениях. Выход книги — без стопа (только пол), тейк — обещание ×2.", "",
+              "| стоп | 1-я → 2-я: правило | на проверке / книга | держит | 2-я → 1-я: правило | на проверке / книга | держит |",
+              "|---|---|---|---|---|---|---|"]
+        for k in sorted(set(b1) | set(b2), key=lambda x: -1.0 if x == "нет" else float(x)):
+            x, y = b1.get(k) or {}, b2.get(k) or {}
+            cell = lambda z: (f"`{rule_text(z['rule'])}` | {pct(z.get('test_mean'))} / {pct(z.get('test_book'))} | "   # noqa: E731
+                              f"{'**да**' if z.get('held') else 'нет'}") if z else "— | — | —"
+            L.append(f"| {k if k == 'нет' else k + ' %'} | {cell(x)} | {cell(y)} |")
+        ss = r.get("shortest_stop")
+        L += ["", f"**Самый короткий стоп, который держится:** {ss + ' %' if ss else 'нет — короткого стопа у книги пока нет'}."]
     if r.get("model"):
         L += ["", "Правила модели — каждое на обеих половинах (описание, не отбор: модель видела сводку тех же сделок, "
               "честная проверка — вперёд):", "",
@@ -468,7 +618,7 @@ def report(r):
     if r.get("candidate"):
         c = r["candidate"]
         L += [f"Кандидат (выбран на всём окне): `{rule_text(c['rule'])}`, прирост {pct(c['gain_all'])} на сигнал, вошло {c['trig']}. "
-              "Следующий шаг — реплей с кассой (`entry_shift`); книгу заводит только владелец."]
+              "Книгу с этим правилом может завести модель по порогу §12 (только бумага)."]
     L += ["", "Покрытие полей (доля сигнало-часов с числом): " +
           ", ".join(f"{k} {v:.0%}" for k, v in sorted(r["cover"].items(), key=lambda x: x[1]))]
     return "\n".join(L) + "\n"

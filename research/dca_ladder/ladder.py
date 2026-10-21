@@ -432,7 +432,7 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
                  take_px=None, floor_frac=None, track=False,
                  checkpoints=None, take_rule=None, side="long",
                  adds=None, adds_max=None, adds_if_profit=False,
-                 adds_min_profit=None, take_events=None):
+                 adds_min_profit=None, take_events=None, stop_frac=None):
     """DCA на РЕАЛЬНЫХ барах: доливы против хода, тейк по ходу, пол.
 
     Вход в `bars[0][1]` (открытие первого бара после решения, next_open) —
@@ -536,7 +536,14 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     того же бара. Умолчание `None` — прежний счёт; в ответе —
     `take_moves` (сколько переносов исполнено).
 
-    Возвращает: exit ("тейк"/"трейл"/"пол"/"ликвидация"/"срок"), pnl_frac
+    `stop_frac` — СТОП в доле цены от средней (спека 19 §11.9, 21.10):
+    уровень `средняя × (1 − d·s)` по средней на НАЧАЛО бара (как тейк);
+    выход РЫНОЧНЫЙ — `min(закрытие, уровень)` у лонга, `max(…)` у шорта:
+    цену уровня стоп не получает никогда; считается и на баре без принтов;
+    проверяется после ликвидации и пола (пол книги остаётся страховкой).
+    Умолчание `None` не меняет ни одного числа — закреплено тестом.
+
+    Возвращает: exit ("тейк"/"трейл"/"стоп"/"пол"/"ликвидация"/"срок"), pnl_frac
     (доля капитала позиции; ликвидация = −1.0), depth, avg,
     filled_notional, adds.
     """
@@ -683,6 +690,15 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
                 return _ret({"exit": "пол",
                              "pnl_frac": d * qty * (cl - avg) / capital,
                              "exit_ts": bt, "exit_px": cl,
+                             "depth": sum(filled), "avg": avg,
+                             "filled_notional": cash}, bt)
+        if stop_frac is not None:
+            stop_lvl = avg_prev * (1.0 - d * float(stop_frac))
+            if (adverse <= stop_lvl) if side == "long" else (adverse >= stop_lvl):
+                px = min(cl, stop_lvl) if side == "long" else max(cl, stop_lvl)
+                return _ret({"exit": "стоп",
+                             "pnl_frac": d * qty * (px - avg) / capital,
+                             "exit_ts": bt, "exit_px": px,
                              "depth": sum(filled), "avg": avg,
                              "filled_notional": cash}, bt)
         trail = (float(cur_rule.get("trail") or 0.0)

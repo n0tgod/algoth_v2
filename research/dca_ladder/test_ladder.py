@@ -1423,7 +1423,36 @@ def test_take_events_move_the_target_from_the_bar_open_and_default_is_bit_for_bi
           f"ближе → {near['exit_px']:.3f}; без переноса бит в бит")
 
 
+def test_stop_is_a_market_exit_and_default_is_bit_for_bit():
+    """Стоп шорта (спека 19 §11.9): уровень от средней, выход рыночный —
+    max(закрытие, уровень), цену уровня лучше закрытия не получает; умолчание
+    `stop_frac=None` даёт прежний счёт дословно."""
+    bars = _add_bars()
+    base = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short",
+                          take_rule={"anchor": "avg", "frac": 0.5}, floor_frac=0.5, track=True)
+    same = L.simulate_dca(bars, [100.0], [0.25], 1.0, 4.0, 0.01, side="short",
+                          take_rule={"anchor": "avg", "frac": 0.5}, floor_frac=0.5, track=True,
+                          stop_frac=None)
+    for k in ("exit", "pnl_frac", "depth", "avg", "filled_notional", "exit_ts", "exit_px", "fills", "track"):
+        assert base[k] == same[k], (k, base[k], same[k])
+    # вход 100; второй бар: верх 103 при закрытии 101 — стоп 2 % по уровню 102, не по 101
+    b1 = _bars([100.0, 101.0, 99.0], [100.0, 99.5, 98.0], [100.0, 103.0, 100.0], entry=100.0)
+    r = L.simulate_dca(b1, [100.0], [1.0], 1.0, 3.0, 0.01, side="short", floor_frac=0.5, stop_frac=0.02)
+    assert r["exit"] == "стоп" and abs(r["exit_px"] - 102.0) < 1e-9, (r["exit"], r["exit_px"])
+    assert abs(r["pnl_frac"] - 3.0 * (100.0 - 102.0) / 100.0) < 1e-9, r["pnl_frac"]
+    # закрытие выше уровня — выход по закрытию (хуже уровня)
+    b2 = _bars([100.0, 104.0, 99.0], [100.0, 100.0, 98.0], [100.0, 104.5, 100.0], entry=100.0)
+    r2 = L.simulate_dca(b2, [100.0], [1.0], 1.0, 3.0, 0.01, side="short", floor_frac=0.5, stop_frac=0.02)
+    assert r2["exit"] == "стоп" and r2["exit_px"] == 104.0, (r2["exit"], r2["exit_px"])
+    # без стопа тот же путь доходит до срока
+    r3 = L.simulate_dca(b1, [100.0], [1.0], 1.0, 3.0, 0.01, side="short", floor_frac=0.5)
+    assert r3["exit"] == "срок", r3["exit"]
+    print(f"ok  стоп шорта: рыночный ({r['exit_px']:g} при закрытии 101, {r2['exit_px']:g} при закрытии 104), "
+          "умолчание бит в бит")
+
+
 TESTS = [
+    test_stop_is_a_market_exit_and_default_is_bit_for_bit,
     test_open_mark_equals_the_simulation_pnl,
     test_liq_price_matches_spec5_table,
     test_one_x_long_cannot_liquidate,

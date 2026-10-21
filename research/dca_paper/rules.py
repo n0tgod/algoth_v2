@@ -909,7 +909,14 @@ START_TS = {k: AI_START_TS for k in AI_BRANCHES}   # ключ → момент �
 def model_rule_text(b):
     """Правило модельной книги словами кода: условия и окно."""
     w = " и ".join(f"{c['field']} {c['op']} {c['value']:g}" for c in (b.get("rule") or {}).get("when") or [])
-    return w + (f", окно {b['rule']['W']} ч" if b.get("kind") == "entry" else "")
+    w += (f", окно {b['rule']['W']} ч" if b.get("kind") == "entry" else "")
+    ex = (b.get("rule") or {}).get("exit")
+    if ex and ex != "s0:t2:book":
+        # выход книги модели (спека 19 §11.9): `s<стоп %>:t<×обещания>:<book|eq>`
+        st_, tk, lev = (ex.split(":") + ["", "", ""])[:3]
+        w += (f"; стоп {st_[1:]} %" if st_ not in ("s0", "") else "; без стопа") + \
+             f", тейк обещание ×{tk[1:]}" + (", равный риск" if lev == "eq" else "")
+    return w
 
 
 def _register_model_books(path=None):

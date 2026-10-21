@@ -238,13 +238,14 @@
   - L225 `Summary.test_half_life_filter_narrows_selection(self)`
   - L232 `Summary.test_off_grid_window_is_refused_not_averaged(self)` — Окно не по сетке ломает смысл «соседнего» — и должно падать.
 
-## research/ai_gate/test_entry_search.py · 68 строк
+## research/ai_gate/test_entry_search.py · 102 строк
 
 Поиск ТВХ по состоянию (U4c): калибровочная пара — подсаженный параметр (вход, когда доля лонгов упала ниже п…
 
 - L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L18 `synth(n=600, seed=3, planted=True)`
-- L31 `main()`
+- L31 `test_exit_cells_and_shortest_stop()` — Таблица O[сигнал, k, ячейка выхода] (§11.9): подсаженный выигрыш живёт в паре «состояние + стоп 3 %» — отбор…
+- L64 `main()`
 
 ## research/ai_gate/test_entry_shift.py · 93 строк
 
@@ -312,7 +313,7 @@
 - L49 `R_NOISE = {'text': 'fear', 'when': [{'field': 'ma…`
 - L52 `main()`
 
-## research/ai_gate/test_model_books.py · 164 строк
+## research/ai_gate/test_model_books.py · 183 строк
 
 Книги модели (спека 19 §12): мягкий порог, пределы, подпись, рождение с нуля в следующий час, отставка по окн…
 
@@ -323,7 +324,8 @@
 - L60 `test_retire_window_and_idle()`
 - L78 `test_entry_hour_first_match_frozen_and_dedup()`
 - L108 `test_skip_pass_in_judge_and_rules_registration()`
-- L154 `main()`
+- L154 `test_exit_cell_in_signature_candidates_and_words()` — Выход книги модели (§11.9): подпись без выхода — прежняя (m01/m02 не меняются), с выходом — другая; кандидат…
+- L173 `main()`
 
 ## research/ai_gate/test_path_review.py · 135 строк
 
@@ -715,7 +717,7 @@
 - L231 `test_reading_is_written_from_numbers()` — Вывод собирается из чисел, а не из надежды.
 - L247 `main()`
 
-## research/dca_ladder/test_ladder.py · 1517 строк
+## research/dca_ladder/test_ladder.py · 1546 строк
 
 Тесты ядра забора — цена ликвидации закреплена таблицей §5 спеки 01.
 
@@ -800,9 +802,10 @@
 - L1350 `test_time_add_take_level_uses_the_average_of_the_bar_start()` — Уровень тейка бара долива — по ТВХ на его начало; со следующего бара цель едет со средней.
 - L1371 `test_time_adds_min_profit_threshold_gates_candidates()` — Порог прибыли: кандидат исполняется только когда pnl по открытию бара выше порога; порог 0 тождествен `adds_i…
 - L1396 `test_take_events_move_the_target_from_the_bar_open_and_default_…` — Перенос цели по событию: с бара события цель — неподвижный уровень от его открытия; дальше цель назначается;…
-- L1426 `TESTS = [test_open_mark_equals_the_simulation_p…`
-- L1477 `CONTROLS = [('доливы шорта по правилу лонга', _con…`
-- L1507 `main()`
+- L1426 `test_stop_is_a_market_exit_and_default_is_bit_for_bit()` — Стоп шорта (спека 19 §11.9): уровень от средней, выход рыночный — max(закрытие, уровень), цену уровня лучше з…
+- L1454 `TESTS = [test_stop_is_a_market_exit_and_default…`
+- L1506 `CONTROLS = [('доливы шорта по правилу лонга', _con…`
+- L1536 `main()`
 
 ## research/dca_ladder/test_legs_cache.py · 88 строк
 
@@ -822,7 +825,7 @@
 - L40 `test_exchange_marking_cuts_what_the_list_misses()`
 - L66 `test_leg_gate_uses_the_same_set()`
 
-## research/dca_ladder/test_run_d10.py · 668 строк
+## research/dca_ladder/test_run_d10.py · 708 строк
 
 Проверки замера D10 — короткие DCA-книги: плечо, доливы, цель, гейт.
 
@@ -861,11 +864,12 @@
 - L502 `_control_wrong_side_promise_accepted()`
 - L508 `test_collect_rulers_subset_is_bit_for_bit_and_only_those()` — Проход по подмножеству линеек отдаёт ТОЛЬКО их, записи те же бит в бит, чужую линейку отвергает словами (06.1…
 - L539 `test_cell_policy_floor_and_sink_do_not_retain_records()` — Пол ячейки заменяет пол книги и едет в запись; `sink` отдаёт записи сразу и в памяти не держит, конец записи…
-- L573 `test_cell_hold_inside_a_longer_window_matches_the_short_window_…` — Ячейка со сроком 24 ч внутри окна 48 ч считает те же бары, что проход с окном 24 ч: исход, отметки, конец окн…
-- L620 `TESTS = [test_cell_hold_inside_a_longer_window_…`
-- L641 `_control_memory_guard_never_stops()`
-- L646 `CONTROLS = [('сторож памяти не останавливает', _co…`
-- L658 `main()`
+- L573 `test_cell_stop_and_equal_risk_leverage_go_into_the_record()` — Ячейка со стопом (спека 19 §11.9): рост к 106 режет стопом 2 % в небольшой минус там, где книга доезжает до т…
+- L612 `test_cell_hold_inside_a_longer_window_matches_the_short_window_…` — Ячейка со сроком 24 ч внутри окна 48 ч считает те же бары, что проход с окном 24 ч: исход, отметки, конец окн…
+- L659 `TESTS = [test_cell_stop_and_equal_risk_leverage…`
+- L681 `_control_memory_guard_never_stops()`
+- L686 `CONTROLS = [('сторож памяти не останавливает', _co…`
+- L698 `main()`
 
 ## research/dca_ladder/test_run_d11.py · 112 строк
 

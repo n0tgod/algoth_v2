@@ -151,9 +151,28 @@ def test_skip_pass_in_judge_and_rules_registration():
     print("ok  фильтр модели: решает правило в проходе судьи (skip/open/held, нет поля — словами), книга в корне AI lab с нуля")
 
 
+def test_exit_cell_in_signature_candidates_and_words():
+    """Выход книги модели (§11.9): подпись без выхода — прежняя (m01/m02 не
+    меняются), с выходом — другая; кандидат несёт выход; слова — стоп и тейк."""
+    import rules as R                                          # noqa: E402
+    rule = {"when": [{"field": "oi_1h", "op": "<=", "value": -0.02}], "W": 5}
+    old = json.dumps({"kind": "entry", "W": 5, "when": [["oi_1h", "<=", -0.02]]}, sort_keys=True, ensure_ascii=False)
+    assert MB.sig("entry", rule) == old and MB.sig("entry", dict(rule, exit="s0:t2:book")) == old
+    assert MB.sig("entry", dict(rule, exit="s2:t1:eq")) != old
+    search = {"model": [{"rule": dict(rule, exit="s2:t1:eq"), "halves": [],
+                         "all": {"trig": 50, "rule_mean": 0.04, "book_mean": 0.01, "p_random_hour": 0.05}}]}
+    rf = {"rules": [dict(rule, exit="s2:t1:eq", why="unwind then short with a tight stop", proposed_at="x")]}
+    c = MB.entry_candidates(search, rf)[0]
+    assert c["rule"]["exit"] == "s2:t1:eq" and c["fail"] is None and c["why"].startswith("unwind"), c
+    assert "стоп 2 %" in MB.rule_text("entry", c["rule"]) and "равный риск" in MB.rule_text("entry", c["rule"])
+    assert "стоп 2 %" in R.model_rule_text({"kind": "entry", "rule": c["rule"]})
+    assert "стоп" not in R.model_rule_text({"kind": "entry", "rule": rule})
+    print("ok  выход книги модели: подпись прежних книг не меняется, с выходом — своя; слова стопа и тейка")
+
+
 def main():
     n = 0
-    for f in (test_soft_gate_quota_and_signature, test_retire_window_and_idle,
+    for f in (test_exit_cell_in_signature_candidates_and_words, test_soft_gate_quota_and_signature, test_retire_window_and_idle,
               test_entry_hour_first_match_frozen_and_dedup, test_skip_pass_in_judge_and_rules_registration):
         f()
         n += 1

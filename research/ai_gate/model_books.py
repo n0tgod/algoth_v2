@@ -90,11 +90,17 @@ def save(reg, path=None):
     os.replace(path + ".tmp", path)
 
 
+BOOK_EXIT = "s0:t2:book"           # выход книги (спека 19 §11.9): без стопа, тейк ×2, её плечо
+
+
 def sig(kind, rule):
-    """Подпись правила: вид, условия (поле, знак, порог), окно."""
-    return json.dumps({"kind": kind, "W": rule.get("W") if kind == "entry" else None,
-                       "when": sorted([c["field"], c["op"], round(float(c["value"]), 6)] for c in rule["when"])},
-                      sort_keys=True, ensure_ascii=False)
+    """Подпись правила: вид, условия (поле, знак, порог), окно и выход (§11.9;
+    выход книги поля не несёт — подписи книг до §11.9 не меняются)."""
+    d = {"kind": kind, "W": rule.get("W") if kind == "entry" else None,
+         "when": sorted([c["field"], c["op"], round(float(c["value"]), 6)] for c in rule["when"])}
+    if rule.get("exit") and rule["exit"] != BOOK_EXIT:
+        d["exit"] = rule["exit"]
+    return json.dumps(d, sort_keys=True, ensure_ascii=False)
 
 
 def live(reg):
@@ -124,7 +130,11 @@ def matches(rule, f):
 
 def rule_text(kind, rule):
     w = " и ".join(f"{c['field']} {c['op']} {float(c['value']):g}" for c in rule["when"])
-    return w + (f", окно {rule['W']} ч" if kind == "entry" else "")
+    w += (f", окно {rule['W']} ч" if kind == "entry" else "")
+    if rule.get("exit") and rule["exit"] != BOOK_EXIT:
+        import entry_search as ES                              # noqa: E402
+        w += f"; {ES.exit_text(rule['exit'])}"
+    return w
 
 
 # ------------------------------------------------------------ кандидаты и порог
@@ -181,6 +191,8 @@ def entry_candidates(search, rules_file):
         if m.get("why") or not m.get("rule"):
             continue
         rule = {"when": m["rule"]["when"], "W": int(m["rule"]["W"])}
+        if m["rule"].get("exit") and m["rule"]["exit"] != BOOK_EXIT:
+            rule["exit"] = m["rule"]["exit"]
         a = m.get("all") or {}
         src = why_of.get(sig("entry", rule)) or {}
         out.append({"kind": "entry", "rule": rule, "why": src.get("why"), "text": None,
@@ -344,23 +356,27 @@ def tick(log=print, now=None, dry=False):
             new += n
             log(f"{b['id']}: новых решений о часе входа {n}")
     cache, _why = MB.read_cache(log=log)
-    need, by_leg = [], {}
+    # к реплею — по ячейке выхода книги (§11.9): у каждой своя ячейка ядра
+    need, by_leg = {}, {}
     for b in books:
+        ex = (b["rule"].get("exit") or BOOK_EXIT)
         for g in shifted_legs(b, legs, state):
             k = (b["id"], g["sym"], round(float(g["at"]), 3))
             r = cache.get(k)
             if r is None or r.get("state") != "closed":
-                need.append(g)
-                by_leg.setdefault((g["sym"], round(float(g["at"]), 3)), []).append((b["id"], g))
-    uniq = list({(g["sym"], round(float(g["at"]), 3)): g for g in need}.values())
-    log(f"книг ТВХ {len(books)}, сигналов после рождения {len(legs)}, новых решений {new}, к реплею {len(uniq)}")
-    if uniq:
-        rk = S.BOOKS[BASE]
-        out, _tail = S.replay_cells(uniq, [S.CELL], log=log, rulers=[rk])
-        for (r_rk, sym, at), r in (out.get(S.CELL[0]) or {}).items():
+                need.setdefault(ex, {})[(g["sym"], round(float(g["at"]), 3))] = g
+                by_leg.setdefault((ex, g["sym"], round(float(g["at"]), 3)), []).append((b["id"], g))
+    n_need = sum(len(v) for v in need.values())
+    log(f"книг ТВХ {len(books)}, сигналов после рождения {len(legs)}, новых решений {new}, к реплею {n_need}")
+    rk = S.BOOKS[BASE]
+    for ex, legs_ex in need.items():
+        cell, pol = ES.exit_cell(ex)
+        out, _tail = S.replay_cells(list(legs_ex.values()), [cell], log=log, rulers=[rk],
+                                    adds_of=(lambda g, key, _p=pol: _p) if pol else None)
+        for (r_rk, sym, at), r in (out.get(cell[0]) or {}).items():
             if r_rk != rk:
                 continue
-            for bid, g in by_leg.get((sym, at), []):
+            for bid, g in by_leg.get((ex, sym, at), []):
                 cache[(bid, sym, at)] = dict(r, at_signal=g["at_signal"], mbook=bid)
     if not dry:
         MB.write_cache(cache)
@@ -368,7 +384,7 @@ def tick(log=print, now=None, dry=False):
         with open(ENTRY_STATE + ".tmp", "w", encoding="utf-8") as f:
             json.dump(state, f, ensure_ascii=False)
         os.replace(ENTRY_STATE + ".tmp", ENTRY_STATE)
-    return {"books": len(books), "legs": len(legs), "new_decisions": new, "replayed": len(uniq)}
+    return {"books": len(books), "legs": len(legs), "new_decisions": new, "replayed": n_need}
 
 
 # ------------------------------------------------------------ касса и отчёт
