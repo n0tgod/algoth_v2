@@ -208,6 +208,92 @@ def test_ai_branch_is_paper_only_and_side_survives_suffix():
     print("ok  ветвь судьи и книга модели — только бумага: ячейка помечена, подписка отклонена словами; сторона по ключу с суффиксом")
 
 
+def test_book_ai_log_is_public_per_book_with_learn_and_model_books():
+    """Журнал по книге на странице стратегии (владелец 21.10): у `*_ai` — все
+    дни, принято/отклонено/без вердикта, учащаяся ветка отдельными итогами с
+    её дня рождения; общий счёт — обе стороны; книга модели — свой журнал
+    (ТВХ: час входа и значения полей; фильтр: строки ветви книги); чужая
+    книга — 400 словами; кэш минуты."""
+    with tempfile.TemporaryDirectory() as tmp:
+        app, _ = _app(tmp, venue=FakeVenue(equity=1100.0, modes={}))
+        app.AI_DIR = os.path.join(tmp, "dec"); app.NEWS_REC = os.path.join(tmp, "news")
+        app.AI_PATHS = os.path.join(tmp, "paths"); app.AI_LESSONS = os.path.join(tmp, "lessons.json")
+        app.AI_MODEL_REG = os.path.join(tmp, "model_books.json"); app.AI_MODEL_ENTRY = os.path.join(tmp, "model_entry.json")
+        app._ai_log_cache = {}
+        st, r = app.book_ai_log("optimal_h_ai")
+        assert st == 200 and r["entries"] == [] and "not written" in r["error"]
+        assert app.book_ai_log("safe_h")[0] == 400 and app.book_ai_log("x|y")[0] == 400
+        os.makedirs(app.AI_DIR); os.makedirs(app.NEWS_REC); os.makedirs(app.AI_PATHS)
+        k1, k2, k3 = "optimal_h|QUSDT|1792368000", "optimal_h|AIOZUSDT|1792454400", "optimal|LUSDT|1792454400"
+        d1 = [{"t": 1792368300, "kind": "entry", "branch": "ai_news", "key": k1, "book": "optimal_h", "side": "short",
+               "sym": "QUSDT", "at": 1792368000, "decision": "skip", "confidence": 0.6, "reasons": ["75 % short"],
+               "news_used": [], "cost_usd": 0.02, "no_verdict": None},
+              {"t": 1792368300, "kind": "entry", "branch": "ai_plain", "key": k1, "book": "optimal_h", "side": "short",
+               "sym": "QUSDT", "at": 1792368000, "decision": "open", "reasons": [], "cost_usd": 0.01, "no_verdict": None}]
+        d2 = [{"t": 1792454700, "kind": "entry", "branch": "ai_news", "key": k2, "book": "optimal_h", "side": "short",
+               "sym": "AIOZUSDT", "at": 1792454400, "decision": "open", "confidence": 0.8, "reasons": ["calm"],
+               "news_used": [], "cost_usd": 0.01, "no_verdict": None},
+              {"t": 1792454700, "kind": "entry", "branch": "ai_learn", "key": k2, "book": "optimal_h", "side": "short",
+               "sym": "AIOZUSDT", "at": 1792454400, "decision": "skip", "confidence": 0.7,
+               "reasons": ["similar_past_cases: 3 floors"], "news_used": [], "cost_usd": 0.01, "no_verdict": None},
+              {"t": 1792454700, "kind": "entry", "branch": "ai_news", "key": k3, "book": "optimal", "side": "long",
+               "sym": "LUSDT", "at": 1792454400, "decision": "open", "confidence": 0.8, "reasons": ["up"],
+               "news_used": [], "cost_usd": 0.01, "no_verdict": None},
+              {"t": 1792455000, "kind": "entry", "branch": "ai_news", "key": "optimal_h|QUSDT|1792454400",
+               "book": "optimal_h", "side": "short", "sym": "QUSDT", "at": 1792454400, "decision": "held",
+               "held_by": k1, "cost_usd": 0.0},
+              # книга-фильтр модели m05: решения правила тем же журналом
+              {"t": 1792454700, "kind": "entry", "branch": "m05", "key": k2, "book": "optimal_h", "side": "short",
+               "sym": "AIOZUSDT", "at": 1792454400, "decision": "skip", "by": "rule", "cost_usd": 0.0,
+               "values": {"price_moves_to_decision.4h_pct": 12.5}, "no_verdict": None}]
+        for day, rows in (("2026-10-19", d1), ("2026-10-20", d2)):
+            with open(os.path.join(app.AI_DIR, f"decisions-{day}.jsonl"), "w") as f:
+                f.write("\n".join(json.dumps(x) for x in rows) + "\n")
+        st, r = app.book_ai_log("optimal_h_ai")
+        assert st == 200 and r["kind"] == "judge" and r["bases"] == ["optimal_h"] and r["days"] == ["2026-10-19", "2026-10-20"]
+        assert [e["sym"] for e in r["entries"]] == ["AIOZUSDT", "QUSDT"], "все дни, свежие сверху, повтор — не строка"
+        assert r["summary"]["opened"] == 1 and r["summary"]["skipped"] == 1 and r["summary"]["held"] == 1
+        assert r["entries"][0]["learn"]["decision"] == "skip" and r["entries"][0]["learn"]["reasons"][0].startswith("similar")
+        assert r["learn"] == {"entries": 1, "opened": 0, "skipped": 1, "no_verdict": 0, "disagrees": 1, "since": 1792454400}
+        assert not any(e["sym"] == "LUSDT" for e in r["entries"]), "лонги — не в короткой книге"
+        st, r2 = app.book_ai_log("pair_optimal_ai")
+        assert st == 200 and r2["bases"] == ["optimal", "optimal_h"] and len(r2["entries"]) == 3
+        st, r1 = app.book_ai_log("optimal_h_ai", days="1")
+        assert [e["sym"] for e in r1["entries"]] == ["AIOZUSDT"] and r1["days"] == ["2026-10-20"]
+        # кэш минуты: новая строка не видна до истечения, новый запрос с другим числом дней — виден
+        with open(os.path.join(app.AI_DIR, "decisions-2026-10-20.jsonl"), "a") as f:
+            f.write(json.dumps(dict(d2[0], key="optimal_h|ZUSDT|1792458000", sym="ZUSDT", at=1792458000, t=1792458300)) + "\n")
+        assert len(app.book_ai_log("optimal_h_ai")[1]["entries"]) == 2
+        app._ai_log_cache.clear()
+        assert len(app.book_ai_log("optimal_h_ai")[1]["entries"]) == 3
+        # книги модели (§12): ТВХ — состояние с часом входа и значениями; фильтр — строки ветви
+        json.dump({"books": [
+            {"id": "m01", "key": "optimal_h_m01", "kind": "entry", "status": "live", "born_at": 1792540800.0,
+             "why": "squeeze is over", "rule": {"when": [{"field": "oi_1h", "op": "<=", "value": -0.02}], "W": 5}},
+            {"id": "m05", "key": "optimal_h_m05", "kind": "skip", "status": "live", "born_at": 1792440000.0,
+             "why": "pump still running",
+             "rule": {"when": [{"field": "price_moves_to_decision.4h_pct", "op": ">=", "value": 10.0}]}}]},
+                  open(app.AI_MODEL_REG, "w"))
+        json.dump({"m01": {"AUSDT|1792544400": {"k": 2, "t": 1792552000, "vals": {"oi_1h": -0.031}},
+                           "BUSDT|1792544400": {"k": -1, "t": 1792566000, "vals": {"oi_1h": 0.004}}}},
+                  open(app.AI_MODEL_ENTRY, "w"))
+        st, r = app.book_ai_log("optimal_h_m01")
+        assert st == 200 and r["kind"] == "model_entry" and "oi_1h <= -0.02" in r["rule"] and r["why"] == "squeeze is over"
+        a = next(e for e in r["entries"] if e["sym"] == "AUSDT")
+        assert a["decision"] == "open" and a["k"] == 2 and a["at"] == 1792544400 + 2 * 3600 and a["book"] == "optimal_h_m01"
+        assert a["reasons"][0].startswith("entered 2 h") and "oi_1h = -0.031" in a["reasons"][1]
+        bb = next(e for e in r["entries"] if e["sym"] == "BUSDT")
+        assert bb["decision"] == "skip" and bb["k"] is None and "any of the 6 hours" in bb["reasons"][0]
+        assert r["summary"] == {"entries": 2, "opened": 1, "skipped": 1, "held": 0, "no_verdict": 0}
+        st, r = app.book_ai_log("optimal_h_m05")
+        assert st == 200 and r["kind"] == "model_skip" and len(r["entries"]) == 1
+        e = r["entries"][0]
+        assert e["decision"] == "skip" and e["book"] == "optimal_h" and "4h_pct = 12.5" in e["reasons"][1]
+        assert "not in the model" in app.book_ai_log("optimal_h_m09")[1]["error"]
+    print("ok  журнал по книге: судья за все дни со свежими сверху, учащаяся ветка итогами, общий счёт — обе стороны, "
+          "книги модели — час входа со значениями и строки фильтра, чужая книга — 400, кэш минуты")
+
+
 def test_ai_log_for_operator_groups_entries_and_names_news():
     with tempfile.TemporaryDirectory() as tmp:
         app, _ = _app(tmp, venue=FakeVenue(equity=1100.0, modes={}))

@@ -261,51 +261,8 @@ class App:
                 except ValueError:
                     continue
         titles = self._news_titles(day)
-        by = {}
-        for r in rows:
-            if r.get("kind") != "entry":
-                continue
-            e = by.setdefault(r.get("key"), {"key": r.get("key"), "book": r.get("book"), "side": r.get("side"),
-                                             "sym": r.get("sym"), "at": r.get("at"), "t": r.get("t"),
-                                             "late_min": r.get("late_min"), "cost_usd": 0.0})
-            e["cost_usd"] = round(e["cost_usd"] + float(r.get("cost_usd") or 0), 5)
-            br = r.get("branch")
-            part = {"decision": r.get("decision"), "confidence": r.get("confidence"),
-                    "reasons": r.get("reasons") or [], "no_verdict": r.get("no_verdict"),
-                    "news": [{"id": n, "title": titles.get(n)} for n in (r.get("news_used") or [])],
-                    "news_n": r.get("news_n")}
-            if br == "ai_news":
-                e.update(part)
-                e["t"] = r.get("t")
-            elif br == "ai_plain":
-                e["plain"] = part
-            elif br == "ai_learn":
-                # учащаяся ветка (§11.4): то же решение с похожими случаями и уроками
-                e["learn"] = part
-            elif br == "ai_news_repeat":
-                e["repeat"] = {"decision": r.get("decision"), "no_verdict": r.get("no_verdict")}
-        # Повтор по имени, которое ветка уже держит, модели не показывается
-        # (`gate_run.holder_of`, 20.10): книга выбрасывает его сама. В списке
-        # его нет — это не решение; число таких — в итогах (`held`).
-        held = [e for e in by.values() if e.get("decision") == "held"]
-        for e in held:
-            by.pop(e["key"], None)
-        # Путь цены внутри сделки (спека 19 §11.2, U0) — по ключу решения из
-        # разбора путей; у открытой или ещё не разобранной — поля нет.
-        paths = self._ai_paths()
-        # Разбор судьёй своего решения (§11.3, U1) — строка `kind: review` в
-        # журнале того дня, когда разбор сделан (позже дня решения): индекс
-        # по всем дням, как у путей.
-        revs = self._ai_reviews(names)
-        for e in by.values():
-            pth = paths.get(e.get("key"))
-            if pth:
-                e["path"] = dict(pth.get("path") or {}, words=pth.get("words_en"), exit=pth.get("exit"),
-                                 exit_ts=pth.get("exit_ts"), pnl_frac=pth.get("pnl_frac"))
-            rv = revs.get(e.get("key"))
-            if rv:
-                e["review"] = {k: rv.get(k) for k in ("verdict", "confidence", "failed", "saved", "lesson", "notes",
-                                                      "no_verdict", "dossier_found", "t", "cost_usd")}
+        by, held = self._ai_group(rows, titles)
+        self._ai_attach(by, names)
         entries = sorted(by.values(), key=lambda e: (-(e.get("t") or 0), e.get("sym") or ""))[:int(limit)]
         watch = [{"t": r.get("t"), "book": r.get("book"), "side": r.get("side"), "sym": r.get("sym"),
                   "at": r.get("at"), "decision": r.get("decision"), "confidence": r.get("confidence"),
@@ -332,7 +289,222 @@ class App:
         return 200, {"days": days[-14:], "day": day, "summary": summary, "entries": entries, "watch": watch[:200],
                      "lessons": self._ai_lessons()}
 
+    def _ai_group(self, rows, titles):
+        """Строки журнала → по ключу входа: решение судьи, без новостей,
+        учащаяся ветка, повтор. → (входы, повторы по держимому имени)."""
+        by = {}
+        for r in rows:
+            if r.get("kind") != "entry":
+                continue
+            e = by.setdefault(r.get("key"), {"key": r.get("key"), "book": r.get("book"), "side": r.get("side"),
+                                             "sym": r.get("sym"), "at": r.get("at"), "t": r.get("t"),
+                                             "late_min": r.get("late_min"), "cost_usd": 0.0})
+            e["cost_usd"] = round(e["cost_usd"] + float(r.get("cost_usd") or 0), 5)
+            br = r.get("branch")
+            part = {"decision": r.get("decision"), "confidence": r.get("confidence"),
+                    "reasons": r.get("reasons") or [], "no_verdict": r.get("no_verdict"),
+                    "news": [{"id": n, "title": titles.get(n)} for n in (r.get("news_used") or [])],
+                    "news_n": r.get("news_n")}
+            if br == "ai_news":
+                e.update(part)
+                e["t"] = r.get("t")
+            elif br == "ai_plain":
+                e["plain"] = part
+            elif br == "ai_learn":
+                # учащаяся ветка (§11.4): то же решение с похожими случаями и уроками
+                e["learn"] = dict(part, t=r.get("t"))
+            elif br == "ai_news_repeat":
+                e["repeat"] = {"decision": r.get("decision"), "no_verdict": r.get("no_verdict")}
+        # Повтор по имени, которое ветка уже держит, модели не показывается
+        # (`gate_run.holder_of`, 20.10): книга выбрасывает его сама. В списке
+        # его нет — это не решение; число таких — в итогах (`held`).
+        held = [e for e in by.values() if e.get("decision") == "held"]
+        for e in held:
+            by.pop(e["key"], None)
+        return by, held
+
+    def _ai_attach(self, by, names):
+        """Путь цены внутри сделки (U0) и разбор судьёй (U1) — по ключу решения."""
+        # Путь — из разбора путей (файл дня выхода, не дня решения); разбор
+        # судьёй — строка `kind: review` в журнале дня разбора: индекс по всем дням.
+        paths = self._ai_paths()
+        revs = self._ai_reviews(names)
+        for e in by.values():
+            pth = paths.get(e.get("key"))
+            if pth:
+                e["path"] = dict(pth.get("path") or {}, words=pth.get("words_en"), exit=pth.get("exit"),
+                                 exit_ts=pth.get("exit_ts"), pnl_frac=pth.get("pnl_frac"))
+            rv = revs.get(e.get("key"))
+            if rv:
+                e["review"] = {k: rv.get(k) for k in ("verdict", "confidence", "failed", "saved", "lesson", "notes",
+                                                      "no_verdict", "dossier_found", "t", "cost_usd")}
+
     AI_LESSONS = os.path.join(ROOT, "research", "ai_gate", "out", "lessons.json")
+    AI_MODEL_REG = os.path.join(ROOT, "research", "ai_gate", "out", "model_books.json")
+    AI_MODEL_ENTRY = os.path.join(ROOT, "research", "ai_gate", "out", "model_entry.json")
+    AI_LOG_TTL = 60.0
+    _ai_log_cache = {}
+
+    def book_ai_log(self, book, days="14", limit=500):
+        """Публично, на странице стратегии (владелец 21.10: «какие сделки были
+        приняты ai, какие нет и почему, весь лог; у модели обучения — свой»):
+        журнал решений ПО КНИГЕ за последние `days` суток журнала.
+
+        Ветвь судьи (`*_ai`): входы основной книги стороны с решением судьи,
+        причинами и новостями; рядом — решение учащейся ветки (`learn`) с её
+        причинами и итоги по ней отдельно (с её дня рождения). Общий счёт —
+        обе стороны. Книга модели (`*_m<номер>`, спека 19 §12): фильтр —
+        решения правила из того же журнала (ветвь с именем книги); своя ТВХ —
+        решения о часе входа из состояния книги, со значениями полей правила.
+        Ничего не считает заново; текст, которого в журнале нет, — None.
+        """
+        if not book or not PUB_VALUE.match(str(book)):
+            return 400, {"error": "parameter 'book': letters, digits and ._:- only"}
+        try:
+            nd = max(1, min(60, int(days)))
+        except (TypeError, ValueError):
+            return 400, {"error": "parameter 'days' must be a number"}
+        ck = (book, nd)
+        hit = self._ai_log_cache.get(ck)
+        if hit and time.time() - hit[0] < self.AI_LOG_TTL:
+            return hit[1]
+        out = self._book_ai_log(book, nd, limit)
+        if out[0] == 200 and not out[1].get("error"):     # отказ не запоминается: журнал мог появиться
+            self._ai_log_cache[ck] = (time.time(), out)
+        return out
+
+    def _book_ai_log(self, book, nd, limit):
+        bare = BRANCH_SUFFIX.sub("", str(book))
+        mid = re.search(r"_m(\d+)$", str(book))
+        if mid:
+            return self._model_book_log(book, "m" + mid.group(1), bare, nd, limit)
+        if not str(book).endswith("_ai"):
+            return 400, {"error": "this book has no AI decisions: the judge and the model's books only"}
+        bases = ["optimal", "optimal_h"] if bare.startswith(PAIR_PREFIX) else [bare]
+        try:
+            names = sorted(f for f in os.listdir(self.AI_DIR) if f.startswith("decisions-") and f.endswith(".jsonl"))
+        except OSError:
+            names = []
+        if not names:
+            return 200, {"book": book, "kind": "judge", "bases": bases, "days": [], "entries": [], "summary": None,
+                         "learn": None, "error": "the judge has not written any decisions on this server yet"}
+        names = names[-nd:]
+        rows = []
+        for n in names:
+            with open(os.path.join(self.AI_DIR, n), encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        r = json.loads(line)
+                    except ValueError:
+                        continue
+                    if r.get("kind") == "entry" and r.get("book") in bases:
+                        rows.append(r)
+        titles = {}
+        for n in names[-3:]:
+            titles.update(self._news_titles(n[len("decisions-"):-len(".jsonl")]))
+        by, held = self._ai_group(rows, titles)
+        self._ai_attach(by, names)
+        entries = sorted(by.values(), key=lambda e: (-(e.get("t") or 0), e.get("sym") or ""))[:int(limit)]
+        judged = [e for e in by.values() if e.get("decision") and not e.get("no_verdict")]
+        summary = {"entries": len(by), "held": len(held),
+                   "opened": sum(1 for e in judged if e["decision"] == "open"),
+                   "skipped": sum(1 for e in judged if e["decision"] == "skip"),
+                   "no_verdict": sum(1 for e in by.values() if e.get("no_verdict")),
+                   "plain_disagrees": sum(1 for e in judged if (e.get("plain") or {}).get("decision")
+                                          and e["plain"]["decision"] != e["decision"]),
+                   "cost_usd": round(sum(e.get("cost_usd") or 0 for e in by.values()), 4)}
+        lj = [e for e in by.values() if (e.get("learn") or {}).get("decision") and not e["learn"].get("no_verdict")]
+        learn = {"entries": sum(1 for e in by.values() if e.get("learn")),
+                 "opened": sum(1 for e in lj if e["learn"]["decision"] == "open"),
+                 "skipped": sum(1 for e in lj if e["learn"]["decision"] == "skip"),
+                 "no_verdict": sum(1 for e in by.values() if (e.get("learn") or {}).get("no_verdict")),
+                 "disagrees": sum(1 for e in lj if e.get("decision") and not e.get("no_verdict")
+                                  and e["learn"]["decision"] != e["decision"]),
+                 "since": min((e["at"] for e in by.values() if e.get("learn") and e.get("at")), default=None)}
+        return 200, {"book": book, "kind": "judge", "bases": bases,
+                     "days": [n[len("decisions-"):-len(".jsonl")] for n in names],
+                     "summary": summary, "learn": learn, "entries": entries, "lessons": self._ai_lessons()}
+
+    def _model_book_log(self, book, bid, bare, nd, limit):
+        """Журнал книги модели (§12): фильтр — решения правила из журнала судьи,
+        своя ТВХ — решения о часе входа из состояния книги."""
+        try:
+            with open(self.AI_MODEL_REG, encoding="utf-8") as f:
+                reg = json.load(f)
+        except (OSError, ValueError):
+            reg = {}
+        b = next((x for x in reg.get("books") or [] if x.get("id") == bid), None)
+        if not b:
+            return 200, {"book": book, "kind": "model", "entries": [], "summary": None,
+                         "error": "this book is not in the model's registry on this server"}
+        rule = b.get("rule") or {}
+        R = TRADES.rules()
+        head = {"book": book, "id": bid, "kind": "model_" + str(b.get("kind")), "status": b.get("status"),
+                "born_at": b.get("born_at"), "retired_why": b.get("retired_why"),
+                "rule": R.model_rule_text(b), "why": b.get("why"), "gate": b.get("gate"), "W": rule.get("W")}
+        thr = {c["field"]: (c["op"], c["value"]) for c in rule.get("when") or []}
+
+        def words(vals):
+            out = []
+            for fld, (op, v) in thr.items():
+                x = (vals or {}).get(fld)
+                out.append(f"{fld} = {x:g} (rule: {op} {v:g})" if isinstance(x, (int, float)) else
+                           f"{fld}: no value (rule: {op} {v:g})")
+            return out
+        entries = []
+        if b.get("kind") == "entry":
+            try:
+                with open(self.AI_MODEL_ENTRY, encoding="utf-8") as f:
+                    st = (json.load(f) or {}).get(bid) or {}
+            except (OSError, ValueError):
+                st = {}
+            W = int(rule.get("W") or 0)
+            for sk, d in st.items():
+                sym, _, at_s = sk.partition("|")
+                try:
+                    at_sig = float(at_s)
+                except ValueError:
+                    continue
+                k = int(d.get("k", -1))
+                entered = k >= 0
+                entries.append({"key": f"{bid}|{sk}", "book": book, "sym": sym, "side": "short",
+                                "signal_at": at_sig, "at": at_sig + k * 3600 if entered else at_sig,
+                                "t": d.get("t"), "k": k if entered else None, "W": W,
+                                "decision": "open" if entered else "skip", "no_verdict": None,
+                                "reasons": ([f"entered {k} h after the signal: the rule held"] if entered
+                                            else [f"the rule did not hold in any of the {W + 1} hours after the signal"])
+                                + words(d.get("vals"))})
+        else:
+            try:
+                names = sorted(f for f in os.listdir(self.AI_DIR) if f.startswith("decisions-") and f.endswith(".jsonl"))
+            except OSError:
+                names = []
+            for n in names[-nd:]:
+                with open(os.path.join(self.AI_DIR, n), encoding="utf-8") as f:
+                    for line in f:
+                        if f'"{bid}"' not in line:
+                            continue
+                        try:
+                            r = json.loads(line)
+                        except ValueError:
+                            continue
+                        if r.get("kind") != "entry" or r.get("branch") != bid:
+                            continue
+                        dec = r.get("decision")
+                        entries.append({"key": r.get("key"), "book": bare, "sym": r.get("sym"), "side": r.get("side"),
+                                        "at": r.get("at"), "t": r.get("t"), "decision": dec,
+                                        "no_verdict": r.get("no_verdict"), "held_by": r.get("held_by"),
+                                        "reasons": ([{"open": "the rule did not hold: the entry stays as in Depth short",
+                                                      "skip": "the rule held: the entry is filtered out",
+                                                      "held": "a repeat on a name the book already holds"}.get(dec, dec)]
+                                                    + (words(r.get("values")) if dec != "held" else []))})
+        entries.sort(key=lambda e: (-(e.get("t") or 0), e.get("sym") or ""))
+        judged = [e for e in entries if e.get("decision") in ("open", "skip") and not e.get("no_verdict")]
+        summary = {"entries": len(entries), "opened": sum(1 for e in judged if e["decision"] == "open"),
+                   "skipped": sum(1 for e in judged if e["decision"] == "skip"),
+                   "held": sum(1 for e in entries if e.get("decision") == "held"),
+                   "no_verdict": sum(1 for e in entries if e.get("no_verdict"))}
+        return 200, dict(head, summary=summary, entries=entries[:int(limit)])
 
     def _ai_lessons(self):
         """Уроки судьи (§11.4): действующие и ждущие, с числами проверки.
@@ -1702,6 +1874,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self._send(200, {"ok": True, "schema": SCHEMA})
         if rest == ["pub", "top"] and method == "GET":
             return self._send(*self.app.top(q.get("deposit", [None])[0]))
+        if rest == ["pub", "ai_log"] and method == "GET":
+            # журнал решений по книге — страница стратегии (владелец 21.10)
+            return self._send(*self.app.book_ai_log((q.get("book") or [None])[0], (q.get("days") or ["14"])[0]))
         if len(rest) == 2 and rest[0] == "pub" and method == "GET":
             return self._pub(rest[1], q)
         if rest == ["legal"] and method == "GET":

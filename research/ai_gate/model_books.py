@@ -298,17 +298,21 @@ def entry_decide(b, legs, feat, state, now):
         sk = f"{g['sym']}|{int(at)}"
         if at < float(b["born_at"]) or (hi is not None and at >= hi) or sk in mine:
             continue
-        got = None
+        got, vals = None, None
         for k in range(W + 1):
             if now < at + k * H + EDGE_S:
                 got = "wait"
                 break
-            if matches(b["rule"], feat(g, k)):
+            f = feat(g, k)
+            # значения полей правила на решающем часе — в запись: журнал
+            # книги на странице говорит, ПОЧЕМУ вошли или нет (владелец 21.10)
+            vals = {c["field"]: f.get(c["field"]) for c in b["rule"]["when"]}
+            if matches(b["rule"], f):
                 got = k
                 break
         if got == "wait":
             continue
-        mine[sk] = {"k": -1 if got is None else int(got), "t": round(now)}
+        mine[sk] = {"k": -1 if got is None else int(got), "t": round(now), "vals": vals}
         new += 1
     return new
 
