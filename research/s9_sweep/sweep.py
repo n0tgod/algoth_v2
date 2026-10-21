@@ -234,6 +234,30 @@ def _bars_cache_save(cache, sym, d, keep=BARS_CACHE_KEEP_H, ttl=BARS_CACHE_TTL_S
         pass
 
 
+def _b1(name):
+    """Модуль записи B1 (`b1_book/<name>.py`) — по пути, если под тем же
+    именем уже загружен чужой: у сборщика новостей и состояния рынка тоже
+    есть `collect.py`, и процесс, грузивший досье судьи (`research/news` на
+    пути первым), получал не тот модуль (книги ТВХ модели, 21.10)."""
+    import importlib
+    import importlib.util
+    b1 = os.path.join(os.path.dirname(HERE), "b1_book")
+    m = sys.modules.get(name)
+    if m is not None and os.path.dirname(os.path.abspath(getattr(m, "__file__", "") or "")) == b1:
+        return m
+    if m is None:
+        m = importlib.import_module(name)
+        if os.path.dirname(os.path.abspath(getattr(m, "__file__", "") or "")) == b1:
+            return m
+    key = f"b1_{name}"
+    if key not in sys.modules:
+        spec = importlib.util.spec_from_file_location(key, os.path.join(b1, f"{name}.py"))
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[key] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules[key]
+
+
 def read_bars(root, sym, t0, t1, cache=None):
     """Минутные бары собственной записи сборщика в окне `[t0, t1]`.
 
@@ -245,8 +269,8 @@ def read_bars(root, sym, t0, t1, cache=None):
     пять минут (16 с из 56), а закрытые часы не меняются. Без `cache` —
     как прежде, бит в бит: кэш хранит результат того же `minute_bars`.
     """
-    from collect import minute_bars
-    from store import read_hour
+    minute_bars = _b1("collect").minute_bars
+    read_hour = _b1("store").read_hour
     dirpath = os.path.join(root, "trades", sym)
     cached = _bars_cache_load(cache, sym) if cache else {}
     dirty = False

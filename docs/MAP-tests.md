@@ -4461,6 +4461,15 @@
 - L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L18 `main()`
 
+## research/s9_sweep/test_b1_modules.py · 34 строк
+
+Чтение баров записи B1 не зависит от порядка пути: процесс, где первым на пути стоит `research/news` (у сборщ…
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L12 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L13 `CODE = <текст, 11 строк>`
+- L26 `main()`
+
 ## research/s9_sweep/test_bars_cache.py · 151 строк
 
 Кэш минутных баров на диске (`sweep.read_bars(cache=…)`, 15.10): с кэшем то же, что без него, бит в бит; втор…
