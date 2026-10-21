@@ -275,7 +275,8 @@ def test_book_ai_log_is_public_per_book_with_learn_and_model_books():
              "rule": {"when": [{"field": "price_moves_to_decision.4h_pct", "op": ">=", "value": 10.0}]}}]},
                   open(app.AI_MODEL_REG, "w"))
         json.dump({"m01": {"AUSDT|1792544400": {"k": 2, "t": 1792552000, "vals": {"oi_1h": -0.031}},
-                           "BUSDT|1792544400": {"k": -1, "t": 1792566000, "vals": {"oi_1h": 0.004}}}},
+                           "BUSDT|1792544400": {"k": -1, "t": 1792566000, "vals": {"oi_1h": 0.004}},
+                           "CUSDT|1792540800": {"k": 1, "t": 1792550000}}},
                   open(app.AI_MODEL_ENTRY, "w"))
         st, r = app.book_ai_log("optimal_h_m01")
         assert st == 200 and r["kind"] == "model_entry" and "oi_1h <= -0.02" in r["rule"] and r["why"] == "squeeze is over"
@@ -284,7 +285,9 @@ def test_book_ai_log_is_public_per_book_with_learn_and_model_books():
         assert a["reasons"][0].startswith("entered 2 h") and "oi_1h = -0.031" in a["reasons"][1]
         bb = next(e for e in r["entries"] if e["sym"] == "BUSDT")
         assert bb["decision"] == "skip" and bb["k"] is None and "any of the 6 hours" in bb["reasons"][0]
-        assert r["summary"] == {"entries": 2, "opened": 1, "skipped": 1, "held": 0, "no_verdict": 0}
+        c = next(e for e in r["entries"] if e["sym"] == "CUSDT")
+        assert "not recorded" in c["reasons"][1], "решение до записи значений — словами, не «нет значения»"
+        assert r["summary"] == {"entries": 3, "opened": 2, "skipped": 1, "held": 0, "no_verdict": 0}
         st, r = app.book_ai_log("optimal_h_m05")
         assert st == 200 and r["kind"] == "model_skip" and len(r["entries"]) == 1
         e = r["entries"][0]

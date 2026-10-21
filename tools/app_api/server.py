@@ -445,6 +445,9 @@ class App:
         thr = {c["field"]: (c["op"], c["value"]) for c in rule.get("when") or []}
 
         def words(vals):
+            if vals is None:
+                # решения до 21.10 16:30 UTC писались без значений полей
+                return ["field values were not recorded for this decision"]
             out = []
             for fld, (op, v) in thr.items():
                 x = (vals or {}).get(fld)
