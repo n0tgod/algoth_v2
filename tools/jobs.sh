@@ -105,6 +105,7 @@ if [ "${JOBS_NO_FETCH:-0}" != "1" ]; then
     # файлы переживают сведение (`tools/git_guard.sh`)
     . tools/git_guard.sh
     stale_lock_clear >> jobs/queue-state.md
+    broken_rebase_clear >> jobs/queue-state.md
     if ! git fetch -q origin main 2>/dev/null; then
         note "origin/main не получен (сеть или доступ) — задания могут быть не видны"
     fi

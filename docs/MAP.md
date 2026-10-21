@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 681, строк: 268762, каталогов: 89.
+Модулей кода: 681, строк: 268790, каталогов: 89.
 
 
 ## корень — память проекта, идеи, README
@@ -916,16 +916,16 @@
 - `exit_probe.py` · 81 строк — Зонд: почему исполнитель Ladder закрыл позиции — записи намерений `exit` и событий исполнителя по именам за п…
 - `freeze_weights.py` · 77 строк — Заморозить текущие веса S8: копия в `out/model/frozen/`.
 - `frozen_probe.py` · 53 строк — Зонд: пишет ли цикл лист замороженной модели и ложится ли архив весов.
-- `git_guard.sh` · 62 строк — Охрана git на сервере (20.10): подключается `publish.sh` и `jobs.sh`.
+- `git_guard.sh` · 79 строк — Охрана git на сервере (20.10): подключается `publish.sh` и `jobs.sh`.
 - `guard_probe.py` · 50 строк — Зонд: что видела охрана рынком — волна прокси-имён с момента входа коротких позиций по часам. Печатает порог,…
 - `instr_fields.py` · 47 строк — Зонд: какие поля справочника Bybit отличают перпы на акции от крипты.
-- `jobs.sh` · 340 строк — Очередь заданий: сессия кладёт задание в git, сервер его выполняет.
+- `jobs.sh` · 341 строк — Очередь заданий: сессия кладёт задание в git, сервер его выполняет.
 - `loggrep.py` · 100 строк — Строки лога по образцу, счётом по дням — через очередь заданий.
 - `logtail.py` · 88 строк — Выдержка логов сервера за окно времени — через очередь заданий.
 - `memtop.py` · 155 строк — Кто держит память на сервере — через очередь заданий.
 - `probe_cli_models.py` · 56 строк — Какие модели принимает CLI НА ЭТОЙ машине.
 - `project_map.py` · 546 строк — Карта кода проекта — из самих файлов, не руками.
-- `publish.sh` · 213 строк — Опубликовать артефакты прогона: отчёты и сводки — в git.
+- `publish.sh` · 214 строк — Опубликовать артефакты прогона: отчёты и сводки — в git.
 - `publish_doctor.py` · 225 строк — Доктор публикации: почему сервер молчит в git — и отчёт В ОБХОД канала.
 - `publish_mech_code.py` · 88 строк — Опубликовать КОД механики, отчёт которой уже уехал в git.
 - `record_ship.py` · 437 строк — Выгрузка закрытых суток записи стакана в объектное хранилище (S3).
@@ -951,4 +951,4 @@
 - `watchdog_book.sh` · 855 строк — Сторож сбора: поднимает умершее и перезапускает зависшее.
 - `wave_episodes.py` · 108 строк — Зонд: как часто рынок даёт волну, на которую смотрит охрана.
 - `wave_rows_probe.py` · 59 строк — Зонд: строки часовых сводок прокси-имён за данный час — какие поля, когда записаны, и какая волна выходит по…
-- тесты: `app_api/test_app_api.py` (1734), `test_disk_alarm.py` (64), `test_git_guard.sh` (36), `test_jobs.sh` (284), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_api.sh` (47), `test_watchdog_books.sh` (114), `test_watchdog_gate.sh` (43), `test_watchdog_gate_books.sh` (41), `test_watchdog_lessons.sh` (41), `test_watchdog_market.sh` (53), `test_watchdog_mem.sh` (68), `test_watchdog_news.sh` (37), `test_watchdog_pair.sh` (59), `test_watchdog_paths.sh` (41), `test_watchdog_ship.sh` (49)
+- тесты: `app_api/test_app_api.py` (1734), `test_disk_alarm.py` (64), `test_git_guard.sh` (45), `test_jobs.sh` (284), `test_loggrep.py` (53), `test_memtop.py` (103), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_restart_book.sh` (83), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_train_alarm.py` (109), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_api.sh` (47), `test_watchdog_books.sh` (114), `test_watchdog_gate.sh` (43), `test_watchdog_gate_books.sh` (41), `test_watchdog_lessons.sh` (41), `test_watchdog_market.sh` (53), `test_watchdog_mem.sh` (68), `test_watchdog_news.sh` (37), `test_watchdog_pair.sh` (59), `test_watchdog_paths.sh` (41), `test_watchdog_ship.sh` (49)

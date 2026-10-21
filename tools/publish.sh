@@ -18,6 +18,7 @@ msg="${1:-артефакты прогона}"
 # охрана git: мёртвый замок индекса и живые большие файлы (20.10)
 . "$(dirname "$0")/git_guard.sh"
 stale_lock_clear | tee -a jobs/queue-state.md
+broken_rebase_clear | tee -a jobs/queue-state.md
 branch="$(git rev-parse --abbrev-ref HEAD)"
 
 # --ignore-removal, а не -A: команда публикации не вправе записывать

@@ -10237,13 +10237,14 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L16 `main()`
 
-## tools/git_guard.sh · 62 строк
+## tools/git_guard.sh · 79 строк
 
 Охрана git на сервере (20.10): подключается `publish.sh` и `jobs.sh`.
 
 - L20 `stale_lock_clear()`
-- L32 `big_save()`
-- L48 `big_restore()`
+- L32 `broken_rebase_clear()`
+- L49 `big_save()`
+- L65 `big_restore()`
 
 ## tools/guard_probe.py · 50 строк
 
@@ -10261,7 +10262,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L17 `REF = ('BTCUSDT', 'DOGEUSDT', 'AMZUUSDT', 'ME…`
 - L21 `main()`
 
-## tools/jobs.sh · 340 строк
+## tools/jobs.sh · 341 строк
 
 Очередь заданий: сессия кладёт задание в git, сервер его выполняет.
 
@@ -10357,11 +10358,11 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L387 `build()`
 - L511 `main(argv)`
 
-## tools/publish.sh · 213 строк
+## tools/publish.sh · 214 строк
 
 Опубликовать артефакты прогона: отчёты и сводки — в git.
 
-- L86 `finish_rebase()` — Конфликт на артефакте разрешается в пользу того, что лежит на диске ЗДЕСЬ, то есть в пользу прогона. Так уже…
+- L87 `finish_rebase()` — Конфликт на артефакте разрешается в пользу того, что лежит на диске ЗДЕСЬ, то есть в пользу прогона. Так уже…
 
 ## tools/publish_doctor.py · 225 строк
 

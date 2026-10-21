@@ -5096,7 +5096,7 @@ X1: исполнитель против подставной биржи.
 - L18 `check(name, cond, detail='')`
 - L25 `main()`
 
-## tools/test_git_guard.sh · 36 строк
+## tools/test_git_guard.sh · 45 строк
 
 Охрана git (20.10): мёртвый замок индекса (старше предела, живого git нет)
 

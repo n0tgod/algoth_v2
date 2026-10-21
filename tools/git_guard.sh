@@ -29,6 +29,23 @@ stale_lock_clear() {
     return 0
 }
 
+broken_rebase_clear() {
+    # След сведения без `head-name` — мусор прерванного процесса: ветка
+    # обычная, а `rebase --abort` его не читает и любое `pull --rebase`
+    # отказывается начинаться (20.10–21.10, 7.5 ч без публикаций).
+    # Снимается, только если сведение НЕ идёт: живого git нет и HEAD на ветке.
+    local d
+    for d in .git/rebase-merge .git/rebase-apply; do
+        [ -d "$d" ] || continue
+        [ -f "$d/head-name" ] && continue
+        if ! pgrep -x git >/dev/null 2>&1 && git symbolic-ref -q HEAD >/dev/null 2>&1; then
+            rm -rf "$d"
+            echo "$(date -u +%FT%TZ) · git: снят битый след сведения $d (без head-name, ветка на месте)"
+        fi
+    done
+    return 0
+}
+
 big_save() {
     # → каталог с копиями в GIT_BIG_KEEP (пусто — копировать нечего)
     GIT_BIG_KEEP=""

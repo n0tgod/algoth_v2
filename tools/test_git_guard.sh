@@ -32,5 +32,14 @@ touch -d "@$(( $(date +%s) - 3600 ))" .git/index.lock
 msg="$(stale_lock_clear)"
 check "мёртвый замок снят" '[ ! -f .git/index.lock ]'
 check "снятие названо словами" 'echo "$msg" | grep -q "снят мёртвый замок"'
+# битый след сведения: без head-name и на ветке — снимается; с head-name — нет
+mkdir -p .git/rebase-merge
+msg2="$(broken_rebase_clear)"
+check "битый след сведения снят" '[ ! -d .git/rebase-merge ]'
+check "снятие следа названо словами" 'echo "$msg2" | grep -q "битый след"'
+mkdir -p .git/rebase-merge && echo refs/heads/main > .git/rebase-merge/head-name
+broken_rebase_clear >/dev/null
+check "след с head-name не трогается" '[ -f .git/rebase-merge/head-name ]'
+rm -rf .git/rebase-merge
 if [ "$fail" -ne 0 ]; then echo "есть падения"; exit 1; fi
 echo "все проверки охраны git прошли"
