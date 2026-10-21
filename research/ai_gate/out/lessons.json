@@ -1,0 +1,309 @@
+{
+ "version": 0,
+ "accepted": [],
+ "proposed": [
+  {
+   "text": "Skip shorts into a pump that is still accelerating: 4h move at least +10% and the last hour still up at least 1%.",
+   "when": [
+    {
+     "field": "price_moves_to_decision.4h_pct",
+     "op": ">=",
+     "value": 10.0
+    },
+    {
+     "field": "price_moves_to_decision.1h_pct",
+     "op": ">=",
+     "value": 1.0
+    }
+   ],
+   "do": "skip",
+   "why": "If momentum has not rolled over by the entry hour, continuation squeezes tend to come before any fade. Shorts here often went straight to the floor or deep under water (JCT, BIRB, CT, CTR, BMT, XNY, BR).",
+   "proposed_at": "2026-10-21T07:00:03Z",
+   "status": "proposed",
+   "id": "fbc0224a71",
+   "test": {
+    "first": {
+     "n": 72,
+     "matched": 5,
+     "mean_matched": 0.0441,
+     "mean_rest": 0.0937,
+     "p_random": 0.395,
+     "floors_matched": 0
+    },
+    "second": {
+     "n": 73,
+     "matched": 12,
+     "mean_matched": -0.2598,
+     "mean_rest": -0.0263,
+     "p_random": 0.0,
+     "floors_matched": 7
+    },
+    "all": {
+     "n": 145,
+     "matched": 17,
+     "mean_matched": -0.1704,
+     "mean_rest": 0.0365,
+     "p_random": 0.003,
+     "floors_matched": 7
+    },
+    "passed": false,
+    "why": "подходящих 17 < 20",
+    "split_at": "2026-10-19 12:00"
+   },
+   "tested_at": "2026-10-21T07:00:03Z"
+  },
+  {
+   "text": "Skip high-leverage shorts on names where the book already hit the floor in a large share of past positions.",
+   "when": [
+    {
+     "field": "book_rules.lev",
+     "op": ">=",
+     "value": 10.0
+    },
+    {
+     "field": "derived.name_floor_share",
+     "op": ">=",
+     "value": 0.35
+    }
+   ],
+   "do": "skip",
+   "why": "A high floor share marks names whose intraday swings routinely exceed the floor distance. At 10x or more the floor is close, so the same volatility turns into repeated floor exits (APR, JCT).",
+   "proposed_at": "2026-10-21T07:00:03Z",
+   "status": "proposed",
+   "id": "78cbd0fd97",
+   "test": {
+    "first": {
+     "n": 72,
+     "matched": 4,
+     "mean_matched": -0.2515,
+     "mean_rest": 0.1104,
+     "p_random": 0.005,
+     "floors_matched": 3
+    },
+    "second": {
+     "n": 73,
+     "matched": 10,
+     "mean_matched": -0.3979,
+     "mean_rest": -0.0118,
+     "p_random": 0.0,
+     "floors_matched": 10
+    },
+    "all": {
+     "n": 145,
+     "matched": 14,
+     "mean_matched": -0.3561,
+     "mean_rest": 0.0516,
+     "p_random": 0.0,
+     "floors_matched": 13
+    },
+    "passed": false,
+    "why": "подходящих 14 < 20",
+    "split_at": "2026-10-19 12:00"
+   },
+   "tested_at": "2026-10-21T07:00:03Z"
+  },
+  {
+   "text": "Skip shorts where the Bybit crowd swung sharply short in 24h while price is still rising over 4h.",
+   "when": [
+    {
+     "field": "derived.crowd_bybit_shift_24h",
+     "op": "<=",
+     "value": -0.15
+    },
+    {
+     "field": "price_moves_to_decision.4h_pct",
+     "op": ">=",
+     "value": 3.0
+    }
+   ],
+   "do": "skip",
+   "why": "Shorts that pile in during a live up-move are squeeze fuel. Their forced covering extends the move against a new short before any reversion.",
+   "proposed_at": "2026-10-21T07:00:03Z",
+   "status": "proposed",
+   "id": "047ce777b8",
+   "test": {
+    "first": {
+     "n": 72,
+     "matched": 1,
+     "mean_matched": 0.2028,
+     "mean_rest": 0.0887,
+     "p_random": 0.812,
+     "floors_matched": 0
+    },
+    "second": {
+     "n": 73,
+     "matched": 11,
+     "mean_matched": -0.2886,
+     "mean_rest": -0.0249,
+     "p_random": 0.0,
+     "floors_matched": 8
+    },
+    "all": {
+     "n": 145,
+     "matched": 12,
+     "mean_matched": -0.2477,
+     "mean_rest": 0.0357,
+     "p_random": 0.0,
+     "floors_matched": 8
+    },
+    "passed": false,
+    "why": "подходящих 12 < 20",
+    "split_at": "2026-10-19 12:00"
+   },
+   "tested_at": "2026-10-21T07:00:03Z"
+  },
+  {
+   "text": "Skip 20x+ shorts on names already up 15% or more in 24h.",
+   "when": [
+    {
+     "field": "book_rules.lev",
+     "op": ">=",
+     "value": 20.0
+    },
+    {
+     "field": "price_moves_to_decision.24h_pct",
+     "op": ">=",
+     "value": 15.0
+    }
+   ],
+   "do": "skip",
+   "why": "Names after big 24h runs routinely swing 8-10% within hours. At 20x the floor sits inside that noise, so the floor tends to be hit before the fade arrives.",
+   "proposed_at": "2026-10-21T07:00:03Z",
+   "status": "proposed",
+   "id": "3f7e6fa534",
+   "test": {
+    "first": {
+     "n": 72,
+     "matched": 5,
+     "mean_matched": 0.1957,
+     "mean_rest": 0.0824,
+     "p_random": 0.82,
+     "floors_matched": 1
+    },
+    "second": {
+     "n": 73,
+     "matched": 15,
+     "mean_matched": -0.3508,
+     "mean_rest": 0.0093,
+     "p_random": 0.0,
+     "floors_matched": 14
+    },
+    "all": {
+     "n": 145,
+     "matched": 20,
+     "mean_matched": -0.2142,
+     "mean_rest": 0.0485,
+     "p_random": 0.0,
+     "floors_matched": 15
+    },
+    "passed": false,
+    "why": "первая половина не держит",
+    "split_at": "2026-10-19 12:00"
+   },
+   "tested_at": "2026-10-21T07:00:03Z"
+  },
+  {
+   "text": "Skip 20x+ shorts on names whose last 4h is up 5% or more.",
+   "when": [
+    {
+     "field": "book_rules.lev",
+     "op": ">=",
+     "value": 20.0
+    },
+    {
+     "field": "price_moves_to_decision.4h_pct",
+     "op": ">=",
+     "value": 5.0
+    }
+   ],
+   "do": "skip",
+   "why": "Fresh short-term momentum combined with a close floor gives little room for the first adverse leg. That leg tends to hit the floor before the mean-reversion thesis can play out.",
+   "proposed_at": "2026-10-21T07:00:03Z",
+   "status": "proposed",
+   "id": "08538ebbcd",
+   "test": {
+    "first": {
+     "n": 72,
+     "matched": 5,
+     "mean_matched": 0.1487,
+     "mean_rest": 0.0859,
+     "p_random": 0.715,
+     "floors_matched": 2
+    },
+    "second": {
+     "n": 73,
+     "matched": 10,
+     "mean_matched": -0.3964,
+     "mean_rest": -0.012,
+     "p_random": 0.0,
+     "floors_matched": 10
+    },
+    "all": {
+     "n": 145,
+     "matched": 15,
+     "mean_matched": -0.2147,
+     "mean_rest": 0.0384,
+     "p_random": 0.0,
+     "floors_matched": 12
+    },
+    "passed": false,
+    "why": "подходящих 15 < 20",
+    "split_at": "2026-10-19 12:00"
+   },
+   "tested_at": "2026-10-21T07:00:03Z"
+  },
+  {
+   "text": "Skip shorts when the 1h bounce is strong (3% or more) and Bybit longs are below 0.45.",
+   "when": [
+    {
+     "field": "price_moves_to_decision.1h_pct",
+     "op": ">=",
+     "value": 3.0
+    },
+    {
+     "field": "crowd_positioning.bybit.now",
+     "op": "<",
+     "value": 0.45
+    }
+   ],
+   "do": "skip",
+   "why": "A sharp up-hour against a short-heavy crowd signals covering has begun. Squeezes then tend to extend, producing deep adverse excursions (BTW, Q, JCT).",
+   "proposed_at": "2026-10-21T07:00:03Z",
+   "status": "proposed",
+   "id": "200eead5fb",
+   "test": {
+    "first": {
+     "n": 72,
+     "matched": 2,
+     "mean_matched": 0.0239,
+     "mean_rest": 0.0922,
+     "p_random": 0.41,
+     "floors_matched": 0
+    },
+    "second": {
+     "n": 73,
+     "matched": 8,
+     "mean_matched": -0.1365,
+     "mean_rest": -0.0558,
+     "p_random": 0.135,
+     "floors_matched": 3
+    },
+    "all": {
+     "n": 145,
+     "matched": 10,
+     "mean_matched": -0.1044,
+     "mean_rest": 0.0209,
+     "p_random": 0.072,
+     "floors_matched": 3
+    },
+    "passed": false,
+    "why": "подходящих 10 < 20",
+    "split_at": "2026-10-19 12:00"
+   },
+   "tested_at": "2026-10-21T07:00:03Z"
+  }
+ ],
+ "rejected": [],
+ "revoked": [],
+ "updated": "2026-10-21T07:00:03Z"
+}
