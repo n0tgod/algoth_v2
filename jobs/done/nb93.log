@@ -1,0 +1,34 @@
+== задание nb93 ==
+строка: run research/ai_gate/model_books.py --tick --dry
+начало: 2026-10-21T08:21:29Z
+запускаю: .venv/bin/python research/ai_gate/model_books.py --tick --dry
+m01: новых решений о часе входа 1
+m02: новых решений о часе входа 0
+книг ТВХ 2, сигналов после рождения 6, новых решений 1, к реплею 1
+пол капитуляции 0.5 — линейки optimal_s
+коротких ног (край ≥ 33) 1: rr2 0, lo 1, any 1; символов 1
+окно решений 2026-10-21 08:00 … 2026-10-21 08:00 UTC (0 суток, дат 1)
+память: 135.8 МБ (ноги загружены; предел 1200)
+Traceback (most recent call last):
+  File "/root/algoth_v2/research/ai_gate/model_books.py", line 576, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/root/algoth_v2/research/ai_gate/model_books.py", line 553, in main
+    s = tick(log=log, dry=a.dry)
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/ai_gate/model_books.py", line 359, in tick
+    out, _tail = S.replay_cells(uniq, [S.CELL], log=log, rulers=[rk])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/run_short.py", line 221, in replay_cells
+    part = D10.collect(legs=need, cells=list(cells), rich=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_ladder/run_d10.py", line 481, in collect
+    bars = get(sym, a0, b1)
+           ^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/tail.py", line 159, in bars
+    tape = SW.read_bars(self.root, sym, t0, t1, cache=self.cache)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/s9_sweep/sweep.py", line 248, in read_bars
+    from collect import minute_bars
+ImportError: cannot import name 'minute_bars' from 'collect' (/root/algoth_v2/research/news/collect.py)
+конец: 2026-10-21T08:21:32Z, код 1

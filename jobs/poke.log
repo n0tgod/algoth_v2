@@ -2647,3 +2647,6 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792569035 ==
 [2026-10-21T07:50:38Z] задание nb92 запущено: research/ai_gate/model_books.py
+
+== сигнал 1792570887 ==
+[2026-10-21T08:21:29Z] задание nb93 запущено: research/ai_gate/model_books.py
