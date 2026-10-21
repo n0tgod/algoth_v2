@@ -32,3 +32,20 @@ Traceback (most recent call last):
     from collect import minute_bars
 ImportError: cannot import name 'minute_bars' from 'collect' (/root/algoth_v2/research/news/collect.py)
 конец: 2026-10-21T08:21:32Z, код 1
+ВНИМАНИЕ: 2026-10-21T08:21:32Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nb93.done                      |   1 +
+ jobs/done/nb93.log                       |  34 ++
+ jobs/poke.log                            |   3 +
+ jobs/queue-state.md                      |   2 +-
+ research/dca_paper/out/DCA-pair.md       |  26 +-
+ research/dca_paper/out/DCA-paper.json    | 872 +++++++++++++++----------------
+ research/dca_paper/out/DCA-paper.md      |  26 +-
+ research/dca_paper/out/watch/latest.json |   2 +-
+ research/dca_paper/out/watch/pair.json   |   2 +-
+ research/dca_paper/out/watch/sit.json    |   2 +-
+ 10 files changed, 504 insertions(+), 466 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   b760192bc..9cc24861f  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
