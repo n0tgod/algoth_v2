@@ -130,7 +130,7 @@
 - `peek_dossier.py` · 50 строк — Одно досье ветки ai_news из записи (только чтение, 20.10): какие поля и в каком виде видит судья — для катало…
 - `trade_path.py` · 134 строк — Путь цены ВНУТРИ сделки числами (спека 19 §11.2, этап U0).
 - тесты: `test_entry_search.py` (54), `test_entry_shift.py` (93), `test_gate_books.py` (82), `test_gate_run.py` (208), `test_judge.py` (137), `test_lessons.py` (103), `test_path_review.py` (135), `test_patterns.py` (55), `test_trade_path.py` (53)
-- отчёты в `out/` (4): AI-dry-hour.md, AI-gate-books.md, ENTRY-SHIFT.md, LESSONS.md
+- отчёты в `out/` (5): AI-dry-hour.md, AI-gate-books.md, ENTRY-SEARCH.md, ENTRY-SHIFT.md, LESSONS.md
 
 ## research/asset_groups — A3 — группы активов, ликвидность, кандидаты пар
 
