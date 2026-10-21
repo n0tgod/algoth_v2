@@ -1,6 +1,6 @@
 # Состояние рынка (спека 19 §3b)
 
-Срез 2026-10-21T05:13:58Z, прогон 836.3 с, строк записано 2137 (из них докачка 0).
+Срез 2026-10-21T06:14:08Z, прогон 845.8 с, строк записано 2149 (из них докачка 0).
 
 | источник | имён получено | из | % |
 |---|---|---|---|
@@ -8,9 +8,9 @@
 | binance | 460 | 460 | 100.0 |
 | okx | 439 | 443 | 99.1 |
 
-Рынок: fng 63, fng_label Greed, btc_dom 59.52, mcap_usd 2794955664858, mcap_24h_pct -1.6, insurance_usdt 530765363, stables_usd 304326229217, trending ['PEARL', 'PENGU', 'CARDS', 'NEAR', 'QTC', 'PUMP', 'AERO', 'BTC', 'ZEC', 'SUI', 'PYBOBO', 'PEPE', 'MON', 'GRASS', 'POL']
+Рынок: fng 63, fng_label Greed, btc_dom 59.52, mcap_usd 2785328594143, mcap_24h_pct -1.46, insurance_usdt 530765366, stables_usd 304266452785, trending ['PEARL', 'PENGU', 'CARDS', 'QTC', 'TIA', 'CVX', 'ZEC', 'AERO', 'SUI', 'UNI', 'NEAR', 'ETH', 'TAO', 'ONDO', 'DOOD']
 
-Толпа в лонге сильнее всего: SKHYNIXUSDT 0.87, MELANIAUSDT 0.84, BEUSDT 0.84, APPSTOCKUSDT 0.83, MNTUSDT 0.83, ONDOUSDT 0.83, GRAMUSDT 0.82, LABUSDT 0.82, INTCUSDT 0.81, GOOGLUSDT 0.81
-Толпа в шорте сильнее всего: JCTUSDT 0.20, HMSTRUSDT 0.30, POPMARTUSDT 0.35, DOODUSDT 0.36, SOSOUSDT 0.37, BITOUSDT 0.38, BTWUSDT 0.39, TWSTUSDT 0.39, ICNTUSDT 0.40, CTRUSDT 0.40
+Толпа в лонге сильнее всего: SKHYNIXUSDT 0.86, MELANIAUSDT 0.84, BEUSDT 0.84, APPSTOCKUSDT 0.83, MNTUSDT 0.83, ONDOUSDT 0.83, GRAMUSDT 0.82, LABUSDT 0.82, XAGUSDT 0.81, INTCUSDT 0.81
+Толпа в шорте сильнее всего: JCTUSDT 0.22, HMSTRUSDT 0.31, POPMARTUSDT 0.34, SOSOUSDT 0.35, DOODUSDT 0.37, BITOUSDT 0.37, BTWUSDT 0.37, ICNTUSDT 0.40, TWSTUSDT 0.40, BZUSDT 0.40
 
 Событий за сутки: 7.
