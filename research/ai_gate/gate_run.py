@@ -64,6 +64,7 @@ TRAIN_WAIT_STALE_S = 3600        # флаг старше часа — застр
 NEWS_STALE_S = 45 * 60
 MS_STALE_S = 2 * 3600
 H = 3600
+MODEL_REGISTRY = None              # реестр книг модели (§12); None — `model_books.REGISTRY`
 
 
 def _peak_mb():
@@ -188,6 +189,54 @@ def write_rows(rows, full=None):
                 f.write(json.dumps(x, ensure_ascii=False) + "\n")
 
 
+def model_pass(recs, dec_by, dossier_of, now, out_rows, full, build, log=print, registry=None):
+    """Решения книг-фильтров модели (спека 19 §12.1) по входам Depth Short.
+
+    Правило книги — над числовыми полями досье на момент входа (те же поля,
+    что у уроков: `lessons.fields_of`). Повтор по имени, которое книга уже
+    держит, — `held` тем же правилом, что у веток судьи. Поля нет —
+    «открыть» со словами, какого поля не было (как судья без решения)."""
+    import lessons as LS                                       # noqa: E402
+    import model_books as MBK                                  # noqa: E402
+    reg = MBK.load(registry or MODEL_REGISTRY)
+    mine = [b for b in reg["books"] if b.get("kind") == "skip"]
+    if not mine:
+        return 0
+    n = 0
+    order = sorted(recs, key=lambda x: (int(float(x["at"])), -float(x.get("fwd") or 0)))
+    for b in mine:
+        bid = b["id"]
+        dec = dec_by.setdefault(bid, {})
+        hi = float(b["retired_at"]) if b.get("retired_at") else None
+        for r in order:
+            at = float(r["at"])
+            k = key_of("optimal_h", r)
+            if at < float(b["born_at"]) or (hi is not None and at >= hi) or now - at > LATE_H * H or k in dec:
+                continue
+            row = {"t": now, "kind": "entry", "branch": bid, "key": k, "book": "optimal_h", "sym": r["sym"],
+                   "side": "short", "at": at, "late_min": round((now - at) / 60, 1), "by": "rule", "cost_usd": 0.0}
+            hb = holder_of(recs, "optimal_h", dec, {}, r)
+            if hb is not None:
+                row.update(decision="held", held_by=hb)
+            else:
+                d = dossier_of.get(k)
+                if d is None:
+                    kw, nw, _cov = build(r)
+                    d = J.dossier("entry", r, "optimal_h", "short", at, news=nw, **kw)
+                    dossier_of[k] = d
+                f = LS.fields_of(d)
+                miss = [c["field"] for c in b["rule"]["when"] if f.get(c["field"]) is None]
+                row.update(decision="open" if miss or not MBK.matches(b["rule"], f) else "skip",
+                           no_verdict=(f"нет поля: {', '.join(miss)}" if miss else None),
+                           values={c["field"]: f.get(c["field"]) for c in b["rule"]["when"]})
+            dec[k] = row["decision"]
+            out_rows.append(row)
+            full.append(row)
+            n += 1
+        log(f"книга модели {bid}: решений в проходе {sum(1 for x in out_rows if x.get('branch') == bid)}")
+    return n
+
+
 def candidates(log):
     """Позиции книг Depth так, как они живут (шорты — после возраста и охраны)."""
     import run_pair as RPair                                   # noqa: E402
@@ -249,6 +298,7 @@ def run(log=print, client=None, dry=False, now=None):
     dec_by = {b: dict(v) for b, v in GB.entry_index(prev).items()}
     closes_news = GB.close_index(prev)
     stats["held"] = 0
+    dossier_of = {}
     learn_cs, learn_lessons = None, None
     for book, side, r, k in pick_new(cands, judged, now):
         recs = books[book]
@@ -292,6 +342,8 @@ def run(log=print, client=None, dry=False, now=None):
                 crowd_now = ((kw.get("crowd") or {}).get("bybit") or {}).get("now")
                 d = dict(d, similar_past_cases=LS.similar(learn_cs, r["sym"], side, crowd_now, float(r["at"])),
                          accepted_lessons=learn_lessons or [])
+            if branch == "ai_news":
+                dossier_of[k] = d
             res = call("entry", d, learn=(branch == "ai_learn"))
             row = {"t": now, "kind": "entry", "branch": branch, "key": k, "book": book, "sym": r["sym"],
                    "side": side, "at": float(r["at"]), "late_min": round((now - float(r["at"])) / 60, 1),
@@ -308,6 +360,11 @@ def run(log=print, client=None, dry=False, now=None):
         stats["entry_new"] += 1
         log(f"вход {k}: " + ", ".join(f"{x['branch']}={x['decision']}{'(' + x['no_verdict'] + ')' if x.get('no_verdict') else ''}"
                                        for x in out_rows if x["key"] == k))
+
+    # --- книги-фильтры модели (§12.1): решает правило, модель не спрашивается
+    stats["model_rows"] = model_pass(books.get("optimal_h") or [], dec_by, dossier_of, now, out_rows, full,
+                                     lambda r: CTX.build("entry", r, "optimal_h", "short", now, books["optimal_h"],
+                                                         state, market_rows, events, news), log)
 
     # --- сторож ------------------------------------------------------------
     watch = {}

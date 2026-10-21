@@ -20,6 +20,7 @@ import glob
 import json
 import os
 import re
+import time
 
 RULES = 7                        # версия правил книг; смена — новая запись
 # Момент (UTC), с которого действует ЭТА версия правил. Нужен потому, что
@@ -59,10 +60,11 @@ def is_current(row):
     except (TypeError, ValueError):
         return False
     rk = ruler_of(row)
-    # ветвь судьи спеки 19 стартует с нуля: её строки раньше старта — не её
-    if rk in AI_BRANCHES:
+    # ветвь судьи спеки 19 и книга модели (§12) стартуют с нуля: их строки
+    # раньше старта — не их
+    if rk in START_TS:
         try:
-            if float(row.get("at", 0)) < AI_START_TS:
+            if float(row.get("at", 0)) < START_TS[rk]:
                 return False
         except (TypeError, ValueError):
             return False
@@ -272,7 +274,7 @@ def mode_of(key):
     """Режим по ключу книги: без приставки общего счёта, хвоста короткой
     и суффикса ветви правил (`_g<порог>` или `_g<порог>i<обратный>`,
     спека 18; `_ai` — ветвь судьи спеки 19)."""
-    k = re.sub(r"(?:_g\d+(?:i\d+)?|_ai)$", "", str(key))
+    k = re.sub(r"(?:_g\d+(?:i\d+)?|_ai|_m\d+)$", "", str(key))
     if k.startswith("pair_"):
         k = k[5:]
     for suf in ("_h", "_s"):
@@ -286,6 +288,8 @@ def title_en(key):
     судьи спеки 19 — имя её корня в дереве («AI judge»), не режима плеча."""
     if str(key).endswith("_ai"):
         return "AI judge"
+    if re.search(r"_m\d+$", str(key)):
+        return "AI lab"
     return MODE_EN.get(mode_of(key), str(key))
 
 
@@ -885,6 +889,76 @@ def is_ai(key):
     return key in AI_BRANCHES
 
 
+# Книги, которые заводит модель (спека 19 §12, решение владельца 21.10):
+# основная книга Depth Short + правило модели — фильтр входов (`skip`) или
+# своя ТВХ (`entry`). Реестр — `research/ai_gate/out/model_books.json`,
+# его пишет только `model_books.py`; здесь он читается на импорте, чтобы
+# книги шли тем же путём, что сестры (журнал семейства, касса, дерево).
+# Отдельный корень дерева «AI lab»; ТОЛЬКО БУМАГА (API отклоняет подписку,
+# живой исполнитель их не знает); старт с нуля в час рождения.
+MODEL_REGISTRY = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                              "ai_gate", "out", "model_books.json")
+MODEL_BASE = "optimal_h"
+MODEL_ROOT = "lab"
+MODEL_ROOT_EN = "AI lab"
+MODEL_KEY_RE = re.compile(r"_m\d+$")
+MODEL_BOOKS = {}       # ключ книги → запись реестра
+START_TS = {k: AI_START_TS for k in AI_BRANCHES}   # ключ → момент старта с нуля
+
+
+def model_rule_text(b):
+    """Правило модельной книги словами кода: условия и окно."""
+    w = " и ".join(f"{c['field']} {c['op']} {c['value']:g}" for c in (b.get("rule") or {}).get("when") or [])
+    return w + (f", окно {b['rule']['W']} ч" if b.get("kind") == "entry" else "")
+
+
+def _register_model_books(path=None):
+    try:
+        with open(path or MODEL_REGISTRY, encoding="utf-8") as f:
+            reg = json.load(f)
+    except (OSError, ValueError):
+        return
+    for b in reg.get("books") or []:
+        k = b.get("key")
+        if not k or not MODEL_KEY_RE.search(k) or k in RULERS or MODEL_BASE not in RULERS:
+            continue
+        MODEL_BOOKS[k] = b
+        START_TS[k] = float(b["born_at"])
+        kind_ru = "вход по правилу" if b.get("kind") == "entry" else "фильтр входов"
+        kind_en = "own entry rule" if b.get("kind") == "entry" else "entry filter"
+        gone = " · отставлена" if b.get("status") == "retired" else ""
+        gone_en = " · retired" if b.get("status") == "retired" else ""
+        BRANCHES[k] = {"base": MODEL_BASE, "rule": "model", "value": float(str(b["id"])[1:]), "default": False}
+        RULERS[k] = dict(RULERS[MODEL_BASE])
+        RULERS[k]["title"] = f"{RULERS[MODEL_BASE]['title']} · модель {b['id']}{gone}"
+        RULERS[k]["title_en"] = MODEL_ROOT_EN
+        RULERS[k]["plain_en_short"] = f"Depth short; {kind_en} found by the model · paper only"
+        RULERS[k]["branch"] = {"base": MODEL_BASE, "rule": "model", "value": BRANCHES[k]["value"], "default": False,
+                               "title": f"{b['id']} · {kind_ru}{gone}", "title_en": f"{b['id']} · {kind_en}{gone_en}"}
+        rule = model_rule_text(b)
+        RULERS[k]["plain"] = (f"Книга модели {b['id']} (спека 19 §12): Depth Short, {kind_ru}: {rule}. "
+                              f"Механизм словами модели: {b.get('why') or '—'} Родилась "
+                              f"{time.strftime('%Y-%m-%d %H:%M', time.gmtime(float(b['born_at'])))} UTC с нуля; "
+                              "только бумага.")
+        RULERS[k]["plain_en"] = (f"Model book {b['id']} (spec 19 §12): Depth short, {kind_en}: {rule}. "
+                                 f"Mechanism in the model's words: {b.get('why') or '—'} Started from zero at "
+                                 f"{time.strftime('%Y-%m-%d %H:%M', time.gmtime(float(b['born_at'])))} UTC; paper only.")
+        RULER_SINCE[k] = time.strftime("%Y-%m-%d", time.gmtime(float(b["born_at"])))
+        for _m in (PEAKS, SHORT_SHARE, SHARE_SINCE, MIN_AGE_DAYS, FLOOR_FRAC_BY_BOOK,
+                   WAVE_GUARD_PCT, WAVE_INV_GUARD_PCT, PAIR_SHORT_GATE):
+            if MODEL_BASE in _m:
+                _m[k] = _m[MODEL_BASE]
+        H24_ORDER.append(k)
+
+
+_register_model_books()
+
+
+def is_model(key):
+    """Книга ли это, заведённая моделью (§12)."""
+    return key in MODEL_BOOKS
+
+
 def base_of(key):
     """Основная книга ветви; у книги без ветви — она сама."""
     return ((RULERS.get(key) or {}).get("branch") or {}).get("base") or str(key)
@@ -1002,6 +1076,8 @@ def family_since(key):
 
 def root_of(key):
     """Корень книги в дереве: режим плеча, у ветви судьи — свой корень `ai`."""
+    if key in MODEL_BOOKS:
+        return MODEL_ROOT
     return AI_ROOT if key in AI_BRANCHES else mode_of(key)
 
 
@@ -1021,14 +1097,15 @@ def tree():
     """Дерево книг для каталога: режим → сторона → ветви с ключами книг.
     Готовое на сервере, чтобы читатель не собирал его из суффиксов."""
     out = []
-    for mode in ("safe", "optimal", "aggr", AI_ROOT):
+    for mode in ("safe", "optimal", "aggr", AI_ROOT) + ((MODEL_ROOT,) if MODEL_BOOKS else ()):
         sides = []
         for side, fam in (("long", "sit"), ("short", "h24"), ("both", "pair")):
             keys = [k for k in order_of(fam) if root_of(k) == mode]
             default = next((k for k in keys if not is_branch(k)), keys[0] if keys else None)
             sides.append({"side": side, "default": default,
                           "branches": [address_of(k) for k in keys]})
-        out.append({"mode": mode, "mode_en": MODE_EN.get(mode, AI_ROOT_EN), "sides": sides})
+        out.append({"mode": mode, "mode_en": MODE_EN.get(mode) or {MODEL_ROOT: MODEL_ROOT_EN}.get(mode, AI_ROOT_EN),
+                    "sides": sides})
     return out
 
 

@@ -276,6 +276,24 @@ def search(F, O, names, at, extra=(), seed=0):
     return f1, f2
 
 
+def trig_stats(O, ks, W, rng):
+    """Порог рождения книги ТВХ (§12.2) на всём окне: сработавшие сигналы —
+    средний в час правила, у тех же в час сигнала (вход книги) и доля
+    случайных часов окна, не хуже правила (400 зёрен)."""
+    T = [i for i in range(len(ks)) if ks[i] >= 0 and not np.isnan(O[i, ks[i]])]
+    if not T:
+        return {"trig": 0, "rule_mean": None, "book_mean": None, "p_random_hour": None}
+    rule_mean = float(np.mean([O[i, ks[i]] for i in T]))
+    b = [O[i, 0] for i in T if not np.isnan(O[i, 0])]
+    ge = 0
+    for _ in range(NULL_DRAWS):
+        v = [O[i, rng.randint(0, W)] for i in T]
+        v = [0.0 if np.isnan(x) else float(x) for x in v]
+        ge += float(np.mean(v)) >= rule_mean
+    return {"trig": len(T), "rule_mean": round(rule_mean, 5), "book_mean": round(float(np.mean(b)), 5) if b else None,
+            "p_random_hour": round(ge / NULL_DRAWS, 4)}
+
+
 def model_scores(F, O, names, at, extra, seed=0):
     """Каждое правило модели на каждой половине: прирост к книге на сигнал и случайный час.
 
@@ -297,6 +315,7 @@ def model_scores(F, O, names, at, extra, seed=0):
             base, _ = score(O, np.zeros(len(O), dtype=int), idx)
             p = null_p(O, ks, idx, int(rule["W"]), m, random.Random(seed + 101 + 2 * n + h)) if trig else None
             row["halves"].append({"gain": None if m is None else round(m - base, 5), "trig": trig, "p_random_hour": p})
+        row["all"] = trig_stats(O, ks, int(rule["W"]), random.Random(seed + 7))
         out.append(row)
     return out
 
@@ -353,8 +372,6 @@ def run(log=print, since=None, now=None, legs=None, table=None, seed=0):
 def make_table(log, since, now, legs=None):
     """Семь реплеев (вход через k = 0…6 ч) и параметры на каждом часе."""
     import run_short as S                                     # noqa: E402
-    import context as CTX                                     # noqa: E402
-    import wave as WV                                         # noqa: E402
     if legs is None:
         legs = S.legs(log=lambda *a: None)
     lo = since or (now - 30 * 86400)
@@ -377,22 +394,7 @@ def make_table(log, since, now, legs=None):
                 d[i] = float(r.get("pnl_net", r.get("pnl", 0.0)))
         out_by_k.append(d)
         log(f"  k={k}: позиций {len(d)} ({time.time() - t1:.0f} с)")
-    # история имени — по записи книги до сигнала
-    cache, _ = S.read_cache(log=lambda *a: None)
-    book = sorted((r for (rk, _s, _a), r in cache.items() if rk == E.RULER), key=lambda r: float(r["at"]))
-    by_sym = {}
-    for r in book:
-        by_sym.setdefault(r["sym"], []).append(r)
-
-    def hist(sym, at):
-        prev = [r for r in by_sym.get(sym, []) if float(r["at"]) < at]
-        return {"n": len(prev), "floors": sum(1 for r in prev if r.get("exit") == "пол")}
-    syms = sorted({g["sym"] for g in legs} | {"BTCUSDT"})
-    state, market_rows, _ev = CTX.load_state(days=45, syms=syms)
-    hours = WV.Hours()
-    mkt = WV.Market(hours=hours)
-    names, F, O = build_table(legs, out_by_k, lambda g, k: features(
-        g, k, hours, mkt, state, market_rows, hist(g["sym"], float(g["at"])), CTX.crowd_of, CTX.at_or_before))
+    names, F, O = build_table(legs, out_by_k, feature_env(legs, days=45))
     os.makedirs(os.path.dirname(TABLE), exist_ok=True)
     np.savez_compressed(TABLE, F=F, O=O, at=np.array([float(g["at"]) for g in legs]), names=np.array(names))
     return {"names": names, "F": F, "O": O, "at": np.array([float(g["at"]) for g in legs]), "n": len(legs)}
@@ -405,6 +407,31 @@ def load_table(path=None):
     except OSError as e:
         return {"error": f"таблицы нет ({type(e).__name__}) — нужен полный прогон"}
     return {"names": [str(x) for x in z["names"]], "F": z["F"], "O": z["O"], "at": z["at"], "n": len(z["at"])}
+
+
+def feature_env(legs, days=45):
+    """→ feat(g, k): параметры состояния на час k после сигнала — одним
+    окружением на поиск (§11.8) и книги ТВХ модели вперёд (§12)."""
+    import run_short as S                                     # noqa: E402
+    import context as CTX                                     # noqa: E402
+    import wave as WV                                         # noqa: E402
+    # история имени — по записи книги до сигнала
+    cache, _ = S.read_cache(log=lambda *a: None)
+    book = sorted((r for (rk, _s, _a), r in cache.items() if rk == E.RULER), key=lambda r: float(r["at"]))
+    by_sym = {}
+    for r in book:
+        by_sym.setdefault(r["sym"], []).append(r)
+    del cache, book
+
+    def hist(sym, at):
+        prev = [r for r in by_sym.get(sym, []) if float(r["at"]) < at]
+        return {"n": len(prev), "floors": sum(1 for r in prev if r.get("exit") == "пол")}
+    syms = sorted({g["sym"] for g in legs} | {"BTCUSDT"})
+    state, market_rows, _ev = CTX.load_state(days=days, syms=syms)
+    hours = WV.Hours()
+    mkt = WV.Market(hours=hours)
+    return lambda g, k: features(g, k, hours, mkt, state, market_rows, hist(g["sym"], float(g["at"])),
+                                 CTX.crowd_of, CTX.at_or_before)
 
 
 def report(r):

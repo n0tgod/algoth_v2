@@ -51,6 +51,7 @@ import run_d10 as D10                                         # noqa: E402
 import run_d11 as D11                                         # noqa: E402
 import tail as TL                                             # noqa: E402
 import ai_branch as AIB                                       # noqa: E402
+import model_branch as MBR                                    # noqa: E402
 import account_watch as AW                                    # noqa: E402
 
 # Ячейка сетки D10, которой торгует семейство: плечо забора, без доливов,
@@ -288,6 +289,17 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
     for (rk, _sym, _at), r in cache.items():
         by_ruler.setdefault(rk, []).append(r)
     packed = {bk: list(by_ruler.get(rk) or []) for bk, rk in BOOKS.items()}
+    # книги ТВХ модели (спека 19 §12) — записи своего реплея сдвинутых
+    # входов (`model_books.tick`), не линейки основной книги
+    model = {}
+    mcache = None
+    for bk in list(packed):
+        b = R.MODEL_BOOKS.get(bk)
+        if b and b.get("kind") == "entry":
+            if mcache is None:
+                mcache, _mwhy = MBR.read_cache(log=log)
+            packed[bk], why = MBR.entry_recs(bk, cache=mcache, log=log)
+            model[bk] = {"kind": "entry", "positions": len(packed[bk]), "why": why}
     # ВОЗРАСТ ИМЕНИ на входе — правило книги с 2026-09-08 (решение
     # владельца «сделать такую же логику, как в общих»). Порог и доля
     # билета объявлены одной картой на все счета (`rules.MIN_AGE_DAYS`,
@@ -306,6 +318,10 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
         # судят ту же позицию, что основная книга
         if R.is_ai(bk):
             packed[bk], gates[bk] = AIB.apply(packed[bk], bk, log=log)
+        # книга-фильтр модели (§12) — после возраста и охраны, как судья
+        b = R.MODEL_BOOKS.get(bk)
+        if b and b.get("kind") == "skip":
+            packed[bk], model[bk] = MBR.apply_skip(packed[bk], bk, log=log)
     ph.mark("возраст и охрана")
     rows, cells, one, live = RP.build_rows(packed, now=now,
                                            keys=R.H24_ORDER, log=log)
@@ -318,7 +334,7 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
                      keys=R.H24_ORDER)
     ph.mark("свод")
     s.update({"family": "h24", "cells": cells, "one_name": one, "ages": ages,
-              "guards": guards, "ai_gate": gates,
+              "guards": guards, "ai_gate": gates, "model_books": model,
               "signal": {"book": "h24", "arms": list(ARMS), "cell": CELL[0],
                          "hold_h": R.H24_HOLD_H, "legs": len(legs_),
                          "gate": "край ≥ 33 б.п., отношение любое"},

@@ -183,7 +183,7 @@ def book_label(db, sub_id):
 
 def book_words(key):
     """«Sigma · long» из ключа книги — та же карта, что у правил (`rules.title_en`)."""
-    k = re.sub(r"(?:_g\d+(?:i\d+)?|_ai)$", "", str(key))       # суффикс ветви — до хвоста короткой
+    k = re.sub(r"(?:_g\d+(?:i\d+)?|_ai|_m\d+)$", "", str(key))   # суффикс ветви — до хвоста короткой
     side = "both" if k.startswith("pair_") else "short" if k.endswith("_h") else "long"
     return f"{rules().title_en(k)} · {side}"
 

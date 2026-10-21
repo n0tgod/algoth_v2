@@ -189,11 +189,13 @@ def test_ai_branch_is_paper_only_and_side_survives_suffix():
                                                "branch": {"base": "optimal_h", "rule": "ai", "value": 1.0,
                                                           "default": False, "title_en": "AI judge: entry + watcher"}})
             d["rulers"].append("optimal_ai")                       # запас: ключ без поля — по суффиксу
+            d["rulers"].append("optimal_h_m07")                    # книга модели (§12) — тоже по суффиксу
             return d
         app.dca = with_ai
         st, cells = app.strategies()
-        ai = [x for x in cells["cells"] if x["book"] in ("optimal_h_ai", "optimal_ai")]
-        assert ai and all(x["paper_only"] for x in ai)
+        ai = [x for x in cells["cells"] if x["book"] in ("optimal_h_ai", "optimal_ai", "optimal_h_m07")]
+        assert ai and all(x["paper_only"] for x in ai) and any(x["book"] == "optimal_h_m07" for x in ai)
+        assert {x["side"] for x in ai if x["book"] == "optimal_h_m07"} == {"short"}
         assert {x["side"] for x in ai if x["book"] == "optimal_h_ai"} == {"short"}, "суффикс ветви снят до хвоста короткой"
         assert {x["side"] for x in ai if x["book"] == "optimal_ai"} == {"long"}
         acc = _login(app)
@@ -201,7 +203,9 @@ def test_ai_branch_is_paper_only_and_side_survives_suffix():
         dep = next(x["deposit"] for x in ai if x["book"] == "optimal_h_ai")
         st, r = app.add_subscription(acc, k["key_id"], "optimal_h_ai", dep)
         assert st == 400 and "paper only" in r["error"], (st, r)
-    print("ok  ветвь судьи — только бумага: ячейка помечена, подписка отклонена словами; сторона по ключу с суффиксом")
+        st, r = app.add_subscription(acc, k["key_id"], "optimal_h_m07", dep)
+        assert st == 400 and "paper only" in r["error"], (st, r)
+    print("ok  ветвь судьи и книга модели — только бумага: ячейка помечена, подписка отклонена словами; сторона по ключу с суффиксом")
 
 
 def test_ai_log_for_operator_groups_entries_and_names_news():

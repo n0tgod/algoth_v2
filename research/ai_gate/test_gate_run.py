@@ -34,6 +34,7 @@ def setup(tmp, books, news=(), events=(), state=None):
     G.DECISIONS = os.path.join(tmp, "decisions"); G.RECORD = os.path.join(tmp, "record")
     G.WATCH = os.path.join(G.RECORD, "watch.json"); G.LATEST = os.path.join(tmp, "latest.json")
     G.TRAIN_WAIT = os.path.join(tmp, "train_wait.flag")
+    G.MODEL_REGISTRY = os.path.join(tmp, "model_books.json")      # книг модели в подделке нет
     G.NEWS_LATEST = os.path.join(tmp, "news.json"); G.MS_LATEST = os.path.join(tmp, "ms.json")
     for p in (G.NEWS_LATEST, G.MS_LATEST):
         open(p, "w").write("{}"); os.utime(p, (NOW - 60, NOW - 60))

@@ -42,7 +42,8 @@ def test_sisters_in_registry_inherit_maps_and_differ_only_by_guard():
             assert R.wave_guard_of(k) == (v or None), k
             assert R.family_of(k) == "pair" and R.side_of(k) == "both" and R.mode_of(k) == R.mode_of(pk)
             assert R.SHORT_SHARE[k] == R.SHORT_SHARE[pk] and R.MIN_AGE_DAYS[k] == R.MIN_AGE_DAYS[pk]
-    guard_h24 = [k for k in R.H24_ORDER if not R.is_ai(k)]
+    # книги модели (спека 19 §12) — не сестры охраны: их число живёт реестром
+    guard_h24 = [k for k in R.H24_ORDER if not R.is_ai(k) and not R.is_model(k)]
     assert len(guard_h24) == 15 and len([k for k in R.PAIR_ORDER if not R.is_ai(k)]) == 12
     assert [k for k in R.order_of("sit") if not R.is_ai(k)] == ["safe", "optimal", "aggr"]
     # длинные книги ветвей охраны не несут (ветвь судьи — своя, ниже)
@@ -60,9 +61,11 @@ def test_birthdays_versions_and_tree():
     row = {"rules": R.RULES, "book_rules": R.FAMILY_RULES["h24"], "ruler": "safe_h_g2"}
     assert R.is_current(row) and not R.is_current(dict(row, book_rules=5))
     t = R.tree()
-    assert [m["mode"] for m in t] == ["safe", "optimal", "aggr", "ai"], "судья — отдельный корень последним"
+    # корень книг модели (§12) — после судьи, когда реестр не пуст
+    assert [m["mode"] for m in t] == ["safe", "optimal", "aggr", "ai"] + (["lab"] if R.MODEL_BOOKS else []), \
+        "судья — отдельный корень последним из постоянных"
     guard_only = lambda xs: [x for x in xs if not R.is_ai(x["key"])]          # noqa: E731
-    for m in [x for x in t if x["mode"] != "ai"]:
+    for m in [x for x in t if x["mode"] not in ("ai", "lab")]:
         sides = {s["side"]: s for s in m["sides"]}
         assert set(sides) == {"long", "short", "both"}
         lb = guard_only(sides["long"]["branches"])
@@ -94,7 +97,8 @@ def test_short_cache_signature_ignores_sisters_and_books_map_feeds_them():
     assert sorted(sig["floor"]) == ["aggr_h", "optimal_h", "safe_h"], sig["floor"]
     assert sorted(sig["books"]) == ["optimal_s", "safe_s"]
     assert S.BOOKS["safe_h_g2"] == S.BOOKS["safe_h"] and S.BOOKS["aggr_h_g0"] == S.BOOKS["aggr_h"]
-    assert len(S.BOOKS) == 16 and len(S.BASE_BOOKS) == 3          # 15 ветвей охраны + ветвь судьи
+    # 15 ветвей охраны + ветвь судьи + книги модели (§12, число — реестром)
+    assert len(S.BOOKS) == 16 + len(R.MODEL_BOOKS) and len(S.BASE_BOOKS) == 3
     assert S.BOOKS["optimal_h_ai"] == S.BOOKS["optimal_h"], "ветвь судьи кормится линейкой основной книги"
     assert S.BOOKS["optimal_h_g4i2"] == S.BOOKS["optimal_h"]
     S.floor_groups()                       # сестры с полом основной книги не ломают группы

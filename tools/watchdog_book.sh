@@ -817,7 +817,50 @@ if ! pgrep -f "ai_gate/lessons.py" >/dev/null \
             nice -n 15 .venv/bin/python research/ai_gate/lessons.py \
                 >> $LESS_LOG 2>&1
             nice -n 15 .venv/bin/python research/ai_gate/entry_search.py \
+                >> $LESS_LOG 2>&1
+            nice -n 15 .venv/bin/python research/ai_gate/model_books.py \
                 >> $LESS_LOG 2>&1" &
+    fi
+fi
+
+# --- книги модели (спека 19 §12) -----------------------------------------
+# Раз в сутки в 08 UTC (сводка старше 20 ч): отставка по окну, рождение по
+# мягкому порогу из наблюдений недели, отчёт группой. Раз в час, минута
+# ≥ 10, при живых книгах ТВХ в реестре: час входа по условию и реплей
+# сдвинутых входов (отметка тика старше 55 мин). Идущий не дублируется;
+# свежий флаг обучения — не стартует. Модели не зовёт.
+MBK_LATEST=research/ai_gate/out/model_books_latest.json
+MBK_REG=research/ai_gate/out/model_books.json
+MBK_TICK=research/ai_gate/out/record/model_tick.json
+MBK_LOG=research/ai_gate/out/model_books.log
+if ! pgrep -f "ai_gate/model_books.py" >/dev/null \
+   && { [ ! -f research/s8_loop/out/train_wait.flag ] \
+        || [ -n "$(find research/s8_loop/out/train_wait.flag -mmin +60 2>/dev/null)" ]; }; then
+    mb_age=999999999
+    if [ -f "$MBK_LATEST" ]; then
+        mb_ts=$(date -u -r "$MBK_LATEST" +%s 2>/dev/null || echo 0)
+        [ "$mb_ts" -gt 0 ] && mb_age=$(( $(date -u +%s) - mb_ts ))
+    fi
+    mt_age=999999999
+    if [ -f "$MBK_TICK" ]; then
+        mt_ts=$(date -u -r "$MBK_TICK" +%s 2>/dev/null || echo 0)
+        [ "$mt_ts" -gt 0 ] && mt_age=$(( $(date -u +%s) - mt_ts ))
+    fi
+    mb_hh=$(date -u +%H)
+    mb_mm=$(date -u +%M | sed 's/^0//')
+    if [ "$mb_hh" = "08" ] && [ "$mb_age" -gt 72000 ]; then
+        mkdir -p "$(dirname "$MBK_LOG")"
+        echo "[$(now)] книги модели: сводка ${mb_age} с назад — отставка, рождение, отчёт"
+        setsid nohup bash -c "
+            nice -n 15 .venv/bin/python research/ai_gate/model_books.py \
+                >> $MBK_LOG 2>&1" &
+    elif [ "${mb_mm:-0}" -ge 10 ] && [ "$mt_age" -gt 3300 ] \
+         && grep -q '"kind": "entry"' "$MBK_REG" 2>/dev/null; then
+        mkdir -p "$(dirname "$MBK_LOG")"
+        echo "[$(now)] книги модели: тик ТВХ ${mt_age} с назад — прогон"
+        setsid nohup bash -c "
+            nice -n 15 .venv/bin/python research/ai_gate/model_books.py --tick \
+                >> $MBK_LOG 2>&1" &
     fi
 fi
 

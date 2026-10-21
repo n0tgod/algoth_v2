@@ -49,6 +49,7 @@ SEEDS = 20
 JUDGE_DAY = "2026-11-10"
 H = 3600
 PERP_RE = re.compile(r"\b([0-9A-Z]{2,25}USDT)\b")
+MODEL_BRANCH = re.compile(r"^m\d+$")
 
 
 # ------------------------------------------------------------ ветки (чистые функции)
@@ -57,7 +58,9 @@ def entry_index(rows):
     """{ветка: {ключ: решение}} по строкам входа; повтор — не ветка."""
     out = {}
     for r in rows:
-        if r.get("kind") == "entry" and r.get("branch") in ("ai_news", "ai_plain", "ai_learn"):
+        # ветви книг модели (§12) — `m01`, `m02`, …: решения правила, не модели
+        if r.get("kind") == "entry" and (r.get("branch") in ("ai_news", "ai_plain", "ai_learn")
+                                         or MODEL_BRANCH.match(str(r.get("branch") or ""))):
             out.setdefault(r["branch"], {})[r["key"]] = r.get("decision")
     return out
 
