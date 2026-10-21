@@ -332,15 +332,15 @@
 - L66 `test_reviews()` — Разбор судьёй: только сделки с решением ai_news моделью; один раз на ключ; досье из записи, без досье — помеч…
 - L107 `main()`
 
-## research/ai_gate/test_patterns.py · 52 строк
+## research/ai_gate/test_patterns.py · 55 строк
 
-Паттерны пути (U4b): модель видит сводку путей и уже проверенное; гипотеза вне словаря отвергается формой; по…
+Правила модели (U4b, словарь поиска §11.8): модель видит каталог полей, сводку путей и итог поиска; поле вне…
 
-- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L16 `class Client`
-  - L17 `Client.__init__(self, hyps)`
-  - L21 `Client._create(self, **kw)`
-- L29 `main()`
+- L12 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L17 `class Client`
+  - L18 `Client.__init__(self, rules)`
+  - L22 `Client._create(self, **kw)`
+- L30 `main()`
 
 ## research/ai_gate/test_trade_path.py · 53 строк
 

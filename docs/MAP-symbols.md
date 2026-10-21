@@ -863,20 +863,22 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L161 `run(log=print, now=None, src=None, mkt=None, books=None, client…`
 - L230 `main(argv=None)`
 
-## research/ai_gate/patterns.py · 159 строк
+## research/ai_gate/patterns.py · 193 строк
 
-Поиск паттернов пути моделью → гипотезы новой ТВХ (спека 19 §11.7, U4b).
+Поиск паттернов моделью → правила новой ТВХ по состоянию рынка (спека 19 §11.7–11.8, U4b).
 
-- L21 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L26 `MAX_HYPS = 5`
-- L27 `SAMPLE = 200`
-- L29 `SYSTEM_PATTERNS = 'You are searching for a better entry t…`
-- L38 `schema()`
-- L47 `parse(stop, text)`
-- L61 `hyp_id(h)`
-- L67 `summary(paths)` — Сводка путей по выходам и формам — медианы и доли, из чисел U0.
-- L86 `propose(client, paths, tested)`
-- L114 `run(log=print, client=None, paths=None, hyps_file=None, shift_f…` — Предложить гипотезы и дописать их в файл гипотез `entry_shift`.
+- L27 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L31 `MAX_HYPS = 5`
+- L32 `SAMPLE = 200`
+- L34 `SYSTEM_PATTERNS = 'You are searching for a better entry m…`
+- L43 `OPS = ('<=', '>=')`
+- L46 `schema()`
+- L57 `parse(stop, text)`
+- L71 `valid(rule, catalog)`
+- L93 `sig(rule)`
+- L97 `summary(paths)` — Сводка путей по выходам и формам — медианы, из чисел U0.
+- L116 `catalog_from_table(path=None)` — Каталог полей с диапазонами — из таблицы поиска (`entry_search`).
+- L133 `run(log=print, client=None, paths=None, rules_file=None, catalo…` — Предложить правила входа по состоянию и дописать их в файл правил поиска.
 
 ## research/ai_gate/peek.py · 47 строк
 
@@ -10621,7 +10623,7 @@ HTTPS-API приложения Algoth (спека 15 §7, §7a, этап Y0).
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 855 строк
+## tools/watchdog_book.sh · 859 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 

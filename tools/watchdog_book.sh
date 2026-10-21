@@ -811,8 +811,12 @@ if ! pgrep -f "ai_gate/lessons.py" >/dev/null \
     if [ "$ls_hh" = "07" ] && [ "$ls_age" -gt 561600 ]; then
         mkdir -p "$(dirname "$LESS_LOG")"
         echo "[$(now)] уроки судьи: сводка ${ls_age} с назад — прогон"
+        # следом — поиск ТВХ по состоянию (§11.8): правила модели этой
+        # недели проверяются в тот же день; семь реплеев под пределом памяти
         setsid nohup bash -c "
             nice -n 15 .venv/bin/python research/ai_gate/lessons.py \
+                >> $LESS_LOG 2>&1
+            nice -n 15 .venv/bin/python research/ai_gate/entry_search.py \
                 >> $LESS_LOG 2>&1" &
     fi
 fi

@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Поиск паттернов пути моделью → гипотезы новой ТВХ (спека 19 §11.7, U4b).
+"""Поиск паттернов моделью → правила новой ТВХ по состоянию рынка (спека 19 §11.7–11.8, U4b).
+
+С 21.10 (владелец: «не просто ход цены — комплексный поиск по всем
+параметрам рынка») модель предлагает правила словаря поиска
+`entry_search`: 1–3 условия на параметрах состояния на каждом часе после
+сигнала и окно W; проверяет их поиск теми же порогами, что ячейки.
+Ниже — прежнее описание (словарь хода цены), оставлено как история.
 
 Раз в неделю, следом за уроками: модель получает сводку путей цены внутри
 закрытых сделок книги (U0: худший ход против и когда, лучший за и когда,
@@ -20,28 +26,32 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-import entry_shift as E                                       # noqa: E402
 import judge as J                                             # noqa: E402
 
 MAX_HYPS = 5
 SAMPLE = 200
 
-SYSTEM_PATTERNS = """You are searching for a better entry timing for a paper-trading book of crypto perpetual futures on Bybit (short side, 24-hour holding limit, a stop floor and a target set by the book's rules). You are given the price path inside each closed trade of this book: the worst move against the position and after how many hours, the best move in its favour and when, what was touched first (target or floor), the shape of the path, the exit and the result; aggregated by exit and by shape; and the results of entry-timing rules already tested.
+SYSTEM_PATTERNS = """You are searching for a better entry moment for a paper-trading book of crypto perpetual futures on Bybit (short side, 24-hour holding limit, a stop floor and a target set by the book's rules). An entry rule here says: after the model's signal, wait and enter at the FIRST hour k = 0..W when the market state satisfies all conditions; if that never happens within W hours, there is no trade.
 
-Look for something that REPEATS in the paths and that a different entry moment could exploit: for example, if most trades first move against the position by a few percent in the first hours before going its way, waiting for that move would enter at a better price. Propose at most %d entry rules in the given vocabulary: "pullback" (wait until the price moves AGAINST the position by pct %% within within_h hours, then enter), "confirm" (wait until it moves IN FAVOUR by pct %% within within_h hours), "delay" (enter after_h hours later). If the condition does not happen within the window, there is no trade.
+You are given: the catalog of market-state fields computed at every hour after a signal (crowd positioning, order-book microstructure from our own recording, funding, basis, open interest, the coin's and BTC's moves, the move since the signal, market regime, the signal's own promise and reward/risk, the coin's history in the book) with their observed ranges; a summary of the price path inside past trades (worst move against and when, best move in favour and when, what was touched first, the shape, the exit); and the results of the last systematic search over single and paired conditions.
 
-Every rule will be tested by numbers, not by your judgement: replayed by the book's own engine on past signals, compared with the book's own entry and with entering at a random minute of the same window for the same signals, on both halves of the period. A rule that only selects which signals trade, without better timing, will fail. Do not repeat a rule already tested with the same parameters. Returning fewer rules is a valid answer.
+Look for a COMBINATION of conditions with a mechanism: for example, a crowded short squeeze that has already happened, a burst of buying exhausting itself, funding flipping, open interest unwinding. Propose at most %d rules, each with 1 to 3 conditions ("field" from the catalog, "op" <= or >=, numeric "value" inside the observed range) and a window W of 1 to 6 hours, plus the mechanism in "why".
+
+Every rule is tested by numbers, not by your judgement: chosen on one half of the period and checked on the other half, against the book's own entry and against entering at a random hour of the same window for the same signals. Rules that only skip signals without improving the entry moment fail. Do not repeat a rule already in the search results. Returning fewer rules is a valid answer.
 
 Return only the JSON object required by the schema.""" % MAX_HYPS
+OPS = ("<=", ">=")
 
 
 def schema():
-    h = {"type": "object",
-         "properties": {"kind": {"type": "string", "enum": list(E.KINDS)}, "pct": {"type": "number"},
-                        "within_h": {"type": "number"}, "after_h": {"type": "number"}, "why": {"type": "string"}},
-         "required": ["kind", "pct", "within_h", "after_h", "why"], "additionalProperties": False}
-    return {"type": "object", "properties": {"hypotheses": {"type": "array", "items": h}, "notes": {"type": "string"}},
-            "required": ["hypotheses", "notes"], "additionalProperties": False}
+    cond = {"type": "object", "properties": {"field": {"type": "string"}, "op": {"type": "string", "enum": list(OPS)},
+                                             "value": {"type": "number"}},
+            "required": ["field", "op", "value"], "additionalProperties": False}
+    r = {"type": "object", "properties": {"when": {"type": "array", "items": cond}, "W": {"type": "integer"},
+                                          "why": {"type": "string"}},
+         "required": ["when", "W", "why"], "additionalProperties": False}
+    return {"type": "object", "properties": {"rules": {"type": "array", "items": r}, "notes": {"type": "string"}},
+            "required": ["rules", "notes"], "additionalProperties": False}
 
 
 def parse(stop, text):
@@ -53,19 +63,39 @@ def parse(stop, text):
         v = json.loads(text or "")
     except ValueError:
         return None, "ответ не JSON"
-    if not isinstance(v, dict) or not isinstance(v.get("hypotheses"), list):
-        return None, "нет списка гипотез"
-    return {"hypotheses": v["hypotheses"][:MAX_HYPS], "notes": str(v.get("notes") or "")[:1000]}, None
+    if not isinstance(v, dict) or not isinstance(v.get("rules"), list):
+        return None, "нет списка правил"
+    return {"rules": v["rules"][:MAX_HYPS], "notes": str(v.get("notes") or "")[:1000]}, None
 
 
-def hyp_id(h):
-    if h["kind"] == "delay":
-        return f"delay_{float(h['after_h']):g}h"
-    return f"{h['kind']}_{float(h['pct']):g}pct_{float(h['within_h']):g}h"
+def valid(rule, catalog):
+    w = rule.get("when")
+    if not isinstance(w, list) or not (1 <= len(w) <= 3):
+        return "условий должно быть 1–3"
+    try:
+        W = int(rule.get("W"))
+    except (TypeError, ValueError):
+        return "окно не число"
+    if not (1 <= W <= 6):
+        return "окно вне 1–6 ч"
+    for c in w:
+        if c.get("field") not in catalog:
+            return f"поля {c.get('field')!r} нет в каталоге"
+        if c.get("op") not in OPS:
+            return f"знак {c.get('op')!r} вне словаря"
+        try:
+            float(c.get("value"))
+        except (TypeError, ValueError):
+            return "порог не число"
+    return None
+
+
+def sig(rule):
+    return json.dumps([sorted((c["field"], c["op"], round(float(c["value"]), 6)) for c in rule["when"]), int(rule["W"])])
 
 
 def summary(paths):
-    """Сводка путей по выходам и формам — медианы и доли, из чисел U0."""
+    """Сводка путей по выходам и формам — медианы, из чисел U0."""
     def med(xs):
         xs = [x for x in xs if x is not None]
         return round(st.median(xs), 4) if xs else None
@@ -83,62 +113,44 @@ def summary(paths):
     return out
 
 
-def propose(client, paths, tested):
-    shorts = [p for p in paths if p.get("side") == "short" and (p.get("path") or {}).get("shape") != "no_bars"]
-    sample = sorted(shorts, key=lambda p: -float(p.get("exit_ts") or 0))[:SAMPLE]
-    payload = {"kind": "entry_patterns", "summary": summary(shorts),
-               "paths": [{"exit": p.get("exit"), "result_on_margin": p.get("pnl_frac"),
-                          **{k: (p.get("path") or {}).get(k) for k in ("mae", "mae_h", "mfe", "mfe_h", "first_touch",
-                                                                         "shape", "life_h", "market_move")}}
-                         for p in sample],
-               "already_tested": tested}
-    row = J._call(client, "patterns", SYSTEM_PATTERNS, schema(), payload, parse, {"hypotheses": []})
-    hyps, invalid = [], []
-    seen = {t.get("id") for t in tested}
-    for h in row.get("hypotheses") or []:
-        h = {k: h.get(k) for k in ("kind", "pct", "within_h", "after_h", "why")}
-        why = E.valid(h)
-        if why:
-            invalid.append({"rule": h, "why": why})
+def catalog_from_table(path=None):
+    """Каталог полей с диапазонами — из таблицы поиска (`entry_search`)."""
+    import numpy as np
+    import entry_search as ES                                  # noqa: E402
+    z = np.load(path or ES.TABLE, allow_pickle=False)
+    F, names = z["F"], [str(x) for x in z["names"]]
+    out = {}
+    for j, nm in enumerate(names):
+        x = F[:, :, j].ravel()
+        x = x[~np.isnan(x)]
+        if len(x) == 0:
             continue
-        h["id"] = hyp_id(h)
-        if h["id"] in seen:
-            continue
-        seen.add(h["id"])
-        h["proposed_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-        h["by"] = "model"
-        hyps.append(h)
-    return row, hyps, invalid
+        out[nm] = {"cover": round(float(len(x)) / F[:, :, j].size, 3), "q10": round(float(np.quantile(x, 0.1)), 6),
+                   "q50": round(float(np.quantile(x, 0.5)), 6), "q90": round(float(np.quantile(x, 0.9)), 6)}
+    return out
 
 
-def run(log=print, client=None, paths=None, hyps_file=None, shift_file=None):
-    """Предложить гипотезы и дописать их в файл гипотез `entry_shift`."""
-    hyps_file = hyps_file or E.HYPS_FILE
-    shift_file = shift_file or E.LATEST
+def run(log=print, client=None, paths=None, rules_file=None, catalog=None, last_search=None):
+    """Предложить правила входа по состоянию и дописать их в файл правил поиска."""
+    import entry_search as ES                                  # noqa: E402
+    rules_file = rules_file or ES.RULES_FILE
     if paths is None:
         import path_review as PR                              # noqa: E402
         paths = PR.read_paths()
-    tested = []
-    try:
-        with open(shift_file, encoding="utf-8") as f:
-            last = json.load(f)
-        for h in last.get("hypotheses") or []:
-            ps = (h.get("per_signal") or {}).get("all") or {}
-            tested.append({"id": h["id"], "rule": h.get("rule"), "candidate": h.get("candidate"), "why_not": h.get("why"),
-                           "triggered": ps.get("triggered"), "mean_signal": ps.get("mean_signal"),
-                           "mean_triggered": ps.get("mean_triggered"),
-                           "random_minute": (h.get("null_median_triggered") or {}).get("all")})
-        b = ((last.get("base") or {}).get("per_signal") or {}).get("all") or {}
-        tested.append({"id": "book_entry", "mean_signal": b.get("mean_signal")})
-    except (OSError, ValueError):
-        pass
-    try:
-        with open(hyps_file, encoding="utf-8") as f:
-            st_ = json.load(f)
-    except (OSError, ValueError):
-        st_ = {"hypotheses": []}
-    tested += [{"id": h["id"], "rule": h} for h in st_.get("hypotheses") or [] if h["id"] not in {t["id"] for t in tested}]
-    tested += [{"id": g["id"], "rule": g} for g in E.GRID if g["id"] not in {t["id"] for t in tested}]
+    if catalog is None:
+        try:
+            catalog = catalog_from_table()
+        except Exception as e:                                # noqa: BLE001
+            return {"error": f"таблицы поиска нет — каталог полей не построить: {type(e).__name__}"}
+    if last_search is None:
+        try:
+            with open(ES.LATEST, encoding="utf-8") as f:
+                ls = json.load(f)
+            last_search = {k: {kk: ls[k].get(kk) for kk in ("rule", "train_gain", "test_mean", "test_book", "held",
+                                                              "top5_train")}
+                           for k in ("fold_1to2", "fold_2to1") if isinstance(ls.get(k), dict)}
+        except (OSError, ValueError):
+            last_search = None
     if client is None:
         key = J.read_key()
         client = J.make_client(key) if key else None
@@ -146,14 +158,36 @@ def run(log=print, client=None, paths=None, hyps_file=None, shift_file=None):
         return {"error": "ключа нет"}
     if len(paths) < 50:
         return {"error": f"путей {len(paths)} < 50"}
-    row, hyps, invalid = propose(client, paths, tested)
-    st_.setdefault("hypotheses", []).extend(hyps)
+    shorts = [p for p in paths if p.get("side") == "short" and (p.get("path") or {}).get("shape") != "no_bars"]
+    payload = {"kind": "entry_rules", "field_catalog": catalog, "path_summary": summary(shorts),
+               "last_search": last_search}
+    row = J._call(client, "patterns", SYSTEM_PATTERNS, schema(), payload, parse, {"rules": []})
+    try:
+        with open(rules_file, encoding="utf-8") as f:
+            st_ = json.load(f)
+    except (OSError, ValueError):
+        st_ = {"rules": []}
+    seen = {sig(r) for r in st_.get("rules") or []}
+    new, invalid = [], []
+    for r in row.get("rules") or []:
+        why = valid(r, catalog)
+        if why:
+            invalid.append({"rule": r, "why": why})
+            continue
+        r = {"when": [{"field": c["field"], "op": c["op"], "value": float(c["value"])} for c in r["when"]],
+             "W": int(r["W"]), "why": str(r.get("why") or "")[:300],
+             "proposed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+        if sig(r) in seen:
+            continue
+        seen.add(sig(r))
+        new.append(r)
+    st_.setdefault("rules", []).extend(new)
     st_["updated"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    os.makedirs(os.path.dirname(hyps_file), exist_ok=True)
-    with open(hyps_file + ".tmp", "w", encoding="utf-8") as f:
+    os.makedirs(os.path.dirname(rules_file), exist_ok=True)
+    with open(rules_file + ".tmp", "w", encoding="utf-8") as f:
         json.dump(st_, f, ensure_ascii=False, indent=1)
-    os.replace(hyps_file + ".tmp", hyps_file)
-    log(f"паттерны пути: предложено {len(hyps)} новых гипотез ТВХ, отвергнуто формой {len(invalid)}"
+    os.replace(rules_file + ".tmp", rules_file)
+    log(f"правила входа от модели: новых {len(new)}, отвергнуто формой {len(invalid)}"
         + (f" ({row.get('no_verdict')})" if row.get("no_verdict") else ""))
-    return {"new": hyps, "invalid": invalid, "notes": row.get("notes"), "no_verdict": row.get("no_verdict"),
+    return {"new": new, "invalid": invalid, "notes": row.get("notes"), "no_verdict": row.get("no_verdict"),
             "cost_usd": row.get("cost_usd")}
