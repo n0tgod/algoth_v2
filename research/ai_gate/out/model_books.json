@@ -1,0 +1,73 @@
+{
+ "books": [
+  {
+   "id": "m01",
+   "key": "optimal_h_m01",
+   "kind": "entry",
+   "rule": {
+    "when": [
+     {
+      "field": "crowd_bybit_shift",
+      "op": "<=",
+      "value": -0.06
+     },
+     {
+      "field": "px_1h",
+      "op": ">=",
+      "value": 0.005
+     }
+    ],
+    "W": 4
+   },
+   "sig": "{\"W\": 4, \"kind\": \"entry\", \"when\": [[\"crowd_bybit_shift\", \"<=\", -0.06], [\"px_1h\", \">=\", 0.005]]}",
+   "why": "Shorts on Bybit have been covering (the crowd shifted long) while price rose. This marks a short squeeze that has already happened; the forced buying is done, leaving a better price to short with less squeeze fuel left.",
+   "text": null,
+   "source": "patterns:2026-10-21T07:13:35Z",
+   "gate": {
+    "trig": 869,
+    "rule_mean": 0.06959,
+    "book_mean": 0.00535,
+    "p_random_hour": 0.0,
+    "search_at": "2026-10-21T07:48:25Z"
+   },
+   "decided_at": 1792569038.3967063,
+   "born_at": 1792569600.0,
+   "status": "live"
+  },
+  {
+   "id": "m02",
+   "key": "optimal_h_m02",
+   "kind": "entry",
+   "rule": {
+    "when": [
+     {
+      "field": "oi_1h",
+      "op": "<=",
+      "value": -0.02
+     },
+     {
+      "field": "since_signal",
+      "op": ">=",
+      "value": 0.01
+     }
+    ],
+    "W": 5
+   },
+   "sig": "{\"W\": 5, \"kind\": \"entry\", \"when\": [[\"oi_1h\", \"<=\", -0.02], [\"since_signal\", \">=\", 0.01]]}",
+   "why": "Open interest is unwinding during a rise after the signal. The rally is driven by liquidations or covering rather than new longs, so it tends to exhaust; entering after the unwind avoids the straight_against paths.",
+   "text": null,
+   "source": "patterns:2026-10-21T07:13:35Z",
+   "gate": {
+    "trig": 416,
+    "rule_mean": 0.03553,
+    "book_mean": -0.11948,
+    "p_random_hour": 0.0,
+    "search_at": "2026-10-21T07:48:25Z"
+   },
+   "decided_at": 1792569038.3967063,
+   "born_at": 1792569600.0,
+   "status": "live"
+  }
+ ],
+ "updated": "2026-10-21T07:50:42Z"
+}

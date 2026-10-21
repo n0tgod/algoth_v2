@@ -131,7 +131,7 @@
 - `peek_dossier.py` · 50 строк — Одно досье ветки ai_news из записи (только чтение, 20.10): какие поля и в каком виде видит судья — для катало…
 - `trade_path.py` · 134 строк — Путь цены ВНУТРИ сделки числами (спека 19 §11.2, этап U0).
 - тесты: `test_entry_search.py` (68), `test_entry_shift.py` (93), `test_gate_books.py` (82), `test_gate_run.py` (209), `test_judge.py` (137), `test_lessons.py` (103), `test_model_books.py` (164), `test_path_review.py` (135), `test_patterns.py` (55), `test_trade_path.py` (53)
-- отчёты в `out/` (5): AI-dry-hour.md, AI-gate-books.md, ENTRY-SEARCH.md, ENTRY-SHIFT.md, LESSONS.md
+- отчёты в `out/` (6): AI-dry-hour.md, AI-gate-books.md, ENTRY-SEARCH.md, ENTRY-SHIFT.md, LESSONS.md, MODEL-BOOKS.md
 
 ## research/asset_groups — A3 — группы активов, ликвидность, кандидаты пар
 
@@ -873,7 +873,7 @@
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
 - документы: `README.md` — Очередь заданий, `queue-state.md` — 
-- заданий `.job`: 992, логов `done/*.log`: 993 (в карту не перечисляются — их читают по имени)
+- заданий `.job`: 992, логов `done/*.log`: 994 (в карту не перечисляются — их читают по имени)
 
 ## tools — команды сервера, защита коммитов, хуки
 
