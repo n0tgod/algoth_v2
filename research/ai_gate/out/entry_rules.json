@@ -1,0 +1,95 @@
+{
+ "rules": [
+  {
+   "when": [
+    {
+     "field": "since_signal",
+     "op": ">=",
+     "value": 0.03
+    },
+    {
+     "field": "buy_share",
+     "op": "<=",
+     "value": 0.47
+    }
+   ],
+   "W": 4,
+   "why": "Short entry after the price has already squeezed up since the signal and taker buying has faded. This catches the 'against_then_for' shape (MAE around 3h) after the adverse move is spent, so the entry is higher and the floor is further away.",
+   "proposed_at": "2026-10-21T07:13:35Z"
+  },
+  {
+   "when": [
+    {
+     "field": "crowd_bybit_shift",
+     "op": "<=",
+     "value": -0.06
+    },
+    {
+     "field": "px_1h",
+     "op": ">=",
+     "value": 0.005
+    }
+   ],
+   "W": 4,
+   "why": "Shorts on Bybit have been covering (the crowd shifted long) while price rose. This marks a short squeeze that has already happened; the forced buying is done, leaving a better price to short with less squeeze fuel left.",
+   "proposed_at": "2026-10-21T07:13:35Z"
+  },
+  {
+   "when": [
+    {
+     "field": "oi_1h",
+     "op": "<=",
+     "value": -0.02
+    },
+    {
+     "field": "since_signal",
+     "op": ">=",
+     "value": 0.01
+    }
+   ],
+   "W": 5,
+   "why": "Open interest is unwinding during a rise after the signal. The rally is driven by liquidations or covering rather than new longs, so it tends to exhaust; entering after the unwind avoids the straight_against paths.",
+   "proposed_at": "2026-10-21T07:13:35Z"
+  },
+  {
+   "when": [
+    {
+     "field": "burst_ratio",
+     "op": ">=",
+     "value": 2.0
+    },
+    {
+     "field": "depth_eat_ask",
+     "op": ">=",
+     "value": 1000.0
+    },
+    {
+     "field": "px_1h",
+     "op": ">=",
+     "value": 0.01
+    }
+   ],
+   "W": 3,
+   "why": "A burst of aggressive buying that ate through ask depth and lifted the price for an hour. This is a buying climax where exhaustion is likely, so shorting into it gives a better fill than entering at the signal.",
+   "proposed_at": "2026-10-21T07:13:35Z"
+  },
+  {
+   "when": [
+    {
+     "field": "funding",
+     "op": ">=",
+     "value": 0.0001
+    },
+    {
+     "field": "since_signal",
+     "op": ">=",
+     "value": 0.0
+    }
+   ],
+   "W": 6,
+   "why": "Funding has turned positive and longs are paying while the price is at or above the signal price. Longs are getting crowded, and a short collects funding and gets in at a no-worse price than the signal.",
+   "proposed_at": "2026-10-21T07:13:35Z"
+  }
+ ],
+ "updated": "2026-10-21T07:13:35Z"
+}

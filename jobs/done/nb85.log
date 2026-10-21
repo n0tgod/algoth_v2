@@ -43,3 +43,12 @@
 память: 164.4 МБ (символ 200/240; предел 1200)
 память: 164.4 МБ (символ 210/240; предел 1200)
 конец: 2026-10-21T07:06:20Z, код 0
+ВНИМАНИЕ: 2026-10-21T07:06:20Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nb85.log  | 1 +
+ jobs/queue-state.md | 2 +-
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   ddfdf2725..be57ebe48  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
