@@ -61,6 +61,7 @@ REPORT = os.path.join(OUT, "ENTRY-SEARCH.md")
 LATEST = os.path.join(OUT, "entry_search.json")
 TABLE = os.path.join(OUT, "record", "entry_table.npz")      # таблица исходов — не в git
 RULES_FILE = os.path.join(OUT, "entry_rules.json")          # правила модели (U4b)
+LOCK = os.path.join(OUT, "record", "entry_search.lock")     # один поиск за раз
 H = 3600.0
 KMAX = 6
 WINDOWS = (3, 6)
@@ -437,6 +438,25 @@ def model_scores(F, O, names, at, extra, seed=0, exits=None):
     return out
 
 
+def book_exit_rows(O, at, exits):
+    """Вход книги (час сигнала) с каждой ячейкой выхода — описание, не отбор:
+    средний нетто на сигнал на всём окне и по половинам против выхода книги."""
+    O = as3(O)
+    order = np.argsort(at)
+    half = len(order) // 2
+    parts = {"all": list(order), "first": list(order[:half]), "second": list(order[half:])}
+    z = np.zeros(len(O), dtype=int)
+    out = []
+    for c, ex in enumerate(exits):
+        row = {"exit": ex}
+        for nm, idx in parts.items():
+            m, trig = score(O[:, :, c], z, idx)
+            row[nm] = None if m is None else round(m, 5)
+            row[nm + "_n"] = trig
+        out.append(row)
+    return out
+
+
 def shuffled(F, seed):
     """Отрицательный контроль: строки состояния (по сигналам) переставлены."""
     rng = np.random.default_rng(seed)
@@ -477,6 +497,7 @@ def run(log=print, since=None, now=None, legs=None, table=None, seed=0):
     control_silent = not (c1.get("held") and c2.get("held"))
     procedure = bool(f1.get("held") and f2.get("held") and control_silent)
     mine = model_scores(F, O, names, at, extra, seed, exits)
+    book_exits = book_exit_rows(O, at, exits)
     final = None
     if procedure:
         pool, base_all, _ = select(F, O, names, list(range(len(O))), extra, exits)
@@ -484,7 +505,7 @@ def run(log=print, since=None, now=None, legs=None, table=None, seed=0):
     res = {"computed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)), "signals": n_legs,
            "fields": names, "cover": cover, "kmax": KMAX, "windows": list(WINDOWS),
            "book_mean": round(float(np.nanmean(np.where(np.isnan(O[:, 0, jb]), 0.0, O[:, 0, jb]))), 5),
-           "exits": exits, "shortest_stop": shortest_stop(f1, f2),
+           "exits": exits, "shortest_stop": shortest_stop(f1, f2), "book_exits": book_exits,
            "fold_1to2": f1, "fold_2to1": f2, "control": {"fold_1to2": c1, "fold_2to1": c2, "silent": control_silent},
            "procedure_holds": procedure, "candidate": final, "model_rules": len(extra), "model": mine,
            "secs": round(time.time() - t0, 1)}
@@ -603,6 +624,14 @@ def report(r):
             cell = lambda z: (f"`{rule_text(z['rule'])}` | {pct(z.get('test_mean'))} / {pct(z.get('test_book'))} | "   # noqa: E731
                               f"{'**да**' if z.get('held') else 'нет'}") if z else "— | — | —"
             L.append(f"| {k if k == 'нет' else k + ' %'} | {cell(x)} | {cell(y)} |")
+        if r.get("book_exits"):
+            jb = next((x for x in r["book_exits"] if x["exit"] == BOOK_EXIT), None) or {}
+            L += ["", "Вход книги (час сигнала) с каждым выходом — описание, не отбор: средний нетто на сигнал "
+                  f"(выход книги: всё окно {pct(jb.get('all'))}, 1-я {pct(jb.get('first'))}, 2-я {pct(jb.get('second'))}).", "",
+                  "| выход | всё окно | 1-я половина | 2-я половина | позиций |", "|---|---|---|---|---|"]
+            for x in sorted(r["book_exits"], key=lambda x: -(x.get("all") or -9)):
+                L.append(f"| {exit_text(x['exit'])} | {pct(x.get('all'))} | {pct(x.get('first'))} | "
+                         f"{pct(x.get('second'))} | {x.get('all_n')} |")
         ss = r.get("shortest_stop")
         L += ["", f"**Самый короткий стоп, который держится:** {ss + ' %' if ss else 'нет — короткого стопа у книги пока нет'}."]
     if r.get("model"):
@@ -636,6 +665,14 @@ def main(argv=None):
     except Exception:                                        # noqa: BLE001
         pass
     import arm_book as AB                                     # noqa: E402
+    import fcntl
+    os.makedirs(os.path.dirname(LOCK), exist_ok=True)
+    lk = open(LOCK, "w")
+    try:
+        fcntl.flock(lk, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        print("поиск ТВХ уже идёт другим процессом — этот не стартует (таблица и отчёт одни на двоих)")
+        return 1
     since = calendar.timegm(time.strptime(a.since, "%Y-%m-%d")) if a.since else None
     table = load_table() if a.from_table else None
     r = run(log=AB.guarded(print, limit=2500), since=since, table=table)

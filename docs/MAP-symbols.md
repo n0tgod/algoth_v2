@@ -628,7 +628,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L191 `report(s)`
 - L217 `main(argv=None)`
 
-## research/ai_gate/entry_search.py · 655 строк
+## research/ai_gate/entry_search.py · 692 строк
 
 Поиск новой ТВХ по состоянию рынка (спека 19 §11.8, U4c).
 
@@ -639,50 +639,52 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L61 `LATEST = os.path.join(OUT, 'entry_search.json')`
 - L62 `TABLE = os.path.join(OUT, 'record', 'entry_tabl…`
 - L63 `RULES_FILE = os.path.join(OUT, 'entry_rules.json')`
-- L64 `H = 3600.0`
-- L65 `KMAX = 6`
-- L66 `WINDOWS = (3, 6)`
-- L67 `QUANTS = (0.2, 0.4, 0.6, 0.8)`
-- L68 `MIN_COVER = 0.9`
-- L69 `MIN_DISTINCT = 10`
-- L70 `MIN_TRIG = 30`
-- L71 `TOP_PAIRS = 20`
-- L72 `NULL_DRAWS = 400`
-- L73 `P_MAX = 0.1`
-- L78 `_f(x)`
-- L86 `_move(a, b)`
-- L90 `features(g, k, hours, mkt, state, market_rows, hist, crowd_of, …` — Параметры состояния на час k после сигнала `g` (закрытые часы ≤ t).
-- L141 `build_table(legs, out_by_k, get_features)` — → (names, F[n, K+1, f], O[n, K+1(, ячейки)], ячейки выхода) — O NaN, где входа нет.
-- L174 `STOPS = (None, 0.01, 0.02, 0.03, 0.05, 0.08)` — Сетка выхода, объявленная 21.10 ДО первого прогона: стоп в доле цены от средней (нет — только пол книги), тей…
-- L175 `TAKES = ('t1', 't2', 't3')`
-- L176 `BOOK_EXIT = 's0:t2:book'`
-- L179 `_exits()`
-- L191 `EXITS = _exits()`
-- L192 `EXIT_BY = {e['name']: e for e in EXITS}`
-- L196 `exit_cell(name)` — → (ячейка ядра D10, политика ячейки или None). Ячейка книги — та же, что у книги (`run_short.CELL`), без поли…
-- L207 `exit_text(name)`
-- L216 `ALWAYS = {'when': [], 'W': 0, 'by': 'grid'}`
-- L219 `first_k(F, names, rule)` — Первый час k ≤ W, где выполнены ВСЕ условия; −1 — не наступил.
-- L232 `as3(O)` — Таблица исходов O[сигнал, k, ячейка выхода]; прежняя двумерная — одна ячейка.
-- L237 `score(O, ks, idx)` — Средний на сигнал (не вошедший — 0) и число вошедших на подмножестве idx. `O` — исходы одной ячейки выхода O[…
-- L249 `null_p(O, ks, idx, W, mean_rule, rng)` — Доля случайных часов входа (k ~ U[0, W]) для тех же вошедших, не хуже правила.
-- L265 `cells(F, names, idx_train)` — Одиночные ячейки: поле × квантиль (по обучающей половине) × знак × окно.
-- L283 `_jb(exits)`
-- L287 `select(F, O, names, idx_train, extra=(), exits=None, always=Tru…` — Лучшие пары «правило входа + ячейка выхода» обучающей половины по приросту к КНИГЕ (её вход, её выход) на сиг…
-- L332 `judge(F, O, names, rule, test, exits, seed)` — Правило на проверочной половине: среднее на сигнал против книги и доля случайных часов того же окна С ТОЙ ЖЕ…
-- L348 `fold(F, O, names, train, test, extra, seed, exits=None, always=…`
-- L369 `search(F, O, names, at, extra=(), seed=0, exits=None, always=Tr…`
-- L378 `shortest_stop(f1, f2)` — Самый короткий стоп, чьё лучшее правило держится в обоих направлениях.
-- L385 `trig_stats(O, ks, W, rng, Ob=None)` — Порог рождения книги ТВХ (§12.2) на всём окне: сработавшие сигналы — средний в час правила (своя ячейка выход…
-- L405 `model_scores(F, O, names, at, extra, seed=0, exits=None)` — Каждое правило модели на каждой половине: прирост к книге на сигнал и случайный час.
-- L440 `shuffled(F, seed)` — Отрицательный контроль: строки состояния (по сигналам) переставлены.
-- L448 `rule_text(rule)`
-- L457 `run(log=print, since=None, now=None, legs=None, table=None, see…`
-- L496 `make_table(log, since, now, legs=None)` — Семь реплеев (вход через k = 0…6 ч) и параметры на каждом часе.
-- L537 `load_table(path=None)` — Таблица исходов прошлого прогона (`make_table` её сохраняет).
-- L548 `feature_env(legs, days=45)` — → feat(g, k): параметры состояния на час k после сигнала — одним окружением на поиск (§11.8) и книги ТВХ моде…
-- L573 `report(r)`
-- L627 `main(argv=None)`
+- L64 `LOCK = os.path.join(OUT, 'record', 'entry_sear…`
+- L65 `H = 3600.0`
+- L66 `KMAX = 6`
+- L67 `WINDOWS = (3, 6)`
+- L68 `QUANTS = (0.2, 0.4, 0.6, 0.8)`
+- L69 `MIN_COVER = 0.9`
+- L70 `MIN_DISTINCT = 10`
+- L71 `MIN_TRIG = 30`
+- L72 `TOP_PAIRS = 20`
+- L73 `NULL_DRAWS = 400`
+- L74 `P_MAX = 0.1`
+- L79 `_f(x)`
+- L87 `_move(a, b)`
+- L91 `features(g, k, hours, mkt, state, market_rows, hist, crowd_of, …` — Параметры состояния на час k после сигнала `g` (закрытые часы ≤ t).
+- L142 `build_table(legs, out_by_k, get_features)` — → (names, F[n, K+1, f], O[n, K+1(, ячейки)], ячейки выхода) — O NaN, где входа нет.
+- L175 `STOPS = (None, 0.01, 0.02, 0.03, 0.05, 0.08)` — Сетка выхода, объявленная 21.10 ДО первого прогона: стоп в доле цены от средней (нет — только пол книги), тей…
+- L176 `TAKES = ('t1', 't2', 't3')`
+- L177 `BOOK_EXIT = 's0:t2:book'`
+- L180 `_exits()`
+- L192 `EXITS = _exits()`
+- L193 `EXIT_BY = {e['name']: e for e in EXITS}`
+- L197 `exit_cell(name)` — → (ячейка ядра D10, политика ячейки или None). Ячейка книги — та же, что у книги (`run_short.CELL`), без поли…
+- L208 `exit_text(name)`
+- L217 `ALWAYS = {'when': [], 'W': 0, 'by': 'grid'}`
+- L220 `first_k(F, names, rule)` — Первый час k ≤ W, где выполнены ВСЕ условия; −1 — не наступил.
+- L233 `as3(O)` — Таблица исходов O[сигнал, k, ячейка выхода]; прежняя двумерная — одна ячейка.
+- L238 `score(O, ks, idx)` — Средний на сигнал (не вошедший — 0) и число вошедших на подмножестве idx. `O` — исходы одной ячейки выхода O[…
+- L250 `null_p(O, ks, idx, W, mean_rule, rng)` — Доля случайных часов входа (k ~ U[0, W]) для тех же вошедших, не хуже правила.
+- L266 `cells(F, names, idx_train)` — Одиночные ячейки: поле × квантиль (по обучающей половине) × знак × окно.
+- L284 `_jb(exits)`
+- L288 `select(F, O, names, idx_train, extra=(), exits=None, always=Tru…` — Лучшие пары «правило входа + ячейка выхода» обучающей половины по приросту к КНИГЕ (её вход, её выход) на сиг…
+- L333 `judge(F, O, names, rule, test, exits, seed)` — Правило на проверочной половине: среднее на сигнал против книги и доля случайных часов того же окна С ТОЙ ЖЕ…
+- L349 `fold(F, O, names, train, test, extra, seed, exits=None, always=…`
+- L370 `search(F, O, names, at, extra=(), seed=0, exits=None, always=Tr…`
+- L379 `shortest_stop(f1, f2)` — Самый короткий стоп, чьё лучшее правило держится в обоих направлениях.
+- L386 `trig_stats(O, ks, W, rng, Ob=None)` — Порог рождения книги ТВХ (§12.2) на всём окне: сработавшие сигналы — средний в час правила (своя ячейка выход…
+- L406 `model_scores(F, O, names, at, extra, seed=0, exits=None)` — Каждое правило модели на каждой половине: прирост к книге на сигнал и случайный час.
+- L441 `book_exit_rows(O, at, exits)` — Вход книги (час сигнала) с каждой ячейкой выхода — описание, не отбор: средний нетто на сигнал на всём окне и…
+- L460 `shuffled(F, seed)` — Отрицательный контроль: строки состояния (по сигналам) переставлены.
+- L468 `rule_text(rule)`
+- L477 `run(log=print, since=None, now=None, legs=None, table=None, see…`
+- L517 `make_table(log, since, now, legs=None)` — Семь реплеев (вход через k = 0…6 ч) и параметры на каждом часе.
+- L558 `load_table(path=None)` — Таблица исходов прошлого прогона (`make_table` её сохраняет).
+- L569 `feature_env(legs, days=45)` — → feat(g, k): параметры состояния на час k после сигнала — одним окружением на поиск (§11.8) и книги ТВХ моде…
+- L594 `report(r)`
+- L656 `main(argv=None)`
 
 ## research/ai_gate/entry_shift.py · 337 строк
 

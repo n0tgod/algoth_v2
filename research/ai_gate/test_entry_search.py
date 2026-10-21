@@ -48,6 +48,9 @@ def test_exit_cells_and_shortest_stop():
     assert not f1["by_stop"]["1"]["held"] or not f2["by_stop"]["1"]["held"], "стоп 1 % без подсадки не держится"
     r = ES.run(log=lambda *a: None, table={"names": names, "F": F, "O": O, "at": at, "n": n, "exits": exits})
     assert r["shortest_stop"] == "3" and "Самый короткий стоп, который держится:** 3 %" in ES.report(r)
+    be = {x["exit"]: x for x in r["book_exits"]}
+    assert set(be) == set(exits) and be["s3:t2:book"]["all"] > be[ES.BOOK_EXIT]["all"], be
+    assert "Вход книги (час сигнала) с каждым выходом" in ES.report(r)
     O2 = rng.normal(-0.01, 0.05, size=(n, K, len(exits)))
     g1, g2 = ES.search(F, O2, names, at, seed=2, exits=exits)
     assert ES.shortest_stop(g1, g2) is None, "на шуме короткого стопа нет"

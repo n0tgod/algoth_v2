@@ -238,14 +238,14 @@
   - L225 `Summary.test_half_life_filter_narrows_selection(self)`
   - L232 `Summary.test_off_grid_window_is_refused_not_averaged(self)` — Окно не по сетке ломает смысл «соседнего» — и должно падать.
 
-## research/ai_gate/test_entry_search.py · 102 строк
+## research/ai_gate/test_entry_search.py · 105 строк
 
 Поиск ТВХ по состоянию (U4c): калибровочная пара — подсаженный параметр (вход, когда доля лонгов упала ниже п…
 
 - L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L18 `synth(n=600, seed=3, planted=True)`
 - L31 `test_exit_cells_and_shortest_stop()` — Таблица O[сигнал, k, ячейка выхода] (§11.9): подсаженный выигрыш живёт в паре «состояние + стоп 3 %» — отбор…
-- L64 `main()`
+- L67 `main()`
 
 ## research/ai_gate/test_entry_shift.py · 93 строк
 
