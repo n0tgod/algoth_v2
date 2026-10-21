@@ -39,3 +39,15 @@
 Прошли порог, ждут места: `book_rules.lev >= 20 и price_moves_to_decision.24h_pct >= 15` — предел 2 новых за 7 суток; `book_rules.lev >= 20 и price_moves_to_decision.4h_pct >= 5` — предел 2 новых за 7 суток; `book_rules.lev >= 10 и derived.name_floor_share >= 0.35` — предел 2 новых за 7 суток; `derived.crowd_bybit_shift_24h <= -0.15 и price_moves_to_decision.4h_pct >= 3` — предел 2 новых за 7 суток; `price_moves_to_decision.4h_pct >= 10 и price_moves_to_decision.1h_pct >= 1` — предел 2 новых за 7 суток; `since_signal >= 0.03 и buy_share <= 0.47, окно 4 ч` — предел 2 новых за 7 суток; `funding >= 0.0001 и since_signal >= 0, окно 6 ч` — предел 2 новых за 7 суток; `price_moves_to_decision.1h_pct >= 3 и crowd_positioning.bybit.now < 0.45` — предел 2 новых за 7 суток
 
 конец: 2026-10-21T07:49:21Z, код 0
+ВНИМАНИЕ: 2026-10-21T07:49:22Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nb89.log  | 17 +++++++++++++++++
+ jobs/done/nb90.done |  1 +
+ jobs/done/nb90.log  | 41 +++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log       |  3 +++
+ jobs/queue-state.md |  2 +-
+ 5 files changed, 63 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   60ec3d11c..c577b39d0  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
