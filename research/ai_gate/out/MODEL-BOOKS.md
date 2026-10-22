@@ -1,15 +1,16 @@
 # Книги, которые заводит модель (спека 19 §12)
 
-Посчитано 2026-10-21T07:50:38Z; живых 2 из 10; порог рождения мягкий (≥ 10 случаев, случайные не хуже ≤ 20 %); новых ≤ 2 за 7 суток; отставка — 10 суток ниже основной книги или 30 суток простоя. Только бумага.
-
-**Родились в этом проходе:** m01 (entry) — `crowd_bybit_shift <= -0.06 и px_1h >= 0.005, окно 4 ч`; m02 (entry) — `oi_1h <= -0.02 и since_signal >= 0.01, окно 5 ч`
+Посчитано 2026-10-22T08:00:02Z; живых 2 из 10; порог рождения мягкий (≥ 10 случаев, случайные не хуже ≤ 20 %); новых ≤ 2 за 7 суток; отставка — 10 суток ниже основной книги или 30 суток простоя. Только бумага.
 
 | книга | вид | правило | с рождения, сут | позиций | итог $10k | основная на том же окне | нуль книги | статус |
 |---|---|---|---|---|---|---|---|---|
-| — | | книг ещё нет | | | | | | |
+| m01 | ТВХ | `crowd_bybit_shift <= -0.06 и px_1h >= 0.005, окно 4 ч` | 1.0 | 2 | -0.21 % | -1.28 % | -1.29 % | живая |
+| m02 | ТВХ | `oi_1h <= -0.02 и since_signal >= 0.01, окно 5 ч` | 1.0 | 0 | — | -1.28 % | -0.24 % | живая |
 
-**Группой:** лучше основной книги 0 из 0 живых с позициями; без эджа ожидается около половины — это не вердикт.
+**Группой:** лучше основной книги 1 из 1 живых с позициями; без эджа ожидается около половины — это не вердикт.
 
+- m01: Shorts on Bybit have been covering (the crowd shifted long) while price rose. This marks a short squeeze that has already happened; the forced buying is done, leaving a better price to short with less squeeze fuel left.
+- m02: Open interest is unwinding during a rise after the signal. The rally is driven by liquidations or covering rather than new longs, so it tends to exhaust; entering after the unwind avoids the straight_against paths.
 
 ## Наблюдения недели и порог
 
@@ -22,9 +23,9 @@
 | фильтр | `book_rules.lev >= 20 и price_moves_to_decision.4h_pct >= 5` | 15 | 0.0 | проходит |
 | фильтр | `price_moves_to_decision.1h_pct >= 3 и crowd_positioning.bybit.now < 0.45` | 10 | 0.072 | проходит |
 | ТВХ | `since_signal >= 0.03 и buy_share <= 0.47, окно 4 ч` | 235 | 0.03 | проходит |
-| ТВХ | `crowd_bybit_shift <= -0.06 и px_1h >= 0.005, окно 4 ч` | 869 | 0.0 | проходит |
-| ТВХ | `oi_1h <= -0.02 и since_signal >= 0.01, окно 5 ч` | 416 | 0.0 | проходит |
+| ТВХ | `crowd_bybit_shift <= -0.06 и px_1h >= 0.005, окно 4 ч` | 888 | 0.0 | проходит |
+| ТВХ | `oi_1h <= -0.02 и since_signal >= 0.01, окно 5 ч` | 417 | 0.0 | проходит |
 | ТВХ | `burst_ratio >= 2 и depth_eat_ask >= 1000 и px_1h >= 0.01, окно 3 ч` | 128 | 0.775 | случайный час не хуже в 0.775 > 0.2 |
-| ТВХ | `funding >= 0.0001 и since_signal >= 0, окно 6 ч` | 609 | 0.065 | проходит |
+| ТВХ | `funding >= 0.0001 и since_signal >= 0, окно 6 ч` | 618 | 0.0575 | проходит |
 
 Прошли порог, ждут места: `book_rules.lev >= 20 и price_moves_to_decision.24h_pct >= 15` — предел 2 новых за 7 суток; `book_rules.lev >= 20 и price_moves_to_decision.4h_pct >= 5` — предел 2 новых за 7 суток; `book_rules.lev >= 10 и derived.name_floor_share >= 0.35` — предел 2 новых за 7 суток; `derived.crowd_bybit_shift_24h <= -0.15 и price_moves_to_decision.4h_pct >= 3` — предел 2 новых за 7 суток; `price_moves_to_decision.4h_pct >= 10 и price_moves_to_decision.1h_pct >= 1` — предел 2 новых за 7 суток; `since_signal >= 0.03 и buy_share <= 0.47, окно 4 ч` — предел 2 новых за 7 суток; `funding >= 0.0001 и since_signal >= 0, окно 6 ч` — предел 2 новых за 7 суток; `price_moves_to_decision.1h_pct >= 3 и crowd_positioning.bybit.now < 0.45` — предел 2 новых за 7 суток
