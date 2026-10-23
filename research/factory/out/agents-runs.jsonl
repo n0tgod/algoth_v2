@@ -1240,3 +1240,7 @@
 {"at": 1792721402.721, "role": "scout", "status": "no-auth", "started": 1792721402.0, "ended": 1792721402.721, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
 {"at": 1792721702.046, "role": "brief", "status": "start", "started": 1792721701.0, "ended": 1792721702.046, "dry": false, "pid": 3224525}
 {"at": 1792721702.543, "role": "brief", "status": "no-auth", "started": 1792721701.0, "ended": 1792721702.543, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1792722001.86, "role": "brief", "status": "start", "started": 1792722001.0, "ended": 1792722001.86, "dry": false, "pid": 3225920}
+{"at": 1792722002.82, "role": "brief", "status": "no-auth", "started": 1792722001.0, "ended": 1792722002.82, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1792722301.611, "role": "brief", "status": "start", "started": 1792722301.0, "ended": 1792722301.611, "dry": false, "pid": 3227140}
+{"at": 1792722302.358, "role": "brief", "status": "no-auth", "started": 1792722301.0, "ended": 1792722302.358, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
