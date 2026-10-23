@@ -73,6 +73,26 @@ check "флаг с мёртвым pid $dead — снесён, идти" 'grep -q
 run_flag "$tmp/no_such.flag"
 check "флага нет — идти" 'grep -q ИДТИ "$tmp/out.log"'
 
+# Обучение УЖЕ идёт под флагом (23.10: книги стояли 03:00–08:50 UTC): при
+# RSS цикла > 2000 МБ и свободных ≥ 5500 МБ книги считаются рядом; памяти
+# меньше — уступают; цикл ещё ЖДЁТ (RSS мал) — уступают при любой памяти.
+printf '%s\n' "$$" > "$tmp/train_wait.flag"
+run_train() {  # $1 RSS цикла КБ, $2 MemAvailable КБ
+    printf 'MemAvailable:   %s kB\n' "$2" > "$tmp/meminfo"
+    ( cd "$tmp" && PATH="$tmp/stubs:$PATH" BOOKS="" TRAIN="555" TRAIN_KB="$1" MEMINFO="$tmp/meminfo" TRAIN_WAIT_FLAG="$tmp/train_wait.flag" \
+        bash -c "now() { echo T; }; . ./gate.sh; BOOKS_LAUNCHED=''; if books_mem_ok; then echo ИДТИ; fi" \
+        > "$tmp/out.log" 2>&1 )
+}
+run_train 3072000 6144000
+check "флаг, цикл 3000 МБ (учится), свободно 6000 — книги идут рядом" \
+      'grep -q ИДТИ "$tmp/out.log" && grep -q "книги считаются рядом" "$tmp/out.log"'
+run_train 3072000 4096000
+check "флаг, цикл 3000 МБ, свободно 4000 < 5500 — отложить" \
+      '! grep -q ИДТИ "$tmp/out.log" && grep -q "обучение S8 ждёт памяти или идёт" "$tmp/out.log"'
+run_train 512000 9216000
+check "флаг, цикл 500 МБ (ещё ждёт памяти), свободно 9000 — уступить (15.10)" \
+      '! grep -q ИДТИ "$tmp/out.log" && grep -q "обучение S8 ждёт памяти или идёт" "$tmp/out.log"'
+
 # Отрицательный контроль: без проверки «уже запущен в такте» второй
 # прогон того же такта проходит — сперва доказываем, что подделка легла.
 cp "$tmp/gate.sh" "$tmp/gate.good"
