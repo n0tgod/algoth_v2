@@ -75,17 +75,32 @@ def main():
     import rules as R                                          # noqa: E402
     rk, _, dep = cell.partition(":")
     try:
-        rows = R.read_journal(R.journal_of(rk))
+        rows, _bad = R.read_journal(R.journal_of(rk))
     except Exception as e:                                     # noqa: BLE001
         rows = []
         print(f"== журнал {rk}: не прочитан: {type(e).__name__}: {e}")
     lo = time.time() - 36 * 3600
     mine = [r for r in rows if r.get("ruler") == rk and str(int(float(r.get("dep", 0) or 0))) == dep
-            and not r.get("sizing") and float(r.get("exit_ts") or r.get("at") or 0) >= lo]
-    print(f"== журнал {rk}:{dep}: строк всего {sum(1 for r in rows if r.get('ruler') == rk)}, за 36 ч по выходу {len(mine)}:")
+            and not r.get("sizing") and (float(r.get("exit_ts") or 0) >= lo or float(r.get("at") or 0) >= lo
+                                         or float(r.get("t") or r.get("written") or r.get("rec_at") or 0) >= lo)]
+    print(f"== журнал {rk}:{dep}: строк всего {sum(1 for r in rows if r.get('ruler') == rk)}, за 36 ч {len(mine)}; "
+          f"поля строки: {sorted((mine or rows[-1:] or [{}])[0].keys())}")
     for r in sorted(mine, key=lambda r: float(r.get("exit_ts") or 0)):
+        extra = {k: r.get(k) for k in r if k not in ("sym", "side", "at", "exit_ts", "exit", "lev", "margin", "usd",
+                                                     "ruler", "dep", "sizing", "walk", "fills", "levels", "tail")}
         print(f"  {r.get('sym')} {r.get('side')} вход {ts(r.get('at'))} выход {ts(r.get('exit_ts'))} {r.get('exit')} "
-              f"lev={r.get('lev')} margin={r.get('margin')} usd={r.get('usd')} записано {ts(r.get('t') or r.get('written_at'))}")
+              f"lev={r.get('lev')} margin={r.get('margin')} usd={r.get('usd')} {extra}")
+    # --- состояние сторожа счёта по ячейке: что он считает закрытым
+    try:
+        with open(os.path.join(out, "watch", "pair.json" if rk.startswith("pair_") else "h24.json"), encoding="utf-8") as f:
+            wst = json.load(f)
+        c = (wst.get("cells") or {}).get(cell) or {}
+        print(f"== watch/{'pair' if rk.startswith('pair_') else 'h24'}.json at {ts(wst.get('at'))}: {cell} n={c.get('n')} usd={c.get('usd')}; "
+              f"закрытые с сегодняшним входом: " + str({k: v for k, v in (c.get('closed') or {}).items() if int(k.rsplit(':', 1)[-1]) >= int(time.time()) - 36 * 3600}))
+    except (OSError, ValueError, KeyError) as e:
+        print(f"== состояние сторожа не прочитано: {e}")
+    # --- охрана рынком по этой книге в логе общего счёта: последние прогоны
+    tail(os.path.join(out, "pair.log"), 14, grep=[f"{rk}: охрана", f"{rk}: возраст", "computed_at", "общий счёт:", "за "])
     # --- сторож счёта: находки по ячейке за 24 ч
     import account_watch as AW                                 # noqa: E402
     print("== сторож счёта (watch/log.jsonl), ячейка за 24 ч:")
