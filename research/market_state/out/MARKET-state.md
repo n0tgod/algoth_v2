@@ -1,6 +1,6 @@
 # Состояние рынка (спека 19 §3b)
 
-Срез 2026-10-23T05:14:07Z, прогон 843.5 с, строк записано 2173 (из них докачка 0).
+Срез 2026-10-23T06:14:08Z, прогон 843.9 с, строк записано 2151 (из них докачка 0).
 
 | источник | имён получено | из | % |
 |---|---|---|---|
@@ -8,9 +8,9 @@
 | binance | 460 | 460 | 100.0 |
 | okx | 446 | 450 | 99.1 |
 
-Рынок: fng 50, fng_label Neutral, btc_dom 59.44, mcap_usd 2758173984567, mcap_24h_pct -3.82, insurance_usdt 531125591, stables_usd 305064564378, trending ['BTC', 'AXIS', 'PENGU', 'QTC', 'PEARL', 'STRK', 'ZEC', 'PUMP', 'MON', 'PONS', 'GEOD', 'VVV', 'TSC', 'NEAR', 'HYPE']
+Рынок: fng 50, fng_label Neutral, btc_dom 59.44, mcap_usd 2759392417901, mcap_24h_pct -3.62, insurance_usdt 531125692, stables_usd 305095965251, trending ['BTC', 'QTC', 'PUMP', 'AERO', 'PONS', 'ZEC', 'QNT', 'KAS', 'ZRO', 'PEARL', 'XRP', 'NEAR', 'STRK', 'LIT', 'PENGU']
 
-Толпа в лонге сильнее всего: SKHYNIXUSDT 0.86, MELANIAUSDT 0.84, XAGUSDT 0.84, INTCUSDT 0.84, MNTUSDT 0.83, ONDOUSDT 0.82, BEUSDT 0.82, GRAMUSDT 0.81, SOXLUSDT 0.81, LABUSDT 0.81
-Толпа в шорте сильнее всего: MAGMAUSDT 0.27, MXLUSDT 0.27, JCTUSDT 0.28, HMSTRUSDT 0.30, POPMARTUSDT 0.31, BWETUSDT 0.35, USDEXUSDT 0.36, NUSTOCKUSDT 0.36, IRYSUSDT 0.37, BZUSDT 0.38
+Толпа в лонге сильнее всего: SKHYNIXUSDT 0.86, XAGUSDT 0.84, MELANIAUSDT 0.84, INTCUSDT 0.84, MNTUSDT 0.83, ONDOUSDT 0.82, LABUSDT 0.82, GRAMUSDT 0.82, BEUSDT 0.81, XRPUSDT 0.81
+Толпа в шорте сильнее всего: MAGMAUSDT 0.28, MXLUSDT 0.29, JCTUSDT 0.29, HMSTRUSDT 0.30, SENSETIMEUSDT 0.33, SMICUSDT 0.35, BWETUSDT 0.35, POPMARTUSDT 0.36, IRYSUSDT 0.37, NUSTOCKUSDT 0.38
 
 Событий за сутки: 10.
