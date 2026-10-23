@@ -1,0 +1,50 @@
+== задание nb99 ==
+строка: status
+начало: 2026-10-23T08:58:20Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   78G   67G  54% /
+/dev/sdb        147G   74G   67G  53% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 172751  655097 /root/algoth_v2/bot/target/release/bot ladder --dir /root/algoth_v2/bot/out/dca/sub_0a1d813d9612bc11 --base https://api.bybit.com --keys-stdin -
+2219190  228566 .venv/bin/python research/b1_book/collect.py --http 8765
+2219444  228498 .venv/bin/python research/s8_loop/train.py
+--- убийства ядра по памяти за сутки ---
+0 (подробно: run tools/memtop.py)
+--- обучение S8 ---
+обучение S8: веса от 2026-10-23 08:47 UTC, 0.2 ч назад (каденция 24, тревога с 36 ч); последний цикл 08:47 UTC: обучилась
+--- идущие прогоны ---
+3232927 /root/algoth_v2/.venv/bin/python /root/algoth_v2/research/factory/mech_run.py judge 1792723502.003 -- /root/algoth_v2/.venv/bin/python research/factory/run_day.py --tag 1m --no-declare
+3232933 /root/algoth_v2/.venv/bin/python research/factory/run_day.py --tag 1m --no-declare
+--- статус сбора ---
+{"t": 1792745897.0, "uptime_sec": 228562.5, "rss_mb": 3484, "mem_guard": {"drops": 5, "dies": 0, "max_rss_mb": 3616}, "messages": 745259498, "trades": 64419964, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 106992692, "snapshot_errors": 24, "last_snap_age_sec": 0.0, "snap_pass_sec": 0.418, "net_minute": {"lag_max_s": 26.37, "stall_max_s": 2.95, "drops": 19, "ready": 798, "books": 798, "at": 1792745852.2}, "drops": 40772, "stalls_over_5s": 53, "writes": {"book": 106992692, "trades": 64419963, "raw": 4439210, "liq": 15886, "metrics": 594510}, "write_age_sec": {"book": 0.0, "trades": 0.1, "raw": 0.2, "liq": 8.6, "metrics": 131.5}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.2289, "ask":
+--- живой исполнитель ---
+{
+  "at_ms": 1792064189590,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 268.11562509,
+    "equity": 264.97302509
+  }
+}
+--- исполнитель Ladder ---
+
+sub_0a1d813d9612bc11: статусу 1 с, режим live, позиций 0 (отметка у 0), пауза None, без входов False, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+sub_3f11698eb30279fa: статусу 1015399 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+sub_b0b417879b985874: статусу 655100 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+конец: 2026-10-23T08:58:20Z
