@@ -178,3 +178,14 @@ Traceback (most recent call last):
                                ^^^^^
 AttributeError: 'list' object has no attribute 'get'
 конец: 2026-10-23T09:01:35Z, код 1
+ВНИМАНИЕ: 2026-10-23T09:01:35Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nc01.done |   1 +
+ jobs/done/nc01.log  | 180 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log       |   3 +
+ jobs/queue-state.md |   2 +-
+ 4 files changed, 185 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   d9213a304..8ada607f9  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
