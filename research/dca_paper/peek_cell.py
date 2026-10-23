@@ -71,6 +71,51 @@ def main():
                           f"cut_why={p_.get('cut_why')} mark={p_.get('mark_usd')}")
             cells = d.get("cells") or {}
             print(f"  cells ключи: {list(cells)[:6]}")
+    # --- журнал ячейки за 36 ч: что закрылось и чем (23.10: позиции исчезли с экрана)
+    import rules as R                                          # noqa: E402
+    rk, _, dep = cell.partition(":")
+    try:
+        rows = R.read_journal(R.journal_of(rk))
+    except Exception as e:                                     # noqa: BLE001
+        rows = []
+        print(f"== журнал {rk}: не прочитан: {type(e).__name__}: {e}")
+    lo = time.time() - 36 * 3600
+    mine = [r for r in rows if r.get("ruler") == rk and str(int(float(r.get("dep", 0) or 0))) == dep
+            and not r.get("sizing") and float(r.get("exit_ts") or r.get("at") or 0) >= lo]
+    print(f"== журнал {rk}:{dep}: строк всего {sum(1 for r in rows if r.get('ruler') == rk)}, за 36 ч по выходу {len(mine)}:")
+    for r in sorted(mine, key=lambda r: float(r.get("exit_ts") or 0)):
+        print(f"  {r.get('sym')} {r.get('side')} вход {ts(r.get('at'))} выход {ts(r.get('exit_ts'))} {r.get('exit')} "
+              f"lev={r.get('lev')} margin={r.get('margin')} usd={r.get('usd')} записано {ts(r.get('t') or r.get('written_at'))}")
+    # --- сторож счёта: находки по ячейке за 24 ч
+    import account_watch as AW                                 # noqa: E402
+    print("== сторож счёта (watch/log.jsonl), ячейка за 24 ч:")
+    try:
+        with open(AW.LOG, encoding="utf-8") as f:
+            for line in f:
+                try:
+                    x = json.loads(line)
+                except ValueError:
+                    continue
+                if x.get("cell") == cell and float(x.get("t", 0)) >= time.time() - 24 * 3600:
+                    print(f"  {ts(x['t'])} {x.get('kind')} {x.get('text')}")
+    except OSError as e:
+        print(f"  лог не читается: {e}")
+    # --- почему не публикуется: хвосты логов прогонов по словам
+    for lg in ("pair.log", "short.log", "paper.log"):
+        tail(os.path.join(out, lg), 25, grep=["публик", "push", "rebase", "lock", "разош", "ОТКАЗ", "ошибк", "Traceback",
+                                               "Error", "охрана рынком", "pair_optimal_g2"])
+    # --- сводки волны (охрана рынком читает их): какие часы переписаны сегодня
+    import wave as WV                                          # noqa: E402
+    print(f"== сводки часов {os.path.relpath(WV.SUMMARY_DIR, HERE)}: изменённые за 12 ч (имя → изменён):")
+    try:
+        names = sorted(os.listdir(WV.SUMMARY_DIR))
+        fresh = [(n, os.stat(os.path.join(WV.SUMMARY_DIR, n)).st_mtime) for n in names]
+        fresh = [(n, m) for n, m in fresh if m >= time.time() - 12 * 3600]
+        for n, m in sorted(fresh, key=lambda x: x[1])[-40:]:
+            print(f"  {n} → {ts(m)}")
+        print(f"  всего файлов {len(names)}, изменено за 12 ч {len(fresh)}")
+    except OSError as e:
+        print(f"  каталог не читается: {e}")
     return 0
 
 
