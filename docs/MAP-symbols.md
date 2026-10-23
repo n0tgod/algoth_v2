@@ -1386,6 +1386,19 @@ A3 — кандидаты в пары на момент окна.
 - L21 `READY = re.compile('книг готово (\\d+)/(\\d+)')`
 - L24 `main()`
 
+## research/b1_book/peek_watchdog.py · 53 строк
+
+Заглянуть в сторож и цикл S8 за окно часов (только чтение): почему книги не считались (строки «отложен», памя…
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L14 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L15 `WD = os.path.join(HERE, 'out', 'watchdog.log…`
+- L16 `TRAIN = os.path.join(ROOT, 'research', 's8_loop…`
+- L17 `FLAG = os.path.join(ROOT, 'research', 's8_loop…`
+- L18 `WORDS = ('отложен', 'обучен', 'книги', 'память'…`
+- L21 `window(path, lo, hi, words, limit=160)`
+- L39 `main()`
+
 ## research/b1_book/remote.py · 359 строк
 
 Чтение часа записи из объектного хранилища, когда на диске его нет.

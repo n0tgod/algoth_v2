@@ -287,3 +287,15 @@ optimal_h_m02: охрана рынком ≥ 4 % закрыла 0 из 4 поз�
   ZSUSDT → 10-23 01:05:33
   всего файлов 809, изменено за 12 ч 798
 конец: 2026-10-23T09:03:56Z, код 0
+ВНИМАНИЕ: 2026-10-23T09:03:56Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nc01.log  |  11 ++
+ jobs/done/nc02.done |   1 +
+ jobs/done/nc02.log  | 289 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log       |   3 +
+ jobs/queue-state.md |   2 +-
+ 5 files changed, 305 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   597b39919..db96d032c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

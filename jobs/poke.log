@@ -2674,3 +2674,8 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1792746220 ==
 [2026-10-23T09:03:42Z] задание nc02 запущено: research/dca_paper/peek_cell.py
+
+== сигнал 1792746379 ==
+
+== сигнал 1792746733 ==
+[2026-10-23T09:12:15Z] задание nc03 запущено: research/b1_book/peek_watchdog.py
