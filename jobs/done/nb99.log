@@ -48,3 +48,35 @@ sub_3f11698eb30279fa: статусу 1015399 с, режим live, позиций
 sub_b0b417879b985874: статусу 655100 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
   чужое на счёте: нет
 конец: 2026-10-23T08:58:20Z
+ВНИМАНИЕ: 2026-10-23T08:58:20Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nb99.log                                 |    50 +
+ jobs/poke.log                                      |     2 +
+ jobs/queue-state.md                                |     2 +-
+ research/ai_gate/out/latest.json                   |     2 +-
+ research/dca_paper/out/DCA-pair.md                 |   368 +-
+ research/dca_paper/out/DCA-paper.json              | 11865 ++++++++-----------
+ research/dca_paper/out/DCA-paper.md                |   241 +-
+ research/dca_paper/out/DCA-short.json              |     2 +-
+ research/dca_paper/out/DCA-short.md                |   216 +-
+ .../dca_paper/out/fixed_journal-2026-10-22.jsonl   |    16 +
+ research/dca_paper/out/fixed_pair-2026-10-22.jsonl |   215 +
+ research/dca_paper/out/fixed_pair-2026-10-23.jsonl |    16 +
+ .../dca_paper/out/fixed_short-2026-10-22.jsonl     |   183 +
+ .../dca_paper/out/fixed_short-2026-10-23.jsonl     |    24 +
+ research/dca_paper/out/journal-2026-10-22.jsonl    |    16 +
+ research/dca_paper/out/pair-2026-10-22.jsonl       |   202 +
+ research/dca_paper/out/pair-2026-10-23.jsonl       |    16 +
+ research/dca_paper/out/short-2026-10-22.jsonl      |   166 +
+ research/dca_paper/out/short-2026-10-23.jsonl      |    23 +
+ research/dca_paper/out/watch/h24.json              |     2 +-
+ research/dca_paper/out/watch/latest.json           |     2 +-
+ research/dca_paper/out/watch/log.jsonl             |   252 +-
+ research/dca_paper/out/watch/pair.json             |     2 +-
+ research/dca_paper/out/watch/sit.json              |     2 +-
+ research/s8_loop/out/day_brake.json                |     2 +-
+ 25 files changed, 6719 insertions(+), 7168 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   29d841f0b..a3ae4b97e  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
