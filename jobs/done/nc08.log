@@ -1,0 +1,21 @@
+== задание nc08 ==
+строка: run research/dca_paper/what_if_short.py --no-cap
+начало: 2026-10-25T12:38:22Z
+запускаю: .venv/bin/python research/dca_paper/what_if_short.py --no-cap
+safe_h $10000 book: n 1338 полов 47 usd 971.85 итог +9.72 % dd -9.7 % (1-я 698.68, 2-я 273.18, вперёд -1136.51); снято 0; 0.3 с
+safe_h $10000 pause: n 1301 полов 44 usd 1122.48 итог +11.22 % dd -8.2 % (1-я 693.02, 2-я 429.46, вперёд -958.15); снято 265; 22.2 с
+optimal_h $10000 book: n 1462 полов 257 usd 782.17 итог +7.82 % dd -7.7 % (1-я 648.77, 2-я 133.41, вперёд -849.58); снято 0; 0.2 с
+Traceback (most recent call last):
+  File "/root/algoth_v2/research/dca_paper/what_if_short.py", line 316, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/root/algoth_v2/research/dca_paper/what_if_short.py", line 300, in main
+    r = run(books, pairs, deps, log=log, do_pair=not a.no_pair, variants=VARIANTS_NOCAP if a.no_cap else VARIANTS)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/what_if_short.py", line 232, in run
+    rows, steps = pause_rows(recs, bk, dep, now, log)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/what_if_short.py", line 176, in pause_rows
+    raise RuntimeError(f"{bk}: пауза сняла больше {MAX_STEPS} записей — не пауза, а другая книга")
+RuntimeError: optimal_h: пауза сняла больше 400 записей — не пауза, а другая книга
+конец: 2026-10-25T12:39:23Z, код 1

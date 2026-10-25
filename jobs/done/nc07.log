@@ -6,3 +6,25 @@
 TERM → 102764
 остановлено: 102764
 конец: 2026-10-25T12:36:28Z, код 0
+ВНИМАНИЕ: 2026-10-25T12:36:29Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nc06.log                                 |  39 ++
+ jobs/done/nc07.done                                |   1 +
+ jobs/done/nc07.log                                 |   8 +
+ jobs/poke.log                                      |   4 +
+ jobs/queue-state.md                                |   4 +-
+ .../out/decisions/decisions-2026-10-25.jsonl       |  10 +
+ research/ai_gate/out/latest.json                   |   2 +-
+ research/dca_paper/out/DCA-pair.md                 | 242 +++++-----
+ research/dca_paper/out/DCA-short.md                | 150 +++---
+ research/dca_paper/out/fixed_pair-2026-10-25.jsonl |  31 ++
+ .../dca_paper/out/fixed_short-2026-10-25.jsonl     |  41 ++
+ research/dca_paper/out/pair-2026-10-25.jsonl       |  31 ++
+ research/dca_paper/out/short-2026-10-25.jsonl      |  38 ++
+ research/dca_paper/out/watch/h24.json              |   2 +-
+ research/dca_paper/out/watch/latest.json           |   2 +-
+ research/dca_paper/out/watch/log.jsonl             | 528 ++++++++++-----------
+ research/dca_paper/out/watch/pair.json             |   2 +-
+ research/s8_loop/out/day_brake.json                |   2 +-
+ 18 files changed, 670 insertions(+), 467 deletions(-)
+fatal: cannot lock ref 'HEAD': is at 2eca72be805804dc09c0403b385e7f2c9233dc40 but expected 411575e568be8bcea1a18418b1b1fd3821af95d3

@@ -2690,3 +2690,7 @@ _: line 3: 2018325 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 == сигнал 1792931784 ==
 [2026-10-25T12:36:26Z] задание nc07 запущено: tools/stop_run.py
 Terminated
+
+== сигнал 1792931900 ==
+[2026-10-25T12:38:22Z] задание nc08 запущено: research/dca_paper/what_if_short.py
+[2026-10-25T12:38:22Z] задание nc09 запущено: research/dca_paper/what_if_short.py
