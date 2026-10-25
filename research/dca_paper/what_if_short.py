@@ -48,7 +48,6 @@ LATEST = os.path.join(OUT, "whatif_short.json")
 PAUSE_H = 24.0
 LEV_CAP = 10.0
 TRIGGER_EXITS = NP.TRIGGER_EXITS          # «пол», «ликвидация» — как у механики
-MAX_STEPS = 400
 MEM_LIMIT_MB = 3000
 H24_BOOKS = ["safe_h", "optimal_h", "aggr_h"]
 PAIR_BOOKS = ["pair_safe", "pair_optimal", "pair_aggr"]
@@ -172,8 +171,10 @@ def pause_rows(recs, bk, dep, now, log):
             first = blocked[0]
             cur = [r for r in cur if RP._key(r) != first["key"]]
             steps += 1
-            if steps > MAX_STEPS:
-                raise RuntimeError(f"{bk}: пауза сняла больше {MAX_STEPS} записей — не пауза, а другая книга")
+            if steps % 200 == 0:
+                log(f"  {bk} ${int(dep)}: пауза сняла {steps} записей, осталось {len(cur)}…")
+            if steps > len(recs):
+                raise RuntimeError(f"{bk}: пауза сняла больше записей, чем было ({len(recs)}) — цикл не сходится")
 
 
 def plain_rows(recs, bk, dep, now):
