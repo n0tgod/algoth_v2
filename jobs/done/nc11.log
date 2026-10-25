@@ -87,3 +87,18 @@ pair_aggr $10000 pause: n 1528 полов 309 usd 2211.76 итог +22.12 % dd -
 | $10000 | пауза 24 ч после пола | 1528 | 309 | +2212 $ | +22.12 % | -7.69 % | +285 $ | +2004 $ | +208 $ | -479 $ | 1476 | медиана +3179 $ [+2388 $…+4762 $], ≥ паузы 1.00; вперёд -1432 $, ≥ 0.00 |
 
 
+ВНИМАНИЕ: 2026-10-25T13:15:36Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nc11.log                                 | 51 +++++++++++++++++++++
+ jobs/queue-state.md                                |  2 +-
+ .../out/decisions/decisions-2026-10-25.jsonl       |  5 +++
+ research/ai_gate/out/latest.json                   |  2 +-
+ research/ai_gate/out/model_entry.json              |  2 +-
+ research/dca_paper/out/WHATIF-short-nocap.md       | 52 +++++++++++-----------
+ research/dca_paper/out/whatif_short-nocap.json     |  2 +-
+ 7 files changed, 86 insertions(+), 30 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   8483a0bd5..5fa5e2df3  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-25T13:15:42Z, код 0
