@@ -1712,7 +1712,7 @@ DCA-лестница с забором по §5 — ЯДРО (спека 14).
 - L431 `simulate_dca(bars, rung_prices, weights, capital, leverage, mmr…` — DCA на РЕАЛЬНЫХ барах: доливы против хода, тейк по ходу, пол.
 - L739 `same_coin_short(bars, trigger_px, exit_ts, exit_px, short_notio…` — Короткий на ТОЙ ЖЕ монете, включаемый в просадке (вариант а).
 
-## research/dca_ladder/run_d10.py · 1049 строк
+## research/dca_ladder/run_d10.py · 1053 строк
 
 D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: плечо, доливы, цель, гейт.
 
@@ -1758,27 +1758,27 @@ D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: пл�
 - L296 `EQ_LIQ_MULT = 1.5`
 - L299 `eq_leverage(entry, lev, floor, stop, look)` — Плечо равного риска шорта (§11.9): убыток на стопе = убытку книги на её полу при плече `lev` (доля маржи). No…
 - L315 `one_position(g, bars, ts, look, rule, param, lev_look=None, cel…` — Исход одного КОРОТКОГО решения во всех ячейках. None — нечем мерить.
-- L457 `collect(limit=None, src=None, log=print, legs=None, cells=None,…` — Дорогой проход: бары символа читаются ОДИН раз на все ячейки.
-- L567 `common_sample(recs, log=print)` — Решения, ЗАКРЫТЫЕ при каждой ячейке (правило D8). Потери — числом.
-- L592 `_exits(rows)`
-- L599 `cell(recs, book, dep, gate=REF_GATE, net=False, share=None, row…` — Ячейка «правило × книга × депозит × гейт»: касса и форма книги.
-- L663 `paired(rows_ref, rows_cell)` — Парная разность исходов к точке отсчёта на ОБЩИХ решениях (доли маржи).
-- L676 `halves(rows_by_cell)`
-- L688 `lev_split(rows)` — Диагностика D9 на этой выборке: без лестницы против лестницы.
-- L702 `_rss_mb()`
-- L711 `_rss_now_mb()` — Текущий RSS процесса в МБ (Linux); None — не прочитать.
-- L729 `MEM_LIMIT_MB = 1200` — Предел памяти прогона. Машина 7.7 ГБ без свопа: сборщик держит 1.5 ГБ, часовой цикл на шаге матрицы 3.3 ГБ; п…
-- L732 `mem_guard(where, log=print, limit=None)` — Печатает RSS в точке `where`; выше предела — останавливает прогон.
-- L745 `GATE_KEYS = [REF, 'c1:struct:t2', 'c1:none:t2', 'c1…` — Ячейки, по которым читается ось гейта: правило книги и три ячейки 1×.
-- L748 `run(limit=None, src=None, log=print, legs=None)`
-- L807 `verdict(s)` — Вердикт из ЧИСЕЛ: положительные ячейки (брутто и нетто), устойчивые к половинам, и лучше ли они нынешнего пра…
-- L840 `_p(x, d=2, sign=True)`
-- L846 `_u(x)`
-- L850 `title_of(key)`
-- L856 `_row(key, c, cn, p, mark)`
-- L872 `report(s)`
-- L1014 `publish(name)`
-- L1020 `main(argv=None)`
+- L461 `collect(limit=None, src=None, log=print, legs=None, cells=None,…` — Дорогой проход: бары символа читаются ОДИН раз на все ячейки.
+- L571 `common_sample(recs, log=print)` — Решения, ЗАКРЫТЫЕ при каждой ячейке (правило D8). Потери — числом.
+- L596 `_exits(rows)`
+- L603 `cell(recs, book, dep, gate=REF_GATE, net=False, share=None, row…` — Ячейка «правило × книга × депозит × гейт»: касса и форма книги.
+- L667 `paired(rows_ref, rows_cell)` — Парная разность исходов к точке отсчёта на ОБЩИХ решениях (доли маржи).
+- L680 `halves(rows_by_cell)`
+- L692 `lev_split(rows)` — Диагностика D9 на этой выборке: без лестницы против лестницы.
+- L706 `_rss_mb()`
+- L715 `_rss_now_mb()` — Текущий RSS процесса в МБ (Linux); None — не прочитать.
+- L733 `MEM_LIMIT_MB = 1200` — Предел памяти прогона. Машина 7.7 ГБ без свопа: сборщик держит 1.5 ГБ, часовой цикл на шаге матрицы 3.3 ГБ; п…
+- L736 `mem_guard(where, log=print, limit=None)` — Печатает RSS в точке `where`; выше предела — останавливает прогон.
+- L749 `GATE_KEYS = [REF, 'c1:struct:t2', 'c1:none:t2', 'c1…` — Ячейки, по которым читается ось гейта: правило книги и три ячейки 1×.
+- L752 `run(limit=None, src=None, log=print, legs=None)`
+- L811 `verdict(s)` — Вердикт из ЧИСЕЛ: положительные ячейки (брутто и нетто), устойчивые к половинам, и лучше ли они нынешнего пра…
+- L844 `_p(x, d=2, sign=True)`
+- L850 `_u(x)`
+- L854 `title_of(key)`
+- L860 `_row(key, c, cn, p, mark)`
+- L876 `report(s)`
+- L1018 `publish(name)`
+- L1024 `main(argv=None)`
 
 ## research/dca_ladder/run_d11.py · 216 строк
 
@@ -4100,6 +4100,37 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L422 `report(s)`
 - L465 `publish(name)`
 - L471 `main(argv=None)`
+
+## research/dca_paper/what_if_short.py · 271 строк
+
+Что было бы с короткими и общими книгами при двух правилах (владелец 25.10: «если поменять эти правила, как п…
+
+- L33 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L34 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L45 `OUT = os.path.join(HERE, 'out')`
+- L46 `REPORT = os.path.join(OUT, 'WHATIF-short.md')`
+- L47 `LATEST = os.path.join(OUT, 'whatif_short.json')`
+- L48 `PAUSE_H = 24.0`
+- L49 `LEV_CAP = 10.0`
+- L50 `TRIGGER_EXITS = NP.TRIGGER_EXITS`
+- L51 `MAX_STEPS = 400`
+- L52 `MEM_LIMIT_MB = 3000`
+- L53 `H24_BOOKS = ['safe_h', 'optimal_h', 'aggr_h']`
+- L54 `PAIR_BOOKS = ['pair_safe', 'pair_optimal', 'pair_agg…`
+- L55 `VARIANTS = ('book', 'pause', 'cap', 'both')`
+- L56 `VARIANT_RU = {'book': 'как есть', 'pause': f'пауза {…`
+- L60 `capped_cache(cache, log)` — Кэш коротких, где позиции с плечом > LEV_CAP пересчитаны ядром с потолком.
+- L86 `cache_rulers(cache)`
+- L90 `h24_packed(cache, books, launch, now, log)` — Записи коротких книг после возраста и охраны — как в прогоне.
+- L100 `pair_packed(short_cache, books, launch, now, ctx, log)` — Записи общих счетов после гейта, возраста и охраны — как в `run_pair.run`.
+- L119 `pause_rows(recs, bk, dep, now, log)` — Касса книги с паузой: записи снимаются по одной (как `name_pause.sister`), триггер и запрет — только у КОРОТК…
+- L139 `plain_rows(recs, bk, dep, now)`
+- L145 `stats(rows, bk, dep, ctx, since=None, until=None)`
+- L158 `run(books_h24, books_pair, deps, log=print, now=None, do_pair=T…`
+- L207 `pct(x)`
+- L211 `usd(x)`
+- L215 `report(r)`
+- L239 `main(argv=None)`
 
 ## research/f1_carry/carry.py · 169 строк
 

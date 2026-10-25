@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 691, строк: 271444, каталогов: 90.
+Модулей кода: 692, строк: 271746, каталогов: 90.
 
 
 ## корень — память проекта, идеи, README
@@ -176,7 +176,7 @@
 ## research/dca_ladder — DCA D0–D9 — лестница с забором по марже: реплеи, хеджи, тейк, выходы
 
 - `ladder.py` · 779 строк — DCA-лестница с забором по §5 — ЯДРО (спека 14).
-- `run_d10.py` · 1049 строк — D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: плечо, доливы, цель, гейт.
+- `run_d10.py` · 1053 строк — D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: плечо, доливы, цель, гейт.
 - `run_d11.py` · 216 строк — D11 — DCA-лестница на сигнале книги `h24` (24 ч, рука по выбору), шорт.
 - `run_d12.py` · 264 строк — D12 — билет от СОБСТВЕННОГО пика: сколько даёт сигнал h24 (шорт), когда депозит делится на места ЭТОЙ книги,…
 - `run_d13.py` · 376 строк — D13 — короткая книга РЯДОМ с длинной: что даёт пара, а не половина.
@@ -190,7 +190,7 @@
 - `run_d9.py` · 684 строк — D9 — варианты ВЫХОДА коротких DCA-книг (вопрос владельца 2026-09-05).
 - `run_dca.py` · 406 строк — D1 (спека 14) — дешёвый потолок DCA-лестницы: реплей по хранилищу A2.
 - `stress_crash.py` · 398 строк — Стресс: что делает механика Ladder в затяжном падении — без сигнала.
-- тесты: `test_ladder.py` (1546), `test_legs_cache.py` (88), `test_noncrypto_gate.py` (91), `test_run_d10.py` (708), `test_run_d11.py` (112), `test_run_d12.py` (72), `test_run_d13.py` (137), `test_run_d2.py` (207), `test_run_d3.py` (427), `test_run_d4.py` (266), `test_run_d5.py` (486), `test_run_d6.py` (706), `test_run_d7.py` (283), `test_run_d8.py` (365), `test_run_d9.py` (518), `test_run_dca.py` (141), `test_rung_step.py` (91), `test_stress_crash.py` (93)
+- тесты: `test_ladder.py` (1546), `test_legs_cache.py` (88), `test_noncrypto_gate.py` (91), `test_run_d10.py` (735), `test_run_d11.py` (112), `test_run_d12.py` (72), `test_run_d13.py` (137), `test_run_d2.py` (207), `test_run_d3.py` (427), `test_run_d4.py` (266), `test_run_d5.py` (486), `test_run_d6.py` (706), `test_run_d7.py` (283), `test_run_d8.py` (365), `test_run_d9.py` (518), `test_run_dca.py` (141), `test_rung_step.py` (91), `test_stress_crash.py` (93)
 - документы: `RUNBOOK.md` — D1 — потолок DCA-лестницы: как прогонять
 - отчёты в `out/` (21): D1-dca-1m.md, D1-dca-smoke-1m.md, D10-short-1m.md, D11-h24-gbm-h72-1m.md, D11-h24-nn-h24-1m.md, D11-h24-nn-h72-1m.md, D12-own-nn-h24-1m.md, D12-own-nn-h72-1m.md, D13-pair-nn-h24-1m.md, D2-dca-1m.md, D2-dca-smoke.md, D3-fence-1m.md, D4-bookhedge-1m.md, D5-ruler-1m.md, D6-cash-1m-d10000.md, D6-cash-1m.md, D7-hold-1m.md, D8-take-1m.md, D8-take-smoke-1m.md, D9-exit-1m.md, STRESS-crash.md
 
@@ -269,6 +269,7 @@
 - `tail_screen.py` · 495 строк — Портрет хвоста коротких книг: что общего у минусовых сделок.
 - `wave.py` · 309 строк — Волна рынка и охрана рынком — ОДНА библиотека для книг и замеров.
 - `wave_guard.py` · 488 строк — Охрана рынком для коротких книг h24: концентрация, состав выходов, депозиты, равенство ядру.
+- `what_if_short.py` · 271 строк — Что было бы с короткими и общими книгами при двух правилах (владелец 25.10: «если поменять эти правила, как п…
 - тесты: `test_account_watch.py` (85), `test_agree_book.py` (201), `test_ai_branch.py` (64), `test_arm_book.py` (163), `test_arm_split.py` (153), `test_backfill_exit_px.py` (80), `test_best.py` (74), `test_boost.py` (174), `test_branches.py` (294), `test_cost_gap.py` (141), `test_costs.py` (500), `test_costs_cache.py` (82), `test_cut.py` (297), `test_day_shares.py` (45), `test_delist_cases.py` (58), `test_entry_filter.py` (60), `test_entry_gate.py` (160), `test_exit_ceiling.py` (105), `test_exit_grid.py` (83), `test_floor_predict.py` (59), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_guard.py` (238), `test_guard_fill.py` (75), `test_guard_forward.py` (67), `test_journal_cache.py` (120), `test_long_guard.py` (79), `test_names.py` (227), `test_open_days.py` (50), `test_pair.py` (582), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (3355), `test_path_screen.py` (247), `test_pick_rule.py` (121), `test_repeat_entry.py` (234), `test_short.py` (491), `test_short_adds.py` (189), `test_short_age.py` (148), `test_short_floor.py` (125), `test_short_levcap.py` (193), `test_short_levers.py` (225), `test_short_rules_1003.py` (64), `test_short_rung.py` (237), `test_short_rung_axes.py` (143), `test_short_rung_time.py` (144), `test_short_select.py` (143), `test_short_size.py` (66), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_weeks.py` (230), `test_short_why.py` (158), `test_slip_x3.py` (76), `test_tail_screen.py` (198), `test_wave_full.py` (67), `test_wave_guard.py` (166)
 - отчёты в `out/` (60): DCA-agree-book.md, DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-boost-100.md, DCA-cash-fix.md, DCA-cost-gap.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-delist-cases.md, DCA-entry-filter.md, DCA-entry-gate.md, DCA-exit-ceiling.md, DCA-exit-grid.md, DCA-floor-predict.md, DCA-fund-check.md, DCA-fund-probe.md, DCA-guard-fill.md, DCA-guard-forward.md, DCA-guard-sweep.md, DCA-inverse-guard.md, DCA-long-guard.md, DCA-names.md, DCA-pair-age-why.md, DCA-pair-age.md, DCA-pair-gate.md, DCA-pair.md, DCA-paper.md, DCA-path-screen.md, DCA-pick-rule.md, DCA-repeat-entry.md, DCA-short-adds.md, DCA-short-age.md, DCA-short-floor.md, DCA-short-levcap.md, DCA-short-levers-hold.md, DCA-short-levers.md, DCA-short-rung-axes.md, DCA-short-rung-time.md, DCA-short-rung.md, DCA-short-select.md, DCA-short-size.md, DCA-short-stop.md, DCA-short-supply-1m.md, DCA-short-supply.md, DCA-short-take.md, DCA-short-weeks.md, DCA-short-why.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md, DCA-tail-screen.md, DCA-wave-guard-faith.md, DCA-wave-guard.md, NONCRYPTO-cut.md, NONCRYPTO-hold.md, NONCRYPTO-pair.md, NONCRYPTO-window.md, WAVE-episodes.md
 
@@ -879,7 +880,7 @@
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
 - документы: `README.md` — Очередь заданий, `queue-state.md` — 
-- заданий `.job`: 1004, логов `done/*.log`: 1006 (в карту не перечисляются — их читают по имени)
+- заданий `.job`: 1005, логов `done/*.log`: 1007 (в карту не перечисляются — их читают по имени)
 
 ## tools — команды сервера, защита коммитов, хуки
 

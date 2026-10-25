@@ -1,0 +1,14 @@
+== задание nc06 ==
+строка: run research/dca_paper/what_if_short.py --books optimal_h --no-pair --no-publish
+начало: 2026-10-25T12:03:54Z
+запускаю: .venv/bin/python research/dca_paper/what_if_short.py --books optimal_h --no-pair --no-publish
+потолок 10×: позиций с плечом выше — 2987, решений к пересчёту 2186
+пол капитуляции 0.1 — линейки safe_s
+коротких ног (край ≥ 33) 2186: rr2 160, lo 1898, any 2186; символов 309
+окно решений 2026-08-08 10:00 … 2026-10-25 11:00 UTC (78 суток, дат 79)
+память: 225.6 МБ (ноги загружены; предел 1200)
+хранилище: повтор 1/3 для b1/trades/BLUAIUSDT/2026-08-20.tar: An error occurred (GatewayTimeout) when calling the GetObject operation (reached max retries: 5): The server did not res
+кэш хранилища: снято 1450 файлов, осталось 1.80 ГБ при пределе 2
+  символ 2/309  решений 27
+кэш хранилища: снято 1158 файлов, осталось 1.80 ГБ при пределе 2
+кэш хранилища: снято 1758 файлов, осталось 1.80 ГБ при пределе 2

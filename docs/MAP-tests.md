@@ -825,7 +825,7 @@
 - L40 `test_exchange_marking_cuts_what_the_list_misses()`
 - L66 `test_leg_gate_uses_the_same_set()`
 
-## research/dca_ladder/test_run_d10.py · 708 строк
+## research/dca_ladder/test_run_d10.py · 735 строк
 
 Проверки замера D10 — короткие DCA-книги: плечо, доливы, цель, гейт.
 
@@ -866,10 +866,11 @@
 - L539 `test_cell_policy_floor_and_sink_do_not_retain_records()` — Пол ячейки заменяет пол книги и едет в запись; `sink` отдаёт записи сразу и в памяти не держит, конец записи…
 - L573 `test_cell_stop_and_equal_risk_leverage_go_into_the_record()` — Ячейка со стопом (спека 19 §11.9): рост к 106 режет стопом 2 % в небольшой минус там, где книга доезжает до т…
 - L612 `test_cell_hold_inside_a_longer_window_matches_the_short_window_…` — Ячейка со сроком 24 ч внутри окна 48 ч считает те же бары, что проход с окном 24 ч: исход, отметки, конец окн…
-- L659 `TESTS = [test_cell_stop_and_equal_risk_leverage…`
-- L681 `_control_memory_guard_never_stops()`
-- L686 `CONTROLS = [('сторож памяти не останавливает', _co…`
-- L698 `main()`
+- L659 `test_cell_lev_cap_cuts_leverage_from_above_only()` — Потолок плеча ячейки (what-if 25.10): `lev_cap` ниже плеча забора режет плечо до потолка, потолок выше плеча…
+- L685 `TESTS = [test_cell_stop_and_equal_risk_leverage…`
+- L708 `_control_memory_guard_never_stops()`
+- L713 `CONTROLS = [('сторож памяти не останавливает', _co…`
+- L725 `main()`
 
 ## research/dca_ladder/test_run_d11.py · 112 строк
 
