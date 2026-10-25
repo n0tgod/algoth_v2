@@ -141,3 +141,22 @@ pair_aggr $10000 both: n 1536 полов 164 usd 3294.54 итог +32.95 % dd -4
 | $10000 | пауза и потолок | 1536 | 164 | +3295 $ | +32.95 % | -4.21 % | +1085 $ | +2644 $ | +651 $ | -278 $ | 930 | медиана +3131 $ [+2649 $…+3890 $], ≥ паузы 0.30; вперёд -815 $, ≥ 0.00 |
 
 
+ВНИМАНИЕ: 2026-10-25T15:07:32Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nc14.log                       |   75 +
+ jobs/queue-state.md                      |    2 +-
+ research/dca_paper/out/DCA-pair.md       |   26 +-
+ research/dca_paper/out/DCA-paper.json    | 3752 +++++++++++++++---------------
+ research/dca_paper/out/DCA-paper.md      |   36 +-
+ research/dca_paper/out/WHATIF-short.md   |   60 +
+ research/dca_paper/out/watch/latest.json |    2 +-
+ research/dca_paper/out/watch/pair.json   |    2 +-
+ research/dca_paper/out/watch/sit.json    |    2 +-
+ research/dca_paper/out/whatif_short.json |    1 +
+ research/s8_loop/out/day_brake.json      |    2 +-
+ 11 files changed, 2108 insertions(+), 1852 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   5539f6ec3..58e0c3f4f  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-25T15:07:37Z, код 0
