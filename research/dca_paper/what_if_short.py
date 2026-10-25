@@ -53,33 +53,73 @@ MEM_LIMIT_MB = 3000
 H24_BOOKS = ["safe_h", "optimal_h", "aggr_h"]
 PAIR_BOOKS = ["pair_safe", "pair_optimal", "pair_aggr"]
 VARIANTS = ("book", "pause", "cap", "both")
+VARIANTS_NOCAP = ("book", "pause")
+CAP_CACHE = os.path.join(HERE, "cache", f"recs-cap{LEV_CAP:g}.jsonl")   # пересчёт с потолком, переживает прогон
+CAP_CHUNK = 12                                                          # имён на кусок: кэш пишется после каждого
 VARIANT_RU = {"book": "как есть", "pause": f"пауза {PAUSE_H:g} ч после пола", "cap": f"плечо ≤ {LEV_CAP:g}×",
               "both": "пауза и потолок"}
 
 
+def cap_sig():
+    return dict(S.cache_sig(), lev_cap=LEV_CAP)
+
+
+def read_cap_cache(log):
+    """{(линейка, имя, момент): запись с потолком} — что уже пересчитано."""
+    cache, why = RP.read_cache(CAP_CACHE, sig=cap_sig())
+    if why:
+        log(f"кэш потолка не используется: {why}")
+    return {((pair[0] if isinstance(pair, (list, tuple)) else pair), sym, at): r
+            for (pair, sym, at), r in cache.items()}
+
+
+def write_cap_cache(cache):
+    os.makedirs(os.path.dirname(CAP_CACHE), exist_ok=True)
+    RP.write_cache({((rk,), sym, at): r for (rk, sym, at), r in cache.items()}, path=CAP_CACHE, sig=cap_sig())
+
+
 def capped_cache(cache, log):
-    """Кэш коротких, где позиции с плечом > LEV_CAP пересчитаны ядром с потолком."""
+    """Кэш коротких, где позиции с плечом > LEV_CAP пересчитаны ядром с потолком.
+
+    Пересчёт дорогой (август тянется из бакета: ~1.5 мин на имя), поэтому
+    он идёт кусками по именам и после каждого куска ложится в `CAP_CACHE`
+    под подписью кэша коротких + потолок: снятый прогон продолжает с
+    места, а второй прогон уже ничего не считает."""
     legs = S.legs(log=lambda *a: None)
     by_leg = {(g["sym"], round(float(g["at"]), 3)): g for g in legs}
+    done = read_cap_cache(log)
+    over = {k: r for k, r in cache.items() if float(r.get("lev") or 0) > LEV_CAP}
     need = {}
-    for (rk, sym, at), r in cache.items():
-        if float(r.get("lev") or 0) > LEV_CAP and (sym, at) in by_leg:
+    for (rk, sym, at), r in over.items():
+        if (rk, sym, at) not in done and (sym, at) in by_leg:
             need[(sym, at)] = by_leg[(sym, at)]
-    log(f"потолок {LEV_CAP:g}×: позиций с плечом выше — {sum(1 for r in cache.values() if float(r.get('lev') or 0) > LEV_CAP)}, "
+    log(f"потолок {LEV_CAP:g}×: позиций с плечом выше — {len(over)}, уже пересчитано {sum(1 for k in over if k in done)}, "
         f"решений к пересчёту {len(need)}")
-    if not need:
-        return dict(cache), 0
-    t0 = time.time()
-    out, _tail = S.replay_cells(list(need.values()), [S.CELL], log=log, rulers=sorted(set(cache_rulers(cache))),
-                                adds_of=lambda g, key: {"adds": [], "lev_cap": LEV_CAP})
-    fresh = out.get(S.CELL[0]) or {}
+    rulers = sorted(set(cache_rulers(cache)))
+    if need:
+        t0 = time.time()
+        syms = sorted({sym for (sym, _at) in need})
+        for ci in range(0, len(syms), CAP_CHUNK):
+            part = set(syms[ci:ci + CAP_CHUNK])
+            groups = [g for (sym, _at), g in need.items() if sym in part]
+            out, _tail = S.replay_cells(groups, [S.CELL], log=log, rulers=rulers,
+                                        adds_of=lambda g, key: {"adds": [], "lev_cap": LEV_CAP})
+            fresh = out.get(S.CELL[0]) or {}
+            for k, r in fresh.items():
+                if k in over:
+                    done[k] = dict(r, state=over[k].get("state", r.get("state")))
+            write_cap_cache(done)
+            log(f"потолок: имён {min(ci + CAP_CHUNK, len(syms))}/{len(syms)}, в кэше {len(done)}, {time.time() - t0:.0f} с")
     new = dict(cache)
     n = 0
-    for k, r in fresh.items():
-        if k in new and float(new[k].get("lev") or 0) > LEV_CAP:
-            new[k] = dict(r, state=new[k].get("state", r.get("state")))
+    for k in over:
+        if k in done:
+            new[k] = done[k]
             n += 1
-    log(f"пересчитано с потолком: {n} записей за {time.time() - t0:.0f} с")
+    missing = len(over) - n
+    if missing:
+        log(f"потолок: без пересчёта осталось {missing} записей (ноги не найдены) — взяты как есть")
+    log(f"записей с потолком в кэше варианта: {n}")
     return new, n
 
 
@@ -155,7 +195,7 @@ def stats(rows, bk, dep, ctx, since=None, until=None):
             "usd_wo_top3d": st.get("usd_wo_top3d")}
 
 
-def run(books_h24, books_pair, deps, log=print, now=None, do_pair=True):
+def run(books_h24, books_pair, deps, log=print, now=None, do_pair=True, variants=VARIANTS):
     t0 = time.time()
     now = now or time.time()
     R.SIZINGS = (R.SIZING_COMPOUND,)
@@ -164,15 +204,17 @@ def run(books_h24, books_pair, deps, log=print, now=None, do_pair=True):
     if why:
         return {"error": f"кэш коротких: {why}"}
     launch = IR.launches()
-    capped, n_cap = capped_cache(cache, log)
+    with_cap = any(v in ("cap", "both") for v in variants)
+    capped, n_cap = capped_cache(cache, log) if with_cap else (cache, 0)
     sources = {"book": cache, "pause": cache, "cap": capped, "both": capped}
     res = {"computed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)), "pause_h": PAUSE_H,
-           "lev_cap": LEV_CAP, "recapped": n_cap, "deps": deps, "books": {}, "halves": {}}
+           "lev_cap": LEV_CAP, "recapped": n_cap, "deps": deps, "books": {}, "halves": {},
+           "variants": list(variants)}
     plan = [(bk, "h24") for bk in books_h24] + ([(pk, "pair") for pk in books_pair] if do_pair else [])
     packed_cache = {}
     for bk, fam in plan:
         res["books"][bk] = {}
-        for v in VARIANTS:
+        for v in variants:
             src = sources[v]
             pk = (fam, id(src))
             if pk not in packed_cache:
@@ -218,7 +260,8 @@ def report(r):
     L = ["# Что если: пауза имени после пола и потолок плеча у коротких книг", "",
          f"Посчитано {r['computed_at']}; правила заданы владельцем 25.10 до счёта: пауза {r['pause_h']:g} ч после пола "
          f"или ликвидации в том же имени (у книги — её собственная позиция; записи снимаются по одной, касса "
-         f"пересчитывается), потолок плеча {r['lev_cap']:g}× (позиции с плечом выше пересчитаны ядром: {r['recapped']}). "
+         f"пересчитывается), потолок плеча {r['lev_cap']:g}× (позиции с плечом выше пересчитаны ядром: {r['recapped']}"
+         + ("" if "cap" in (r.get("variants") or VARIANTS) else "; в этом прогоне потолок НЕ считан") + "). "
          f"Деньги нетто; «вперёд» — с дня записи семейства; половины — по времени входа. За {r['secs']} с.", "",
          "Это описание: что дали бы правила на той же записи. Правило, снимающее сделки, сравнивать надо и со "
          "случайным снятием того же числа (здесь не считано) — цифры ниже говорят, где стоит минус, а не доказывают эдж.", ""]
@@ -226,7 +269,7 @@ def report(r):
         L += [f"## {R.RULERS.get(bk, {}).get('title', bk)} (`{bk}`)", "",
               "| депозит | вариант | сделок | полов | итог $ | итог % | просадка | без 3 лучших дней | 1-я половина | 2-я половина | вперёд | снято |",
               "|--:|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
-        for v in VARIANTS:
+        for v in r.get("variants") or VARIANTS:
             for dep, c in (by.get(v) or {}).items():
                 a = c["all"]
                 L.append(f"| ${dep} | {VARIANT_RU[v]} | {a['n']} | {a['floors']} | {usd(a['usd'])} | {pct(a['final'])} | "
@@ -243,6 +286,7 @@ def main(argv=None):
     ap.add_argument("--deps", default="10000")
     ap.add_argument("--no-pair", action="store_true")
     ap.add_argument("--no-publish", action="store_true")
+    ap.add_argument("--no-cap", action="store_true", help="только пауза: без пересчёта с потолком (быстро, из кэша)")
     a = ap.parse_args(argv)
     try:
         sys.stdout.reconfigure(line_buffering=True)
@@ -253,12 +297,13 @@ def main(argv=None):
     books = [b for b in a.books.split(",") if b]
     pairs = [b for b in a.pair_books.split(",") if b]
     deps = [float(x) for x in a.deps.split(",") if x]
-    r = run(books, pairs, deps, log=log, do_pair=not a.no_pair)
+    r = run(books, pairs, deps, log=log, do_pair=not a.no_pair, variants=VARIANTS_NOCAP if a.no_cap else VARIANTS)
     os.makedirs(OUT, exist_ok=True)
-    with open(LATEST, "w", encoding="utf-8") as f:
+    suffix = "-nocap" if a.no_cap else ""
+    with open(LATEST.replace(".json", suffix + ".json"), "w", encoding="utf-8") as f:
         json.dump(r, f, ensure_ascii=False, default=str)
     txt = report(r)
-    with open(REPORT, "w", encoding="utf-8") as f:
+    with open(REPORT.replace(".md", suffix + ".md"), "w", encoding="utf-8") as f:
         f.write(txt)
     print(txt)
     if not a.no_publish:
