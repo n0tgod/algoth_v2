@@ -880,7 +880,8 @@ del _k, _b
 # реплея не трогается. Порог — нижний терциль окна 25.09–20.10, объявлен до
 # замера. День записи вперёд — 26.10 UTC, раньше — пересчёт. ТОЛЬКО БУМАГА:
 # намерения исполнителя толпу не читают, подписка отклоняется API.
-CROWD_BRANCHES = {"optimal_h_cr47": {"base": "optimal_h", "max_long": 0.474, "since": "2026-10-26"}}
+CROWD_BRANCHES = {k + "_cr47": {"base": k, "max_long": 0.474, "since": "2026-10-26"}
+                  for k in ("safe_h", "optimal_h", "aggr_h")}   # владелец 25.10: «sigma и gated почему не заводил?»
 
 
 def crowd_key(base, max_long):

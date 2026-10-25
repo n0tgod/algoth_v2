@@ -350,6 +350,13 @@ def test_crowd_sister_registry_and_gate_cuts_crowded_shorts_from_record():
     компактный кэш пересобирается, когда файл дня записи изменился."""
     import json
     import crowd_branch as CRB
+    # три режима (владелец 25.10): сигнал у коротких книг один, толпа — свойство имени и часа
+    assert set(R.CROWD_BRANCHES) == {"safe_h_cr47", "optimal_h_cr47", "aggr_h_cr47"}
+    for base in ("safe_h", "optimal_h", "aggr_h"):
+        kk = R.crowd_key(base, 0.474)
+        assert kk in R.H24_ORDER and R.is_branch(kk) and R.base_of(kk) == base and R.crowd_cap_of(kk) == 0.474
+        assert R.mode_of(kk) == R.mode_of(base) and R.family_since(kk) == "2026-10-26" and S.BOOKS[kk] == S.BOOKS[base]
+        assert R.FLOOR_FRAC_BY_BOOK[kk] == R.FLOOR_FRAC_BY_BOOK[base] and R.min_lev_of(kk) == R.min_lev_of(base)
     k = "optimal_h_cr47"
     assert R.crowd_key("optimal_h", 0.474) == k and k in R.H24_ORDER and R.is_branch(k) and R.base_of(k) == "optimal_h"
     assert R.crowd_cap_of(k) == 0.474 and R.crowd_cap_of("optimal_h") is None and R.lev_cap_of(k) is None
@@ -395,7 +402,7 @@ def test_crowd_sister_registry_and_gate_cuts_crowded_shorts_from_record():
     # пустая запись — записи как у книги, причина словами
     out4, st4 = CRB.apply(recs, k, log=lambda *a: None, idx={})
     assert len(out4) == 3 and st4["why"] and st4["unmeasured"] == 3
-    print("ok  ветвь гейта толпы: optimal_h_cr47 в реестре (Depth, ≤ 0.474, с 26.10, бумага); толпа в шорте снимает вход, "
+    print("ok  ветвь гейта толпы: *_h_cr47 у трёх режимов (≤ 0.474, с 26.10, бумага); толпа в шорте снимает вход, "
           "без строки — как книга; докачка пересобирает кэш")
 
 
