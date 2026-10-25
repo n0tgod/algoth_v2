@@ -181,6 +181,7 @@ def test_ai_branch_is_paper_only_and_side_survives_suffix():
     import server as SRV
     assert SRV.BRANCH_SUFFIX.sub("", "optimal_h_ai") == "optimal_h" and SRV.BRANCH_SUFFIX.sub("", "pair_safe_g4i2") == "pair_safe"
     assert SRV.BRANCH_SUFFIX.sub("", "aggr_h_c10") == "aggr_h", "ветвь потолка плеча (25.10)"
+    assert SRV.BRANCH_SUFFIX.sub("", "optimal_h_cr47") == "optimal_h", "ветвь гейта толпы (25.10)"
     with tempfile.TemporaryDirectory() as tmp:
         app, _ = _app(tmp, venue=FakeVenue(equity=1100.0, modes={}))
         real = app.dca
@@ -194,10 +195,11 @@ def test_ai_branch_is_paper_only_and_side_survives_suffix():
             d["rulers"].append({"key": "aggr_h_c10", "title_en": "Gated",
                                 "branch": {"base": "aggr_h", "rule": "lev_cap", "value": 10.0, "default": False}})
             d["rulers"].append("safe_h_c10")                       # запас: потолок по суффиксу
+            d["rulers"].append("optimal_h_cr47")                   # запас: гейт толпы по суффиксу
             return d
         app.dca = with_ai
         st, cells = app.strategies()
-        cap = [x for x in cells["cells"] if x["book"] in ("aggr_h_c10", "safe_h_c10")]
+        cap = [x for x in cells["cells"] if x["book"] in ("aggr_h_c10", "safe_h_c10", "optimal_h_cr47")]
         assert cap and all(x["paper_only"] and x["side"] == "short" for x in cap), "потолок плеча — бумага, сторона короткая"
         ai = [x for x in cells["cells"] if x["book"] in ("optimal_h_ai", "optimal_ai", "optimal_h_m07")]
         assert ai and all(x["paper_only"] for x in ai) and any(x["book"] == "optimal_h_m07" for x in ai)

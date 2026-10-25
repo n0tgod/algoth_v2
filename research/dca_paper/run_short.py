@@ -53,6 +53,7 @@ import tail as TL                                             # noqa: E402
 import ai_branch as AIB                                       # noqa: E402
 import model_branch as MBR                                    # noqa: E402
 import lev_cap_branch as LC                                   # noqa: E402
+import crowd_branch as CRB                                    # noqa: E402
 import account_watch as AW                                    # noqa: E402
 
 # Ячейка сетки D10, которой торгует семейство: плечо забора, без доливов,
@@ -320,7 +321,7 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
     # Справочник читается ОДИН раз на прогон: его спрашивают все три
     # книги на каждое решение.
     launch = IR.launches() if launch is None else launch
-    ages, guards, gates = {}, {}, {}
+    ages, guards, gates, crowds = {}, {}, {}, {}
     for bk in list(packed):
         packed[bk], ages[bk] = RP.age_shorts(packed[bk], bk, launch=launch,
                                              log=log, now=now)
@@ -331,6 +332,10 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
         # судят ту же позицию, что основная книга
         if R.is_ai(bk):
             packed[bk], gates[bk] = AIB.apply(packed[bk], bk, log=log)
+        # ветвь с гейтом толпы (25.10) — после возраста и охраны, как судья:
+        # правило состава, не исхода
+        if R.crowd_cap_of(bk) is not None:
+            packed[bk], crowds[bk] = CRB.apply(packed[bk], bk, log=log)
         # книга-фильтр модели (§12) — после возраста и охраны, как судья
         b = R.MODEL_BOOKS.get(bk)
         if b and b.get("kind") == "skip":
@@ -347,7 +352,7 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
                      keys=R.H24_ORDER)
     ph.mark("свод")
     s.update({"family": "h24", "cells": cells, "one_name": one, "ages": ages,
-              "guards": guards, "ai_gate": gates, "model_books": model, "lev_caps": lev_caps,
+              "guards": guards, "ai_gate": gates, "model_books": model, "lev_caps": lev_caps, "crowd_gate": crowds,
               "signal": {"book": "h24", "arms": list(ARMS), "cell": CELL[0],
                          "hold_h": R.H24_HOLD_H, "legs": len(legs_),
                          "gate": "край ≥ 33 б.п., отношение любое"},

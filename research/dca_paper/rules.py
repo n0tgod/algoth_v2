@@ -273,9 +273,9 @@ MODE_EN_PLAIN = {"safe": "leverage from the name’s volatility, 6σ reserve",
 def mode_of(key):
     """Режим по ключу книги: без приставки общего счёта, хвоста короткой
     и суффикса ветви правил (`_g<порог>` или `_g<порог>i<обратный>`,
-    спека 18; `_c<потолок>` — потолок плеча, 25.10; `_ai` — ветвь судьи
-    спеки 19)."""
-    k = re.sub(r"(?:_g\d+(?:i\d+)?|_c\d+|_ai|_m\d+)$", "", str(key))
+    спека 18; `_c<потолок>` — потолок плеча, `_cr<порог>` — гейт толпы,
+    25.10; `_ai` — ветвь судьи спеки 19)."""
+    k = re.sub(r"(?:_g\d+(?:i\d+)?|_c\d+|_cr\d+|_ai|_m\d+)$", "", str(key))
     if k.startswith("pair_"):
         k = k[5:]
     for suf in ("_h", "_s"):
@@ -862,6 +862,52 @@ for _k, _b in LEV_CAP_BRANCHES.items():
     RULERS[_k]["plain_en"] += (f" Branch with a leverage CAP of {_cap:g}×: the mode's leverage above the cap is cut "
                                "to it, the entry gate and floor are the same; positions above the cap are recomputed "
                                "by the core. Paper only: the live executor does not know the cap yet.")
+    WAVE_GUARD_PCT[_k] = WAVE_GUARD_PCT[_base]
+    RULER_SINCE[_k] = _b["since"]
+    for _m in (PEAKS, SHORT_SHARE, SHARE_SINCE, MIN_AGE_DAYS, FLOOR_FRAC_BY_BOOK):
+        if _base in _m:
+            _m[_k] = _m[_base]
+    H24_ORDER.append(_k)
+del _k, _b
+
+
+# Ветвь с гейтом толпы (владелец 25.10, «толпа как гейт уже заведены
+# книги?» после замера `research/ai_gate/crowd_gate.py`: при доле длинных
+# в толпе Bybit ≤ 0.474 вход короткой книги в среднем убыточен, гейт держит
+# обе половины, вперёд и неделю пампов — +5.3 % на сигнал, p 0.005). Вход
+# не берётся, когда толпа уже в шорте; поля нет — вход как у книги. Правило
+# меняет состав, не исход: вид над записью (`crowd_branch.apply`), кэш
+# реплея не трогается. Порог — нижний терциль окна 25.09–20.10, объявлен до
+# замера. День записи вперёд — 26.10 UTC, раньше — пересчёт. ТОЛЬКО БУМАГА:
+# намерения исполнителя толпу не читают, подписка отклоняется API.
+CROWD_BRANCHES = {"optimal_h_cr47": {"base": "optimal_h", "max_long": 0.474, "since": "2026-10-26"}}
+
+
+def crowd_key(base, max_long):
+    """Ключ ветви толпы: `optimal_h` + 0.474 → `optimal_h_cr47` (порог в сотых)."""
+    return f"{base}_cr{int(round(float(max_long) * 100))}"
+
+
+def crowd_cap_of(key):
+    """Порог гейта толпы книги (доля длинных, не выше которой вход не берётся); нет — None."""
+    m = BRANCHES.get(key) or {}
+    return float(m["value"]) if m.get("rule") == "crowd" else None
+
+
+for _k, _b in CROWD_BRANCHES.items():
+    _base, _cap = _b["base"], float(_b["max_long"])
+    assert _k == crowd_key(_base, _cap), _k
+    BRANCHES[_k] = {"base": _base, "rule": "crowd", "value": _cap, "default": False}
+    RULERS[_k] = dict(RULERS[_base])
+    RULERS[_k]["title"] = RULERS[_base]["title"] + f" · толпа > {_cap:g}"
+    RULERS[_k]["branch"] = {"base": _base, "rule": "crowd", "value": _cap, "default": False,
+                            "title": f"гейт толпы: длинных > {_cap:g}", "title_en": f"crowd gate: longs > {_cap:g}"}
+    RULERS[_k]["plain"] += (f" Ветвь с ГЕЙТОМ ТОЛПЫ: вход не берётся, если доля длинных счетов в толпе Bybit "
+                            f"на час сигнала не выше {_cap:g} — толпа уже в шорте, и шорт книги стоит в ней. "
+                            "Нет записи толпы — вход как у основной книги. Только бумага.")
+    RULERS[_k]["plain_en"] += (f" Branch with a CROWD GATE: no entry when the share of long accounts in the Bybit "
+                               f"crowd at the signal hour is at most {_cap:g} — the crowd is already short, and the "
+                               "book's short would stand in it. No crowd record — entry as in the base book. Paper only.")
     WAVE_GUARD_PCT[_k] = WAVE_GUARD_PCT[_base]
     RULER_SINCE[_k] = _b["since"]
     for _m in (PEAKS, SHORT_SHARE, SHARE_SINCE, MIN_AGE_DAYS, FLOOR_FRAC_BY_BOOK):

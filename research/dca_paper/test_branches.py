@@ -43,7 +43,8 @@ def test_sisters_in_registry_inherit_maps_and_differ_only_by_guard():
             assert R.family_of(k) == "pair" and R.side_of(k) == "both" and R.mode_of(k) == R.mode_of(pk)
             assert R.SHORT_SHARE[k] == R.SHORT_SHARE[pk] and R.MIN_AGE_DAYS[k] == R.MIN_AGE_DAYS[pk]
     # книги модели (спека 19 §12) — не сестры охраны: их число живёт реестром
-    guard_h24 = [k for k in R.H24_ORDER if not R.is_ai(k) and not R.is_model(k) and R.lev_cap_of(k) is None]
+    guard_h24 = [k for k in R.H24_ORDER if not R.is_ai(k) and not R.is_model(k) and R.lev_cap_of(k) is None
+                 and R.crowd_cap_of(k) is None]
     assert len(guard_h24) == 15 and len([k for k in R.PAIR_ORDER if not R.is_ai(k)]) == 12
     assert [k for k in R.order_of("sit") if not R.is_ai(k)] == ["safe", "optimal", "aggr"]
     # длинные книги ветвей охраны не несут (ветвь судьи — своя, ниже)
@@ -64,7 +65,8 @@ def test_birthdays_versions_and_tree():
     # корень книг модели (§12) — после судьи, когда реестр не пуст
     assert [m["mode"] for m in t] == ["safe", "optimal", "aggr", "ai"] + (["lab"] if R.MODEL_BOOKS else []), \
         "судья — отдельный корень последним из постоянных"
-    guard_only = lambda xs: [x for x in xs if not R.is_ai(x["key"]) and R.lev_cap_of(x["key"]) is None]  # noqa: E731
+    guard_only = lambda xs: [x for x in xs if not R.is_ai(x["key"]) and R.lev_cap_of(x["key"]) is None  # noqa: E731
+                             and R.crowd_cap_of(x["key"]) is None]
     for m in [x for x in t if x["mode"] not in ("ai", "lab")]:
         sides = {s["side"]: s for s in m["sides"]}
         assert set(sides) == {"long", "short", "both"}
@@ -98,7 +100,7 @@ def test_short_cache_signature_ignores_sisters_and_books_map_feeds_them():
     assert sorted(sig["books"]) == ["optimal_s", "safe_s"]
     assert S.BOOKS["safe_h_g2"] == S.BOOKS["safe_h"] and S.BOOKS["aggr_h_g0"] == S.BOOKS["aggr_h"]
     # 15 ветвей охраны + ветвь судьи + книги модели (§12, число — реестром)
-    assert len(S.BOOKS) == 16 + len(R.MODEL_BOOKS) + len(R.LEV_CAP_BRANCHES) and len(S.BASE_BOOKS) == 3
+    assert len(S.BOOKS) == 16 + len(R.MODEL_BOOKS) + len(R.LEV_CAP_BRANCHES) + len(R.CROWD_BRANCHES) and len(S.BASE_BOOKS) == 3
     assert S.BOOKS["optimal_h_ai"] == S.BOOKS["optimal_h"], "ветвь судьи кормится линейкой основной книги"
     assert S.BOOKS["optimal_h_g4i2"] == S.BOOKS["optimal_h"]
     S.floor_groups()                       # сестры с полом основной книги не ломают группы
@@ -340,6 +342,63 @@ def test_lev_cap_sister_registry_and_records_come_from_capped_core():
           "досчёт только нового и открытого")
 
 
+def test_crowd_sister_registry_and_gate_cuts_crowded_shorts_from_record():
+    """Ветвь гейта толпы (владелец 25.10): `optimal_h_cr47` — сестра Depth · Short
+    с правилом `crowd` 0.474, картами и охраной по наследству, днём 26.10, бумага;
+    вход снимается, когда доля длинных толпы Bybit последней строкой не позже
+    часа сигнала ≤ порога; нет строки — вход как у книги и считается отдельно;
+    компактный кэш пересобирается, когда файл дня записи изменился."""
+    import json
+    import crowd_branch as CRB
+    k = "optimal_h_cr47"
+    assert R.crowd_key("optimal_h", 0.474) == k and k in R.H24_ORDER and R.is_branch(k) and R.base_of(k) == "optimal_h"
+    assert R.crowd_cap_of(k) == 0.474 and R.crowd_cap_of("optimal_h") is None and R.lev_cap_of(k) is None
+    assert R.mode_of(k) == "optimal" and R.side_of(k) == "short" and R.family_of(k) == "h24" and R.title_en(k) == "Depth"
+    assert R.family_since(k) == "2026-10-26" and R.wave_guard_of(k) == 4.0 and R.min_lev_of(k) == R.min_lev_of("optimal_h")
+    for m in (R.PEAKS, R.SHORT_SHARE, R.MIN_AGE_DAYS, R.FLOOR_FRAC_BY_BOOK):
+        assert m[k] == m["optimal_h"], k
+    b = R.address_of(k)["branch"][0]
+    assert b["rule"] == "crowd" and b["value"] == 0.474 and b["title_en"] == "crowd gate: longs > 0.474" and not b["default"]
+    assert "Только бумага" in R.RULERS[k]["plain"] and "Paper only" in R.RULERS[k]["plain_en"]
+    assert S.BOOKS[k] == "optimal_s" and k not in S.BASE_BOOKS and "crowd" not in json.dumps(S.cache_sig())
+    # запись толпы: два дня, докачка в прошлый день меняет файл — кэш пересобирается
+    rec_dir, cache_dir = tempfile.mkdtemp(), tempfile.mkdtemp()
+    t0 = int(T0 * 1000)
+    def write(day, rows):
+        with open(os.path.join(rec_dir, f"state-{day}.jsonl"), "w") as f:
+            for r in rows:
+                f.write(json.dumps(r) + "\n")
+    write("2026-10-01", [{"src": "bybit", "sym": "AAAUSDT", "t": t0 - 3600_000, "long": 0.40, "short": 0.60},
+                         {"src": "bn_global", "sym": "AAAUSDT", "t": t0 - 3600_000, "long": 0.9},
+                         {"src": "market", "t": t0, "fng": 50},
+                         {"src": "bybit", "sym": "BBBUSDT", "t": t0 - 3600_000, "long": 0.55, "short": 0.45}])
+    idx = CRB.index(rec_dir, cache_dir)
+    assert set(idx) == {"AAAUSDT", "BBBUSDT"}, "только Bybit-строки с именем"
+    assert CRB.long_share(idx, "AAAUSDT", T0) == 0.40 and CRB.long_share(idx, "BBBUSDT", T0) == 0.55
+    assert CRB.long_share(idx, "AAAUSDT", T0 - 2 * H) is None, "строки позже момента не видны"
+    assert CRB.long_share(idx, "CCCUSDT", T0) is None
+    rec = lambda sym, at=T0: {"sym": sym, "at": at, "lev": 5.0, "pnl": 0.1}                # noqa: E731
+    recs = [rec("AAAUSDT"), rec("BBBUSDT"), rec("CCCUSDT")]
+    out, st = CRB.apply(recs, k, log=lambda *a: None, idx=idx)
+    assert [r["sym"] for r in out] == ["BBBUSDT", "CCCUSDT"] and st["cut"] == 1 and st["unmeasured"] == 1 and st["cap"] == 0.474
+    out2, st2 = CRB.apply(recs, "optimal_h", log=lambda *a: None, idx=idx)
+    assert out2 is recs and st2 is None, "у основной книги гейта нет"
+    # докачка: в прошлый день легла строка толпы 0.9 для AAAUSDT ближе к моменту
+    time.sleep(1.1)
+    write("2026-10-01", [{"src": "bybit", "sym": "AAAUSDT", "t": t0 - 3600_000, "long": 0.40, "short": 0.60},
+                         {"src": "bybit", "sym": "AAAUSDT", "t": t0 - 60_000, "long": 0.90, "short": 0.10},
+                         {"src": "bybit", "sym": "BBBUSDT", "t": t0 - 3600_000, "long": 0.55, "short": 0.45}])
+    idx2 = CRB.index(rec_dir, cache_dir)
+    assert CRB.long_share(idx2, "AAAUSDT", T0) == 0.90
+    out3, st3 = CRB.apply(recs, k, log=lambda *a: None, idx=idx2)
+    assert len(out3) == 3 and st3["cut"] == 0
+    # пустая запись — записи как у книги, причина словами
+    out4, st4 = CRB.apply(recs, k, log=lambda *a: None, idx={})
+    assert len(out4) == 3 and st4["why"] and st4["unmeasured"] == 3
+    print("ok  ветвь гейта толпы: optimal_h_cr47 в реестре (Depth, ≤ 0.474, с 26.10, бумага); толпа в шорте снимает вход, "
+          "без строки — как книга; докачка пересобирает кэш")
+
+
 if __name__ == "__main__":
     test_ai_branch_registry_inherits_base_and_is_paper_only_by_rule()
     for t in (test_sisters_in_registry_inherit_maps_and_differ_only_by_guard,
@@ -349,6 +408,7 @@ if __name__ == "__main__":
               test_inherit_runs_once_before_first_write_and_leaves_a_marker,
               test_branch_forward_starts_on_its_own_day_not_inside_the_120h_window,
               test_inverse_branch_four_plus_two_registry_text_and_end_to_end,
-              test_lev_cap_sister_registry_and_records_come_from_capped_core):
+              test_lev_cap_sister_registry_and_records_come_from_capped_core,
+              test_crowd_sister_registry_and_gate_cuts_crowded_shorts_from_record):
         t()
-    print("\nвсе 8 проверок прошли")
+    print("\nвсе 9 проверок прошли")
