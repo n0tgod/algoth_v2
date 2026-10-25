@@ -108,3 +108,26 @@
 | k6 | 1-я | +2.48 % / +21.17 % (n 524) | +2.73 % / -1.45 % (n 379) | +6.40 % / -17.77 % (n 325) | -1.36 % / -1.12 % (n 14) | 0.275 |
 | k6 | 2-я | +1.82 % / +15.56 % (n 532) | +4.64 % / +1.65 % (n 314) | +2.41 % / -16.88 % (n 359) | — / — (n 0) | 0.41 |
 | k6 | вперёд | -2.60 % / +10.69 % (n 218) | +1.45 % / +3.96 % (n 134) | +2.49 % / -15.47 % (n 136) | — / — (n 0) | 0.25 |
+ВНИМАНИЕ: 2026-10-25T14:41:27Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nc12.log                       |    9 +
+ jobs/done/nc13.done                      |    1 +
+ jobs/done/nc13.log                       |  110 +
+ jobs/poke.log                            |    3 +
+ jobs/queue-state.md                      |    2 +-
+ research/ai_gate/out/REGIME-split.md     |  105 +
+ research/ai_gate/out/regime_split.json   |    1 +
+ research/dca_paper/out/DCA-pair.md       |   26 +-
+ research/dca_paper/out/DCA-paper.json    | 3634 +++++++++++++++---------------
+ research/dca_paper/out/DCA-paper.md      |   36 +-
+ research/dca_paper/out/watch/latest.json |    2 +-
+ research/dca_paper/out/watch/pair.json   |    2 +-
+ research/dca_paper/out/watch/sit.json    |    2 +-
+ research/s8_loop/out/day_brake.json      |    2 +-
+ 14 files changed, 2082 insertions(+), 1853 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   1a79db115..ecc50b26d  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+
+конец: 2026-10-25T14:41:34Z, код 0
