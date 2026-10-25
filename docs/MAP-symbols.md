@@ -4101,7 +4101,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L465 `publish(name)`
 - L471 `main(argv=None)`
 
-## research/dca_paper/what_if_short.py · 316 строк
+## research/dca_paper/what_if_short.py · 317 строк
 
 Что было бы с короткими и общими книгами при двух правилах (владелец 25.10: «если поменять эти правила, как п…
 
@@ -4113,30 +4113,29 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L48 `PAUSE_H = 24.0`
 - L49 `LEV_CAP = 10.0`
 - L50 `TRIGGER_EXITS = NP.TRIGGER_EXITS`
-- L51 `MAX_STEPS = 400`
-- L52 `MEM_LIMIT_MB = 3000`
-- L53 `H24_BOOKS = ['safe_h', 'optimal_h', 'aggr_h']`
-- L54 `PAIR_BOOKS = ['pair_safe', 'pair_optimal', 'pair_agg…`
-- L55 `VARIANTS = ('book', 'pause', 'cap', 'both')`
-- L56 `VARIANTS_NOCAP = ('book', 'pause')`
-- L57 `CAP_CACHE = os.path.join(HERE, 'cache', f'recs-cap{…`
-- L58 `CAP_CHUNK = 12`
-- L59 `VARIANT_RU = {'book': 'как есть', 'pause': f'пауза {…`
-- L63 `cap_sig()`
-- L67 `read_cap_cache(log)` — {(линейка, имя, момент): запись с потолком} — что уже пересчитано.
-- L76 `write_cap_cache(cache)`
-- L81 `capped_cache(cache, log)` — Кэш коротких, где позиции с плечом > LEV_CAP пересчитаны ядром с потолком.
-- L126 `cache_rulers(cache)`
-- L130 `h24_packed(cache, books, launch, now, log)` — Записи коротких книг после возраста и охраны — как в прогоне.
-- L140 `pair_packed(short_cache, books, launch, now, ctx, log)` — Записи общих счетов после гейта, возраста и охраны — как в `run_pair.run`.
-- L159 `pause_rows(recs, bk, dep, now, log)` — Касса книги с паузой: записи снимаются по одной (как `name_pause.sister`), триггер и запрет — только у КОРОТК…
-- L179 `plain_rows(recs, bk, dep, now)`
-- L185 `stats(rows, bk, dep, ctx, since=None, until=None)`
-- L198 `run(books_h24, books_pair, deps, log=print, now=None, do_pair=T…`
-- L249 `pct(x)`
-- L253 `usd(x)`
-- L257 `report(r)`
-- L282 `main(argv=None)`
+- L51 `MEM_LIMIT_MB = 3000`
+- L52 `H24_BOOKS = ['safe_h', 'optimal_h', 'aggr_h']`
+- L53 `PAIR_BOOKS = ['pair_safe', 'pair_optimal', 'pair_agg…`
+- L54 `VARIANTS = ('book', 'pause', 'cap', 'both')`
+- L55 `VARIANTS_NOCAP = ('book', 'pause')`
+- L56 `CAP_CACHE = os.path.join(HERE, 'cache', f'recs-cap{…`
+- L57 `CAP_CHUNK = 12`
+- L58 `VARIANT_RU = {'book': 'как есть', 'pause': f'пауза {…`
+- L62 `cap_sig()`
+- L66 `read_cap_cache(log)` — {(линейка, имя, момент): запись с потолком} — что уже пересчитано.
+- L75 `write_cap_cache(cache)`
+- L80 `capped_cache(cache, log)` — Кэш коротких, где позиции с плечом > LEV_CAP пересчитаны ядром с потолком.
+- L125 `cache_rulers(cache)`
+- L129 `h24_packed(cache, books, launch, now, log)` — Записи коротких книг после возраста и охраны — как в прогоне.
+- L139 `pair_packed(short_cache, books, launch, now, ctx, log)` — Записи общих счетов после гейта, возраста и охраны — как в `run_pair.run`.
+- L158 `pause_rows(recs, bk, dep, now, log)` — Касса книги с паузой: записи снимаются по одной (как `name_pause.sister`), триггер и запрет — только у КОРОТК…
+- L180 `plain_rows(recs, bk, dep, now)`
+- L186 `stats(rows, bk, dep, ctx, since=None, until=None)`
+- L199 `run(books_h24, books_pair, deps, log=print, now=None, do_pair=T…`
+- L250 `pct(x)`
+- L254 `usd(x)`
+- L258 `report(r)`
+- L283 `main(argv=None)`
 
 ## research/f1_carry/carry.py · 169 строк
 
