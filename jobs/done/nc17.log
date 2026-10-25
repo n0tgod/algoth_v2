@@ -118,3 +118,35 @@ aggr_h: дней тормоза 10 из 52; касса 883.58 → 113.74 (впе
 | без дней тормоза | 1063 | +114 $ | +1.14 % | -12.60 % | +1191 $ | -1077 $ | -1112 $ |
 | нуль: случайные дни того же числа | | медиана +619 $ [-169 $…+1712 $], ≥ паузы 0.90; вперёд -1337 $, ≥ 0.05 | | | | | |
 
+ВНИМАНИЕ: 2026-10-25T17:09:01Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nc15.log                       |    5 +
+ jobs/done/nc16.log                       |   11 +
+ jobs/done/nc17.done                      |    1 +
+ jobs/done/nc17.log                       |  120 +
+ jobs/poke.log                            |    3 +
+ jobs/queue-state.md                      |    2 +-
+ research/dca_paper/out/DCA-pair.md       |   26 +-
+ research/dca_paper/out/DCA-paper.json    | 3771 +++++++++++++++---------------
+ research/dca_paper/out/DCA-paper.md      |   36 +-
+ research/dca_paper/out/PUMP-brake.md     |  110 +
+ research/dca_paper/out/pump_brake.json   |    1 +
+ research/dca_paper/out/watch/latest.json |    2 +-
+ research/dca_paper/out/watch/pair.json   |    2 +-
+ research/dca_paper/out/watch/sit.json    |    2 +-
+ research/s8_loop/out/day_brake.json      |    2 +-
+ 15 files changed, 2234 insertions(+), 1860 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+ ! [rejected]            main -> main (fetch first)
+error: failed to push some refs to 'github.com:n0tgod/algoth_v2.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+push не прошёл, подтягиваю ветку и пробую снова 
+(попытка 1 из 4)
+From github.com:n0tgod/algoth_v2
+ * branch                main       -> FETCH_HEAD
+   f3556ce16..3b75ab6ce  main       -> origin/main
+конец: 2026-10-25T17:09:12Z, код 0

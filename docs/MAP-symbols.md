@@ -609,6 +609,28 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L110 `history_of(recs, sym, at_s)`
 - L120 `build(kind, r, book, side, now, recs, state, market_rows, event…` — Досье и счёт покрытия: вход — на момент решения `at`, держание — на `now`.
 
+## research/ai_gate/crowd_gate.py · 162 строк
+
+Толпа как гейт короткого входа (владелец 25.10, пункт 2) — замер с нулём.
+
+- L31 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L32 `ROOT = os.path.abspath(os.path.join(HERE, '..'…`
+- L36 `OUT = os.path.join(HERE, 'out')`
+- L37 `REPORT = os.path.join(OUT, 'CROWD-gate.md')`
+- L38 `LATEST = os.path.join(OUT, 'crowd_gate.json')`
+- L39 `FIELD = 'crowd_bybit'`
+- L40 `THRESH = 0.474`
+- L41 `NEIGHBOURS = (0.45, 0.5)`
+- L42 `DRAWS = 400`
+- L43 `DEEP = -0.3`
+- L44 `FORWARD = '2026-10-16'`
+- L45 `PUMP_WEEK = '2026-10-20'`
+- L48 `pct(v)`
+- L52 `rule_scores(o, x, thresh, rng, draws=DRAWS)` — → гейт и половина билета на подмножестве: средний на сигнал, снято, нуль.
+- L80 `run(log=print, now=None)`
+- L113 `report(r)`
+- L144 `main(argv=None)`
+
 ## research/ai_gate/dry_hour.py · 251 строк
 
 Сухой час судьи (спека 19, этап N2): настоящие кандидаты, настоящая модель, цена числом.
