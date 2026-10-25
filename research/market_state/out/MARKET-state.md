@@ -1,6 +1,6 @@
 # Состояние рынка (спека 19 §3b)
 
-Срез 2026-10-25T14:14:13Z, прогон 850.2 с, строк записано 2156 (из них докачка 0).
+Срез 2026-10-25T15:14:12Z, прогон 849.2 с, строк записано 2164 (из них докачка 0).
 
 | источник | имён получено | из | % |
 |---|---|---|---|
@@ -8,9 +8,9 @@
 | binance | 458 | 458 | 100.0 |
 | okx | 447 | 451 | 99.1 |
 
-Рынок: fng 54, fng_label Neutral, btc_dom 59.51, mcap_usd 2705094844481, mcap_24h_pct -3.0, insurance_usdt 534310862, stables_usd 303779191038, trending ['EVMZONE', 'DACITY', 'PENGU', 'HYPE', 'ENA', 'SUI', 'NEAR', 'PEARL', 'PEPE', 'BTC', 'AERO', 'SOL', 'PUMP', 'AAVE', 'QNT']
+Рынок: fng 54, fng_label Neutral, btc_dom 60.1, mcap_usd 2690636791082, mcap_24h_pct -2.95, insurance_usdt 534310866, stables_usd 303778275967, trending ['DACITY', 'EVMZONE', 'HYPE', 'QTC', 'PEARL', 'NEAR', 'BTC', 'ETH', 'PI', 'GEOD', 'TAO', 'PEPE', 'ZEC', 'PENGU', 'ONDO']
 
-Толпа в лонге сильнее всего: SKHYNIXUSDT 0.85, MELANIAUSDT 0.84, XAGUSDT 0.84, LABUSDT 0.83, INTCUSDT 0.82, MNTUSDT 0.82, ONDOUSDT 0.82, BEUSDT 0.82, GOOGLUSDT 0.81, XAUUSDT 0.81
-Толпа в шорте сильнее всего: CSTOCKUSDT 0.27, JCTUSDT 0.29, HMSTRUSDT 0.31, PGUSDT 0.33, CLUSDT 0.35, BZUSDT 0.35, BAUSDT 0.38, MAUSDT 0.38, NAVERUSDT 0.38, KIIUSDT 0.39
+Толпа в лонге сильнее всего: SKHYNIXUSDT 0.85, XAGUSDT 0.85, MELANIAUSDT 0.84, INTCUSDT 0.83, BEUSDT 0.83, LABUSDT 0.83, MNTUSDT 0.82, ONDOUSDT 0.82, GOOGLUSDT 0.82, XAUUSDT 0.81
+Толпа в шорте сильнее всего: CSTOCKUSDT 0.27, JCTUSDT 0.29, HMSTRUSDT 0.31, PGUSDT 0.33, CLUSDT 0.34, BZUSDT 0.35, AXPUSDT 0.37, BAUSDT 0.38, NAVERUSDT 0.38, LGELECTRONICSUSDT 0.39
 
 Событий за сутки: 1.
