@@ -1,0 +1,8 @@
+== задание nc07 ==
+строка: run tools/stop_run.py research/dca_paper/what_if_short.py
+начало: 2026-10-25T12:36:26Z
+запускаю: .venv/bin/python tools/stop_run.py research/dca_paper/what_if_short.py
+найдено 1: 102764
+TERM → 102764
+остановлено: 102764
+конец: 2026-10-25T12:36:28Z, код 0
