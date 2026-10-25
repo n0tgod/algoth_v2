@@ -52,6 +52,7 @@ import run_d11 as D11                                         # noqa: E402
 import tail as TL                                             # noqa: E402
 import ai_branch as AIB                                       # noqa: E402
 import model_branch as MBR                                    # noqa: E402
+import lev_cap_branch as LC                                   # noqa: E402
 import account_watch as AW                                    # noqa: E402
 
 # Ячейка сетки D10, которой торгует семейство: плечо забора, без доливов,
@@ -285,10 +286,22 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
     ph.mark("fav")
     write_cache(cache, cache_path)
     ph.mark("запись кэша")
+    # сестра с потолком плеча (спека 18, ось lev_cap; владелец 25.10): записи
+    # с плечом выше потолка пересчитаны ядром в своём кэше, досчёт — только
+    # новое и открытое; остальные записи — те же, что у основной книги
+    capped = {cap: LC.ensure(cache, legs_, cap, log=log, src=src,
+                             path=LC.cache_path(cap, cache_path) if cache_path else None)
+              for cap in LC.caps_in_use()}
+    ph.mark("потолок")
     by_ruler = {}
     for (rk, _sym, _at), r in cache.items():
         by_ruler.setdefault(rk, []).append(r)
     packed = {bk: list(by_ruler.get(rk) or []) for bk, rk in BOOKS.items()}
+    lev_caps = {}
+    for bk in list(packed):
+        cap = R.lev_cap_of(bk)
+        if cap is not None:
+            packed[bk], lev_caps[bk] = LC.apply(packed[bk], capped[cap], cap, BOOKS[bk], log=log)
     # книги ТВХ модели (спека 19 §12) — записи своего реплея сдвинутых
     # входов (`model_books.tick`), не линейки основной книги
     model = {}
@@ -334,7 +347,7 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
                      keys=R.H24_ORDER)
     ph.mark("свод")
     s.update({"family": "h24", "cells": cells, "one_name": one, "ages": ages,
-              "guards": guards, "ai_gate": gates, "model_books": model,
+              "guards": guards, "ai_gate": gates, "model_books": model, "lev_caps": lev_caps,
               "signal": {"book": "h24", "arms": list(ARMS), "cell": CELL[0],
                          "hold_h": R.H24_HOLD_H, "legs": len(legs_),
                          "gate": "край ≥ 33 б.п., отношение любое"},

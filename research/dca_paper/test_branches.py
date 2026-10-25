@@ -43,7 +43,7 @@ def test_sisters_in_registry_inherit_maps_and_differ_only_by_guard():
             assert R.family_of(k) == "pair" and R.side_of(k) == "both" and R.mode_of(k) == R.mode_of(pk)
             assert R.SHORT_SHARE[k] == R.SHORT_SHARE[pk] and R.MIN_AGE_DAYS[k] == R.MIN_AGE_DAYS[pk]
     # книги модели (спека 19 §12) — не сестры охраны: их число живёт реестром
-    guard_h24 = [k for k in R.H24_ORDER if not R.is_ai(k) and not R.is_model(k)]
+    guard_h24 = [k for k in R.H24_ORDER if not R.is_ai(k) and not R.is_model(k) and R.lev_cap_of(k) is None]
     assert len(guard_h24) == 15 and len([k for k in R.PAIR_ORDER if not R.is_ai(k)]) == 12
     assert [k for k in R.order_of("sit") if not R.is_ai(k)] == ["safe", "optimal", "aggr"]
     # длинные книги ветвей охраны не несут (ветвь судьи — своя, ниже)
@@ -64,7 +64,7 @@ def test_birthdays_versions_and_tree():
     # корень книг модели (§12) — после судьи, когда реестр не пуст
     assert [m["mode"] for m in t] == ["safe", "optimal", "aggr", "ai"] + (["lab"] if R.MODEL_BOOKS else []), \
         "судья — отдельный корень последним из постоянных"
-    guard_only = lambda xs: [x for x in xs if not R.is_ai(x["key"])]          # noqa: E731
+    guard_only = lambda xs: [x for x in xs if not R.is_ai(x["key"]) and R.lev_cap_of(x["key"]) is None]  # noqa: E731
     for m in [x for x in t if x["mode"] not in ("ai", "lab")]:
         sides = {s["side"]: s for s in m["sides"]}
         assert set(sides) == {"long", "short", "both"}
@@ -98,7 +98,7 @@ def test_short_cache_signature_ignores_sisters_and_books_map_feeds_them():
     assert sorted(sig["books"]) == ["optimal_s", "safe_s"]
     assert S.BOOKS["safe_h_g2"] == S.BOOKS["safe_h"] and S.BOOKS["aggr_h_g0"] == S.BOOKS["aggr_h"]
     # 15 ветвей охраны + ветвь судьи + книги модели (§12, число — реестром)
-    assert len(S.BOOKS) == 16 + len(R.MODEL_BOOKS) and len(S.BASE_BOOKS) == 3
+    assert len(S.BOOKS) == 16 + len(R.MODEL_BOOKS) + len(R.LEV_CAP_BRANCHES) and len(S.BASE_BOOKS) == 3
     assert S.BOOKS["optimal_h_ai"] == S.BOOKS["optimal_h"], "ветвь судьи кормится линейкой основной книги"
     assert S.BOOKS["optimal_h_g4i2"] == S.BOOKS["optimal_h"]
     S.floor_groups()                       # сестры с полом основной книги не ломают группы
@@ -281,6 +281,65 @@ def test_ai_branch_registry_inherits_base_and_is_paper_only_by_rule():
     print("ok  ветвь судьи: свой корень (Long, Short, Both), правила Depth по наследству, адрес и текст, день 19.10")
 
 
+def test_lev_cap_sister_registry_and_records_come_from_capped_core():
+    """Ветвь потолка плеча (владелец 25.10): `aggr_h_c10` в реестре как сестра
+    Gated с правилом `lev_cap` 10, картами и охраной по наследству, своим днём
+    26.10, только бумага; её записи — записи основной линейки, где плечо выше
+    10× заменено пересчётом ядра из кэша потолка; досчёт идёт только по
+    недостающим и открытым, кэш переживает прогон."""
+    import json
+    import lev_cap_branch as LC
+    k = "aggr_h_c10"
+    assert R.lev_cap_key("aggr_h", 10.0) == k and k in R.H24_ORDER and R.is_branch(k) and R.base_of(k) == "aggr_h"
+    assert R.lev_cap_of(k) == 10.0 and R.lev_cap_of("aggr_h") is None and R.lev_cap_of("aggr_h_g2") is None
+    assert R.mode_of(k) == "aggr" and R.side_of(k) == "short" and R.family_of(k) == "h24" and R.title_en(k) == "Gated"
+    assert R.family_since(k) == "2026-10-26" and R.wave_guard_of(k) == 4.0 and R.inv_guard_of(k) is None
+    assert R.min_lev_of(k) == R.min_lev_of("aggr_h") == 4.0 and R.hold_of(k) == 24
+    for m in (R.PEAKS, R.SHORT_SHARE, R.MIN_AGE_DAYS, R.FLOOR_FRAC_BY_BOOK):
+        assert m[k] == m["aggr_h"], k
+    b = R.address_of(k)["branch"][0]
+    assert b["rule"] == "lev_cap" and b["value"] == 10.0 and b["title_en"] == "leverage ≤ 10×" and not b["default"]
+    assert "Только бумага" in R.RULERS[k]["plain"] and "Paper only" in R.RULERS[k]["plain_en"]
+    t = {m["mode"]: {s["side"]: [x["key"] for x in s["branches"]] for s in m["sides"]} for m in R.tree()}
+    assert k in t["aggr"]["short"] and k not in t["aggr"]["both"]
+    assert S.BOOKS[k] == S.BOOKS["aggr_h"] == "optimal_s", "сестра кормится линейкой основной книги"
+    assert k not in S.BASE_BOOKS and "lev_cap" not in json.dumps(S.cache_sig()), "подпись кэша коротких сестры не знает"
+    assert LC.caps_in_use() == [10.0]
+    # записи: 20× заменяется пересчётом, 5× остаётся, без пересчёта — как есть и считается
+    rec = lambda sym, lev, at=T0, **kw: dict({"sym": sym, "at": at, "lev": lev, "state": "closed", "pnl": 0.1}, **kw)  # noqa: E731
+    base = [rec("AAAUSDT", 20.0), rec("BBBUSDT", 5.0), rec("CCCUSDT", 15.0)]
+    capped = {("optimal_s", "AAAUSDT", round(T0, 3)): rec("AAAUSDT", 10.0, pnl=-0.2)}
+    out, st = LC.apply(base, capped, 10.0, "optimal_s")
+    assert [r["lev"] for r in out] == [10.0, 5.0, 15.0] and out[0]["pnl"] == -0.2 and st == {"capped": 1, "missing": 1, "cap": 10.0}
+    # досчёт: кэш пуст → считаются оба решения с плечом выше; второй вызов — ничего; открытое — снова
+    td = tempfile.mkdtemp()
+    path = os.path.join(td, "recs-cap10.jsonl")
+    cache = {("optimal_s", "AAAUSDT", round(T0, 3)): rec("AAAUSDT", 20.0),
+             ("optimal_s", "BBBUSDT", round(T0, 3)): rec("BBBUSDT", 5.0),
+             ("optimal_s", "CCCUSDT", round(T0 + H, 3)): rec("CCCUSDT", 15.0, at=T0 + H, state="open")}
+    legs_ = [{"sym": "AAAUSDT", "at": T0}, {"sym": "BBBUSDT", "at": T0}, {"sym": "CCCUSDT", "at": T0 + H}]
+    calls = []
+
+    def fake_replay(groups, cells, src=None, log=print, rulers=None, adds_of=None):
+        calls.append(sorted(g["sym"] for g in groups))
+        assert adds_of(groups[0], cells[0][0]) == {"adds": [], "lev_cap": 10.0} and rulers == ["optimal_s"]
+        got = {}
+        for g in groups:
+            r = cache[("optimal_s", g["sym"], round(float(g["at"]), 3))]
+            got[("optimal_s", g["sym"], round(float(g["at"]), 3))] = dict(r, lev=10.0, pnl=-0.3)
+        return {cells[0][0]: got}, {}
+    done = LC.ensure(cache, legs_, 10.0, log=lambda *a: None, path=path, replay=fake_replay)
+    assert calls == [["AAAUSDT", "CCCUSDT"]] and len(done) == 2 and all(r["lev"] == 10.0 for r in done.values())
+    assert os.path.exists(path) and LC.read(10.0, path=path, log=lambda *a: None).keys() == done.keys()
+    done2 = LC.ensure(cache, legs_, 10.0, log=lambda *a: None, path=path, replay=fake_replay)
+    assert calls[1:] == [["CCCUSDT"]], "закрытое не пересчитывается, открытое — да"
+    assert len(done2) == 2
+    # смена подписи (другой потолок) — чужой кэш не читается
+    assert LC.read(12.0, path=path, log=lambda *a: None) == {}
+    print("ok  ветвь потолка плеча: aggr_h_c10 в реестре (Gated, 10×, с 26.10, бумага), записи из кэша ядра, "
+          "досчёт только нового и открытого")
+
+
 if __name__ == "__main__":
     test_ai_branch_registry_inherits_base_and_is_paper_only_by_rule()
     for t in (test_sisters_in_registry_inherit_maps_and_differ_only_by_guard,
@@ -289,6 +348,7 @@ if __name__ == "__main__":
               test_inherit_copies_old_guard_rows_into_branch_two_and_is_idempotent,
               test_inherit_runs_once_before_first_write_and_leaves_a_marker,
               test_branch_forward_starts_on_its_own_day_not_inside_the_120h_window,
-              test_inverse_branch_four_plus_two_registry_text_and_end_to_end):
+              test_inverse_branch_four_plus_two_registry_text_and_end_to_end,
+              test_lev_cap_sister_registry_and_records_come_from_capped_core):
         t()
-    print("\nвсе 7 проверок прошли")
+    print("\nвсе 8 проверок прошли")

@@ -42,6 +42,7 @@ import run_pair as RPair                                      # noqa: E402
 import instruments_refresh as IR                              # noqa: E402
 import costs as CO                                            # noqa: E402
 import name_pause as NP                                       # noqa: E402
+import lev_cap_branch as LC                                   # noqa: E402
 
 OUT = os.path.join(HERE, "out")
 REPORT = os.path.join(OUT, "WHATIF-short.md")
@@ -54,72 +55,21 @@ H24_BOOKS = ["safe_h", "optimal_h", "aggr_h"]
 PAIR_BOOKS = ["pair_safe", "pair_optimal", "pair_aggr"]
 VARIANTS = ("book", "pause", "cap", "both")
 VARIANTS_NOCAP = ("book", "pause")
-CAP_CACHE = os.path.join(HERE, "cache", f"recs-cap{LEV_CAP:g}.jsonl")   # пересчёт с потолком, переживает прогон
 NULL_SEEDS = 20                                                         # случайное снятие того же числа записей
-CAP_CHUNK = 12                                                          # имён на кусок: кэш пишется после каждого
 VARIANT_RU = {"book": "как есть", "pause": f"пауза {PAUSE_H:g} ч после пола", "cap": f"плечо ≤ {LEV_CAP:g}×",
               "both": "пауза и потолок"}
 
 
-def cap_sig():
-    return dict(S.cache_sig(), lev_cap=LEV_CAP)
-
-
-def read_cap_cache(log):
-    """{(линейка, имя, момент): запись с потолком} — что уже пересчитано."""
-    cache, why = RP.read_cache(CAP_CACHE, sig=cap_sig())
-    if why:
-        log(f"кэш потолка не используется: {why}")
-    return {((pair[0] if isinstance(pair, (list, tuple)) else pair), sym, at): r
-            for (pair, sym, at), r in cache.items()}
-
-
-def write_cap_cache(cache):
-    os.makedirs(os.path.dirname(CAP_CACHE), exist_ok=True)
-    RP.write_cache({((rk,), sym, at): r for (rk, sym, at), r in cache.items()}, path=CAP_CACHE, sig=cap_sig())
-
-
 def capped_cache(cache, log):
-    """Кэш коротких, где позиции с плечом > LEV_CAP пересчитаны ядром с потолком.
-
-    Пересчёт дорогой (август тянется из бакета: ~1.5 мин на имя), поэтому
-    он идёт кусками по именам и после каждого куска ложится в `CAP_CACHE`
-    под подписью кэша коротких + потолок: снятый прогон продолжает с
-    места, а второй прогон уже ничего не считает."""
-    legs = S.legs(log=lambda *a: None)
-    by_leg = {(g["sym"], round(float(g["at"]), 3)): g for g in legs}
-    done = read_cap_cache(log)
-    over = {k: r for k, r in cache.items() if float(r.get("lev") or 0) > LEV_CAP}
-    need = {}
-    for (rk, sym, at), r in over.items():
-        if (rk, sym, at) not in done and (sym, at) in by_leg:
-            need[(sym, at)] = by_leg[(sym, at)]
-    log(f"потолок {LEV_CAP:g}×: позиций с плечом выше — {len(over)}, уже пересчитано {sum(1 for k in over if k in done)}, "
-        f"решений к пересчёту {len(need)}")
-    rulers = sorted(set(cache_rulers(cache)))
-    if need:
-        t0 = time.time()
-        syms = sorted({sym for (sym, _at) in need})
-        for ci in range(0, len(syms), CAP_CHUNK):
-            part = set(syms[ci:ci + CAP_CHUNK])
-            groups = [g for (sym, _at), g in need.items() if sym in part]
-            out, _tail = S.replay_cells(groups, [S.CELL], log=log, rulers=rulers,
-                                        adds_of=lambda g, key: {"adds": [], "lev_cap": LEV_CAP})
-            fresh = out.get(S.CELL[0]) or {}
-            for k, r in fresh.items():
-                if k in over:
-                    done[k] = dict(r, state=over[k].get("state", r.get("state")))
-            write_cap_cache(done)
-            log(f"потолок: имён {min(ci + CAP_CHUNK, len(syms))}/{len(syms)}, в кэше {len(done)}, {time.time() - t0:.0f} с")
+    """Кэш коротких, где позиции с плечом > LEV_CAP пересчитаны ядром с потолком
+    (`lev_cap_branch.ensure` — тот же кэш, что кормит сестру `aggr_h_c10`)."""
+    done = LC.ensure(cache, S.legs(log=lambda *a: None), LEV_CAP, log=log)
     new = dict(cache)
     n = 0
-    for k in over:
+    for k in LC.over(cache, LEV_CAP):
         if k in done:
             new[k] = done[k]
             n += 1
-    missing = len(over) - n
-    if missing:
-        log(f"потолок: без пересчёта осталось {missing} записей (ноги не найдены) — взяты как есть")
     log(f"записей с потолком в кэше варианта: {n}")
     return new, n
 

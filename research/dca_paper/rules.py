@@ -273,8 +273,9 @@ MODE_EN_PLAIN = {"safe": "leverage from the name’s volatility, 6σ reserve",
 def mode_of(key):
     """Режим по ключу книги: без приставки общего счёта, хвоста короткой
     и суффикса ветви правил (`_g<порог>` или `_g<порог>i<обратный>`,
-    спека 18; `_ai` — ветвь судьи спеки 19)."""
-    k = re.sub(r"(?:_g\d+(?:i\d+)?|_ai|_m\d+)$", "", str(key))
+    спека 18; `_c<потолок>` — потолок плеча, 25.10; `_ai` — ветвь судьи
+    спеки 19)."""
+    k = re.sub(r"(?:_g\d+(?:i\d+)?|_c\d+|_ai|_m\d+)$", "", str(key))
     if k.startswith("pair_"):
         k = k[5:]
     for suf in ("_h", "_s"):
@@ -820,6 +821,54 @@ for _base in [k for k in H24_ORDER if k not in BRANCHES]:
             if _base in _m:
                 _m[_k] = _m[_base]
         H24_ORDER.append(_k)
+
+
+# Ветвь с потолком плеча (владелец 25.10, «давай все 4 пункта» по итогам
+# what-if: у Gated потолок 10× выиграл на всём окне и в обеих половинах —
+# +864 → +1072 $ на $10k, полов 449 → 199, просадка 12.5 → 6.5 %; у Depth
+# стоил 16 % дохода, у Sigma 64 % — им ветви нет). Плечо забора режется
+# СВЕРХУ, геометрия позиции та же (`run_d10` политика `lev_cap`). Исход
+# позиции МЕНЯЕТСЯ, поэтому записи сестры считает ядро, а не вид над
+# записью: свой кэш `cache/recs-cap<потолок>.jsonl` (`lev_cap_branch.py`),
+# подпись — кэш коротких + потолок. День записи вперёд — первые полные
+# сутки после выкатки (26.10 UTC), раньше — пересчёт. ТОЛЬКО БУМАГА пока
+# намерения исполнителя (`tools/app_api/intents.py`) считают плечо
+# правилом режима и потолка не знают: подписка отклоняется API.
+LEV_CAP_BRANCHES = {"aggr_h_c10": {"base": "aggr_h", "lev_cap": 10.0, "since": "2026-10-26"}}
+
+
+def lev_cap_key(base, cap):
+    """Ключ ветви потолка: `aggr_h` + 10× → `aggr_h_c10`."""
+    return f"{base}_c{int(round(float(cap)))}"
+
+
+def lev_cap_of(key):
+    """Потолок плеча книги; у книги без потолка — None."""
+    m = BRANCHES.get(key) or {}
+    return float(m["value"]) if m.get("rule") == "lev_cap" else None
+
+
+for _k, _b in LEV_CAP_BRANCHES.items():
+    _base, _cap = _b["base"], float(_b["lev_cap"])
+    assert _k == lev_cap_key(_base, _cap), _k
+    BRANCHES[_k] = {"base": _base, "rule": "lev_cap", "value": _cap, "default": False}
+    RULERS[_k] = dict(RULERS[_base])
+    RULERS[_k]["title"] = RULERS[_base]["title"] + f" · плечо ≤ {_cap:g}×"
+    RULERS[_k]["branch"] = {"base": _base, "rule": "lev_cap", "value": _cap, "default": False,
+                            "title": f"плечо ≤ {_cap:g}×", "title_en": f"leverage ≤ {_cap:g}×"}
+    RULERS[_k]["plain"] += (f" Ветвь с ПОТОЛКОМ плеча {_cap:g}×: плечо линейки выше потолка режется до него, "
+                            "гейт входа и пол те же; позиции с плечом выше потолка пересчитаны ядром. "
+                            "Только бумага: живой исполнитель потолка пока не знает.")
+    RULERS[_k]["plain_en"] += (f" Branch with a leverage CAP of {_cap:g}×: the mode's leverage above the cap is cut "
+                               "to it, the entry gate and floor are the same; positions above the cap are recomputed "
+                               "by the core. Paper only: the live executor does not know the cap yet.")
+    WAVE_GUARD_PCT[_k] = WAVE_GUARD_PCT[_base]
+    RULER_SINCE[_k] = _b["since"]
+    for _m in (PEAKS, SHORT_SHARE, SHARE_SINCE, MIN_AGE_DAYS, FLOOR_FRAC_BY_BOOK):
+        if _base in _m:
+            _m[_k] = _m[_base]
+    H24_ORDER.append(_k)
+del _k, _b
 
 
 # Ветвь судьи спеки 19 (владелец 18.10: «можно завести новую ветку под

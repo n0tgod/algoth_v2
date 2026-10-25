@@ -34,7 +34,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 # суффикс ветви правил в ключе книги: охрана `_g<порог>[i<обратный>]` (спека 18), судья `_ai` (спека 19)
-BRANCH_SUFFIX = re.compile(r"(?:_g\d+(?:i\d+)?|_ai|_m\d+)$")
+BRANCH_SUFFIX = re.compile(r"(?:_g\d+(?:i\d+)?|_c\d+|_ai|_m\d+)$")
 import db as DBM                                              # noqa: E402
 import legal as LEGAL                                         # noqa: E402
 import sealed
@@ -828,7 +828,8 @@ class App:
             br = (r.get("branch") if isinstance(r, dict) else None) or {}
             # ветвь судьи спеки 19 — только бумага: живой исполнитель судью не знает
             # книги модели спеки 19 §12 — тоже только бумага
-            paper_only = (br.get("rule") in ("ai", "model")) or bool(re.search(r"(?:_ai|_m\d+)$", str(key)))
+            # ветвь с потолком плеча (25.10) — бумага, пока намерения исполнителя потолка не знают
+            paper_only = (br.get("rule") in ("ai", "model", "lev_cap")) or bool(re.search(r"(?:_ai|_m\d+|_c\d+)$", str(key)))
             for dep, sizing in ((dp, z) for dp in deps for z in sizings):
                 b = (d.get("books") or {}).get(self.cell_key(key, dep, sizing)) or {}
                 cells.append({"book": key, "deposit": float(dep), "side": side,
