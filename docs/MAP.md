@@ -133,7 +133,7 @@
 - `regime_split.py` · 213 строк — Разрез исходов короткого входа по состоянию имени и рынка (вопрос владельца 25.10: как ловить трендовые паден…
 - `trade_path.py` · 134 строк — Путь цены ВНУТРИ сделки числами (спека 19 §11.2, этап U0).
 - тесты: `test_entry_search.py` (105), `test_entry_shift.py` (93), `test_gate_books.py` (82), `test_gate_run.py` (209), `test_judge.py` (137), `test_lessons.py` (103), `test_model_books.py` (183), `test_path_review.py` (135), `test_patterns.py` (55), `test_trade_path.py` (53)
-- отчёты в `out/` (7): AI-dry-hour.md, AI-gate-books.md, ENTRY-SEARCH.md, ENTRY-SHIFT.md, LESSONS.md, MODEL-BOOKS.md, REGIME-split.md
+- отчёты в `out/` (8): AI-dry-hour.md, AI-gate-books.md, CROWD-gate.md, ENTRY-SEARCH.md, ENTRY-SHIFT.md, LESSONS.md, MODEL-BOOKS.md, REGIME-split.md
 
 ## research/asset_groups — A3 — группы активов, ликвидность, кандидаты пар
 
@@ -885,7 +885,7 @@
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
 - документы: `README.md` — Очередь заданий, `queue-state.md` — 
-- заданий `.job`: 1016, логов `done/*.log`: 1018 (в карту не перечисляются — их читают по имени)
+- заданий `.job`: 1017, логов `done/*.log`: 1019 (в карту не перечисляются — их читают по имени)
 
 ## tools — команды сервера, защита коммитов, хуки
 
