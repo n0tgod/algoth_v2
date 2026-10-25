@@ -3100,6 +3100,35 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L26 `T = lambda t: time.strftime('%m-%d %H:%M', …`
 - L29 `main(argv=None)`
 
+## research/dca_paper/regime_probe.py · 248 строк
+
+Зонд режима у коротких книг (вопрос владельца 25.10): как ловить трендовые падения и мало терять на неделях п…
+
+- L31 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L32 `ROOT = os.path.abspath(os.path.join(HERE, '..'…`
+- L42 `OUT = os.path.join(HERE, 'out')`
+- L43 `REPORT = os.path.join(OUT, 'REGIME-probe.md')`
+- L44 `LATEST = os.path.join(OUT, 'regime_probe.json')`
+- L45 `BOOKS = ['safe_h', 'optimal_h', 'aggr_h']`
+- L46 `DEP = 10000.0`
+- L47 `GAP_H = 48.0`
+- L48 `LOOK_H = 48.0`
+- L49 `MIN_EXITS = 5`
+- L50 `BUCKETS = [('<10 %', 0.0, 0.1), ('10–25 %', 0.1, …`
+- L51 `SEEDS = 20`
+- L52 `TRIG = W.TRIGGER_EXITS`
+- L55 `day_of(ts)`
+- L59 `shorts_rows(bk, cache, launch, now, ctx)`
+- L69 `agg(rows)`
+- L78 `split_windows(rows, mid, fwd_ts)`
+- L84 `reentries(rows, mid, fwd_ts)` — Повторные входы после СВОЕГО пола в имени, по месту входа относительно цены пола и цены входа прежней позиции.
+- L101 `regime(rows, mid, fwd_ts)` — Дни по доле полов среди выходов за прошлые 48 ч → результат дня.
+- L154 `run(books, log=print, now=None)`
+- L180 `usd(x)`
+- L184 `share(x)`
+- L188 `report(r)`
+- L222 `main(argv=None)`
+
 ## research/dca_paper/repeat_entry.py · 449 строк
 
 Пропустить первый вход: насколько «ювелирны» второй, третий, четвёртый выбор имени моделью — и что это даёт к…
