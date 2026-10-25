@@ -19,3 +19,19 @@ Traceback (most recent call last):
     raise RuntimeError(f"{bk}: пауза сняла больше {MAX_STEPS} записей — не пауза, а другая книга")
 RuntimeError: optimal_h: пауза сняла больше 400 записей — не пауза, а другая книга
 конец: 2026-10-25T12:39:23Z, код 1
+ВНИМАНИЕ: 2026-10-25T12:39:23Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nc06.log                  |  4 ++++
+ jobs/done/nc07.log                  | 22 ++++++++++++++++++++++
+ jobs/done/nc08.done                 |  1 +
+ jobs/done/nc08.log                  | 21 +++++++++++++++++++++
+ jobs/done/nc09.done                 |  1 +
+ jobs/done/nc09.log                  | 14 ++++++++++++++
+ jobs/poke.log                       |  4 ++++
+ jobs/queue-state.md                 |  2 +-
+ research/s8_loop/out/day_brake.json |  2 +-
+ 9 files changed, 69 insertions(+), 2 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   db9dccbe3..031e8fd14  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
