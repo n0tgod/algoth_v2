@@ -87,3 +87,29 @@ pair_aggr $10000 pause: n 1528 полов 309 usd 2211.75 итог +22.12 % dd -
 | $10000 | пауза 24 ч после пола | 1528 | 309 | +2212 $ | +22.12 % | -7.69 % | +285 $ | +2004 $ | +208 $ | -479 $ | 1476 |
 
 
+ВНИМАНИЕ: 2026-10-25T12:57:15Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nc09.log                                 |   53 +
+ jobs/done/nc10.done                                |    1 +
+ jobs/done/nc10.log                                 |   89 +
+ jobs/poke.log                                      |    3 +
+ jobs/queue-state.md                                |    2 +-
+ .../out/decisions/decisions-2026-10-25.jsonl       |   12 +
+ research/ai_gate/out/latest.json                   |    2 +-
+ research/dca_paper/out/DCA-pair.md                 |   26 +-
+ research/dca_paper/out/DCA-paper.json              | 3864 ++++++++++----------
+ research/dca_paper/out/DCA-paper.md                |   32 +-
+ research/dca_paper/out/DCA-short.md                |   38 +-
+ research/dca_paper/out/WHATIF-short-nocap.md       |   48 +
+ research/dca_paper/out/watch/h24.json              |    2 +-
+ research/dca_paper/out/watch/latest.json           |    2 +-
+ research/dca_paper/out/watch/pair.json             |    2 +-
+ research/dca_paper/out/watch/sit.json              |    2 +-
+ research/dca_paper/out/whatif_short-nocap.json     |    1 +
+ research/s8_loop/out/day_brake.json                |    2 +-
+ 18 files changed, 2234 insertions(+), 1947 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   d30503cac..9a6e854a8  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-25T12:57:21Z, код 0
