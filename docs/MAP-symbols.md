@@ -973,6 +973,32 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L14 `leaves(d, pre='')`
 - L22 `main()`
 
+## research/ai_gate/regime_split.py · 213 строк
+
+Разрез исходов короткого входа по состоянию имени и рынка (вопрос владельца 25.10: как ловить трендовые паден…
+
+- L26 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L27 `ROOT = os.path.abspath(os.path.join(HERE, '..'…`
+- L31 `OUT = os.path.join(HERE, 'out')`
+- L32 `REPORT = os.path.join(OUT, 'REGIME-split.md')`
+- L33 `LATEST = os.path.join(OUT, 'regime_split.json')`
+- L34 `FIELDS = ['px_4h', 'px_24h', 'px_168h', 'btc_24h…`
+- L36 `CONFIRM = [('упало ≤ −2 %', -np.inf, -0.02), ('±2…`
+- L37 `DEEP = -0.3`
+- L38 `DRAWS = 200`
+- L39 `FORWARD = '2026-10-16'`
+- L42 `pct(v)`
+- L46 `cell(o)`
+- L53 `terciles(x)`
+- L60 `bucket_ids(x, cuts)` — 0/1/2 — терцили, 3 — не измерено.
+- L70 `spread(o, b, nb=3)`
+- L76 `null_p(o, b, rng, nb=3)`
+- L86 `by_field(F, names, Ob, at, scopes, rng)`
+- L110 `confirmation(F, names, Ob, scopes, rng)`
+- L133 `run(log=print, now=None)`
+- L156 `report(r)`
+- L195 `main(argv=None)`
+
 ## research/ai_gate/trade_path.py · 134 строк
 
 Путь цены ВНУТРИ сделки числами (спека 19 §11.2, этап U0).
