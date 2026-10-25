@@ -3142,6 +3142,35 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L26 `T = lambda t: time.strftime('%m-%d %H:%M', …`
 - L29 `main(argv=None)`
 
+## research/dca_paper/pump_brake.py · 278 строк
+
+Тормоз книги по рынку (владелец 25.10, пункт 3): доля отыгравшихся вчерашних пампов по ВСЕЙ кросс-секции как…
+
+- L30 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L31 `ROOT = os.path.abspath(os.path.join(HERE, '..'…`
+- L43 `OUT = os.path.join(HERE, 'out')`
+- L44 `REPORT = os.path.join(OUT, 'PUMP-brake.md')`
+- L45 `LATEST = os.path.join(OUT, 'pump_brake.json')`
+- L46 `BOOKS = ['safe_h', 'optimal_h', 'aggr_h']`
+- L47 `DEP = 10000.0`
+- L48 `PUMP = 0.2`
+- L49 `MIN_PUMPS = 5`
+- L50 `THRESH = 0.5`
+- L51 `PERM = 200`
+- L52 `SEEDS = 20`
+- L53 `DAY = 86400.0`
+- L56 `universe(root)`
+- L63 `reversal_share(mkt, syms, day_ts, pump=PUMP, min_pumps=MIN_PUMP…` — → (доля отыгравшихся, число пампов, медиана хода пампов за вчера).
+- L79 `series(root, d_from, d_to, log=print)` — Доля по дням [d_from, d_to] (строки ГГГГ-ММ-ДД).
+- L94 `bucket(v)`
+- L100 `book_days(rows)`
+- L111 `by_bucket(per_day, ser, scope_days)`
+- L141 `whatif(recs, bk, ser, ctx, now, mid, fwd_ts)` — Касса без шортов, вошедших в дни тормоза; нуль — без шортов в случайных днях того же числа (из измеренных дне…
+- L167 `run(books, root=None, log=print, now=None)`
+- L210 `usd(x)`
+- L214 `report(r)`
+- L253 `main(argv=None)`
+
 ## research/dca_paper/regime_probe.py · 248 строк
 
 Зонд режима у коротких книг (вопрос владельца 25.10): как ловить трендовые падения и мало терять на неделях п…
