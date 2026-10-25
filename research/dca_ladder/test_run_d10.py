@@ -656,8 +656,35 @@ def test_cell_hold_inside_a_longer_window_matches_the_short_window_bit_for_bit()
           f"ячейка 48 ч дольше; перенос цели записан (победитель: {win_b[0]['exit']} → {win_m[0]['exit']})")
 
 
+def test_cell_lev_cap_cuts_leverage_from_above_only():
+    """Потолок плеча ячейки (what-if 25.10): `lev_cap` ниже плеча забора режет
+    плечо до потолка, потолок выше плеча ничего не меняет; без потолка — число
+    как у базовой ячейки бит в бит."""
+    lo, at = T9._rise_then_fall()
+    src = T3._Src({"SSSUSDT": lo})
+    legs = _legs(at, "SSSUSDT", n=1)
+    base = ("fence:none:t2", "fence", "none", "t2")
+    cells = [base, (base[0] + "#c2", *base[1:]), (base[0] + "#c99", *base[1:])]
+
+    def adds_of(g, key):
+        if key.endswith("#c2"):
+            return {"adds": [], "lev_cap": 2.0}
+        if key.endswith("#c99"):
+            return {"adds": [], "lev_cap": 99.0}
+        return None
+    got = _with_levels(lambda: D10.collect(src=src, legs=legs, cells=cells, raw=True, rich=True,
+                                           log=lambda *a: None, rulers=["optimal_s"], adds_of=adds_of))
+    rec = got["recs"]["optimal_s"]
+    a, b, c = rec[base[0]][0], rec[base[0] + "#c2"][0], rec[base[0] + "#c99"][0]
+    assert a["lev"] > 2.0, a["lev"]
+    assert abs(b["lev"] - 2.0) < 1e-9, b["lev"]
+    assert c["lev"] == a["lev"] and c["pnl"] == a["pnl"], (c["lev"], a["lev"])
+    print(f"ok  потолок плеча: забор {a['lev']:.2f}× → 2.00× под потолком 2, {c['lev']:.2f}× под потолком 99")
+
+
 TESTS = [
     test_cell_stop_and_equal_risk_leverage_go_into_the_record,
+    test_cell_lev_cap_cuts_leverage_from_above_only,
     test_cell_hold_inside_a_longer_window_matches_the_short_window_bit_for_bit,
     test_cell_policy_floor_and_sink_do_not_retain_records,
     test_collect_rulers_subset_is_bit_for_bit_and_only_those,

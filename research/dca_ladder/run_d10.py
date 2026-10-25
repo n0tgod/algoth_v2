@@ -402,6 +402,10 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
         # средней; `eq` — плечо, при котором убыток на стопе равен убытку
         # книги на её полу при её плече; потолок `EQ_LEV_CAP`, ликвидация
         # не ближе `EQ_LIQ_MULT`·стопа — иначе ячейки у позиции нет.
+        # Потолок плеча ячейки (замер what-if 25.10): плечо забора режется
+        # сверху, геометрия та же. Умолчание — без потолка, число не меняется.
+        if pol and pol.get("lev_cap") is not None:
+            lev = min(lev, float(pol["lev_cap"]))
         stop = float(pol["stop_frac"]) if pol and pol.get("stop_frac") is not None else None
         if stop is not None and pol.get("lev_risk"):
             lev = eq_leverage(entry, lev, floor, stop, look)
