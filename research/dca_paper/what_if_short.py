@@ -26,6 +26,7 @@ import argparse
 import calendar
 import json
 import os
+import random
 import subprocess
 import sys
 import time
@@ -54,6 +55,7 @@ PAIR_BOOKS = ["pair_safe", "pair_optimal", "pair_aggr"]
 VARIANTS = ("book", "pause", "cap", "both")
 VARIANTS_NOCAP = ("book", "pause")
 CAP_CACHE = os.path.join(HERE, "cache", f"recs-cap{LEV_CAP:g}.jsonl")   # пересчёт с потолком, переживает прогон
+NULL_SEEDS = 20                                                         # случайное снятие того же числа записей
 CAP_CHUNK = 12                                                          # имён на кусок: кэш пишется после каждого
 VARIANT_RU = {"book": "как есть", "pause": f"пауза {PAUSE_H:g} ч после пола", "cap": f"плечо ≤ {LEV_CAP:g}×",
               "both": "пауза и потолок"}
@@ -177,6 +179,34 @@ def pause_rows(recs, bk, dep, now, log):
                 raise RuntimeError(f"{bk}: пауза сняла больше записей, чем было ({len(recs)}) — цикл не сходится")
 
 
+def null_rows(recs, bk, dep, now, ctx, k, fwd_ts, seeds=NULL_SEEDS):
+    """Нуль паузы: снять k СЛУЧАЙНЫХ коротких записей (столько же, сколько сняла
+    пауза) на `seeds` зёрнах → список (usd всего, usd вперёд). Правило, режущее
+    число сделок, сравнивается с выборкой того же размера — иначе «меньше сделок»
+    выглядит эффектом правила."""
+    shorts = [RP._key(r) for r in recs if (r.get("side") or "long") == "short"]
+    if not k or k > len(shorts):
+        return []
+    out = []
+    for seed in range(seeds):
+        drop = set(random.Random(seed).sample(shorts, k))
+        cur = [r for r in recs if RP._key(r) not in drop]
+        rows = plain_rows(cur, bk, dep, now)
+        out.append((stats(rows, bk, dep, ctx)["usd"], stats(rows, bk, dep, ctx, since=fwd_ts)["usd"] if fwd_ts else None))
+    return out
+
+
+def null_summary(nulls, pause_usd, pause_fwd):
+    if not nulls:
+        return None
+    us = sorted(u for u, _f in nulls if u is not None)
+    fs = sorted(f for _u, f in nulls if f is not None)
+    med = lambda xs: xs[len(xs) // 2] if xs else None          # noqa: E731
+    return {"seeds": len(nulls), "usd_med": med(us), "usd_lo": us[0] if us else None, "usd_hi": us[-1] if us else None,
+            "share_ge": (sum(1 for u in us if u >= pause_usd) / len(us)) if us and pause_usd is not None else None,
+            "fwd_med": med(fs), "fwd_share_ge": (sum(1 for f in fs if f >= pause_fwd) / len(fs)) if fs and pause_fwd is not None else None}
+
+
 def plain_rows(recs, bk, dep, now):
     with NP.only(dep):
         rows, _c, _o, _l = RP.build_rows({bk: recs}, now=now, keys=[bk], log=lambda *a: None)
@@ -236,13 +266,20 @@ def run(books_h24, books_pair, deps, log=print, now=None, do_pair=True, variants
                 cell = {"all": stats(rows, bk, dep, ctx), "first": stats(rows, bk, dep, ctx, until=mid),
                         "second": stats(rows, bk, dep, ctx, since=mid),
                         "forward": stats(rows, bk, dep, ctx, since=fwd_ts) if fwd_ts else None,
-                        "steps": steps, "secs": round(time.time() - t1, 1)}
+                        "steps": steps, "null": None}
+                if v in ("pause", "both") and steps:
+                    nulls = null_rows(recs, bk, dep, now, ctx, steps, fwd_ts)
+                    cell["null"] = null_summary(nulls, cell["all"]["usd"], (cell["forward"] or {}).get("usd"))
+                cell["secs"] = round(time.time() - t1, 1)
                 res["books"][bk].setdefault(v, {})[str(int(dep))] = cell
                 a = cell["all"]
                 log(f"{bk} ${int(dep)} {v}: n {a['n']} полов {a['floors']} usd {a['usd']} итог "
                     f"{(a['final'] or 0) * 100:+.2f} % dd {(a['max_dd'] or 0) * 100:.1f} % "
                     f"(1-я {cell['first']['usd']}, 2-я {cell['second']['usd']}, вперёд "
-                    f"{(cell['forward'] or {}).get('usd')}); снято {steps}; {cell['secs']} с")
+                    f"{(cell['forward'] or {}).get('usd')}); снято {steps}; {cell['secs']} с"
+                    + (f"; нуль {cell['null']['seeds']} зёрен: медиана {cell['null']['usd_med']} "
+                       f"[{cell['null']['usd_lo']}…{cell['null']['usd_hi']}], доля ≥ паузы {cell['null']['share_ge']:.2f}, "
+                       f"вперёд медиана {cell['null']['fwd_med']} доля ≥ {cell['null']['fwd_share_ge']}" if cell["null"] else ""))
     res["secs"] = round(time.time() - t0, 1)
     return res
 
@@ -255,6 +292,14 @@ def usd(x):
     return "—" if x is None else f"{x:+.0f} $"
 
 
+def null_text(z):
+    if not z:
+        return "—"
+    share = lambda x: "—" if x is None else f"{x:.2f}"              # noqa: E731
+    return (f"медиана {usd(z['usd_med'])} [{usd(z['usd_lo'])}…{usd(z['usd_hi'])}], ≥ паузы {share(z['share_ge'])}; "
+            f"вперёд {usd(z['fwd_med'])}, ≥ {share(z['fwd_share_ge'])}")
+
+
 def report(r):
     if r.get("error"):
         return f"# Что если: короткие книги\n\nНЕ ПОСЧИТАНО: {r['error']}\n"
@@ -264,18 +309,19 @@ def report(r):
          f"пересчитывается), потолок плеча {r['lev_cap']:g}× (позиции с плечом выше пересчитаны ядром: {r['recapped']}"
          + ("" if "cap" in (r.get("variants") or VARIANTS) else "; в этом прогоне потолок НЕ считан") + "). "
          f"Деньги нетто; «вперёд» — с дня записи семейства; половины — по времени входа. За {r['secs']} с.", "",
-         "Это описание: что дали бы правила на той же записи. Правило, снимающее сделки, сравнивать надо и со "
-         "случайным снятием того же числа (здесь не считано) — цифры ниже говорят, где стоит минус, а не доказывают эдж.", ""]
+         "Это описание: что дали бы правила на той же записи. Пауза снимает записи — поэтому рядом нуль: столько же "
+         f"СЛУЧАЙНЫХ коротких записей снято на {NULL_SEEDS} зёрнах; «доля ≥ паузы» — доля зёрен, где случайное снятие дало "
+         "не меньше денег, чем пауза (разрешение доли 1/зёрна). Цифры говорят, где стоит минус, а не доказывают эдж.", ""]
     for bk, by in r["books"].items():
         L += [f"## {R.RULERS.get(bk, {}).get('title', bk)} (`{bk}`)", "",
-              "| депозит | вариант | сделок | полов | итог $ | итог % | просадка | без 3 лучших дней | 1-я половина | 2-я половина | вперёд | снято |",
-              "|--:|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
+              "| депозит | вариант | сделок | полов | итог $ | итог % | просадка | без 3 лучших дней | 1-я половина | 2-я половина | вперёд | снято | нуль: случайное снятие |",
+              "|--:|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|---|"]
         for v in r.get("variants") or VARIANTS:
             for dep, c in (by.get(v) or {}).items():
                 a = c["all"]
                 L.append(f"| ${dep} | {VARIANT_RU[v]} | {a['n']} | {a['floors']} | {usd(a['usd'])} | {pct(a['final'])} | "
                          f"{pct(a['max_dd'])} | {usd(a['usd_wo_top3d'])} | {usd(c['first']['usd'])} | {usd(c['second']['usd'])} | "
-                         f"{usd((c['forward'] or {}).get('usd'))} | {c['steps']} |")
+                         f"{usd((c['forward'] or {}).get('usd'))} | {c['steps']} | {null_text(c.get('null'))} |")
         L.append("")
     return "\n".join(L) + "\n"
 
