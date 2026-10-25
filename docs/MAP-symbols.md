@@ -4101,41 +4101,45 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L465 `publish(name)`
 - L471 `main(argv=None)`
 
-## research/dca_paper/what_if_short.py · 317 строк
+## research/dca_paper/what_if_short.py · 363 строк
 
 Что было бы с короткими и общими книгами при двух правилах (владелец 25.10: «если поменять эти правила, как п…
 
-- L33 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L34 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L45 `OUT = os.path.join(HERE, 'out')`
-- L46 `REPORT = os.path.join(OUT, 'WHATIF-short.md')`
-- L47 `LATEST = os.path.join(OUT, 'whatif_short.json')`
-- L48 `PAUSE_H = 24.0`
-- L49 `LEV_CAP = 10.0`
-- L50 `TRIGGER_EXITS = NP.TRIGGER_EXITS`
-- L51 `MEM_LIMIT_MB = 3000`
-- L52 `H24_BOOKS = ['safe_h', 'optimal_h', 'aggr_h']`
-- L53 `PAIR_BOOKS = ['pair_safe', 'pair_optimal', 'pair_agg…`
-- L54 `VARIANTS = ('book', 'pause', 'cap', 'both')`
-- L55 `VARIANTS_NOCAP = ('book', 'pause')`
-- L56 `CAP_CACHE = os.path.join(HERE, 'cache', f'recs-cap{…`
-- L57 `CAP_CHUNK = 12`
-- L58 `VARIANT_RU = {'book': 'как есть', 'pause': f'пауза {…`
-- L62 `cap_sig()`
-- L66 `read_cap_cache(log)` — {(линейка, имя, момент): запись с потолком} — что уже пересчитано.
-- L75 `write_cap_cache(cache)`
-- L80 `capped_cache(cache, log)` — Кэш коротких, где позиции с плечом > LEV_CAP пересчитаны ядром с потолком.
-- L125 `cache_rulers(cache)`
-- L129 `h24_packed(cache, books, launch, now, log)` — Записи коротких книг после возраста и охраны — как в прогоне.
-- L139 `pair_packed(short_cache, books, launch, now, ctx, log)` — Записи общих счетов после гейта, возраста и охраны — как в `run_pair.run`.
-- L158 `pause_rows(recs, bk, dep, now, log)` — Касса книги с паузой: записи снимаются по одной (как `name_pause.sister`), триггер и запрет — только у КОРОТК…
-- L180 `plain_rows(recs, bk, dep, now)`
-- L186 `stats(rows, bk, dep, ctx, since=None, until=None)`
-- L199 `run(books_h24, books_pair, deps, log=print, now=None, do_pair=T…`
-- L250 `pct(x)`
-- L254 `usd(x)`
-- L258 `report(r)`
-- L283 `main(argv=None)`
+- L34 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L35 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L46 `OUT = os.path.join(HERE, 'out')`
+- L47 `REPORT = os.path.join(OUT, 'WHATIF-short.md')`
+- L48 `LATEST = os.path.join(OUT, 'whatif_short.json')`
+- L49 `PAUSE_H = 24.0`
+- L50 `LEV_CAP = 10.0`
+- L51 `TRIGGER_EXITS = NP.TRIGGER_EXITS`
+- L52 `MEM_LIMIT_MB = 3000`
+- L53 `H24_BOOKS = ['safe_h', 'optimal_h', 'aggr_h']`
+- L54 `PAIR_BOOKS = ['pair_safe', 'pair_optimal', 'pair_agg…`
+- L55 `VARIANTS = ('book', 'pause', 'cap', 'both')`
+- L56 `VARIANTS_NOCAP = ('book', 'pause')`
+- L57 `CAP_CACHE = os.path.join(HERE, 'cache', f'recs-cap{…`
+- L58 `NULL_SEEDS = 20`
+- L59 `CAP_CHUNK = 12`
+- L60 `VARIANT_RU = {'book': 'как есть', 'pause': f'пауза {…`
+- L64 `cap_sig()`
+- L68 `read_cap_cache(log)` — {(линейка, имя, момент): запись с потолком} — что уже пересчитано.
+- L77 `write_cap_cache(cache)`
+- L82 `capped_cache(cache, log)` — Кэш коротких, где позиции с плечом > LEV_CAP пересчитаны ядром с потолком.
+- L127 `cache_rulers(cache)`
+- L131 `h24_packed(cache, books, launch, now, log)` — Записи коротких книг после возраста и охраны — как в прогоне.
+- L141 `pair_packed(short_cache, books, launch, now, ctx, log)` — Записи общих счетов после гейта, возраста и охраны — как в `run_pair.run`.
+- L160 `pause_rows(recs, bk, dep, now, log)` — Касса книги с паузой: записи снимаются по одной (как `name_pause.sister`), триггер и запрет — только у КОРОТК…
+- L182 `null_rows(recs, bk, dep, now, ctx, k, fwd_ts, seeds=NULL_SEEDS)` — Нуль паузы: снять k СЛУЧАЙНЫХ коротких записей (столько же, сколько сняла пауза) на `seeds` зёрнах → список (…
+- L199 `null_summary(nulls, pause_usd, pause_fwd)`
+- L210 `plain_rows(recs, bk, dep, now)`
+- L216 `stats(rows, bk, dep, ctx, since=None, until=None)`
+- L229 `run(books_h24, books_pair, deps, log=print, now=None, do_pair=T…`
+- L287 `pct(x)`
+- L291 `usd(x)`
+- L295 `null_text(z)`
+- L303 `report(r)`
+- L329 `main(argv=None)`
 
 ## research/f1_carry/carry.py · 169 строк
 
