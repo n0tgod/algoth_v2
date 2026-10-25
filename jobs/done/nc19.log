@@ -4,3 +4,21 @@
 запускаю: .venv/bin/python tools/app_api/restart.py 
 порт 443: слушает
 конец: 2026-10-25T20:45:55Z, код 0
+ВНИМАНИЕ: 2026-10-25T20:45:55Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nc19.done                      |    1 +
+ jobs/done/nc19.log                       |    6 +
+ jobs/poke.log                            |    3 +
+ jobs/queue-state.md                      |    2 +-
+ research/ai_gate/out/latest.json         |    2 +-
+ research/dca_paper/out/DCA-pair.md       |   26 +-
+ research/dca_paper/out/DCA-paper.json    | 3560 +++++++++++++++---------------
+ research/dca_paper/out/DCA-paper.md      |   36 +-
+ research/dca_paper/out/watch/latest.json |    2 +-
+ research/dca_paper/out/watch/pair.json   |    2 +-
+ research/dca_paper/out/watch/sit.json    |    2 +-
+ 11 files changed, 1826 insertions(+), 1816 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   89f254cd8..8f8af5b43  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
