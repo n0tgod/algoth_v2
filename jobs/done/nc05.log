@@ -168,3 +168,16 @@ train_wait.flag: нет
 == research/s8_loop/out/train.log: есть
 
 конец: 2026-10-25T11:42:37Z, код 0
+ВНИМАНИЕ: 2026-10-25T11:42:37Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (5 МБ)
+публикуется в ветку main:
+ jobs/done/nc04.done |   1 +
+ jobs/done/nc04.log  |  21 +++++++
+ jobs/done/nc05.done |   1 +
+ jobs/done/nc05.log  | 170 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log       |   2 +
+ jobs/queue-state.md |   2 +-
+ 6 files changed, 196 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   76567dd19..af8815dc2  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
