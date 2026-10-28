@@ -14,3 +14,19 @@ funding >= 0.0001 и px_1h <= 0 и crowd_bybit >= 0.55, окно 4 ч — Longs 
 выход: btc_24h <= -0.0038 → s8:t2:book — When BTC is already falling over 24h, the market tailwind supports the short. A wide stop is enough to cap a rare reversal without cutting the trend move; this gain held in both halves.
 модель: The entry rules focus on waiting for the adverse leg to finish: a post-signal squeeze, then exhaustion, an open-interest unwind, or a rollover. The aim is to cut the adverse excursion of winners so that 3-5% stops survive. The exit rules use only the cells whose gain held in both halves.
 стоимость: 0.09458 $
+ВНИМАНИЕ: 2026-10-28T22:45:23Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nc22.log                       |   12 +
+ jobs/queue-state.md                      |    2 +-
+ research/ai_gate/out/entry_rules.json    |  146 +-
+ research/ai_gate/out/latest.json         |    2 +-
+ research/dca_paper/out/DCA-paper.json    | 2362 +++++++++++++++---------------
+ research/dca_paper/out/DCA-paper.md      |   32 +-
+ research/dca_paper/out/watch/latest.json |    2 +-
+ research/dca_paper/out/watch/sit.json    |    2 +-
+ 8 files changed, 1358 insertions(+), 1202 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   329cb055b..47f7c2e01  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-28T22:45:29Z, код 0
