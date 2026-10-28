@@ -457,6 +457,104 @@ def book_exit_rows(O, at, exits):
     return out
 
 
+def exit_by_state(F, O, names, at, exits, min_n=30):
+    """Выход по состоянию (§11.10): в час сигнала, по терцилям каждого поля —
+    лучшая ячейка выхода по среднему на сигнал, прирост к выходу книги и
+    держится ли он в обеих половинах. Описание для модели, не отбор."""
+    O = as3(O)
+    exits = list(exits or [BOOK_EXIT])
+    jb = _jb(exits)
+    order = np.argsort(at)
+    half = len(order) // 2
+    halves = (set(order[:half].tolist()), set(order[half:].tolist()))
+    ob = O[:, 0, jb]
+    out = []
+    for j, nm in enumerate(names):
+        x = F[:, 0, j]
+        ok = ~np.isnan(x) & ~np.isnan(ob)
+        if ok.sum() < 3 * min_n:
+            continue
+        cuts = np.quantile(x[ok], [1 / 3, 2 / 3])
+        for ti, (lo, hi) in enumerate(((-np.inf, cuts[0]), (cuts[0], cuts[1]), (cuts[1], np.inf))):
+            idx = np.where(ok & (x > lo) & (x <= hi))[0]
+            if len(idx) < min_n:
+                continue
+            best = None
+            for c, ex in enumerate(exits):
+                if c == jb:
+                    continue
+                oc = O[idx, 0, c]
+                m = ~np.isnan(oc)
+                if m.sum() < min_n:
+                    continue
+                g = float(np.mean(oc[m] - ob[idx][m]))
+                g1 = [float(oc[t] - ob[idx][t]) for t in range(len(idx)) if m[t] and idx[t] in halves[0]]
+                g2 = [float(oc[t] - ob[idx][t]) for t in range(len(idx)) if m[t] and idx[t] in halves[1]]
+                row = {"field": nm, "tercile": ti, "range": [None if np.isinf(lo) else round(float(lo), 6),
+                                                              None if np.isinf(hi) else round(float(hi), 6)],
+                       "n": int(m.sum()), "exit": ex, "gain": round(g, 5),
+                       "gain_first": round(float(np.mean(g1)), 5) if g1 else None,
+                       "gain_second": round(float(np.mean(g2)), 5) if g2 else None}
+                row["held"] = bool(g1 and g2 and np.mean(g1) > 0 and np.mean(g2) > 0)
+                if best is None or g > best["gain"]:
+                    best = row
+            if best is not None:
+                out.append(best)
+    out.sort(key=lambda r: -r["gain"])
+    return out
+
+
+def exit_rule_scores(F, O, names, at, rules, exits, seed=0):
+    """Правила выхода модели (§11.10): условия в час сигнала → ячейка выхода.
+    На подходящих сигналах: средний в ячейке против выхода книги у тех же;
+    прирост на сигнал по всему окну; нуль — случайные подмножества того же
+    числа с той же ячейкой (400); половины — описание."""
+    O = as3(O)
+    exits = list(exits or [BOOK_EXIT])
+    jb = _jb(exits)
+    ob = np.where(np.isnan(O[:, 0, jb]), 0.0, O[:, 0, jb])
+    order = np.argsort(at)
+    half = len(order) // 2
+    halves = (np.array(order[:half]), np.array(order[half:]))
+    rng = np.random.default_rng(seed + 17)
+    out = []
+    for rule in rules:
+        ex = rule.get("exit")
+        if not all(c["field"] in names for c in rule.get("when") or []):
+            out.append({"rule": rule, "why": "поле вне таблицы"})
+            continue
+        if ex not in exits or ex == BOOK_EXIT:
+            out.append({"rule": rule, "why": f"ячейки выхода {ex} нет в таблице или это выход книги"})
+            continue
+        c = exits.index(ex)
+        oc = O[:, 0, c]
+        ks = first_k(F, names, dict(rule, W=0))
+        hit = (ks == 0) & ~np.isnan(oc) & ~np.isnan(O[:, 0, jb])
+        n_all = len(ob)
+        n_hit = int(hit.sum())
+        diff = np.where(hit, oc - ob, 0.0)
+        diff = np.where(np.isnan(diff), 0.0, diff)
+        gain = float(diff.sum() / n_all) if n_all else None
+        row = {"rule": {"when": rule["when"], "exit": ex}, "matched": n_hit,
+               "mean_cell": round(float(oc[hit].mean()), 5) if n_hit else None,
+               "mean_book": round(float(ob[hit].mean()), 5) if n_hit else None,
+               "gain": round(gain, 5) if gain is not None else None, "p_random": None, "halves": []}
+        if n_hit:
+            pool = np.where(~np.isnan(oc) & ~np.isnan(O[:, 0, jb]))[0]
+            if len(pool) > n_hit:
+                ge = 0
+                for _ in range(NULL_DRAWS):
+                    pick = rng.choice(pool, size=n_hit, replace=False)
+                    ge += float((oc[pick] - ob[pick]).sum() / n_all) >= gain
+                row["p_random"] = round(ge / NULL_DRAWS, 4)
+            for hv in halves:
+                hh = hit[hv]
+                row["halves"].append({"matched": int(hh.sum()),
+                                      "gain": round(float(diff[hv].sum() / max(1, len(hv))), 5)})
+        out.append(row)
+    return out
+
+
 def shuffled(F, seed):
     """Отрицательный контроль: строки состояния (по сигналам) переставлены."""
     rng = np.random.default_rng(seed)
@@ -484,10 +582,12 @@ def run(log=print, since=None, now=None, legs=None, table=None, seed=0):
     names, F, O, at, n_legs = table["names"], table["F"], as3(table["O"]), table["at"], table["n"]
     exits = list(table.get("exits") or [BOOK_EXIT])
     jb = _jb(exits)
-    extra = []
+    extra, exit_rules = [], []
     try:
         with open(RULES_FILE, encoding="utf-8") as f:
-            extra = [dict(r, by="model") for r in (json.load(f).get("rules") or [])]
+            rf = json.load(f)
+        extra = [dict(r, by="model") for r in (rf.get("rules") or [])]
+        exit_rules = list(rf.get("exit_rules") or [])
     except (OSError, ValueError):
         pass
     cover = {nm: round(float(np.mean(~np.isnan(F[:, :, j]))), 3) for j, nm in enumerate(names)}
@@ -498,6 +598,8 @@ def run(log=print, since=None, now=None, legs=None, table=None, seed=0):
     procedure = bool(f1.get("held") and f2.get("held") and control_silent)
     mine = model_scores(F, O, names, at, extra, seed, exits)
     book_exits = book_exit_rows(O, at, exits)
+    exit_state = exit_by_state(F, O, names, at, exits)                       # §11.10: описание для модели
+    exit_model = exit_rule_scores(F, O, names, at, exit_rules, exits, seed)  # §11.10: правила выхода модели
     final = None
     if procedure:
         pool, base_all, _ = select(F, O, names, list(range(len(O))), extra, exits)
@@ -508,6 +610,7 @@ def run(log=print, since=None, now=None, legs=None, table=None, seed=0):
            "exits": exits, "shortest_stop": shortest_stop(f1, f2), "book_exits": book_exits,
            "fold_1to2": f1, "fold_2to1": f2, "control": {"fold_1to2": c1, "fold_2to1": c2, "silent": control_silent},
            "procedure_holds": procedure, "candidate": final, "model_rules": len(extra), "model": mine,
+           "exit_state": exit_state, "exit_model": exit_model,
            "secs": round(time.time() - t0, 1)}
     log(f"поиск ТВХ: сигналов {n_legs}, полей {len(names)}; 1→2 {'держит' if f1.get('held') else 'нет'}, "
         f"2→1 {'держит' if f2.get('held') else 'нет'}, контроль {'молчит' if control_silent else 'НЕ молчит'}")
@@ -650,6 +753,31 @@ def report(r):
               "Книгу с этим правилом может завести модель по порогу §12 (только бумага)."]
     L += ["", "Покрытие полей (доля сигнало-часов с числом): " +
           ", ".join(f"{k} {v:.0%}" for k, v in sorted(r["cover"].items(), key=lambda x: x[1]))]
+    # §11.10: выход по состоянию и правила выхода модели
+    es = r.get("exit_state") or []
+    if es:
+        L += ["", "## Выход по состоянию (описание для модели, не правило)", "",
+              "Для терциля поля в час сигнала — лучшая ячейка выхода по среднему на сигнал против выхода книги; "
+              "«держит» — прирост > 0 в обеих половинах. Лучшая ячейка терциля на всём окне — не правило (R5).", "",
+              "| поле | терциль | диапазон | n | ячейка | прирост | 1-я | 2-я | держит |", "|---|--:|---|--:|---|--:|--:|--:|---|"]
+        for x in es[:15]:
+            rg = f"{'' if x['range'][0] is None else x['range'][0]:}…{'' if x['range'][1] is None else x['range'][1]}"
+            L.append(f"| `{x['field']}` | {x['tercile']} | {rg} | {x['n']} | `{x['exit']}` ({exit_text(x['exit'])}) | "
+                     f"{pct(x['gain'])} | {pct(x['gain_first'])} | {pct(x['gain_second'])} | {'да' if x['held'] else 'нет'} |")
+        L.append(f"| … | | | | держат всего {sum(1 for x in es if x['held'])} из {len(es)} | | | | |")
+    em = r.get("exit_model") or []
+    if em:
+        L += ["", "## Правила выхода модели (§11.10)", "",
+              "| правило | подходящих | ячейка: средний | книга у тех же | прирост на сигнал | случайные не хуже | половины |",
+              "|---|--:|--:|--:|--:|--:|---|"]
+        for x in em:
+            if x.get("why"):
+                L.append(f"| {rule_text(x['rule'])} | {x['why']} | | | | | |")
+                continue
+            hv = "; ".join(f"{h['matched']}: {pct(h['gain'])}" for h in x["halves"])
+            cond = " и ".join(f"{c['field']} {c['op']} {float(c['value']):g}" for c in x["rule"]["when"])
+            L.append(f"| {cond} → {exit_text(x['rule']['exit'])} | {x['matched']} | {pct(x['mean_cell'])} | {pct(x['mean_book'])} | "
+                     f"{pct(x['gain'])} | {x['p_random'] if x['p_random'] is not None else '—'} | {hv} |")
     return "\n".join(L) + "\n"
 
 

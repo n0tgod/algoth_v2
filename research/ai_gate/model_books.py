@@ -55,6 +55,7 @@ TICK = os.path.join(OUT, "record", "model_tick.json")
 BASE = "optimal_h"                 # основная книга: Depth Short
 CAP_LIVE = 10                      # живых модельных книг (владелец 21.10)
 CAP_ENTRY = 3                      # из них книг ТВХ — каждая свой реплей каждый час
+CAP_EXIT = 3                       # книг «свой выход» (§11.10) — реплей только подходящих
 PER_WEEK = 2                       # новых за скользящие 7 суток (владелец 21.10)
 SOFT_MIN = 10                      # случаев (фильтр) / сработавших (ТВХ) на всём окне
 SOFT_P = 0.20                      # случайные не хуже — не больше этой доли из 400
@@ -130,6 +131,9 @@ def matches(rule, f):
 
 def rule_text(kind, rule):
     w = " и ".join(f"{c['field']} {c['op']} {float(c['value']):g}" for c in rule["when"])
+    if kind == "exit":
+        import entry_search as ES                              # noqa: E402
+        return f"выход при {w}: {ES.exit_text(rule.get('exit') or BOOK_EXIT)}"
     w += (f", окно {rule['W']} ч" if kind == "entry" else "")
     if rule.get("exit") and rule["exit"] != BOOK_EXIT:
         import entry_search as ES                              # noqa: E402
@@ -163,6 +167,41 @@ def soft_entry(a):
     if p is None or p > SOFT_P:
         return f"случайный час не хуже в {p} > {SOFT_P}"
     return None
+
+
+def soft_exit(a):
+    """Порог рождения книги «свой выход» (§11.10): подходящих ≥ 10, в ячейке
+    лучше, чем с выходом книги у тех же, случайные подмножества не хуже ≤ 20 %."""
+    m = a.get("matched") or 0
+    if m < SOFT_MIN:
+        return f"подходящих {m} < {SOFT_MIN}"
+    if a.get("mean_cell") is None or a.get("mean_book") is None or not a["mean_cell"] > a["mean_book"]:
+        return "в ячейке не лучше, чем с выходом книги"
+    p = a.get("p_random")
+    if p is None or p > SOFT_P:
+        return f"случайные не хуже в {p} > {SOFT_P}"
+    return None
+
+
+def exit_candidates(search, rules_file):
+    why_of = {}
+    for r in (rules_file or {}).get("exit_rules") or []:
+        try:
+            why_of[sig("exit", r)] = r
+        except (KeyError, TypeError, ValueError):
+            continue
+    out = []
+    for m in (search or {}).get("exit_model") or []:
+        if m.get("why") or not m.get("rule"):
+            continue
+        rule = {"when": m["rule"]["when"], "exit": m["rule"]["exit"]}
+        src = why_of.get(sig("exit", rule)) or {}
+        a = {k: m.get(k) for k in ("matched", "mean_cell", "mean_book", "gain", "p_random")}
+        out.append({"kind": "exit", "rule": rule, "why": src.get("why"), "text": None,
+                    "source": f"patterns:{src.get('proposed_at') or '?'}", "fail": soft_exit(a),
+                    "gate": dict(a, search_at=(search or {}).get("computed_at")),
+                    "p": a.get("p_random"), "n": a.get("matched") or 0})
+    return out
 
 
 def skip_candidates(lstate):
@@ -217,6 +256,7 @@ def births(reg, cands, now):
     lv = live(reg)
     room_live = CAP_LIVE - len(lv)
     room_entry = CAP_ENTRY - sum(1 for b in lv if b["kind"] == "entry")
+    room_exit = CAP_EXIT - sum(1 for b in lv if b["kind"] == "exit")
     born, wait = [], []
     for c in ok:
         if room_week <= 0:
@@ -228,6 +268,9 @@ def births(reg, cands, now):
         if c["kind"] == "entry" and room_entry <= 0:
             wait.append({"rule": rule_text(c["kind"], c["rule"]), "why": f"книг ТВХ уже {CAP_ENTRY}"})
             continue
+        if c["kind"] == "exit" and room_exit <= 0:
+            wait.append({"rule": rule_text(c["kind"], c["rule"]), "why": f"книг «свой выход» уже {CAP_EXIT}"})
+            continue
         bid = next_id(reg)
         b = {"id": bid, "key": key_of_book(bid), "kind": c["kind"], "rule": c["rule"], "sig": c["sig"],
              "why": c["why"], "text": c["text"], "source": c["source"], "gate": c["gate"],
@@ -238,6 +281,8 @@ def births(reg, cands, now):
         room_live -= 1
         if c["kind"] == "entry":
             room_entry -= 1
+        if c["kind"] == "exit":
+            room_exit -= 1
     return born, wait
 
 
@@ -317,6 +362,37 @@ def entry_decide(b, legs, feat, state, now):
     return new
 
 
+def exit_decide(b, legs, feat, state, now):
+    """Книга «свой выход» (§11.10): правило судится в час сигнала (k = 0), когда
+    сводка часа легла; решение с числами полей замораживается."""
+    mine = state.setdefault(b["id"], {})
+    hi = float(b["retired_at"]) if b.get("retired_at") else None
+    new = 0
+    for g in legs:
+        at = float(g["at"])
+        sk = f"{g['sym']}|{int(at)}"
+        if at < float(b["born_at"]) or (hi is not None and at >= hi) or sk in mine or now < at + EDGE_S:
+            continue
+        f = feat(g, 0)
+        vals = {c["field"]: f.get(c["field"]) for c in b["rule"]["when"]}
+        mine[sk] = {"k": 0 if matches(b["rule"], f) else -1, "t": round(now), "vals": vals}
+        new += 1
+    return new
+
+
+def matched_legs(b, legs, state):
+    """Входы книги «свой выход», где правило выполнено: вход в час сигнала, свой выход."""
+    mine = state.get(b["id"]) or {}
+    out, seen = [], set()
+    for g in sorted(legs, key=lambda g: float(g["at"])):
+        d = mine.get(f"{g['sym']}|{int(float(g['at']))}")
+        if not d or d["k"] != 0 or (g["sym"], float(g["at"])) in seen:
+            continue
+        seen.add((g["sym"], float(g["at"])))
+        out.append(dict(g, at=float(g["at"]), at_signal=float(g["at"])))
+    return out
+
+
 def shifted_legs(b, legs, state):
     """Сдвинутые входы книги: вход в час срабатывания; один на (имя, час)."""
     mine = state.get(b["id"]) or {}
@@ -337,9 +413,9 @@ def tick(log=print, now=None, dry=False):
     """Часовой проход книг ТВХ: решения о часе входа и реплей сдвинутых входов."""
     now = now or time.time()
     reg = load()
-    books = [b for b in reg["books"] if b["kind"] == "entry"]
+    books = [b for b in reg["books"] if b["kind"] in ("entry", "exit")]
     if not books:
-        return {"books": 0, "why": "книг ТВХ нет"}
+        return {"books": 0, "why": "книг ТВХ и «свой выход» нет"}
     import model_branch as MB                                  # noqa: E402
     import run_short as S                                      # noqa: E402
     import entry_search as ES                                  # noqa: E402
@@ -356,15 +432,15 @@ def tick(log=print, now=None, dry=False):
     if act and legs:
         feat = ES.feature_env(legs, days=min(45, int((now - lo) / DAY) + 3))
         for b in act:
-            n = entry_decide(b, legs, feat, state, now)
+            n = (entry_decide if b["kind"] == "entry" else exit_decide)(b, legs, feat, state, now)
             new += n
-            log(f"{b['id']}: новых решений о часе входа {n}")
+            log(f"{b['id']}: новых решений {'о часе входа' if b['kind'] == 'entry' else 'о выходе'} {n}")
     cache, _why = MB.read_cache(log=log)
     # к реплею — по ячейке выхода книги (§11.9): у каждой своя ячейка ядра
     need, by_leg = {}, {}
     for b in books:
         ex = (b["rule"].get("exit") or BOOK_EXIT)
-        for g in shifted_legs(b, legs, state):
+        for g in (shifted_legs if b["kind"] == "entry" else matched_legs)(b, legs, state):
             k = (b["id"], g["sym"], round(float(g["at"]), 3))
             r = cache.get(k)
             if r is None or r.get("state") != "closed":
@@ -437,6 +513,9 @@ def run(log=print, now=None, dry=False, client_cands=None):
         if b["kind"] == "skip":
             win = MB.window(base_all, b)
             return GB.filt(win, BASE, eidx.get(b["id"], {}))[0], win
+        if b["kind"] == "exit":
+            win = MB.window(base_all, b)
+            return MB.exit_recs(b["key"], win, cache=cache, log=lambda *a: None, book=b)[0], win
         mine = MB.window([r for (bid, _s, _a), r in cache.items() if bid == b["id"]], b)
         return E.book_chain(mine, lambda *a: None, now), None
 
@@ -462,6 +541,9 @@ def run(log=print, now=None, dry=False, client_cands=None):
                     "not_worse_share": (round(sum(1 for f in fs if st_.get("final") is not None and f >= st_["final"])
                                               / len(fs), 2) if fs and st_.get("final") is not None else None),
                     "cut": sum(nbh.values())}
+        elif b["kind"] == "exit":
+            null = {"what": "основная книга на тех же входах (её выход)", "median_final": bst.get("final"),
+                    "not_worse_share": None, "replaced": sum(1 for r in recs if r.get("mbook") == b["id"])}
         elif b["kind"] == "entry":
             sigs = {(r["sym"], int(float(r.get("at_signal", r["at"])))) for r in recs}
             same = [r for r in base_all if (r["sym"], int(float(r["at"]))) in sigs]
@@ -492,7 +574,8 @@ def run(log=print, now=None, dry=False, client_cands=None):
             rfile = json.load(f)
     except (OSError, ValueError):
         rfile = {}
-    cands = client_cands if client_cands is not None else skip_candidates(lstate) + entry_candidates(search, rfile)
+    cands = (client_cands if client_cands is not None
+             else skip_candidates(lstate) + entry_candidates(search, rfile) + exit_candidates(search, rfile))
     born, wait = births(reg, cands, now)
     for b in born:
         log(f"родилась {b['id']} ({b['kind']}): {rule_text(b['kind'], b['rule'])}")
@@ -507,7 +590,7 @@ def run(log=print, now=None, dry=False, client_cands=None):
                 "live": len(lv), "group": {"live_with_cash": sum(1 for x in res["books"] if x["status"] == "live"
                                                                  and x["book"].get("final") is not None),
                                            "better_than_base": len(better)},
-                "limits": {"cap_live": CAP_LIVE, "cap_entry": CAP_ENTRY, "per_week": PER_WEEK, "soft_min": SOFT_MIN,
+                "limits": {"cap_live": CAP_LIVE, "cap_entry": CAP_ENTRY, "cap_exit": CAP_EXIT, "per_week": PER_WEEK, "soft_min": SOFT_MIN,
                            "soft_p": SOFT_P, "retire_min_d": RETIRE_MIN_D, "window_d": WINDOW_D, "idle_d": IDLE_D},
                 "secs": round(time.time() - t0, 1)})
     if not dry:
@@ -537,7 +620,7 @@ def report(r):
         nl = x.get("null") or {}
         nt = pct(nl.get("median_final")) + (f" (не хуже {nl['not_worse_share']})" if nl.get("not_worse_share") is not None else "")
         st_ = "живая" if x["status"] == "live" else f"отставлена: {x.get('retired_why')}"
-        L.append(f"| {x['id']} | {'фильтр' if x['kind'] == 'skip' else 'ТВХ'} | `{x['rule']}` | {x['days']} | "
+        L.append(f"| {x['id']} | { {'skip': 'фильтр', 'exit': 'выход'}.get(x['kind'], 'ТВХ') } | `{x['rule']}` | {x['days']} | "
                  f"{x['book'].get('n') or 0} | {pct(x['book'].get('final'))} | {pct(x['base'].get('final'))} | {nt} | {st_} |")
     if not r["books"]:
         L.append("| — | | книг ещё нет | | | | | | |")
@@ -550,7 +633,7 @@ def report(r):
     L += ["", "## Наблюдения недели и порог", "",
           "| вид | правило | случаев | случайные не хуже | вердикт |", "|---|---|---|---|---|"]
     for c in r["candidates"]:
-        L.append(f"| {'фильтр' if c['kind'] == 'skip' else 'ТВХ'} | `{c['rule']}` | {c['n']} | {c['p']} | "
+        L.append(f"| { {'skip': 'фильтр', 'exit': 'выход'}.get(c['kind'], 'ТВХ') } | `{c['rule']}` | {c['n']} | {c['p']} | "
                  f"{c['fail'] or 'проходит'} |")
     if r["waiting"]:
         L += ["", "Прошли порог, ждут места: " + "; ".join(f"`{w['rule']}` — {w['why']}" for w in r["waiting"])]
@@ -559,7 +642,7 @@ def report(r):
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--tick", action="store_true", help="часовой проход книг ТВХ")
+    ap.add_argument("--tick", action="store_true", help="часовой проход книг ТВХ и «свой выход»")
     ap.add_argument("--dry", action="store_true", help="без записи реестра, состояния и кэша")
     ap.add_argument("--no-publish", action="store_true")
     a = ap.parse_args(argv)

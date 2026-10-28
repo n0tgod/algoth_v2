@@ -872,7 +872,7 @@ if ! pgrep -f "ai_gate/model_books.py" >/dev/null \
             nice -n 15 .venv/bin/python research/ai_gate/model_books.py \
                 >> $MBK_LOG 2>&1" &
     elif [ "${mb_mm:-0}" -ge 10 ] && [ "$mt_age" -gt 3300 ] \
-         && grep -q '"kind": "entry"' "$MBK_REG" 2>/dev/null; then
+         && grep -qE '"kind": "(entry|exit)"' "$MBK_REG" 2>/dev/null; then
         mkdir -p "$(dirname "$MBK_LOG")"
         echo "[$(now)] книги модели: тик ТВХ ${mt_age} с назад — прогон"
         setsid nohup bash -c "

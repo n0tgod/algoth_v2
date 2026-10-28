@@ -94,3 +94,27 @@ def entry_recs(key, cache=None, log=print):
     mine = [r for (bid, _s, _a), r in cache.items() if bid == b["id"]]
     mine = window(mine, b)
     return sorted(mine, key=lambda r: float(r["at"])), (None if mine else "входов по правилу ещё не было")
+
+
+def exit_recs(key, base_recs, cache=None, log=print, book=None):
+    """Книга «свой выход» (спека 19 §11.10): записи основной книги в окне жизни,
+    где у подходящего входа запись заменена реплеем с ячейкой выхода правила
+    (кэш реплея книг модели: ключ — книга, имя, момент). Нет записи в кэше —
+    вход как у основной книги, и это считается."""
+    import rules as R                                          # noqa: E402
+    b = book or R.MODEL_BOOKS.get(key)
+    if not b or b.get("kind") != "exit":
+        return base_recs, None
+    recs = window(base_recs, b)
+    if cache is None:
+        cache, _why = read_cache(log=log)
+    out, n = [], 0
+    for r in recs:
+        c = cache.get((b["id"], r["sym"], round(float(r["at"]), 3)))
+        if c is not None:
+            out.append(dict(c, mbook=b["id"]))
+            n += 1
+        else:
+            out.append(r)
+    log(f"{key}: свой выход у {n} входов из {len(recs)}")
+    return out, {"replaced": n, "positions": len(recs), "why": None if cache else "кэш реплея книг модели пуст"}

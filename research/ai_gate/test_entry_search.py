@@ -64,7 +64,52 @@ def test_exit_cells_and_shortest_stop():
           "ячейка книги = run_short.CELL")
 
 
+def test_exit_by_state_and_exit_rules():
+    """§11.10: выход по состоянию — подсаженный выигрыш «стоп 3 % при толпе в
+    шорте» (терциль 0 поля crowd_bybit в час сигнала) находится и держит обе
+    половины; правило выхода модели на этом условии проходит (случайные не
+    хуже ≈ 0), правило на шуме — нет; ячейка книги и поле вне таблицы —
+    словами; отчёт несёт обе секции."""
+    rng = np.random.default_rng(21)
+    n, K = 900, ES.KMAX + 1
+    names = ["crowd_bybit", "noise_a"]
+    F = rng.uniform(0, 1, size=(n, K, len(names)))
+    exits = [ES.BOOK_EXIT, "s3:t2:book", "s1:t2:book"]
+    O = rng.normal(0.0, 0.05, size=(n, K, len(exits)))
+    good = F[:, 0, 0] <= 1 / 3
+    O[:, 0, 1] = np.where(good, O[:, 0, 1] + 0.10, O[:, 0, 1])      # выигрыш ячейки — только при толпе в шорте
+    at = np.arange(n) * 3600.0
+    es = ES.exit_by_state(F, O, names, at, exits)
+    top = es[0]
+    assert top["field"] == "crowd_bybit" and top["tercile"] == 0 and top["exit"] == "s3:t2:book" and top["held"], top
+    assert top["gain"] > 0.05 and top["range"][0] is None and top["n"] >= 250, top
+    rules = [{"when": [{"field": "crowd_bybit", "op": "<=", "value": 0.33}], "exit": "s3:t2:book"},
+             {"when": [{"field": "noise_a", "op": "<=", "value": 0.33}], "exit": "s3:t2:book"},
+             {"when": [{"field": "crowd_bybit", "op": "<=", "value": 0.33}], "exit": ES.BOOK_EXIT},
+             {"when": [{"field": "нет_поля", "op": "<=", "value": 1}], "exit": "s1:t2:book"}]
+    em = ES.exit_rule_scores(F, O, names, at, rules, exits, seed=3)
+    assert em[0]["matched"] >= 250 and em[0]["mean_cell"] > em[0]["mean_book"] and em[0]["p_random"] == 0.0, em[0]
+    assert all(h["gain"] > 0 for h in em[0]["halves"]) and em[0]["gain"] > 0.02
+    assert em[1]["p_random"] > 0.05 and em[1]["gain"] < em[0]["gain"] / 2, em[1]    # шум: не значимо, прирост вдвое меньше
+    assert "выход книги" in em[2]["why"] and "вне таблицы" in em[3]["why"]
+    import tempfile
+    rf = os.path.join(tempfile.mkdtemp(), "rules.json")
+    was = ES.RULES_FILE
+    try:
+        ES.RULES_FILE = rf
+        import json
+        json.dump({"rules": [], "exit_rules": rules[:2]}, open(rf, "w"))
+        r = ES.run(log=lambda *a: None, table={"names": names, "F": F, "O": O, "at": at, "n": n, "exits": exits})
+    finally:
+        ES.RULES_FILE = was
+    assert r["exit_state"][0]["exit"] == "s3:t2:book" and len(r["exit_model"]) == 2
+    txt = ES.report(r)
+    assert "## Выход по состоянию" in txt and "## Правила выхода модели" in txt and "crowd_bybit <= 0.33 → стоп 3 %" in txt, txt[-1500:]
+    print("ok  выход по состоянию: «стоп 3 % при толпе в шорте» найден и держит; правило выхода проходит, шум — нет; отчёт")
+
+
 def main():
+    test_exit_by_state_and_exit_rules()
     test_exit_cells_and_shortest_stop()
     names, F, O, at = synth()
     rule = {"when": [{"field": "crowd_bybit", "op": "<=", "value": 0.25}], "W": 3}
@@ -98,7 +143,7 @@ def main():
     assert all(h["gain"] > 0 for h in ms[0]["halves"]) and ms[1]["why"], ms
     assert "Правила модели" in ES.report(dict(r, model=ms))
     print("ok  поиск ТВХ по сохранённой таблице: тот же отбор; без таблицы — ошибка с причиной")
-    print("\nвсе 3 проверки прошли")
+    print("\nвсе 4 проверки прошли")
 
 
 if __name__ == "__main__":

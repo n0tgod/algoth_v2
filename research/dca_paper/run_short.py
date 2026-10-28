@@ -314,6 +314,13 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
                 mcache, _mwhy = MBR.read_cache(log=log)
             packed[bk], why = MBR.entry_recs(bk, cache=mcache, log=log)
             model[bk] = {"kind": "entry", "positions": len(packed[bk]), "why": why}
+        elif b and b.get("kind") == "exit":
+            # книга «свой выход» (§11.10): входы основной книги, у подходящих —
+            # запись реплея с ячейкой выхода правила
+            if mcache is None:
+                mcache, _mwhy = MBR.read_cache(log=log)
+            packed[bk], st_x = MBR.exit_recs(bk, packed[bk], cache=mcache, log=log)
+            model[bk] = dict(st_x or {}, kind="exit")
     # ВОЗРАСТ ИМЕНИ на входе — правило книги с 2026-09-08 (решение
     # владельца «сделать такую же логику, как в общих»). Порог и доля
     # билета объявлены одной картой на все счета (`rules.MIN_AGE_DAYS`,

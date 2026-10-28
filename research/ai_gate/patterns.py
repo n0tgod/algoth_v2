@@ -41,7 +41,8 @@ Each rule also chooses its EXIT ("exit"): one cell of the declared exit grid —
 
 Every rule is tested by numbers, not by your judgement: chosen on one half of the period and checked on the other half, against the book's own entry and against entering at a random hour of the same window for the same signals. Rules that only skip signals without improving the entry moment fail. Do not repeat a rule already in the search results. Returning fewer rules is a valid answer.
 
-Return only the JSON object required by the schema.""" % MAX_HYPS
+Also study the EXIT. You are given "exit_by_state": for each market-state field at the signal hour, by terciles, which exit cell of the grid gave the best net result per signal versus the book's exit, and whether that gain held in both halves of the period. Propose at most %d EXIT rules ("exit_rules"): 1-3 conditions on fields at the SIGNAL hour, and the exit cell to use when they hold (the book's own exit otherwise). The owner's goal is a SHORT stop: prefer rules that let a short stop (1-3 %%) survive where the state says the adverse excursion is small, and say the mechanism. These rules are tested by numbers too: matched signals vs the same signals with the book's exit, against random subsets of the same size with the same cell.
+Return only the JSON object required by the schema.""" % (MAX_HYPS, MAX_HYPS)
 OPS = ("<=", ">=")
 
 
@@ -54,8 +55,14 @@ def schema():
                                           "exit": {"type": "string", "enum": [e["name"] for e in ES.EXITS]},
                                           "why": {"type": "string"}},
          "required": ["when", "W", "exit", "why"], "additionalProperties": False}
-    return {"type": "object", "properties": {"rules": {"type": "array", "items": r}, "notes": {"type": "string"}},
-            "required": ["rules", "notes"], "additionalProperties": False}
+    xr = {"type": "object", "properties": {"when": {"type": "array", "items": cond},
+                                           "exit": {"type": "string", "enum": [e["name"] for e in ES.EXITS]},
+                                           "why": {"type": "string"}},
+          "required": ["when", "exit", "why"], "additionalProperties": False}
+    return {"type": "object", "properties": {"rules": {"type": "array", "items": r},
+                                             "exit_rules": {"type": "array", "items": xr},
+                                             "notes": {"type": "string"}},
+            "required": ["rules", "exit_rules", "notes"], "additionalProperties": False}
 
 
 def parse(stop, text):
@@ -69,7 +76,8 @@ def parse(stop, text):
         return None, "ответ не JSON"
     if not isinstance(v, dict) or not isinstance(v.get("rules"), list):
         return None, "нет списка правил"
-    return {"rules": v["rules"][:MAX_HYPS], "notes": str(v.get("notes") or "")[:1000]}, None
+    xr = v.get("exit_rules") if isinstance(v.get("exit_rules"), list) else []
+    return {"rules": v["rules"][:MAX_HYPS], "exit_rules": xr[:MAX_HYPS], "notes": str(v.get("notes") or "")[:1000]}, None
 
 
 def valid(rule, catalog):
@@ -95,6 +103,32 @@ def valid(rule, catalog):
     if rule.get("exit") is not None and rule.get("exit") not in ES.EXIT_BY:
         return f"выхода {rule.get('exit')!r} нет в сетке"
     return None
+
+
+def valid_exit(rule, catalog):
+    """Правило выхода (§11.10): 1–3 условия из каталога, ячейка из сетки и не выход книги."""
+    w = rule.get("when")
+    if not isinstance(w, list) or not (1 <= len(w) <= 3):
+        return "условий должно быть 1–3"
+    for c in w:
+        if c.get("field") not in catalog:
+            return f"поля {c.get('field')!r} нет в каталоге"
+        if c.get("op") not in OPS:
+            return f"знак {c.get('op')!r} вне словаря"
+        try:
+            float(c.get("value"))
+        except (TypeError, ValueError):
+            return "порог не число"
+    import entry_search as ES                                  # noqa: E402
+    if rule.get("exit") not in ES.EXIT_BY:
+        return f"выхода {rule.get('exit')!r} нет в сетке"
+    if rule.get("exit") == ES.BOOK_EXIT:
+        return "выход книги — не правило"
+    return None
+
+
+def sig_exit(rule):
+    return json.dumps([sorted((c["field"], c["op"], round(float(c["value"]), 6)) for c in rule["when"]), rule["exit"]])
 
 
 def sig(rule):
@@ -149,7 +183,7 @@ def catalog_from_table(path=None):
     return out
 
 
-def run(log=print, client=None, paths=None, rules_file=None, catalog=None, last_search=None):
+def run(log=print, client=None, paths=None, rules_file=None, catalog=None, last_search=None, exit_state=None):
     """Предложить правила входа по состоянию и дописать их в файл правил поиска."""
     import entry_search as ES                                  # noqa: E402
     rules_file = rules_file or ES.RULES_FILE
@@ -179,8 +213,16 @@ def run(log=print, client=None, paths=None, rules_file=None, catalog=None, last_
     if len(paths) < 50:
         return {"error": f"путей {len(paths)} < 50"}
     shorts = [p for p in paths if p.get("side") == "short" and (p.get("path") or {}).get("shape") != "no_bars"]
+    if exit_state is None:
+        try:
+            with open(ES.LATEST, encoding="utf-8") as f:
+                ls = json.load(f)
+            exit_state = {"by_state": (ls.get("exit_state") or [])[:40], "last_exit_rules": ls.get("exit_model") or [],
+                          "book_exits": ls.get("book_exits")}
+        except (OSError, ValueError):
+            exit_state = None
     payload = {"kind": "entry_rules", "field_catalog": catalog, "path_summary": summary(shorts),
-               "last_search": last_search}
+               "last_search": last_search, "exit_by_state": exit_state}
     row = J._call(client, "patterns", SYSTEM_PATTERNS, schema(), payload, parse, {"rules": []})
     try:
         with open(rules_file, encoding="utf-8") as f:
@@ -203,15 +245,32 @@ def run(log=print, client=None, paths=None, rules_file=None, catalog=None, last_
         seen.add(sig(r))
         new.append(r)
     st_.setdefault("rules", []).extend(new)
+    # правила выхода (§11.10): своя подпись, свой список; повтор не пишется
+    seen_x = {sig_exit(r) for r in st_.get("exit_rules") or []}
+    new_x, invalid_x = [], []
+    for r in row.get("exit_rules") or []:
+        why = valid_exit(r, catalog)
+        if why:
+            invalid_x.append({"rule": r, "why": why})
+            continue
+        r = {"when": [{"field": c["field"], "op": c["op"], "value": float(c["value"])} for c in r["when"]],
+             "exit": r["exit"], "why": str(r.get("why") or "")[:300],
+             "proposed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+        if sig_exit(r) in seen_x:
+            continue
+        seen_x.add(sig_exit(r))
+        new_x.append(r)
+    st_.setdefault("exit_rules", []).extend(new_x)
     st_["updated"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     os.makedirs(os.path.dirname(rules_file), exist_ok=True)
     with open(rules_file + ".tmp", "w", encoding="utf-8") as f:
         json.dump(st_, f, ensure_ascii=False, indent=1)
     os.replace(rules_file + ".tmp", rules_file)
-    log(f"правила входа от модели: новых {len(new)}, отвергнуто формой {len(invalid)}"
+    log(f"правила входа от модели: новых {len(new)}, отвергнуто формой {len(invalid)}; "
+        f"правила выхода: новых {len(new_x)}, отвергнуто {len(invalid_x)}"
         + (f" ({row.get('no_verdict')})" if row.get("no_verdict") else ""))
-    return {"new": new, "invalid": invalid, "notes": row.get("notes"), "no_verdict": row.get("no_verdict"),
-            "cost_usd": row.get("cost_usd")}
+    return {"new": new, "invalid": invalid, "new_exit": new_x, "invalid_exit": invalid_x, "notes": row.get("notes"),
+            "no_verdict": row.get("no_verdict"), "cost_usd": row.get("cost_usd")}
 
 
 def main():
@@ -229,6 +288,10 @@ def main():
         print(" и ".join(f"{c['field']} {c['op']} {c['value']:g}" for c in x["when"]) + f", окно {x['W']} ч — {x['why']}")
     for x in r.get("invalid") or []:
         print(f"отвергнуто формой: {x['why']}")
+    for x in r.get("new_exit") or []:
+        print("выход: " + " и ".join(f"{c['field']} {c['op']} {c['value']:g}" for c in x["when"]) + f" → {x['exit']} — {x['why']}")
+    for x in r.get("invalid_exit") or []:
+        print(f"выход отвергнут формой: {x['why']}")
     if r.get("notes"):
         print(f"модель: {r['notes']}")
     print(f"стоимость: {r.get('cost_usd')} $")

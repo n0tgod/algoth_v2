@@ -455,7 +455,31 @@ class App:
                            f"{fld}: no value (rule: {op} {v:g})")
             return out
         entries = []
-        if b.get("kind") == "entry":
+
+        def exit_words(ex):
+            st_, tk, lev = (str(ex or "").split(":") + ["", "", ""])[:3]
+            return ((f"stop {st_[1:]} %" if st_ not in ("s0", "") else "no stop") + f", take ×{tk[1:] or '2'}"
+                    + (", equal-risk leverage" if lev == "eq" else ", book leverage"))
+        if b.get("kind") == "exit":
+            try:
+                with open(self.AI_MODEL_ENTRY, encoding="utf-8") as f:
+                    st = (json.load(f) or {}).get(bid) or {}
+            except (OSError, ValueError):
+                st = {}
+            ew = exit_words(rule.get("exit"))
+            for sk, d in st.items():
+                sym, _, at_s = sk.partition("|")
+                try:
+                    at_sig = float(at_s)
+                except ValueError:
+                    continue
+                own = int(d.get("k", -1)) == 0
+                entries.append({"key": f"{bid}|{sk}", "book": book, "sym": sym, "side": "short",
+                                "signal_at": at_sig, "at": at_sig, "t": d.get("t"), "k": 0 if own else None, "W": None,
+                                "decision": "open" if own else "skip", "no_verdict": None,
+                                "reasons": ([f"the rule held at the signal hour: own exit ({ew})"] if own
+                                            else ["the rule did not hold: the book's exit"]) + words(d.get("vals"))})
+        elif b.get("kind") == "entry":
             try:
                 with open(self.AI_MODEL_ENTRY, encoding="utf-8") as f:
                     st = (json.load(f) or {}).get(bid) or {}
