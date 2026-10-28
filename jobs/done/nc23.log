@@ -124,3 +124,22 @@
 | spread_bp >= 9 → стоп 8 %, тейк обещание ×3, плечо книги | 941 | +2.27 % | +1.81 % | +0.13 % | 0.0 | 550: +0.11 %; 391: +0.15 % |
 | btc_24h <= -0.0038 → стоп 8 %, тейк обещание ×2, плечо книги | 928 | +1.45 % | +1.17 % | +0.08 % | 0.005 | 453: -0.02 %; 475: +0.18 % |
 
+ВНИМАНИЕ: 2026-10-28T22:48:59Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nc22.log                       |   9 +++
+ jobs/done/nc23.done                      |   1 +
+ jobs/done/nc23.log                       | 126 +++++++++++++++++++++++++++++++
+ jobs/poke.log                            |   3 +
+ jobs/queue-state.md                      |   2 +-
+ research/ai_gate/out/ENTRY-SEARCH.md     |  20 ++++-
+ research/ai_gate/out/entry_search.json   |   2 +-
+ research/dca_paper/out/DCA-pair.md       |  26 +++----
+ research/dca_paper/out/watch/latest.json |   2 +-
+ research/dca_paper/out/watch/pair.json   |   2 +-
+ research/s8_loop/out/day_brake.json      |   2 +-
+ 11 files changed, 174 insertions(+), 21 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   958f9ba8f..d9873c081  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-28T22:49:03Z, код 0
