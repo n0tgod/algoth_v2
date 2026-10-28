@@ -4,3 +4,27 @@
 запускаю: .venv/bin/python tools/app_api/restart.py 
 порт 443: слушает
 конец: 2026-10-28T22:41:27Z, код 0
+ВНИМАНИЕ: 2026-10-28T22:41:27Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nc20.done                                |    1 +
+ jobs/done/nc20.log                                 |    6 +
+ jobs/done/nc21.done                                |    1 +
+ jobs/done/nc21.log                                 |    4 +
+ jobs/poke.log                                      |    4 +
+ jobs/queue-state.md                                |    2 +-
+ research/dca_paper/out/DCA-pair.md                 |   28 +-
+ research/dca_paper/out/DCA-paper.json              | 2422 ++++++++++----------
+ research/dca_paper/out/DCA-paper.md                |   32 +-
+ research/dca_paper/out/DCA-short.md                |   62 +-
+ .../dca_paper/out/fixed_short-2026-10-27.jsonl     |    3 +
+ research/dca_paper/out/short-2026-10-27.jsonl      |    3 +
+ research/dca_paper/out/watch/h24.json              |    2 +-
+ research/dca_paper/out/watch/latest.json           |    2 +-
+ research/dca_paper/out/watch/pair.json             |    2 +-
+ research/dca_paper/out/watch/sit.json              |    2 +-
+ research/s8_loop/out/day_brake.json                |    2 +-
+ 17 files changed, 1300 insertions(+), 1278 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   f0bbb2172..9ce2477b8  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
