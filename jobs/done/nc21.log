@@ -110,3 +110,16 @@
 | `spread_bp` | 2 | 8.967267… | 947 | `s8:t3:book` (стоп 8 %, тейк обещание ×3, плечо книги) | +0.47 % | +0.38 % | +0.58 % | да |
 | … | | | | держат всего 10 из 85 | | | | |
 
+ВНИМАНИЕ: 2026-10-28T22:41:55Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nc20.log                     |  24 ++++++++
+ jobs/done/nc21.log                     | 108 +++++++++++++++++++++++++++++++++
+ jobs/queue-state.md                    |   2 +-
+ research/ai_gate/out/ENTRY-SEARCH.md   |  25 +++++++-
+ research/ai_gate/out/entry_search.json |   2 +-
+ 5 files changed, 158 insertions(+), 3 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   9ce2477b8..8adc4d6b7  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-28T22:42:00Z, код 0
