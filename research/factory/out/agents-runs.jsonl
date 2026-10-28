@@ -1364,3 +1364,7 @@
 {"at": 1793092501.772, "role": "task", "status": "ok", "started": 1793092501.586, "ended": 1793092501.772, "dry": false, "note": "код возврата 0"}
 {"at": 1793152802.079, "role": "scout", "status": "start", "started": 1793152802.0, "ended": 1793152802.079, "dry": false, "pid": 1328052}
 {"at": 1793152803.311, "role": "scout", "status": "no-auth", "started": 1793152802.0, "ended": 1793152803.311, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1793153101.992, "role": "scout", "status": "start", "started": 1793153101.0, "ended": 1793153101.992, "dry": false, "pid": 1329637}
+{"at": 1793153103.219, "role": "scout", "status": "no-auth", "started": 1793153101.0, "ended": 1793153103.219, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1793153401.96, "role": "scout", "status": "start", "started": 1793153401.0, "ended": 1793153401.96, "dry": false, "pid": 1330934}
+{"at": 1793153402.538, "role": "scout", "status": "no-auth", "started": 1793153401.0, "ended": 1793153402.538, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
