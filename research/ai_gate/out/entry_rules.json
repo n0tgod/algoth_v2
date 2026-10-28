@@ -89,7 +89,97 @@
    "W": 6,
    "why": "Funding has turned positive and longs are paying while the price is at or above the signal price. Longs are getting crowded, and a short collects funding and gets in at a no-worse price than the signal.",
    "proposed_at": "2026-10-21T07:13:35Z"
+  },
+  {
+   "when": [
+    {
+     "field": "px_4h",
+     "op": ">=",
+     "value": 0.06
+    },
+    {
+     "field": "burst_ratio",
+     "op": "<=",
+     "value": 0.8
+    },
+    {
+     "field": "oi_1h",
+     "op": "<=",
+     "value": -0.01
+    }
+   ],
+   "W": 6,
+   "why": "Pump already happened (4h up >6%), buying burst has faded and OI is unwinding: late longs exiting, so shorting the exhausted top should lower adverse excursion versus entering at the signal hour.",
+   "proposed_at": "2026-10-28T07:00:55Z"
+  },
+  {
+   "when": [
+    {
+     "field": "since_signal",
+     "op": ">=",
+     "value": 0.03
+    },
+    {
+     "field": "buy_share",
+     "op": "<=",
+     "value": 0.47
+    },
+    {
+     "field": "crowd_bybit_shift",
+     "op": ">=",
+     "value": 0.0
+    }
+   ],
+   "W": 6,
+   "why": "Price ran against the signal (better short price), but taker flow has turned to selling and the crowd is not adding shorts. The squeeze risk is spent, so a 5% stop rarely hits the winners.",
+   "exit": "s5:t2:book",
+   "proposed_at": "2026-10-28T07:00:55Z"
+  },
+  {
+   "when": [
+    {
+     "field": "funding",
+     "op": ">=",
+     "value": 0.0001
+    },
+    {
+     "field": "px_1h",
+     "op": ">=",
+     "value": 0.01
+    },
+    {
+     "field": "trades_ratio",
+     "op": "<=",
+     "value": 1.0
+    }
+   ],
+   "W": 4,
+   "why": "Positive funding means longs pay and are crowded. A 1h up-move on below-normal trade activity is a weak, thin rally, which makes a good fade entry for shorts.",
+   "proposed_at": "2026-10-28T07:00:55Z"
+  },
+  {
+   "when": [
+    {
+     "field": "crowd_bybit",
+     "op": ">=",
+     "value": 0.6
+    },
+    {
+     "field": "oi_1h",
+     "op": "<=",
+     "value": -0.02
+    },
+    {
+     "field": "px_1h",
+     "op": "<=",
+     "value": 0.0
+    }
+   ],
+   "W": 6,
+   "why": "Long-heavy crowd starts unwinding (OI falling, price turning down): a long liquidation cascade begins, so the short enters with momentum and little adverse excursion, which suits a tight 3% stop.",
+   "exit": "s3:t2:book",
+   "proposed_at": "2026-10-28T07:00:55Z"
   }
  ],
- "updated": "2026-10-21T07:13:35Z"
+ "updated": "2026-10-28T07:00:55Z"
 }
