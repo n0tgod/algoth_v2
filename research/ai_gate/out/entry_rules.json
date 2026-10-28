@@ -179,7 +179,151 @@
    "why": "Long-heavy crowd starts unwinding (OI falling, price turning down): a long liquidation cascade begins, so the short enters with momentum and little adverse excursion, which suits a tight 3% stop.",
    "exit": "s3:t2:book",
    "proposed_at": "2026-10-28T07:00:55Z"
+  },
+  {
+   "when": [
+    {
+     "field": "since_signal",
+     "op": ">=",
+     "value": 0.02
+    },
+    {
+     "field": "buy_share",
+     "op": "<=",
+     "value": 0.48
+    }
+   ],
+   "W": 6,
+   "why": "Price has already squeezed at least 2% against the short since the signal, and aggressive buying has dropped below half of trades. Entering here means the adverse leg is behind us, which should shrink the further adverse excursion so a 5% stop can survive.",
+   "exit": "s5:t2:book",
+   "proposed_at": "2026-10-28T22:45:23Z"
+  },
+  {
+   "when": [
+    {
+     "field": "since_signal",
+     "op": ">=",
+     "value": 0.03
+    },
+    {
+     "field": "oi_1h",
+     "op": "<=",
+     "value": -0.02
+    }
+   ],
+   "W": 6,
+   "why": "A squeeze has taken place (price up 3% or more since the signal) and open interest is now unwinding. The shorts who were forced out have covered, so the fuel for further upside is spent. Waiting past the squeeze should make the remaining adverse move small enough for a 3% stop at equal risk.",
+   "exit": "s3:t2:eq",
+   "proposed_at": "2026-10-28T22:45:23Z"
+  },
+  {
+   "when": [
+    {
+     "field": "since_signal",
+     "op": ">=",
+     "value": 0.01
+    },
+    {
+     "field": "px_1h",
+     "op": "<=",
+     "value": -0.01
+    }
+   ],
+   "W": 5,
+   "why": "Price rose after the signal and then printed the first down hour of at least 1%. Entering on that rollover sells near a local high, after the 'against then for' move has started, which should lower the adverse excursion.",
+   "exit": "s5:t2:book",
+   "proposed_at": "2026-10-28T22:45:23Z"
+  },
+  {
+   "when": [
+    {
+     "field": "burst_ratio",
+     "op": "<=",
+     "value": 0.5
+    },
+    {
+     "field": "since_signal",
+     "op": ">=",
+     "value": 0.015
+    }
+   ],
+   "W": 6,
+   "why": "Price is above the signal level, but trade-burst intensity has collapsed. The buying burst that lifted the price is exhausting, so the short is entered at a better price with momentum fading.",
+   "exit": "s8:t2:book",
+   "proposed_at": "2026-10-28T22:45:23Z"
+  },
+  {
+   "when": [
+    {
+     "field": "funding",
+     "op": ">=",
+     "value": 0.0001
+    },
+    {
+     "field": "px_1h",
+     "op": "<=",
+     "value": 0.0
+    },
+    {
+     "field": "crowd_bybit",
+     "op": ">=",
+     "value": 0.55
+    }
+   ],
+   "W": 4,
+   "why": "Longs are crowded and paying positive funding while price stalls or dips. Trapped longs who are bleeding funding tend to unwind, which favours the short with limited upside risk.",
+   "proposed_at": "2026-10-28T22:45:23Z"
   }
  ],
- "updated": "2026-10-28T07:00:55Z"
+ "updated": "2026-10-28T22:45:23Z",
+ "exit_rules": [
+  {
+   "when": [
+    {
+     "field": "name_floor_share",
+     "op": ">=",
+     "value": 0.282
+    }
+   ],
+   "exit": "s3:t3:eq",
+   "why": "Coins that often hit the book's floor have large, fast losses. A 3% stop at equal risk cuts those losers early and still lets a 3x take capture the winners; this gain held in both halves.",
+   "proposed_at": "2026-10-28T22:45:23Z"
+  },
+  {
+   "when": [
+    {
+     "field": "depth_eat_bid",
+     "op": "<=",
+     "value": 220.0
+    }
+   ],
+   "exit": "s3:t2:eq",
+   "why": "Thin bid-side depth consumption at the signal means little aggressive pressure is present. Adverse moves tend to be contained, so a 3% stop rarely cuts winners; this gain held in both halves.",
+   "proposed_at": "2026-10-28T22:45:23Z"
+  },
+  {
+   "when": [
+    {
+     "field": "spread_bp",
+     "op": ">=",
+     "value": 9.0
+    }
+   ],
+   "exit": "s8:t3:book",
+   "why": "Wide-spread, illiquid names make noisy swings that tighter stops would cut. A wide 8% stop with a 3x take lets the larger moves play out; this gain held in both halves.",
+   "proposed_at": "2026-10-28T22:45:23Z"
+  },
+  {
+   "when": [
+    {
+     "field": "btc_24h",
+     "op": "<=",
+     "value": -0.0038
+    }
+   ],
+   "exit": "s8:t2:book",
+   "why": "When BTC is already falling over 24h, the market tailwind supports the short. A wide stop is enough to cap a rare reversal without cutting the trend move; this gain held in both halves.",
+   "proposed_at": "2026-10-28T22:45:23Z"
+  }
+ ]
 }

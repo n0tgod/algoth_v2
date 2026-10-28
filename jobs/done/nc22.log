@@ -2,3 +2,15 @@
 строка: run research/ai_gate/patterns.py
 начало: 2026-10-28T22:45:00Z
 запускаю: .venv/bin/python research/ai_gate/patterns.py 
+правила входа от модели: новых 5, отвергнуто формой 0; правила выхода: новых 4, отвергнуто 0
+since_signal >= 0.02 и buy_share <= 0.48, окно 6 ч — Price has already squeezed at least 2% against the short since the signal, and aggressive buying has dropped below half of trades. Entering here means the adverse leg is behind us, which should shrink the further adverse excursion so a 5% stop can survive.
+since_signal >= 0.03 и oi_1h <= -0.02, окно 6 ч — A squeeze has taken place (price up 3% or more since the signal) and open interest is now unwinding. The shorts who were forced out have covered, so the fuel for further upside is spent. Waiting past the squeeze should make the remaining adverse move small enough for a 3% stop at equal risk.
+since_signal >= 0.01 и px_1h <= -0.01, окно 5 ч — Price rose after the signal and then printed the first down hour of at least 1%. Entering on that rollover sells near a local high, after the 'against then for' move has started, which should lower the adverse excursion.
+burst_ratio <= 0.5 и since_signal >= 0.015, окно 6 ч — Price is above the signal level, but trade-burst intensity has collapsed. The buying burst that lifted the price is exhausting, so the short is entered at a better price with momentum fading.
+funding >= 0.0001 и px_1h <= 0 и crowd_bybit >= 0.55, окно 4 ч — Longs are crowded and paying positive funding while price stalls or dips. Trapped longs who are bleeding funding tend to unwind, which favours the short with limited upside risk.
+выход: name_floor_share >= 0.282 → s3:t3:eq — Coins that often hit the book's floor have large, fast losses. A 3% stop at equal risk cuts those losers early and still lets a 3x take capture the winners; this gain held in both halves.
+выход: depth_eat_bid <= 220 → s3:t2:eq — Thin bid-side depth consumption at the signal means little aggressive pressure is present. Adverse moves tend to be contained, so a 3% stop rarely cuts winners; this gain held in both halves.
+выход: spread_bp >= 9 → s8:t3:book — Wide-spread, illiquid names make noisy swings that tighter stops would cut. A wide 8% stop with a 3x take lets the larger moves play out; this gain held in both halves.
+выход: btc_24h <= -0.0038 → s8:t2:book — When BTC is already falling over 24h, the market tailwind supports the short. A wide stop is enough to cap a rare reversal without cutting the trend move; this gain held in both halves.
+модель: The entry rules focus on waiting for the adverse leg to finish: a post-signal squeeze, then exhaustion, an open-interest unwind, or a rollover. The aim is to cut the adverse excursion of winners so that 3-5% stops survive. The exit rules use only the cells whose gain held in both halves.
+стоимость: 0.09458 $
