@@ -55,3 +55,17 @@
 
 
 правила входа от модели: новых 4, отвергнуто формой 0; правила выхода: новых 2, отвергнуто 0; правила закрытия: новых 1, отвергнуто 0
+ВНИМАНИЕ: 2026-10-29T20:01:26Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (7 МБ)
+публикуется в ветку main:
+ jobs/done/nc32.log                       |  53 +++
+ jobs/queue-state.md                      |   2 +-
+ research/ai_gate/out/LESSONS.md          |  53 ++-
+ research/ai_gate/out/entry_rules.json    | 140 +++++-
+ research/ai_gate/out/lessons.json        | 748 +++++++++++++++++++++----------
+ research/ai_gate/out/lessons_latest.json |   2 +-
+ 6 files changed, 739 insertions(+), 259 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   47d69fa2c..3e6c9ee0f  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-29T20:01:31Z, код 0
