@@ -253,9 +253,90 @@ def test_entry_book_carries_exit_rules_judged_at_entry_hour():
           "решение заморожено, вход несёт ячейку; подключение живым — с часа подключения")
 
 
+def test_entry_book_closes_early_on_state_change():
+    """Ранний выход (§11.11): кандидаты правил закрытия с мягким порогом; книга ТВХ
+    рождается с ними (≤ 3); в прожитом часе первое выполненное правило решает
+    «закрыть», решение заморожено с числами; позиция режется на отметке часа после
+    решения словом «смена» тем же ядром, что сторож; уже вышедшая не трогается;
+    подключение живым — с ближайшего часа."""
+    import rules as R                                          # noqa: E402
+    rule = {"when": [{"field": "crowd_bybit", "op": ">=", "value": 0.6}], "H": 12}
+    cs_ = {"computed_at": "x", "close_model": [
+        {"rule": rule, "matched": 40, "mean_close": 0.02, "mean_hold": -0.03, "gain": 0.004, "p_random_hour": 0.0, "halves": []},
+        {"rule": dict(rule, H=3), "matched": 4, "mean_close": 0.02, "mean_hold": -0.03, "gain": 0.0, "p_random_hour": 0.0},
+        {"rule": {"when": [{"field": "btc_1h", "op": ">=", "value": 0.01}], "H": 23}, "matched": 60, "mean_close": -0.01,
+         "mean_hold": 0.0, "gain": -0.001, "p_random_hour": 0.5}]}
+    rf = {"close_rules": [dict(rule, why="the crowd flipped long: the squeeze is on", proposed_at="p")]}
+    cc = MB.close_candidates(cs_, rf)
+    assert [c["fail"] for c in cc] == [None, "подходящих 4 < 10", "закрыть не лучше, чем держать"], [c["fail"] for c in cc]
+    cr = MB.close_rules_for_birth(cc)
+    assert len(cr) == 1 and cr[0]["H"] == 12 and cr[0]["why"].startswith("the crowd") and MB.close_rule_text(cr[0]) == "crowd_bybit >= 0.6, до 12 ч"
+    ent = {"kind": "entry", "rule": {"when": [{"field": "oi_1h", "op": "<=", "value": -0.02}], "W": 4}, "why": "w",
+           "text": None, "source": "s", "fail": None, "gate": {}, "p": 0.0, "n": 50}
+    reg = {"books": []}
+    born, _w = MB.births(reg, [ent] + cc, NOW)
+    assert born[0]["close_rules"] == cr and born[0]["close_since"] == born[0]["born_at"] and all(b["kind"] == "entry" for b in reg["books"])
+    # решения по прожитым часам: вход в NOW−5ч, толпа развернулась на 3-м часе; сводка 5-го часа ещё не легла
+    b = dict(born[0], id="m07", born_at=NOW - 10 * H, close_since=NOW - 10 * H)
+    at = NOW - 5 * H + 60                                        # пятый час ещё не прожит целиком (EDGE_S)
+    legs = [{"sym": "AUSDT", "at": at, "at_signal": at, "exit": MB.BOOK_EXIT},
+            {"sym": "OLDUSDT", "at": NOW - 8 * H, "at_signal": NOW - 8 * H, "exit": MB.BOOK_EXIT}]
+    crowd = {("AUSDT", 1): 0.4, ("AUSDT", 2): 0.5, ("AUSDT", 3): 0.7, ("AUSDT", 4): 0.9}
+    calls = []
+
+    def feat(g, h):
+        calls.append((g["sym"], h))
+        return {"crowd_bybit": crowd.get((g["sym"], h), 0.1)}
+    state = {}
+    b["close_since"] = NOW - 10 * H
+    n = MB.close_decide(b, [legs[0]], feat, state, NOW)
+    d = state["closes"]["m07"][f"AUSDT|{int(at)}"]
+    assert n == 1 and d["close"]["h"] == 3 and d["close"]["rule"] == 0 and d["close"]["vals"] == {"crowd_bybit": 0.7} and d["h_done"] == 3
+    assert [h for s_, h in calls] == [1, 2, 3], calls                 # после решения часы не судятся
+    crowd[("AUSDT", 3)] = 0.1
+    assert MB.close_decide(b, [legs[0]], feat, state, NOW + H) == 0 and d["close"]["h"] == 3, "решение заморожено"
+    # вход до close_since не судится; у входа без срабатывания растёт h_done
+    b2 = dict(b, close_since=NOW - 4 * H)
+    assert MB.close_decide(b2, [legs[0]], feat, {}, NOW) == 0
+    st2 = {}
+    assert MB.close_decide(b, [legs[1]], feat, st2, NOW) == 0 and st2["closes"]["m07"][f"OLDUSDT|{int(NOW - 8 * H)}"]["h_done"] == 7
+    # применение: закрыть на отметке часа после решения словом «смена»; вышедшая раньше — как есть
+    rec = {"sym": "AUSDT", "at": at, "marks": [[at + (k - 1) * H, 0.01] for k in range(1, 13)], "state": "open", "pnl": 0.12,
+           "pnl_net": 0.11, "exit": "срок", "exit_ts": at + 24 * H, "side": "short", "lev": 2.0, "fills": []}
+    early = dict(rec, sym="AUSDT", at=at, marks=rec["marks"][:2], state="closed", exit="пол", exit_ts=at + 2 * H - 1)
+    st_apply = {"closes": {"m07": {f"AUSDT|{int(at)}": d}}}
+    out, n_cl = MB.apply_closes([rec], b, st_apply, R.RULE_EXIT)
+    assert n_cl == 1 and out[0]["exit"] == "смена" and out[0]["state"] == "closed" and len(out[0]["marks"]) == 4, out[0]
+    assert abs(out[0]["pnl"] - 0.04) < 1e-9 and abs(out[0]["pnl_net"] - 0.03) < 1e-9
+    out2, n2 = MB.apply_closes([early], b, st_apply, R.RULE_EXIT)
+    assert n2 == 0 and out2[0]["exit"] == "пол", "вышедшая раньше решения не трогается"
+    import costs as CO                                         # noqa: E402
+    assert R.RULE_EXIT in CO.MARKET_EXITS, "рыночный выход — издержки как у охраны"
+    # подключение живым
+    import close_search as CS                                  # noqa: E402
+    import entry_search as ES                                  # noqa: E402
+    with tempfile.TemporaryDirectory() as dd:
+        reg_p = os.path.join(dd, "model_books.json")
+        json.dump({"books": [dict(b, close_rules=None, close_since=None, sig="z", key="optimal_h_m07")]}, open(reg_p, "w"))
+        json.dump(cs_, open(os.path.join(dd, "c.json"), "w")); json.dump(rf, open(os.path.join(dd, "r.json"), "w"))
+        was = (MB.REGISTRY, CS.LATEST, ES.RULES_FILE)
+        try:
+            MB.REGISTRY, CS.LATEST, ES.RULES_FILE = reg_p, os.path.join(dd, "c.json"), os.path.join(dd, "r.json")
+            r = MB.attach_closes(log=lambda *a: None, now=NOW)
+            got = json.load(open(reg_p))["books"]
+        finally:
+            MB.REGISTRY, CS.LATEST, ES.RULES_FILE = was
+        assert r["attached"] == ["m07"] and got[0]["close_rules"] == cr and got[0]["close_since"] == float((int(NOW // H) + 1) * H)
+        R._register_model_books(reg_p)
+        k = "optimal_h_m07"
+        assert R.RULERS[k]["branch"]["title_en"].endswith("+ early close") and "ранний выход по смене состояния: crowd_bybit >= 0.6 (до 12 ч)" in R.model_rule_text(R.MODEL_BOOKS[k])
+    print("ok  ранний выход книги ТВХ: кандидаты и порог, при рождении, решение по прожитому часу заморожено, "
+          "закрытие словом «смена» на отметке часа после решения, подключение живым")
+
+
 def main():
     n = 0
-    for f in (test_entry_book_carries_exit_rules_judged_at_entry_hour, test_exit_cell_in_signature_candidates_and_words, test_soft_gate_quota_and_signature, test_retire_window_and_idle,
+    for f in (test_entry_book_closes_early_on_state_change, test_entry_book_carries_exit_rules_judged_at_entry_hour, test_exit_cell_in_signature_candidates_and_words, test_soft_gate_quota_and_signature, test_retire_window_and_idle,
               test_entry_hour_first_match_frozen_and_dedup, test_skip_pass_in_judge_and_rules_registration):
         f()
         n += 1

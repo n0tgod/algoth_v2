@@ -690,6 +690,7 @@ INV_GUARD_EXIT = "рынок за нас"
 # объявлению площадки о делистинге. Оба — по рынку, платят проскальзывание
 # рыночного выхода (`costs.MARKET_EXITS`); книги без веток их не знают.
 JUDGE_EXIT = "судья"
+RULE_EXIT = "смена"      # ранний выход книги ТВХ по смене состояния (спека 19 §11.11, 29.10): рыночный
 DELIST_EXIT = "делистинг"
 
 
@@ -1016,6 +1017,10 @@ def model_rule_text(b):
             xs.append(cond + " → " + ("без стопа" if st_ in ("s0", "") else f"стоп {st_[1:]} %")
                       + f", тейк ×{tk[1:] or '2'}" + (", равный риск" if lev == "eq" else ""))
         w += "; выход по состоянию часа входа: " + "; ".join(xs) + "; иначе выход книги"
+    if b.get("kind") == "entry" and b.get("close_rules"):
+        cs = [" и ".join(f"{c['field']} {c['op']} {c['value']:g}" for c in r.get("when") or []) + f" (до {int(r.get('H') or 23)} ч)"
+              for r in b["close_rules"]]
+        w += "; ранний выход по смене состояния: " + "; ".join(cs)
     ex = (b.get("rule") or {}).get("exit")
     if ex and ex != "s0:t2:book":
         # выход книги модели (спека 19 §11.9): `s<стоп %>:t<×обещания>:<book|eq>`
@@ -1042,6 +1047,9 @@ def _register_model_books(path=None):
         if b.get("kind") == "entry" and b.get("exit_rules"):
             kind_ru += " и выход"
             kind_en += " + exit"
+        if b.get("kind") == "entry" and b.get("close_rules"):
+            kind_ru += " и ранний выход"
+            kind_en += " + early close"
         gone = " · отставлена" if b.get("status") == "retired" else ""
         gone_en = " · retired" if b.get("status") == "retired" else ""
         BRANCHES[k] = {"base": MODEL_BASE, "rule": "model", "value": float(str(b["id"])[1:]), "default": False}

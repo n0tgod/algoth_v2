@@ -16,6 +16,7 @@
 Журнала или кэша нет — книга пуста, а причина идёт в свод словами (`why`):
 пустая книга молча выглядела бы «правило всё отсекло».
 """
+import json
 import os
 import sys
 
@@ -93,5 +94,17 @@ def entry_recs(key, cache=None, log=print):
             return [], why
     mine = [r for (bid, _s, _a), r in cache.items() if bid == b["id"]]
     mine = window(mine, b)
+    # ранний выход по смене состояния (§11.11): решения книги из её состояния,
+    # закрытие на отметке часа после решения тем же ядром, что сторож и охрана
+    if b.get("close_rules"):
+        import model_books as MBK                              # noqa: E402
+        try:
+            with open(MBK.ENTRY_STATE, encoding="utf-8") as f:
+                estate = json.load(f)
+        except (OSError, ValueError):
+            estate = {}
+        mine, n_cl = MBK.apply_closes(mine, b, estate, R.RULE_EXIT)
+        if n_cl:
+            log(f"{key}: ранних выходов по состоянию {n_cl}")
     return sorted(mine, key=lambda r: float(r["at"])), (None if mine else "входов по правилу ещё не было")
 

@@ -443,7 +443,9 @@ class App:
                 "born_at": b.get("born_at"), "retired_why": b.get("retired_why"),
                 "rule": R.model_rule_text(b), "why": b.get("why"), "gate": b.get("gate"), "W": rule.get("W"),
                 "exit_rules": [{"when": r.get("when"), "exit": r.get("exit"), "why": r.get("why")}
-                               for r in (b.get("exit_rules") or [])], "exit_since": b.get("exit_since")}
+                               for r in (b.get("exit_rules") or [])], "exit_since": b.get("exit_since"),
+                "close_rules": [{"when": r.get("when"), "H": r.get("H"), "why": r.get("why")}
+                                for r in (b.get("close_rules") or [])], "close_since": b.get("close_since")}
         thr = {c["field"]: (c["op"], c["value"]) for c in rule.get("when") or []}
 
         def words(vals):
@@ -469,6 +471,12 @@ class App:
             except (OSError, ValueError):
                 st = {}
             W = int(rule.get("W") or 0)
+            try:
+                with open(self.AI_MODEL_ENTRY, encoding="utf-8") as f:
+                    closes = ((json.load(f) or {}).get("closes") or {}).get(bid) or {}
+            except (OSError, ValueError):
+                closes = {}
+            crules = b.get("close_rules") or []
             for sk, d in st.items():
                 sym, _, at_s = sk.partition("|")
                 try:
@@ -488,6 +496,19 @@ class App:
                                     + (f" (exit rule {int(d['exit_rule']) + 1} held at the entry hour)"
                                        if d.get("exit_rule") is not None else " (no exit rule held: the book's exit)")]
                                    if entered and d.get("exit") else [])})
+                if entered:
+                    # ранний выход по смене состояния (§11.11): решение книги по прожитому часу
+                    c = (closes.get(f"{sym}|{int(at_sig + k * 3600)}") or {}).get("close")
+                    if c:
+                        cr = crules[int(c["rule"])] if int(c.get("rule", -1)) < len(crules) else {}
+                        cond = " and ".join(f"{x['field']} {x['op']} {x['value']:g}" for x in cr.get("when") or [])
+                        entries.append({"key": f"{bid}|{sk}|close", "book": book, "sym": sym, "side": "short",
+                                        "signal_at": at_sig, "at": at_sig + k * 3600 + float(c["h"]) * 3600,
+                                        "t": c.get("t"), "k": None, "W": W, "decision": "close", "no_verdict": None,
+                                        "reasons": [f"closed early at market {int(c['h'])} h after the entry: the market changed "
+                                                    f"(close rule {int(c['rule']) + 1}: {cond})"]
+                                        + [f"{fld} = {v:g}" if isinstance(v, (int, float)) else f"{fld}: no value"
+                                           for fld, v in (c.get("vals") or {}).items()]})
         else:
             try:
                 names = sorted(f for f in os.listdir(self.AI_DIR) if f.startswith("decisions-") and f.endswith(".jsonl"))

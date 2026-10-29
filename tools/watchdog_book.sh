@@ -835,6 +835,8 @@ if ! pgrep -f "ai_gate/lessons.py" >/dev/null \
                 >> $LESS_LOG 2>&1
             nice -n 15 .venv/bin/python research/ai_gate/entry_search.py \
                 >> $LESS_LOG 2>&1
+            nice -n 15 .venv/bin/python research/ai_gate/close_search.py \
+                >> $LESS_LOG 2>&1
             nice -n 15 .venv/bin/python research/ai_gate/model_books.py \
                 >> $LESS_LOG 2>&1" &
     fi

@@ -56,6 +56,8 @@ BASE = "optimal_h"                 # основная книга: Depth Short
 CAP_LIVE = 10                      # живых модельных книг (владелец 21.10)
 CAP_ENTRY = 3                      # из них книг ТВХ — каждая свой реплей каждый час
 MAX_EXIT_RULES = 3                 # правил выхода у книги ТВХ (§11.10): первое подходящее в час входа решает
+MAX_CLOSE_RULES = 3                # правил закрытия у книги ТВХ (§11.11): первое выполненное в прожитом часе закрывает
+CLOSE_HMAX = 23                    # последний час после входа, в который судится закрытие
 PER_WEEK = 2                       # новых за скользящие 7 суток (владелец 21.10)
 SOFT_MIN = 10                      # случаев (фильтр) / сработавших (ТВХ) на всём окне
 SOFT_P = 0.20                      # случайные не хуже — не больше этой доли из 400
@@ -241,6 +243,53 @@ def entry_candidates(search, rules_file):
     return out
 
 
+def soft_close(a):
+    """Порог рождения правила закрытия (§11.11): подходящих ≥ 10, закрыть лучше, чем
+    держать у тех же, случайный час не хуже ≤ 20 %."""
+    m = a.get("matched") or 0
+    if m < SOFT_MIN:
+        return f"подходящих {m} < {SOFT_MIN}"
+    if a.get("mean_close") is None or a.get("mean_hold") is None or not a["mean_close"] > a["mean_hold"]:
+        return "закрыть не лучше, чем держать"
+    p = a.get("p_random_hour")
+    if p is None or p > SOFT_P:
+        return f"случайный час не хуже в {p} > {SOFT_P}"
+    return None
+
+
+def close_candidates(search_close, rules_file):
+    why_of = {}
+    for r in (rules_file or {}).get("close_rules") or []:
+        try:
+            why_of[json.dumps([sorted([c["field"], c["op"], round(float(c["value"]), 6)] for c in r["when"]), int(r["H"])])] = r
+        except (KeyError, TypeError, ValueError):
+            continue
+    out = []
+    for m in (search_close or {}).get("close_model") or []:
+        if m.get("why") or not m.get("rule"):
+            continue
+        rule = {"when": m["rule"]["when"], "H": int(m["rule"].get("H") or CLOSE_HMAX)}
+        key = json.dumps([sorted([c["field"], c["op"], round(float(c["value"]), 6)] for c in rule["when"]), rule["H"]])
+        src = why_of.get(key) or {}
+        a = {k: m.get(k) for k in ("matched", "mean_close", "mean_hold", "gain", "p_random_hour")}
+        out.append({"kind": "close", "rule": rule, "why": src.get("why"), "text": None,
+                    "source": f"patterns:{src.get('proposed_at') or '?'}", "fail": soft_close(a),
+                    "gate": dict(a, search_at=(search_close or {}).get("computed_at")),
+                    "p": a.get("p_random_hour"), "n": a.get("matched") or 0})
+    return out
+
+
+def close_rules_for_birth(cands):
+    """Правила закрытия для новой книги ТВХ: прошедшие порог, по p, приросту и числу, ≤ MAX_CLOSE_RULES."""
+    ok = [c for c in cands if c["kind"] == "close" and not c["fail"]]
+    ok.sort(key=lambda c: (c["p"] if c["p"] is not None else 1.0, -float((c.get("gate") or {}).get("gain") or 0.0), -c["n"]))
+    return [{"when": c["rule"]["when"], "H": c["rule"]["H"], "why": c.get("why"), "gate": c.get("gate")} for c in ok[:MAX_CLOSE_RULES]]
+
+
+def close_rule_text(r):
+    return " и ".join(f"{c['field']} {c['op']} {float(c['value']):g}" for c in r.get("when") or []) + f", до {int(r.get('H') or CLOSE_HMAX)} ч"
+
+
 def exit_rules_for_birth(cands):
     """Правила выхода для новой книги ТВХ (§11.10): прошедшие порог, по p и числу,
     не больше MAX_EXIT_RULES; первое подходящее в час входа решает."""
@@ -277,6 +326,7 @@ def births(reg, cands, now):
     Книга ТВХ рождается со своими правилами выхода (§11.10)."""
     have = {b["sig"] for b in reg["books"]}
     xr = exit_rules_for_birth(cands)
+    cr = close_rules_for_birth(cands)
     ok, seen = [], set()
     for c in cands:
         s = sig(c["kind"], c["rule"])
@@ -291,8 +341,8 @@ def births(reg, cands, now):
     room_entry = CAP_ENTRY - sum(1 for b in lv if b["kind"] == "entry")
     born, wait = [], []
     for c in ok:
-        if c["kind"] == "exit":
-            continue                                            # правила выхода живут в книгах ТВХ, не сами по себе
+        if c["kind"] in ("exit", "close"):
+            continue                                            # правила выхода и закрытия живут в книгах ТВХ, не сами по себе
         if room_week <= 0:
             wait.append({"rule": rule_text(c["kind"], c["rule"]), "why": f"предел {PER_WEEK} новых за 7 суток"})
             continue
@@ -309,6 +359,8 @@ def births(reg, cands, now):
         if c["kind"] == "entry":
             b["exit_rules"] = xr
             b["exit_since"] = b["born_at"]
+            b["close_rules"] = cr
+            b["close_since"] = b["born_at"]
         reg["books"].append(b)
         born.append(b)
         room_week -= 1
@@ -399,6 +451,76 @@ def entry_decide(b, legs, feat, state, now):
     return new
 
 
+def close_decide(b, legs_shifted, feat, state, now):
+    """Ранний выход (§11.11): у живых входов книги (с `close_since`) каждый
+    прожитый час судится правилами закрытия по состоянию ЭТОГО часа; первое
+    выполненное — закрыть на отметке следующего часа. Решение по часу
+    принимается, когда сводка легла, и не пересматривается; судятся часы
+    1…H до своего срока книги. → число новых решений «закрыть»."""
+    rules = b.get("close_rules") or []
+    since = b.get("close_since")
+    if not rules or since is None:
+        return 0
+    st = state.setdefault("closes", {}).setdefault(b["id"], {})
+    hmax = min(CLOSE_HMAX, max(int(r.get("H") or CLOSE_HMAX) for r in rules))
+    new = 0
+    for g in legs_shifted:
+        at = float(g["at"])
+        if at < float(since):
+            continue
+        key = f"{g['sym']}|{int(at)}"
+        d = st.setdefault(key, {"h_done": 0, "close": None})
+        if d["close"] is not None:
+            continue
+        h = d["h_done"] + 1
+        while h <= hmax and now >= at + h * H + EDGE_S:
+            f = feat(g, h)
+            for i, r in enumerate(rules):
+                if h <= int(r.get("H") or CLOSE_HMAX) and matches(r, f):
+                    d["close"] = {"h": h, "t": round(now), "rule": i,
+                                  "vals": {c["field"]: f.get(c["field"]) for c in r["when"]}}
+                    new += 1
+                    break
+            d["h_done"] = h
+            if d["close"] is not None:
+                break
+            h += 1
+    return new
+
+
+def close_index_of(b, state):
+    """{(имя, момент входа): момент решения «закрыть»} по состоянию книги."""
+    out = {}
+    for key, d in ((state.get("closes") or {}).get(b["id"]) or {}).items():
+        c = d.get("close")
+        if c:
+            sym, _, at_s = key.partition("|")
+            try:
+                out[(sym, int(at_s))] = float(at_s) + float(c["h"]) * H + EDGE_S
+            except ValueError:
+                continue
+    return out
+
+
+def apply_closes(recs, b, state, why):
+    """Записи книги ТВХ с ранними выходами по решениям (`wave.guard_record`, как сторож)."""
+    import gate_books as GB                                    # noqa: E402
+    import wave as WV                                          # noqa: E402
+    idx = close_index_of(b, state)
+    if not idx:
+        return recs, 0
+    out, n = [], 0
+    for r in recs:
+        t = idx.get((r["sym"], int(float(r["at"]))))
+        k = GB.k_of(r, t) if t is not None else None
+        if k is not None:
+            out.append(WV.guard_record(r, k, why=why))
+            n += 1
+        else:
+            out.append(r)
+    return out, n
+
+
 def shifted_legs(b, legs, state):
     """Сдвинутые входы книги: вход в час срабатывания; один на (имя, час)."""
     mine = state.get(b["id"]) or {}
@@ -454,7 +576,14 @@ def tick(log=print, now=None, dry=False):
                 need.setdefault(ex, {})[(g["sym"], round(float(g["at"]), 3))] = g
                 by_leg.setdefault((ex, g["sym"], round(float(g["at"]), 3)), []).append((b["id"], g))
     n_need = sum(len(v) for v in need.values())
-    log(f"книг ТВХ {len(books)}, сигналов после рождения {len(legs)}, новых решений {new}, к реплею {n_need}")
+    # ранний выход (§11.11): по живым входам — решения о закрытии по состоянию прожитых часов
+    closes = 0
+    if act and legs:
+        for b in act:
+            if b.get("close_rules"):
+                closes += close_decide(b, shifted_legs(b, legs, state), feat, state, now)
+    log(f"книг ТВХ {len(books)}, сигналов после рождения {len(legs)}, новых решений {new}, закрытий по состоянию {closes}, "
+        f"к реплею {n_need}")
     rk = S.BOOKS[BASE]
     for ex, legs_ex in need.items():
         cell, pol = ES.exit_cell(ex)
@@ -471,7 +600,7 @@ def tick(log=print, now=None, dry=False):
         with open(ENTRY_STATE + ".tmp", "w", encoding="utf-8") as f:
             json.dump(state, f, ensure_ascii=False)
         os.replace(ENTRY_STATE + ".tmp", ENTRY_STATE)
-    return {"books": len(books), "legs": len(legs), "new_decisions": new, "replayed": n_need}
+    return {"books": len(books), "legs": len(legs), "new_decisions": new, "closes": closes, "replayed": n_need}
 
 
 # ------------------------------------------------------------ касса и отчёт
@@ -513,6 +642,11 @@ def run(log=print, now=None, dry=False, client_cands=None):
     eidx = GB.entry_index(rows)
     ctx = CO.context()
     cache, cwhy = MB.read_cache(log=log)
+    try:
+        with open(ENTRY_STATE, encoding="utf-8") as f:
+            estate = json.load(f)
+    except (OSError, ValueError):
+        estate = {}
     res = {"computed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)), "books": [], "cache_why": cwhy}
     per = {}
 
@@ -521,6 +655,7 @@ def run(log=print, now=None, dry=False, client_cands=None):
             win = MB.window(base_all, b)
             return GB.filt(win, BASE, eidx.get(b["id"], {}))[0], win
         mine = MB.window([r for (bid, _s, _a), r in cache.items() if bid == b["id"]], b)
+        mine, _nc = apply_closes(mine, b, estate, R.RULE_EXIT)
         return E.book_chain(mine, lambda *a: None, now), None
 
     for b in reg["books"]:
@@ -556,6 +691,8 @@ def run(log=print, now=None, dry=False, client_cands=None):
                              "rule": rule_text(b["kind"], b["rule"]), "why": b.get("why"),
                              "exit_rules": [rule_text("exit", r) for r in (b.get("exit_rules") or [])],
                              "exit_since": b.get("exit_since"),
+                             "close_rules": [close_rule_text(r) for r in (b.get("close_rules") or [])],
+                             "close_since": b.get("close_since"),
                              "born_at": b["born_at"], "retired_why": b.get("retired_why"),
                              "days": round((now - lo) / DAY, 2), "book": st_, "base": bst, "null": null})
     _bs, per[BASE] = cash_days(base_all, now, ctx)
@@ -577,8 +714,15 @@ def run(log=print, now=None, dry=False, client_cands=None):
             rfile = json.load(f)
     except (OSError, ValueError):
         rfile = {}
+    try:
+        import close_search as CS                              # noqa: E402
+        with open(CS.LATEST, encoding="utf-8") as f:
+            csearch = json.load(f)
+    except (OSError, ValueError, ImportError):
+        csearch = {}
     cands = (client_cands if client_cands is not None
-             else skip_candidates(lstate) + entry_candidates(search, rfile) + exit_candidates(search, rfile))
+             else skip_candidates(lstate) + entry_candidates(search, rfile) + exit_candidates(search, rfile)
+             + close_candidates(csearch, rfile))
     born, wait = births(reg, cands, now)
     for b in born:
         log(f"родилась {b['id']} ({b['kind']}): {rule_text(b['kind'], b['rule'])}")
@@ -635,14 +779,48 @@ def report(r):
             L.append(f"- {x['id']}: {x['why']}")
             for xr in x.get("exit_rules") or []:
                 L.append(f"  · выход: `{xr}`")
+            for cr_ in x.get("close_rules") or []:
+                L.append(f"  · ранний выход: `{cr_}`")
     L += ["", "## Наблюдения недели и порог", "",
           "| вид | правило | случаев | случайные не хуже | вердикт |", "|---|---|---|---|---|"]
     for c in r["candidates"]:
-        L.append(f"| { {'skip': 'фильтр', 'exit': 'выход'}.get(c['kind'], 'ТВХ') } | `{c['rule']}` | {c['n']} | {c['p']} | "
+        L.append(f"| { {'skip': 'фильтр', 'exit': 'выход', 'close': 'закрытие'}.get(c['kind'], 'ТВХ') } | `{c['rule']}` | {c['n']} | {c['p']} | "
                  f"{c['fail'] or 'проходит'} |")
     if r["waiting"]:
         L += ["", "Прошли порог, ждут места: " + "; ".join(f"`{w['rule']}` — {w['why']}" for w in r["waiting"])]
     return "\n".join(L) + "\n"
+
+
+def attach_closes(log=print, now=None, dry=False, force=False):
+    """Живым книгам ТВХ — правила закрытия последнего разреза (§11.11) с ближайшего часа;
+    прежние входы не пересматриваются (владелец 29.10)."""
+    import close_search as CS                                  # noqa: E402
+    import entry_search as ES                                  # noqa: E402
+    now = now or time.time()
+    reg = load()
+    try:
+        with open(CS.LATEST, encoding="utf-8") as f:
+            csearch = json.load(f)
+        with open(ES.RULES_FILE, encoding="utf-8") as f:
+            rfile = json.load(f)
+    except (OSError, ValueError) as e:
+        return {"error": f"разрез закрытий или правила не прочитаны: {type(e).__name__}"}
+    cr = close_rules_for_birth(close_candidates(csearch, rfile))
+    if not cr:
+        return {"error": "прошедших порог правил закрытия нет"}
+    since = float((int(now // H) + 1) * H)
+    done = []
+    for b in reg["books"]:
+        if b["kind"] == "entry" and b["status"] == "live" and (force or not b.get("close_rules")):
+            if b.get("close_rules"):
+                b.setdefault("close_history", []).append({"rules": b["close_rules"], "since": b.get("close_since"), "until": since})
+            b["close_rules"] = cr
+            b["close_since"] = since
+            done.append(b["id"])
+            log(f"{b['id']}: правил закрытия {len(cr)}, с {time.strftime('%Y-%m-%d %H:%M', time.gmtime(since))} UTC")
+    if done and not dry:
+        save(reg)
+    return {"attached": done, "rules": [close_rule_text(r) for r in cr], "since": since}
 
 
 def attach_exits(log=print, now=None, dry=False, force=False):
@@ -686,7 +864,9 @@ def main(argv=None):
     ap.add_argument("--no-publish", action="store_true")
     ap.add_argument("--attach-exits", action="store_true",
                     help="разово: живым книгам ТВХ без правил выхода — правила выхода последнего поиска (владелец 29.10)")
-    ap.add_argument("--force", action="store_true", help="с --attach-exits: заменить и у книг с правилами (прежние — в историю)")
+    ap.add_argument("--attach-closes", action="store_true",
+                    help="разово: живым книгам ТВХ — правила закрытия последнего разреза (владелец 29.10)")
+    ap.add_argument("--force", action="store_true", help="с --attach-*: заменить и у книг с правилами (прежние — в историю)")
     a = ap.parse_args(argv)
     try:
         sys.stdout.reconfigure(line_buffering=True)
@@ -694,6 +874,12 @@ def main(argv=None):
         pass
     import arm_book as AB                                     # noqa: E402
     log = AB.guarded(print, limit=2500)
+    if a.attach_closes:
+        r = attach_closes(log=log, dry=a.dry, force=a.force)
+        print(json.dumps(r, ensure_ascii=False))
+        if not r.get("error") and not a.dry and not a.no_publish:
+            subprocess.run([os.path.join(ROOT, "tools", "publish.sh"), "книги ТВХ: правила закрытия подключены"], cwd=ROOT, check=False)
+        return 0 if not r.get("error") else 1
     if a.attach_exits:
         r = attach_exits(log=log, dry=a.dry, force=a.force)
         print(json.dumps(r, ensure_ascii=False))
