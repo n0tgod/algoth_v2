@@ -245,7 +245,11 @@ def exit_rules_for_birth(cands):
     """Правила выхода для новой книги ТВХ (§11.10): прошедшие порог, по p и числу,
     не больше MAX_EXIT_RULES; первое подходящее в час входа решает."""
     ok = [c for c in cands if c["kind"] == "exit" and not c["fail"]]
-    ok.sort(key=lambda c: (c["p"] if c["p"] is not None else 1.0, -c["n"]))
+    # порядок = приоритет: первое подходящее в час входа решает. p у прошедших
+    # обычно 0 (разрешение 1/400), поэтому вторым ключом — прирост на сигнал
+    # (деньги), и лишь потом число подходящих: иначе широкое правило с широким
+    # стопом всегда било бы узкое с коротким — против цели владельца
+    ok.sort(key=lambda c: (c["p"] if c["p"] is not None else 1.0, -float((c.get("gate") or {}).get("gain") or 0.0), -c["n"]))
     return [{"when": c["rule"]["when"], "exit": c["rule"]["exit"], "why": c.get("why"), "gate": c.get("gate")}
             for c in ok[:MAX_EXIT_RULES]]
 
@@ -641,7 +645,7 @@ def report(r):
     return "\n".join(L) + "\n"
 
 
-def attach_exits(log=print, now=None, dry=False):
+def attach_exits(log=print, now=None, dry=False, force=False):
     """Живые книги ТВХ без правил выхода получают прошедшие порог правила выхода
     последнего поиска с `exit_since` = следующий час (решение владельца 29.10:
     «в книге со своим входом — и свой выход»). Прежние входы книги не
@@ -662,7 +666,10 @@ def attach_exits(log=print, now=None, dry=False):
     since = float((int(now // H) + 1) * H)
     done = []
     for b in reg["books"]:
-        if b["kind"] == "entry" and b["status"] == "live" and not b.get("exit_rules"):
+        if b["kind"] == "entry" and b["status"] == "live" and (force or not b.get("exit_rules")):
+            if b.get("exit_rules"):
+                # прежний набор — в историю: решения, принятые под ним, заморожены и остаются
+                b.setdefault("exit_history", []).append({"rules": b["exit_rules"], "since": b.get("exit_since"), "until": since})
             b["exit_rules"] = xr
             b["exit_since"] = since
             done.append(b["id"])
@@ -679,6 +686,7 @@ def main(argv=None):
     ap.add_argument("--no-publish", action="store_true")
     ap.add_argument("--attach-exits", action="store_true",
                     help="разово: живым книгам ТВХ без правил выхода — правила выхода последнего поиска (владелец 29.10)")
+    ap.add_argument("--force", action="store_true", help="с --attach-exits: заменить и у книг с правилами (прежние — в историю)")
     a = ap.parse_args(argv)
     try:
         sys.stdout.reconfigure(line_buffering=True)
@@ -687,7 +695,7 @@ def main(argv=None):
     import arm_book as AB                                     # noqa: E402
     log = AB.guarded(print, limit=2500)
     if a.attach_exits:
-        r = attach_exits(log=log, dry=a.dry)
+        r = attach_exits(log=log, dry=a.dry, force=a.force)
         print(json.dumps(r, ensure_ascii=False))
         if not r.get("error") and not a.dry and not a.no_publish:
             subprocess.run([os.path.join(ROOT, "tools", "publish.sh"), "книги ТВХ: правила выхода подключены"], cwd=ROOT, check=False)

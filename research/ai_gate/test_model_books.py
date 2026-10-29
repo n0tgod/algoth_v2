@@ -179,7 +179,7 @@ def test_entry_book_carries_exit_rules_judged_at_entry_hour():
     import rules as R                                          # noqa: E402
     rule = {"when": [{"field": "crowd_bybit", "op": "<=", "value": 0.4}], "exit": "s3:t2:book"}
     search = {"computed_at": "x", "exit_model": [
-        {"rule": rule, "matched": 40, "mean_cell": 0.05, "mean_book": 0.01, "gain": 0.004, "p_random": 0.01, "halves": []},
+        {"rule": rule, "matched": 40, "mean_cell": 0.05, "mean_book": 0.01, "gain": 0.004, "p_random": 0.0, "halves": []},
         {"rule": dict(rule, exit="s1:t2:book"), "matched": 5, "mean_cell": 0.05, "mean_book": 0.01, "gain": 0.0, "p_random": 0.0},
         {"rule": dict(rule, exit="s2:t1:eq"), "matched": 40, "mean_cell": 0.00, "mean_book": 0.01, "gain": -0.001, "p_random": 0.9},
         {"rule": {"when": [{"field": "spread_bp", "op": ">=", "value": 9}], "exit": "s8:t3:book"}, "matched": 900,
@@ -188,8 +188,8 @@ def test_entry_book_carries_exit_rules_judged_at_entry_hour():
     cs = MB.exit_candidates(search, rf)
     assert [c["fail"] for c in cs] == [None, "подходящих 5 < 10", "в ячейке не лучше, чем с выходом книги", None]
     xr = MB.exit_rules_for_birth(cs)
-    assert [r["exit"] for r in xr] == ["s8:t3:book", "s3:t2:book"] and xr[1]["why"].startswith("adverse"), xr
-    assert MB.rule_text("exit", xr[1]) == "crowd_bybit <= 0.4 → стоп 3 %, тейк обещание ×2, плечо книги"
+    assert [r["exit"] for r in xr] == ["s3:t2:book", "s8:t3:book"] and xr[0]["why"].startswith("adverse"), xr   # p равны → по приросту
+    assert MB.rule_text("exit", xr[0]) == "crowd_bybit <= 0.4 → стоп 3 %, тейк обещание ×2, плечо книги"
     # рождение: книга ТВХ несёт правила выхода, отдельная книга выхода не рождается
     ent = {"kind": "entry", "rule": {"when": [{"field": "oi_1h", "op": "<=", "value": -0.02}], "W": 4}, "why": "w",
            "text": None, "source": "s", "fail": None, "gate": {}, "p": 0.0, "n": 50}
@@ -199,10 +199,10 @@ def test_entry_book_carries_exit_rules_judged_at_entry_hour():
     assert not wait and all(b["kind"] != "exit" for b in reg["books"])
     # выход в час входа: первое выполненное правило; до exit_since — выход книги
     b = dict(born[0], id="m05", born_at=NOW - 10 * H, exit_since=NOW - 5 * H)
-    assert MB.exit_for(b, {"crowd_bybit": 0.3, "spread_bp": 12}, NOW - H)[0] == "s8:t3:book", "первое правило по порядку"
-    ex, i, vals = MB.exit_for(b, {"crowd_bybit": 0.3, "spread_bp": 2}, NOW - H)
-    assert ex == "s3:t2:book" and i == 1 and vals == {"spread_bp": 2, "crowd_bybit": 0.3}
-    assert MB.exit_for(b, {"crowd_bybit": 0.9, "spread_bp": 2}, NOW - H) == (MB.BOOK_EXIT, None, {"spread_bp": 2, "crowd_bybit": 0.9})
+    assert MB.exit_for(b, {"crowd_bybit": 0.3, "spread_bp": 12}, NOW - H)[0] == "s3:t2:book", "первое правило по порядку"
+    ex, i, vals = MB.exit_for(b, {"crowd_bybit": 0.9, "spread_bp": 12}, NOW - H)
+    assert ex == "s8:t3:book" and i == 1 and vals == {"crowd_bybit": 0.9, "spread_bp": 12}
+    assert MB.exit_for(b, {"crowd_bybit": 0.9, "spread_bp": 2}, NOW - H) == (MB.BOOK_EXIT, None, {"crowd_bybit": 0.9, "spread_bp": 2})
     assert MB.exit_for(b, {"crowd_bybit": 0.3, "spread_bp": 12}, NOW - 8 * H)[0] == MB.BOOK_EXIT, "до часа подключения — выход книги"
     assert MB.exit_for(dict(b, exit_rules=[], rule=dict(b["rule"], exit="s2:t1:eq")), {}, NOW)[0] == "s2:t1:eq"
     # решение книги: час входа и ячейка выхода вместе, заморожены
@@ -213,7 +213,7 @@ def test_entry_book_carries_exit_rules_judged_at_entry_hour():
     MB.entry_decide(b, legs, lambda g, k: feats[(g["sym"], k)], state, NOW)
     m = state["m05"]
     a_, b_ = m[f"AUSDT|{int(NOW - 4 * H)}"], m[f"BUSDT|{int(NOW - 4 * H)}"]
-    assert a_["k"] == 1 and a_["exit"] == "s3:t2:book" and a_["exit_rule"] == 1 and a_["exit_vals"]["crowd_bybit"] == 0.3
+    assert a_["k"] == 1 and a_["exit"] == "s3:t2:book" and a_["exit_rule"] == 0 and a_["exit_vals"]["crowd_bybit"] == 0.3
     assert b_["k"] == 0 and b_["exit"] == MB.BOOK_EXIT and b_["exit_rule"] is None, "в час входа ни одно правило выхода не держит"
     sh = {g["sym"]: g for g in MB.shifted_legs(b, legs, state)}
     assert sh["AUSDT"]["exit"] == "s3:t2:book" and sh["AUSDT"]["at"] == NOW - 3 * H and sh["BUSDT"]["exit"] == MB.BOOK_EXIT
@@ -234,12 +234,21 @@ def test_entry_book_carries_exit_rules_judged_at_entry_hour():
             MB.REGISTRY, ES.LATEST, ES.RULES_FILE = was
         assert r["attached"] == ["m05"] and got[0]["exit_rules"] == xr and got[0]["exit_since"] == float((int(NOW // H) + 1) * H)
         assert "exit_rules" not in got[1] and got[0]["born_at"] == b["born_at"]
+        r2 = MB.attach_exits(log=lambda *a: None, now=NOW + H)
+        assert r2["attached"] == [], "повторно без --force не трогает"
+        MB.REGISTRY, ES.LATEST, ES.RULES_FILE = reg_p, os.path.join(d, "s.json"), os.path.join(d, "r.json")
+        try:
+            r3 = MB.attach_exits(log=lambda *a: None, now=NOW + H, force=True)
+            got = json.load(open(reg_p))["books"]
+        finally:
+            MB.REGISTRY, ES.LATEST, ES.RULES_FILE = was
+        assert r3["attached"] == ["m05"] and got[0]["exit_history"][0]["rules"] == xr and got[0]["exit_since"] == float((int((NOW + H) // H) + 1) * H)
         R._register_model_books(reg_p)
         k = "optimal_h_m05"
         assert R.RULERS[k]["branch"]["title_en"] == "m05 · own entry rule + exit"
         t = R.model_rule_text(R.MODEL_BOOKS[k])
-        assert t.startswith("oi_1h <= -0.02, окно 4 ч; выход по состоянию часа входа: spread_bp >= 9 → стоп 8 %, тейк ×3; "
-                            "crowd_bybit <= 0.4 → стоп 3 %, тейк ×2; иначе выход книги"), t
+        assert t.startswith("oi_1h <= -0.02, окно 4 ч; выход по состоянию часа входа: crowd_bybit <= 0.4 → стоп 3 %, тейк ×2; "
+                            "spread_bp >= 9 → стоп 8 %, тейк ×3; иначе выход книги"), t
     print("ok  свой выход у книги ТВХ: правила выхода при рождении (≤ 3, по порогу), в час входа первое выполненное, "
           "решение заморожено, вход несёт ячейку; подключение живым — с часа подключения")
 
