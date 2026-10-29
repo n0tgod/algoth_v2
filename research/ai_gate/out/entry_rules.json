@@ -362,9 +362,91 @@
    "why": "Positive funding and a long-heavy crowd mean longs pay to stay in and are crowded. A short pays no carry and benefits from the long unwind.",
    "exit": "s5:t2:eq",
    "proposed_at": "2026-10-29T11:35:51Z"
+  },
+  {
+   "when": [
+    {
+     "field": "since_signal",
+     "op": ">=",
+     "value": 0.025
+    },
+    {
+     "field": "buy_share",
+     "op": "<=",
+     "value": 0.48
+    }
+   ],
+   "W": 6,
+   "why": "Price has already squeezed up 2.5%+ since the signal, but buyers are now a minority of the tape. The burst of buying is exhausting, so we short from a higher level after the adverse leg. The remaining adverse excursion should be small enough for a 3% stop.",
+   "exit": "s3:t2:eq",
+   "proposed_at": "2026-10-29T20:01:26Z"
+  },
+  {
+   "when": [
+    {
+     "field": "px_1h",
+     "op": ">=",
+     "value": 0.01
+    },
+    {
+     "field": "oi_1h",
+     "op": "<=",
+     "value": -0.015
+    }
+   ],
+   "W": 6,
+   "why": "Price rises while open interest falls: shorts are covering, not new longs entering. Once the squeeze fuel is spent, an entry right after it is less likely to see another leg against us.",
+   "exit": "s3:t3:eq",
+   "proposed_at": "2026-10-29T20:01:26Z"
+  },
+  {
+   "when": [
+    {
+     "field": "crowd_bybit",
+     "op": ">=",
+     "value": 0.6
+    },
+    {
+     "field": "burst_ratio",
+     "op": "<=",
+     "value": 0.6
+    },
+    {
+     "field": "since_signal",
+     "op": ">=",
+     "value": 0.0
+    }
+   ],
+   "W": 5,
+   "why": "Retail is crowded long, trading activity is quiet (no fresh buying burst) and price sits at or above the signal level. Longs are trapped without momentum, which favours a straight-for path with low adverse excursion that suits a 2% stop.",
+   "exit": "s2:t2:eq",
+   "proposed_at": "2026-10-29T20:01:26Z"
+  },
+  {
+   "when": [
+    {
+     "field": "funding",
+     "op": ">=",
+     "value": 0.0001
+    },
+    {
+     "field": "px_4h",
+     "op": ">=",
+     "value": 0.03
+    },
+    {
+     "field": "btc_1h",
+     "op": "<=",
+     "value": 0.0
+    }
+   ],
+   "W": 6,
+   "why": "Positive funding after a 4-hour pump means longs are paying to hold. Wait until BTC stops rising in the hour, so there is no market tailwind for a continued squeeze.",
+   "exit": "s5:t2:book",
+   "proposed_at": "2026-10-29T20:01:26Z"
   }
  ],
- "updated": "2026-10-29T11:35:51Z",
+ "updated": "2026-10-29T20:01:26Z",
  "exit_rules": [
   {
    "when": [
@@ -476,6 +558,40 @@
    "exit": "s8:t3:book",
    "why": "Wide-spread coins in a falling BTC tape tend to trend down. A wider 8% stop and take ×3 let the trend run instead of being taken early.",
    "proposed_at": "2026-10-29T11:35:51Z"
+  },
+  {
+   "when": [
+    {
+     "field": "name_floor_share",
+     "op": ">=",
+     "value": 0.282
+    },
+    {
+     "field": "depth_eat_bid",
+     "op": "<=",
+     "value": 220.0
+    }
+   ],
+   "exit": "s3:t2:eq",
+   "why": "Coins that often hit the book floor, with a thin bid side, tend to run far against us under the book exit. A 3% stop at equal risk caps those losers while keeping the book take.",
+   "proposed_at": "2026-10-29T20:01:26Z"
+  },
+  {
+   "when": [
+    {
+     "field": "depth_eat_bid",
+     "op": "<=",
+     "value": 220.0
+    },
+    {
+     "field": "crowd_bybit_shift",
+     "op": ">=",
+     "value": -0.009
+    }
+   ],
+   "exit": "s3:t2:eq",
+   "why": "A thin bid and a crowd that is not shifting short mean there is no squeeze fuel, so adverse excursion is small. A 3% stop rarely cuts the winners.",
+   "proposed_at": "2026-10-29T20:01:26Z"
   }
  ],
  "close_rules": [
@@ -517,6 +633,28 @@
    "H": 8,
    "why": "BTC turns up sharply together with heavy aggressive buying in the coin. A market-wide bid works against the short early in its life, so close.",
    "proposed_at": "2026-10-29T11:35:51Z"
+  },
+  {
+   "when": [
+    {
+     "field": "oi_1h",
+     "op": ">=",
+     "value": 0.04
+    },
+    {
+     "field": "btc_1h",
+     "op": ">=",
+     "value": 0.004
+    },
+    {
+     "field": "crowd_bybit_shift",
+     "op": "<=",
+     "value": -0.08
+    }
+   ],
+   "H": 6,
+   "why": "Early in the trade, open interest rebuilds sharply while BTC turns up and the crowd piles into shorts. Squeeze conditions are forming against our short, so exit before the floor.",
+   "proposed_at": "2026-10-29T20:01:26Z"
   }
  ]
 }

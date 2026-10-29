@@ -1,29 +1,50 @@
 # Уроки судьи (спека 19 §11.4)
 
-Посчитано 2026-10-28T07:00:03Z; случаев 308 (с разбором 308); пороги: всего ≥ 20, в половине ≥ 8, случайные того же размера не хуже в ≤ 10% из 400.
+Посчитано 2026-10-29T20:00:30Z; случаев 357 (с разбором 357); пороги: всего ≥ 20, в половине ≥ 8, случайные того же размера не хуже в ≤ 10% из 400.
 
 ## Действующие (читает ветка ai_learn)
 
-| правило | условие | подходит (1-я / 2-я) | результат: подходящие vs остальные (всего) | случайные не хуже (1-я / 2-я) | почему не принято |
-|---|---|---|---|---|---|
-| Skip shorts into a pump that is still accelerating: 4h move at least +10% and the last hour still up at least 1%. | `price_moves_to_decision.4h_pct >= 10 и price_moves_to_decision.1h_pct >= 1` | 17 / 24 | -20.7 % vs +4.3 % | 0.0 / 0.0 | — |
-| Skip high-leverage shorts on names where the book already hit the floor in a large share of past positions. | `book_rules.lev >= 10 и derived.name_floor_share >= 0.35` | 14 / 23 | -21.4 % vs +4.1 % | 0.0 / 0.05 | — |
-| Skip 20x+ shorts on names already up 15% or more in 24h. | `book_rules.lev >= 20 и price_moves_to_decision.24h_pct >= 15` | 19 / 31 | -15.4 % vs +4.2 % | 0.0 / 0.02 | — |
-| Skip shorts when the 1h bounce is strong (3% or more) and Bybit longs are below 0.45. | `price_moves_to_decision.1h_pct >= 3 и crowd_positioning.bybit.now < 0.45` | 11 / 14 | -14.8 % vs +2.4 % | 0.077 / 0.015 | — |
-| Skip shorts into a pump that is still running hard: last hour up 3% or more and 4h up 5% or more, at any leverage. | `book_rules.fav_bp <= 0 и price_moves_to_decision.1h_pct >= 3 и price_moves_to_decision.4h_pct >= 5` | 15 / 20 | -18.5 % vs +3.5 % | 0.02 / 0.0 | — |
-| Skip 10x+ shorts on names up 20% or more in 24h when the book has already floored on a large share of past entries in that name. | `book_rules.lev >= 10 и price_moves_to_decision.24h_pct >= 20 и derived.name_floor_share >= 0.3` | 9 / 19 | -22.1 % vs +3.3 % | 0.0 / 0.028 | — |
-| Skip 20x+ shorts on names up 20% or more in 24h unless the last hour is already down at least 2%. | `book_rules.lev >= 20 и price_moves_to_decision.24h_pct >= 20 и price_moves_to_decision.1h_pct >= -2` | 10 / 17 | -25.6 % vs +3.6 % | 0.0 / 0.003 | — |
+| что | правило | условие | подходит (1-я / 2-я) | результат: подходящие vs остальные (всего) | случайные не лучше правила (1-я / 2-я) | почему не принято |
+|---|---|---|---|---|---|---|
+| не брать | Skip shorts into a pump that is still accelerating: 4h move at least +10% and the last hour still up at least 1%. | `price_moves_to_decision.4h_pct >= 10 и price_moves_to_decision.1h_pct >= 1` | 20 / 31 | -18.5 % vs +3.5 % | 0.0 / 0.0 | — |
+| не брать | Skip high-leverage shorts on names where the book already hit the floor in a large share of past positions. | `book_rules.lev >= 10 и derived.name_floor_share >= 0.35` | 21 / 21 | -22.0 % vs +3.3 % | 0.0 / 0.065 | — |
+| не брать | Skip 20x+ shorts on names already up 15% or more in 24h. | `book_rules.lev >= 20 и price_moves_to_decision.24h_pct >= 15` | 29 / 27 | -16.8 % vs +3.5 % | 0.0 / 0.018 | — |
+| не брать | Skip shorts when the 1h bounce is strong (3% or more) and Bybit longs are below 0.45. | `price_moves_to_decision.1h_pct >= 3 и crowd_positioning.bybit.now < 0.45` | 14 / 13 | -14.4 % vs +1.5 % | 0.022 / 0.102 | вторая половина не держит |
+| не брать | Skip shorts into a pump that is still running hard: last hour up 3% or more and 4h up 5% or more, at any leverage. | `book_rules.fav_bp <= 0 и price_moves_to_decision.1h_pct >= 3 и price_moves_to_decision.4h_pct >= 5` | 19 / 23 | -16.4 % vs +2.6 % | 0.0 / 0.005 | — |
+| не брать | Skip 10x+ shorts on names up 20% or more in 24h when the book has already floored on a large share of past entries in that name. | `book_rules.lev >= 10 и price_moves_to_decision.24h_pct >= 20 и derived.name_floor_share >= 0.3` | 15 / 16 | -24.2 % vs +2.7 % | 0.0 / 0.045 | — |
+| не брать | Skip 20x+ shorts on names up 20% or more in 24h unless the last hour is already down at least 2%. | `book_rules.lev >= 20 и price_moves_to_decision.24h_pct >= 20 и price_moves_to_decision.1h_pct >= -2` | 16 / 15 | -27.9 % vs +3.0 % | 0.0 / 0.0 | — |
+| не брать | Skip 20x+ shorts on names whose last 4h is up 5% or more. | `book_rules.lev >= 20 и price_moves_to_decision.4h_pct >= 5` | 19 / 28 | -13.4 % vs +2.4 % | 0.0 / 0.045 | — |
+| не брать | Skip shorts at 10x or more while the 4h move is at least +10% and the last hour is still not falling. | `book_rules.lev >= 10 и price_moves_to_decision.4h_pct >= 10 и price_moves_to_decision.1h_pct >= 0` | 9 / 14 | -36.1 % vs +2.8 % | 0.0 / 0.0 | — |
+| не брать | Skip 20x+ shorts while the last hour is still up 2.5% or more, whatever the 4h move. | `book_rules.lev >= 20 и book_rules.fav_bp <= 0 и price_moves_to_decision.1h_pct >= 2.5` | 10 / 13 | -36.6 % vs +2.9 % | 0.0 / 0.0 | — |
 
 ## Предложенные, ждут данных
 
-| правило | условие | подходит (1-я / 2-я) | результат: подходящие vs остальные (всего) | случайные не хуже (1-я / 2-я) | почему не принято |
-|---|---|---|---|---|---|
-| Skip shorts where the Bybit crowd swung sharply short in 24h while price is still rising over 4h. | `derived.crowd_bybit_shift_24h <= -0.15 и price_moves_to_decision.4h_pct >= 3` | 13 / 14 | +6.0 % vs +0.5 % | 0.0 / 0.99 | вторая половина не держит |
-| Skip 20x+ shorts on names whose last 4h is up 5% or more. | `book_rules.lev >= 20 и price_moves_to_decision.4h_pct >= 5` | 14 / 28 | -12.1 % vs +3.1 % | 0.0 / 0.11 | вторая половина не держит |
-| Skip shorts at 10x or more while the 4h move is at least +10% and the last hour is still not falling. | `book_rules.lev >= 10 и price_moves_to_decision.4h_pct >= 10 и price_moves_to_decision.1h_pct >= 0` | 7 / 12 | -42.4 % vs +3.9 % | 0.0 / 0.0 | подходящих 19 < 20 |
-| Skip shorts where the Bybit crowd swung short by at least 10 points in 24h while the last hour is still up at least 1%. | `book_rules.fav_bp <= 0 и derived.crowd_bybit_shift_24h <= -0.1 и price_moves_to_decision.1h_pct >= 1` | 19 / 15 | -2.5 % vs +1.5 % | 0.23 / 0.425 | первая половина не держит |
+| что | правило | условие | подходит (1-я / 2-я) | результат: подходящие vs остальные (всего) | случайные не лучше правила (1-я / 2-я) | почему не принято |
+|---|---|---|---|---|---|---|
+| не брать | Skip shorts where the Bybit crowd swung sharply short in 24h while price is still rising over 4h. | `derived.crowd_bybit_shift_24h <= -0.15 и price_moves_to_decision.4h_pct >= 3` | 18 / 11 | +5.0 % vs -0.1 % | 0.0 / 1.0 | вторая половина не держит |
+| не брать | Skip shorts where the Bybit crowd swung short by at least 10 points in 24h while the last hour is still up at least 1%. | `book_rules.fav_bp <= 0 и derived.crowd_bybit_shift_24h <= -0.1 и price_moves_to_decision.1h_pct >= 1` | 23 / 13 | -2.8 % vs +0.7 % | 0.098 / 0.665 | вторая половина не держит |
+| брать | Take shorts on names up 30% or more in 24h when the 4h move is already flat or negative, so the pump is rolling over. | `book_rules.fav_bp <= 0 и price_moves_to_decision.24h_pct >= 30 и price_moves_to_decision.4h_pct <= 0` | 9 / 9 | +1.3 % vs +0.3 % | 0.965 / 0.1 | подходящих 18 < 20 |
+| брать | Take shorts at 10x or less when the Bybit crowd swung short by 18 points or more in 24h but the 4h move is below +5%. | `derived.crowd_bybit_shift_24h <= -0.18 и price_moves_to_decision.4h_pct <= 5 и book_rules.lev <= 10` | 16 / 6 | +11.5 % vs -0.4 % | 0.285 / 0.06 | первая половина не держит |
+| не брать | Skip 10x+ shorts when the Bybit crowd is already heavily short (long share 0.36 or below) and the last hour is not falling. | `book_rules.lev >= 10 и crowd_positioning.bybit.now <= 0.36 и price_moves_to_decision.1h_pct >= 0` | 7 / 4 | -32.6 % vs +1.4 % | 0.007 / 0.01 | подходящих 11 < 20 |
 
 ## Отозванные
 
 нет
+
+## Отклонено зря (исход базовой книги у входов, которые судья не взял)
+
+Отклонено 50, из них вышли бы в плюс 28 (56 %); сумма на маржу всех -266.4 %, только плюсовых +599.4 %. Правило take принимается числом (см. выше), не этой таблицей.
+
+| имя | вход UTC | было бы | выход | доводы тогда | разбор |
+|---|---|--:|---|---|---|
+| JCTUSDT | 2026-10-25 10:00 | +220.9 % | тейк | crowd_positioning: Bybit long ratio fell from 0.52 to 0.30 and Binance global from 0.64 to 0.39, so retail is crowded short; crowd_positioning.bn_top: top trade | wrong |
+| JCTUSDT | 2026-10-25 13:00 | +69.2 % | тейк | crowd_positioning: Bybit ratio fell 0.49 to 0.29 and Binance global 0.63 to 0.40, so shorts are piling in; price_moves_to_decision: +41.6% 24h and +266% 7d para | unclear |
+| JCTUSDT | 2026-10-25 09:00 | +46.2 % | тейк | crowd_positioning: bybit long ratio fell 0.54 to 0.30 and bn_global to 0.40, crowd heavily short; price_moves_to_decision: +15.5% in 1h and +99% in 24h, squeeze | right |
+| JCTUSDT | 2026-10-25 03:00 | +44.6 % | срок | crowd_positioning: Bybit long share fell from 0.56 to 0.26 and Binance global from 0.66 to 0.38, so the crowd is heavily short; price_moves: +143% in 24h and +2 | right |
+| PTBUSDT | 2026-10-23 13:00 | +44.6 % | тейк | exchange_events_since_72h: Binance delists PTBUSDT perp today, so forced short covering and thin liquidity; crowd_positioning: shorts dominate (bn_top 0.52, byb | wrong |
+| MAGMAUSDT | 2026-10-23 01:00 | +34.2 % | срок | crowd_positioning: bybit long share fell 0.59->0.30, bn_global 0.62->0.32, crowd heavily short; price_moves_to_decision: +49.8% 24h, +118% 7d parabolic run, so  | wrong |
+| JCTUSDT | 2026-10-25 04:00 | +33.3 % | срок | crowd_positioning: Bybit long ratio fell from 0.56 to 0.29 and Binance global to 0.39, so shorts are crowded; price_moves_to_decision: +132% in 24h and +215% in | unclear |
+| PTBUSDT | 2026-10-23 12:00 | +17.0 % | тейк | exchange_events_since_72h: Binance delists the PTBUSDT perp today, which moves liquidity and short interest onto thinner venues where post-delisting squeezes ar | wrong |
+| ARIAUSDT | 2026-10-19 03:00 | +15.7 % | срок | crowd_positioning: Bybit ratio fell from 0.65 to 0.49 in 24h, so shorts are crowding in; bn_global and bn_top ratios are also falling and below 1, which is one- | wrong |
+| BTWUSDT | 2026-10-19 13:00 | +15.5 % | тейк | crowd_positioning: bybit L/S 0.34, bn_global 0.36, roughly 3 in 4 accounts already short; crowd_positioning: short share grew after a 16% 24h drop, squeeze risk | unclear |
 

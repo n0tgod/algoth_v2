@@ -1,5 +1,5 @@
 {
- "version": 1,
+ "version": 2,
  "accepted": [
   {
    "text": "Skip shorts into a pump that is still accelerating: 4h move at least +10% and the last hour still up at least 1%.",
@@ -22,34 +22,37 @@
    "id": "fbc0224a71",
    "test": {
     "first": {
-     "n": 154,
-     "matched": 17,
-     "mean_matched": -0.1704,
-     "mean_rest": 0.0361,
+     "n": 178,
+     "matched": 20,
+     "mean_matched": -0.1911,
+     "mean_rest": 0.0171,
      "p_random": 0.0,
-     "floors_matched": 7
+     "floors_matched": 8,
+     "rejected_matched": 6
     },
     "second": {
-     "n": 154,
-     "matched": 24,
-     "mean_matched": -0.2329,
-     "mean_rest": 0.0513,
+     "n": 179,
+     "matched": 31,
+     "mean_matched": -0.1808,
+     "mean_rest": 0.0534,
      "p_random": 0.0,
-     "floors_matched": 13
+     "floors_matched": 16,
+     "rejected_matched": 5
     },
     "all": {
-     "n": 308,
-     "matched": 41,
-     "mean_matched": -0.207,
-     "mean_rest": 0.0435,
+     "n": 357,
+     "matched": 51,
+     "mean_matched": -0.1849,
+     "mean_rest": 0.0346,
      "p_random": 0.0,
-     "floors_matched": 20
+     "floors_matched": 24,
+     "rejected_matched": 11
     },
     "passed": true,
     "why": null,
-    "split_at": "2026-10-20 20:00"
+    "split_at": "2026-10-22 03:00"
    },
-   "tested_at": "2026-10-28T07:00:03Z",
+   "tested_at": "2026-10-29T20:00:30Z",
    "accepted_at": "2026-10-28T07:00:03Z"
   },
   {
@@ -73,34 +76,37 @@
    "id": "78cbd0fd97",
    "test": {
     "first": {
-     "n": 154,
-     "matched": 14,
-     "mean_matched": -0.3561,
-     "mean_rest": 0.0502,
+     "n": 178,
+     "matched": 21,
+     "mean_matched": -0.3227,
+     "mean_rest": 0.036,
      "p_random": 0.0,
-     "floors_matched": 13
+     "floors_matched": 19,
+     "rejected_matched": 10
     },
     "second": {
-     "n": 154,
-     "matched": 23,
-     "mean_matched": -0.1269,
-     "mean_rest": 0.0306,
-     "p_random": 0.05,
-     "floors_matched": 17
+     "n": 179,
+     "matched": 21,
+     "mean_matched": -0.1172,
+     "mean_rest": 0.0301,
+     "p_random": 0.065,
+     "floors_matched": 15,
+     "rejected_matched": 4
     },
     "all": {
-     "n": 308,
-     "matched": 37,
-     "mean_matched": -0.2136,
-     "mean_rest": 0.0407,
+     "n": 357,
+     "matched": 42,
+     "mean_matched": -0.2199,
+     "mean_rest": 0.033,
      "p_random": 0.0,
-     "floors_matched": 30
+     "floors_matched": 34,
+     "rejected_matched": 14
     },
     "passed": true,
     "why": null,
-    "split_at": "2026-10-20 20:00"
+    "split_at": "2026-10-22 03:00"
    },
-   "tested_at": "2026-10-28T07:00:03Z",
+   "tested_at": "2026-10-29T20:00:30Z",
    "accepted_at": "2026-10-28T07:00:03Z"
   },
   {
@@ -124,34 +130,37 @@
    "id": "3f7e6fa534",
    "test": {
     "first": {
-     "n": 154,
-     "matched": 19,
-     "mean_matched": -0.2004,
-     "mean_rest": 0.0434,
+     "n": 178,
+     "matched": 29,
+     "mean_matched": -0.2075,
+     "mean_rest": 0.0329,
      "p_random": 0.0,
-     "floors_matched": 14
+     "floors_matched": 21,
+     "rejected_matched": 12
     },
     "second": {
-     "n": 154,
-     "matched": 31,
-     "mean_matched": -0.1259,
-     "mean_rest": 0.0405,
-     "p_random": 0.02,
-     "floors_matched": 23
+     "n": 179,
+     "matched": 27,
+     "mean_matched": -0.1253,
+     "mean_rest": 0.0374,
+     "p_random": 0.018,
+     "floors_matched": 21,
+     "rejected_matched": 6
     },
     "all": {
-     "n": 308,
-     "matched": 50,
-     "mean_matched": -0.1542,
-     "mean_rest": 0.042,
+     "n": 357,
+     "matched": 56,
+     "mean_matched": -0.1679,
+     "mean_rest": 0.0351,
      "p_random": 0.0,
-     "floors_matched": 37
+     "floors_matched": 42,
+     "rejected_matched": 18
     },
     "passed": true,
     "why": null,
-    "split_at": "2026-10-20 20:00"
+    "split_at": "2026-10-22 03:00"
    },
-   "tested_at": "2026-10-28T07:00:03Z",
+   "tested_at": "2026-10-29T20:00:30Z",
    "accepted_at": "2026-10-28T07:00:03Z"
   },
   {
@@ -175,34 +184,37 @@
    "id": "200eead5fb",
    "test": {
     "first": {
-     "n": 154,
-     "matched": 11,
-     "mean_matched": -0.0944,
-     "mean_rest": 0.0216,
-     "p_random": 0.077,
-     "floors_matched": 3
+     "n": 178,
+     "matched": 14,
+     "mean_matched": -0.1585,
+     "mean_rest": 0.0067,
+     "p_random": 0.022,
+     "floors_matched": 5,
+     "rejected_matched": 8
     },
     "second": {
-     "n": 154,
-     "matched": 14,
-     "mean_matched": -0.1903,
-     "mean_rest": 0.0268,
-     "p_random": 0.015,
-     "floors_matched": 7
+     "n": 179,
+     "matched": 13,
+     "mean_matched": -0.1277,
+     "mean_rest": 0.0238,
+     "p_random": 0.102,
+     "floors_matched": 5,
+     "rejected_matched": 4
     },
     "all": {
-     "n": 308,
-     "matched": 25,
-     "mean_matched": -0.1481,
-     "mean_rest": 0.0242,
-     "p_random": 0.007,
-     "floors_matched": 10
+     "n": 357,
+     "matched": 27,
+     "mean_matched": -0.1437,
+     "mean_rest": 0.0153,
+     "p_random": 0.005,
+     "floors_matched": 10,
+     "rejected_matched": 12
     },
-    "passed": true,
-    "why": null,
-    "split_at": "2026-10-20 20:00"
+    "passed": false,
+    "why": "вторая половина не держит",
+    "split_at": "2026-10-22 03:00"
    },
-   "tested_at": "2026-10-28T07:00:03Z",
+   "tested_at": "2026-10-29T20:00:30Z",
    "accepted_at": "2026-10-28T07:00:03Z"
   },
   {
@@ -231,34 +243,37 @@
    "id": "1067933818",
    "test": {
     "first": {
-     "n": 154,
-     "matched": 15,
-     "mean_matched": -0.1151,
-     "mean_rest": 0.0272,
-     "p_random": 0.02,
-     "floors_matched": 5
+     "n": 178,
+     "matched": 19,
+     "mean_matched": -0.1619,
+     "mean_rest": 0.0123,
+     "p_random": 0.0,
+     "floors_matched": 7,
+     "rejected_matched": 8
     },
     "second": {
-     "n": 154,
-     "matched": 20,
-     "mean_matched": -0.2368,
-     "mean_rest": 0.0434,
-     "p_random": 0.0,
-     "floors_matched": 11
+     "n": 179,
+     "matched": 23,
+     "mean_matched": -0.1653,
+     "mean_rest": 0.0391,
+     "p_random": 0.005,
+     "floors_matched": 12,
+     "rejected_matched": 5
     },
     "all": {
-     "n": 308,
-     "matched": 35,
-     "mean_matched": -0.1847,
-     "mean_rest": 0.0352,
+     "n": 357,
+     "matched": 42,
+     "mean_matched": -0.1638,
+     "mean_rest": 0.0256,
      "p_random": 0.0,
-     "floors_matched": 16
+     "floors_matched": 19,
+     "rejected_matched": 13
     },
     "passed": true,
     "why": null,
-    "split_at": "2026-10-20 20:00"
+    "split_at": "2026-10-22 03:00"
    },
-   "tested_at": "2026-10-28T07:00:03Z",
+   "tested_at": "2026-10-29T20:00:30Z",
    "accepted_at": "2026-10-28T07:00:03Z"
   },
   {
@@ -287,34 +302,37 @@
    "id": "d306ec7026",
    "test": {
     "first": {
-     "n": 154,
-     "matched": 9,
-     "mean_matched": -0.3999,
-     "mean_rest": 0.039,
+     "n": 178,
+     "matched": 15,
+     "mean_matched": -0.3306,
+     "mean_rest": 0.0235,
      "p_random": 0.0,
-     "floors_matched": 9
+     "floors_matched": 14,
+     "rejected_matched": 10
     },
     "second": {
-     "n": 154,
-     "matched": 19,
-     "mean_matched": -0.1364,
-     "mean_rest": 0.0272,
-     "p_random": 0.028,
-     "floors_matched": 15
+     "n": 179,
+     "matched": 16,
+     "mean_matched": -0.1591,
+     "mean_rest": 0.0297,
+     "p_random": 0.045,
+     "floors_matched": 13,
+     "rejected_matched": 5
     },
     "all": {
-     "n": 308,
-     "matched": 28,
-     "mean_matched": -0.2211,
-     "mean_rest": 0.0333,
+     "n": 357,
+     "matched": 31,
+     "mean_matched": -0.2421,
+     "mean_rest": 0.0266,
      "p_random": 0.0,
-     "floors_matched": 24
+     "floors_matched": 27,
+     "rejected_matched": 15
     },
     "passed": true,
     "why": null,
-    "split_at": "2026-10-20 20:00"
+    "split_at": "2026-10-22 03:00"
    },
-   "tested_at": "2026-10-28T07:00:03Z",
+   "tested_at": "2026-10-29T20:00:30Z",
    "accepted_at": "2026-10-28T07:00:03Z"
   },
   {
@@ -343,35 +361,210 @@
    "id": "d540ee82fa",
    "test": {
     "first": {
-     "n": 154,
-     "matched": 10,
-     "mean_matched": -0.2867,
-     "mean_rest": 0.0341,
+     "n": 178,
+     "matched": 16,
+     "mean_matched": -0.2534,
+     "mean_rest": 0.0181,
      "p_random": 0.0,
-     "floors_matched": 8
+     "floors_matched": 12,
+     "rejected_matched": 6
     },
     "second": {
-     "n": 154,
-     "matched": 17,
-     "mean_matched": -0.2379,
-     "mean_rest": 0.0374,
-     "p_random": 0.003,
-     "floors_matched": 13
+     "n": 179,
+     "matched": 15,
+     "mean_matched": -0.3072,
+     "mean_rest": 0.0421,
+     "p_random": 0.0,
+     "floors_matched": 13,
+     "rejected_matched": 3
     },
     "all": {
-     "n": 308,
-     "matched": 27,
-     "mean_matched": -0.256,
-     "mean_rest": 0.0357,
+     "n": 357,
+     "matched": 31,
+     "mean_matched": -0.2794,
+     "mean_rest": 0.0302,
      "p_random": 0.0,
-     "floors_matched": 21
+     "floors_matched": 25,
+     "rejected_matched": 9
     },
     "passed": true,
     "why": null,
-    "split_at": "2026-10-20 20:00"
+    "split_at": "2026-10-22 03:00"
    },
-   "tested_at": "2026-10-28T07:00:03Z",
+   "tested_at": "2026-10-29T20:00:30Z",
    "accepted_at": "2026-10-28T07:00:03Z"
+  },
+  {
+   "text": "Skip 20x+ shorts on names whose last 4h is up 5% or more.",
+   "when": [
+    {
+     "field": "book_rules.lev",
+     "op": ">=",
+     "value": 20.0
+    },
+    {
+     "field": "price_moves_to_decision.4h_pct",
+     "op": ">=",
+     "value": 5.0
+    }
+   ],
+   "do": "skip",
+   "why": "Fresh short-term momentum combined with a close floor gives little room for the first adverse leg. That leg tends to hit the floor before the mean-reversion thesis can play out.",
+   "proposed_at": "2026-10-21T07:00:03Z",
+   "status": "accepted",
+   "id": "08538ebbcd",
+   "test": {
+    "first": {
+     "n": 178,
+     "matched": 19,
+     "mean_matched": -0.1809,
+     "mean_rest": 0.0146,
+     "p_random": 0.0,
+     "floors_matched": 14,
+     "rejected_matched": 6
+    },
+    "second": {
+     "n": 179,
+     "matched": 28,
+     "mean_matched": -0.1028,
+     "mean_rest": 0.0343,
+     "p_random": 0.045,
+     "floors_matched": 21,
+     "rejected_matched": 5
+    },
+    "all": {
+     "n": 357,
+     "matched": 47,
+     "mean_matched": -0.1344,
+     "mean_rest": 0.0242,
+     "p_random": 0.0,
+     "floors_matched": 35,
+     "rejected_matched": 11
+    },
+    "passed": true,
+    "why": null,
+    "split_at": "2026-10-22 03:00"
+   },
+   "tested_at": "2026-10-29T20:00:30Z",
+   "accepted_at": "2026-10-29T20:00:30Z"
+  },
+  {
+   "text": "Skip shorts at 10x or more while the 4h move is at least +10% and the last hour is still not falling.",
+   "when": [
+    {
+     "field": "book_rules.lev",
+     "op": ">=",
+     "value": 10.0
+    },
+    {
+     "field": "price_moves_to_decision.4h_pct",
+     "op": ">=",
+     "value": 10.0
+    },
+    {
+     "field": "price_moves_to_decision.1h_pct",
+     "op": ">=",
+     "value": 0.0
+    }
+   ],
+   "do": "skip",
+   "why": "At high leverage the floor sits within one hourly range of a live pump. If the last hour has not rolled over, momentum continuation reaches the floor before any fade. Shorts in the same setup but with a negative last hour (BTW, TUSDT, BIRB) mostly survived.",
+   "proposed_at": "2026-10-28T07:00:03Z",
+   "status": "accepted",
+   "id": "4247864f8a",
+   "test": {
+    "first": {
+     "n": 178,
+     "matched": 9,
+     "mean_matched": -0.4026,
+     "mean_rest": 0.0148,
+     "p_random": 0.0,
+     "floors_matched": 8,
+     "rejected_matched": 2
+    },
+    "second": {
+     "n": 179,
+     "matched": 14,
+     "mean_matched": -0.3346,
+     "mean_rest": 0.0423,
+     "p_random": 0.0,
+     "floors_matched": 13,
+     "rejected_matched": 3
+    },
+    "all": {
+     "n": 357,
+     "matched": 23,
+     "mean_matched": -0.3612,
+     "mean_rest": 0.0284,
+     "p_random": 0.0,
+     "floors_matched": 21,
+     "rejected_matched": 5
+    },
+    "passed": true,
+    "why": null,
+    "split_at": "2026-10-22 03:00"
+   },
+   "tested_at": "2026-10-29T20:00:30Z",
+   "accepted_at": "2026-10-29T20:00:30Z"
+  },
+  {
+   "text": "Skip 20x+ shorts while the last hour is still up 2.5% or more, whatever the 4h move.",
+   "when": [
+    {
+     "field": "book_rules.lev",
+     "op": ">=",
+     "value": 20.0
+    },
+    {
+     "field": "book_rules.fav_bp",
+     "op": "<=",
+     "value": 0.0
+    },
+    {
+     "field": "price_moves_to_decision.1h_pct",
+     "op": ">=",
+     "value": 2.5
+    }
+   ],
+   "do": "skip",
+   "why": "At 20-25x the floor sits about 1.5-4% away. A name moving 2.5% or more per hour against the short covers that distance on noise before any fade can play out, so these entries floor within minutes to hours.",
+   "proposed_at": "2026-10-29T20:00:30Z",
+   "status": "accepted",
+   "id": "52543df59f",
+   "test": {
+    "first": {
+     "n": 178,
+     "matched": 10,
+     "mean_matched": -0.37,
+     "mean_rest": 0.0154,
+     "p_random": 0.0,
+     "floors_matched": 8,
+     "rejected_matched": 4
+    },
+    "second": {
+     "n": 179,
+     "matched": 13,
+     "mean_matched": -0.3625,
+     "mean_rest": 0.0422,
+     "p_random": 0.0,
+     "floors_matched": 11,
+     "rejected_matched": 3
+    },
+    "all": {
+     "n": 357,
+     "matched": 23,
+     "mean_matched": -0.3657,
+     "mean_rest": 0.0287,
+     "p_random": 0.0,
+     "floors_matched": 19,
+     "rejected_matched": 7
+    },
+    "passed": true,
+    "why": null,
+    "split_at": "2026-10-22 03:00"
+   },
+   "tested_at": "2026-10-29T20:00:30Z",
+   "accepted_at": "2026-10-29T20:00:30Z"
   }
  ],
  "proposed": [
@@ -396,139 +589,37 @@
    "id": "047ce777b8",
    "test": {
     "first": {
-     "n": 154,
-     "matched": 13,
-     "mean_matched": -0.2282,
-     "mean_rest": 0.0356,
+     "n": 178,
+     "matched": 18,
+     "mean_matched": -0.235,
+     "mean_rest": 0.0194,
      "p_random": 0.0,
-     "floors_matched": 8
+     "floors_matched": 10,
+     "rejected_matched": 8
     },
     "second": {
-     "n": 154,
-     "matched": 14,
-     "mean_matched": 0.3274,
-     "mean_rest": -0.025,
-     "p_random": 0.99,
-     "floors_matched": 2
+     "n": 179,
+     "matched": 11,
+     "mean_matched": 0.5154,
+     "mean_rest": -0.0201,
+     "p_random": 1.0,
+     "floors_matched": 0,
+     "rejected_matched": 5
     },
     "all": {
-     "n": 308,
-     "matched": 27,
-     "mean_matched": 0.0599,
-     "mean_rest": 0.0054,
-     "p_random": 0.795,
-     "floors_matched": 10
+     "n": 357,
+     "matched": 29,
+     "mean_matched": 0.0496,
+     "mean_rest": -0.0008,
+     "p_random": 0.77,
+     "floors_matched": 10,
+     "rejected_matched": 13
     },
     "passed": false,
     "why": "вторая половина не держит",
-    "split_at": "2026-10-20 20:00"
+    "split_at": "2026-10-22 03:00"
    },
-   "tested_at": "2026-10-28T07:00:03Z"
-  },
-  {
-   "text": "Skip 20x+ shorts on names whose last 4h is up 5% or more.",
-   "when": [
-    {
-     "field": "book_rules.lev",
-     "op": ">=",
-     "value": 20.0
-    },
-    {
-     "field": "price_moves_to_decision.4h_pct",
-     "op": ">=",
-     "value": 5.0
-    }
-   ],
-   "do": "skip",
-   "why": "Fresh short-term momentum combined with a close floor gives little room for the first adverse leg. That leg tends to hit the floor before the mean-reversion thesis can play out.",
-   "proposed_at": "2026-10-21T07:00:03Z",
-   "status": "proposed",
-   "id": "08538ebbcd",
-   "test": {
-    "first": {
-     "n": 154,
-     "matched": 14,
-     "mean_matched": -0.196,
-     "mean_rest": 0.0342,
-     "p_random": 0.0,
-     "floors_matched": 11
-    },
-    "second": {
-     "n": 154,
-     "matched": 28,
-     "mean_matched": -0.0828,
-     "mean_rest": 0.027,
-     "p_random": 0.11,
-     "floors_matched": 20
-    },
-    "all": {
-     "n": 308,
-     "matched": 42,
-     "mean_matched": -0.1206,
-     "mean_rest": 0.0308,
-     "p_random": 0.003,
-     "floors_matched": 31
-    },
-    "passed": false,
-    "why": "вторая половина не держит",
-    "split_at": "2026-10-20 20:00"
-   },
-   "tested_at": "2026-10-28T07:00:03Z"
-  },
-  {
-   "text": "Skip shorts at 10x or more while the 4h move is at least +10% and the last hour is still not falling.",
-   "when": [
-    {
-     "field": "book_rules.lev",
-     "op": ">=",
-     "value": 10.0
-    },
-    {
-     "field": "price_moves_to_decision.4h_pct",
-     "op": ">=",
-     "value": 10.0
-    },
-    {
-     "field": "price_moves_to_decision.1h_pct",
-     "op": ">=",
-     "value": 0.0
-    }
-   ],
-   "do": "skip",
-   "why": "At high leverage the floor sits within one hourly range of a live pump. If the last hour has not rolled over, momentum continuation reaches the floor before any fade. Shorts in the same setup but with a negative last hour (BTW, TUSDT, BIRB) mostly survived.",
-   "proposed_at": "2026-10-28T07:00:03Z",
-   "status": "proposed",
-   "id": "4247864f8a",
-   "test": {
-    "first": {
-     "n": 154,
-     "matched": 7,
-     "mean_matched": -0.4121,
-     "mean_rest": 0.0336,
-     "p_random": 0.0,
-     "floors_matched": 7
-    },
-    "second": {
-     "n": 154,
-     "matched": 12,
-     "mean_matched": -0.4306,
-     "mean_rest": 0.044,
-     "p_random": 0.0,
-     "floors_matched": 11
-    },
-    "all": {
-     "n": 308,
-     "matched": 19,
-     "mean_matched": -0.4238,
-     "mean_rest": 0.0387,
-     "p_random": 0.0,
-     "floors_matched": 18
-    },
-    "passed": false,
-    "why": "подходящих 19 < 20",
-    "split_at": "2026-10-20 20:00"
-   },
-   "tested_at": "2026-10-28T07:00:03Z"
+   "tested_at": "2026-10-29T20:00:30Z"
   },
   {
    "text": "Skip shorts where the Bybit crowd swung short by at least 10 points in 24h while the last hour is still up at least 1%.",
@@ -556,37 +647,214 @@
    "id": "8f8cf1272b",
    "test": {
     "first": {
-     "n": 154,
-     "matched": 19,
-     "mean_matched": -0.0317,
-     "mean_rest": 0.0196,
-     "p_random": 0.23,
-     "floors_matched": 4
+     "n": 178,
+     "matched": 23,
+     "mean_matched": -0.0764,
+     "mean_rest": 0.0041,
+     "p_random": 0.098,
+     "floors_matched": 6,
+     "rejected_matched": 8
     },
     "second": {
-     "n": 154,
-     "matched": 15,
-     "mean_matched": -0.0153,
-     "mean_rest": 0.0095,
-     "p_random": 0.425,
-     "floors_matched": 4
+     "n": 179,
+     "matched": 13,
+     "mean_matched": 0.0575,
+     "mean_rest": 0.0093,
+     "p_random": 0.665,
+     "floors_matched": 2,
+     "rejected_matched": 7
     },
     "all": {
-     "n": 308,
-     "matched": 34,
-     "mean_matched": -0.0245,
-     "mean_rest": 0.0145,
-     "p_random": 0.292,
-     "floors_matched": 8
+     "n": 357,
+     "matched": 36,
+     "mean_matched": -0.028,
+     "mean_rest": 0.0068,
+     "p_random": 0.335,
+     "floors_matched": 8,
+     "rejected_matched": 15
+    },
+    "passed": false,
+    "why": "вторая половина не держит",
+    "split_at": "2026-10-22 03:00"
+   },
+   "tested_at": "2026-10-29T20:00:30Z"
+  },
+  {
+   "text": "Take shorts on names up 30% or more in 24h when the 4h move is already flat or negative, so the pump is rolling over.",
+   "when": [
+    {
+     "field": "book_rules.fav_bp",
+     "op": "<=",
+     "value": 0.0
+    },
+    {
+     "field": "price_moves_to_decision.24h_pct",
+     "op": ">=",
+     "value": 30.0
+    },
+    {
+     "field": "price_moves_to_decision.4h_pct",
+     "op": "<=",
+     "value": 0.0
+    }
+   ],
+   "do": "take",
+   "why": "Once a parabolic move has stopped rising over 4h, the crowd's short tilt is more likely a correct late read than squeeze fuel. The fade has already started, so the squeeze worry the judge cites should not block the entry.",
+   "proposed_at": "2026-10-29T20:00:30Z",
+   "status": "proposed",
+   "id": "fc944b9b78",
+   "test": {
+    "first": {
+     "n": 178,
+     "matched": 9,
+     "mean_matched": -0.1633,
+     "mean_rest": 0.0021,
+     "p_random": 0.965,
+     "floors_matched": 5,
+     "rejected_matched": 5
+    },
+    "second": {
+     "n": 179,
+     "matched": 9,
+     "mean_matched": 0.1884,
+     "mean_rest": 0.0035,
+     "p_random": 0.1,
+     "floors_matched": 1,
+     "rejected_matched": 7
+    },
+    "all": {
+     "n": 357,
+     "matched": 18,
+     "mean_matched": 0.0126,
+     "mean_rest": 0.0028,
+     "p_random": 0.36,
+     "floors_matched": 6,
+     "rejected_matched": 12
+    },
+    "passed": false,
+    "why": "подходящих 18 < 20",
+    "split_at": "2026-10-22 03:00"
+   },
+   "tested_at": "2026-10-29T20:00:30Z"
+  },
+  {
+   "text": "Take shorts at 10x or less when the Bybit crowd swung short by 18 points or more in 24h but the 4h move is below +5%.",
+   "when": [
+    {
+     "field": "derived.crowd_bybit_shift_24h",
+     "op": "<=",
+     "value": -0.18
+    },
+    {
+     "field": "price_moves_to_decision.4h_pct",
+     "op": "<=",
+     "value": 5.0
+    },
+    {
+     "field": "book_rules.lev",
+     "op": "<=",
+     "value": 10.0
+    }
+   ],
+   "do": "take",
+   "why": "A sharp swing to short positioning only fuels a squeeze when price is still accelerating. With momentum stalled and moderate leverage, the floor is far enough away to survive noise, and these setups repeatedly mean-reverted.",
+   "proposed_at": "2026-10-29T20:00:30Z",
+   "status": "proposed",
+   "id": "b2f2762762",
+   "test": {
+    "first": {
+     "n": 178,
+     "matched": 16,
+     "mean_matched": 0.0391,
+     "mean_rest": -0.0108,
+     "p_random": 0.285,
+     "floors_matched": 0,
+     "rejected_matched": 6
+    },
+    "second": {
+     "n": 179,
+     "matched": 6,
+     "mean_matched": 0.3171,
+     "mean_rest": 0.0023,
+     "p_random": 0.06,
+     "floors_matched": 0,
+     "rejected_matched": 6
+    },
+    "all": {
+     "n": 357,
+     "matched": 22,
+     "mean_matched": 0.1149,
+     "mean_rest": -0.004,
+     "p_random": 0.072,
+     "floors_matched": 0,
+     "rejected_matched": 12
     },
     "passed": false,
     "why": "первая половина не держит",
-    "split_at": "2026-10-20 20:00"
+    "split_at": "2026-10-22 03:00"
    },
-   "tested_at": "2026-10-28T07:00:03Z"
+   "tested_at": "2026-10-29T20:00:30Z"
+  },
+  {
+   "text": "Skip 10x+ shorts when the Bybit crowd is already heavily short (long share 0.36 or below) and the last hour is not falling.",
+   "when": [
+    {
+     "field": "book_rules.lev",
+     "op": ">=",
+     "value": 10.0
+    },
+    {
+     "field": "crowd_positioning.bybit.now",
+     "op": "<=",
+     "value": 0.36
+    },
+    {
+     "field": "price_moves_to_decision.1h_pct",
+     "op": ">=",
+     "value": 0.0
+    }
+   ],
+   "do": "skip",
+   "why": "With crowded shorts and no downward momentum yet, short covering spikes are likely, and high leverage leaves no room to survive them before the floor.",
+   "proposed_at": "2026-10-29T20:00:30Z",
+   "status": "proposed",
+   "id": "602fd138ac",
+   "test": {
+    "first": {
+     "n": 178,
+     "matched": 7,
+     "mean_matched": -0.2889,
+     "mean_rest": 0.0053,
+     "p_random": 0.007,
+     "floors_matched": 6,
+     "rejected_matched": 5
+    },
+    "second": {
+     "n": 179,
+     "matched": 4,
+     "mean_matched": -0.3923,
+     "mean_rest": 0.0221,
+     "p_random": 0.01,
+     "floors_matched": 4,
+     "rejected_matched": 1
+    },
+    "all": {
+     "n": 357,
+     "matched": 11,
+     "mean_matched": -0.3265,
+     "mean_rest": 0.0138,
+     "p_random": 0.0,
+     "floors_matched": 10,
+     "rejected_matched": 6
+    },
+    "passed": false,
+    "why": "подходящих 11 < 20",
+    "split_at": "2026-10-22 03:00"
+   },
+   "tested_at": "2026-10-29T20:00:30Z"
   }
  ],
  "rejected": [],
  "revoked": [],
- "updated": "2026-10-28T07:00:03Z"
+ "updated": "2026-10-29T20:00:30Z"
 }
