@@ -37,3 +37,25 @@
 |---|--:|--:|--:|--:|--:|---|
 | правил закрытия модели ещё нет | | | | | | |
 
+ВНИМАНИЕ: 2026-10-29T11:27:57Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nc27.log                     | 34 ++++++++++++++++++++++++++++++++++
+ jobs/done/nc28.log                     | 28 ++++++++++++++++++++++++++++
+ jobs/queue-state.md                    |  2 +-
+ research/ai_gate/out/CLOSE-SEARCH.md   | 32 ++++++++++++++++++++++++++++++++
+ research/ai_gate/out/close_search.json |  1 +
+ 5 files changed, 96 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+ ! [rejected]            main -> main (fetch first)
+error: failed to push some refs to 'github.com:n0tgod/algoth_v2.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+push не прошёл, подтягиваю ветку и пробую снова 
+(попытка 1 из 4)
+From github.com:n0tgod/algoth_v2
+ * branch                main       -> FETCH_HEAD
+   50cd9a630..0740eefc7  main       -> origin/main
+конец: 2026-10-29T11:28:07Z, код 0
