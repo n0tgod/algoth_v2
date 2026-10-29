@@ -238,6 +238,15 @@
   - L225 `Summary.test_half_life_filter_narrows_selection(self)`
   - L232 `Summary.test_off_grid_window_is_refused_not_averaged(self)` — Окно не по сетке ломает смысл «соседнего» — и должно падать.
 
+## research/ai_gate/test_close_search.py · 94 строк
+
+Ранний выход по смене состояния (§11.11): калибровочная пара — подсаженное поле (после роста открытого интере…
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L17 `H = 3600.0`
+- L20 `synth(n=500, seed=4)`
+- L43 `main()`
+
 ## research/ai_gate/test_entry_search.py · 150 строк
 
 Поиск ТВХ по состоянию (U4c): калибровочная пара — подсаженный параметр (вход, когда доля лонгов упала ниже п…
@@ -314,7 +323,7 @@
 - L49 `R_NOISE = {'text': 'fear', 'when': [{'field': 'ma…`
 - L52 `main()`
 
-## research/ai_gate/test_model_books.py · 266 строк
+## research/ai_gate/test_model_books.py · 347 строк
 
 Книги модели (спека 19 §12): мягкий порог, пределы, подпись, рождение с нуля в следующий час, отставка по окн…
 
@@ -327,7 +336,8 @@
 - L108 `test_skip_pass_in_judge_and_rules_registration()`
 - L154 `test_exit_cell_in_signature_candidates_and_words()` — Выход книги модели (§11.9): подпись без выхода — прежняя (m01/m02 не меняются), с выходом — другая; кандидат…
 - L173 `test_entry_book_carries_exit_rules_judged_at_entry_hour()` — Свой выход у книги ТВХ (§11.10, владелец 29.10): кандидаты правил выхода с мягким порогом; книга ТВХ рождаетс…
-- L256 `main()`
+- L256 `test_entry_book_closes_early_on_state_change()` — Ранний выход (§11.11): кандидаты правил закрытия с мягким порогом; книга ТВХ рождается с ними (≤ 3); в прожит…
+- L337 `main()`
 
 ## research/ai_gate/test_path_review.py · 135 строк
 
@@ -349,13 +359,13 @@
 - L66 `test_reviews()` — Разбор судьёй: только сделки с решением ai_news моделью; один раз на ключ; досье из записи, без досье — помеч…
 - L107 `main()`
 
-## research/ai_gate/test_patterns.py · 65 строк
+## research/ai_gate/test_patterns.py · 68 строк
 
 Правила модели (U4b, словарь поиска §11.8): модель видит каталог полей, сводку путей и итог поиска; поле вне…
 
 - L12 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L17 `class Client`
-  - L18 `Client.__init__(self, rules, exit_rules=())`
+  - L18 `Client.__init__(self, rules, exit_rules=(), close_rules=())`
   - L22 `Client._create(self, **kw)`
 - L30 `main()`
 
