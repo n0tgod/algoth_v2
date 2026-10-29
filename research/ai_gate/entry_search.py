@@ -771,11 +771,11 @@ def report(r):
               "| правило | подходящих | ячейка: средний | книга у тех же | прирост на сигнал | случайные не хуже | половины |",
               "|---|--:|--:|--:|--:|--:|---|"]
         for x in em:
+            cond = " и ".join(f"{c['field']} {c['op']} {float(c['value']):g}" for c in (x["rule"].get("when") or []))
             if x.get("why"):
-                L.append(f"| {rule_text(x['rule'])} | {x['why']} | | | | | |")
+                L.append(f"| {cond} → `{x['rule'].get('exit')}` | {x['why']} | | | | | |")
                 continue
             hv = "; ".join(f"{h['matched']}: {pct(h['gain'])}" for h in x["halves"])
-            cond = " и ".join(f"{c['field']} {c['op']} {float(c['value']):g}" for c in x["rule"]["when"])
             L.append(f"| {cond} → {exit_text(x['rule']['exit'])} | {x['matched']} | {pct(x['mean_cell'])} | {pct(x['mean_book'])} | "
                      f"{pct(x['gain'])} | {x['p_random'] if x['p_random'] is not None else '—'} | {hv} |")
     return "\n".join(L) + "\n"

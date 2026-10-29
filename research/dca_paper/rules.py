@@ -1006,8 +1006,16 @@ def model_rule_text(b):
     """Правило модельной книги словами кода: условия и окно."""
     w = " и ".join(f"{c['field']} {c['op']} {c['value']:g}" for c in (b.get("rule") or {}).get("when") or [])
     w += (f", окно {b['rule']['W']} ч" if b.get("kind") == "entry" else "")
-    if b.get("kind") == "exit":
-        w = f"при {w} —"
+    if b.get("kind") == "entry" and b.get("exit_rules"):
+        # свой выход (§11.10): правила выхода по состоянию часа входа, первое
+        # подходящее решает; иначе — выход правила входа или книги
+        xs = []
+        for r in b["exit_rules"]:
+            st_, tk, lev = ((r.get("exit") or "s0:t2:book").split(":") + ["", "", ""])[:3]
+            cond = " и ".join(f"{c['field']} {c['op']} {c['value']:g}" for c in r.get("when") or [])
+            xs.append(cond + " → " + ("без стопа" if st_ in ("s0", "") else f"стоп {st_[1:]} %")
+                      + f", тейк ×{tk[1:] or '2'}" + (", равный риск" if lev == "eq" else ""))
+        w += "; выход по состоянию часа входа: " + "; ".join(xs) + "; иначе выход книги"
     ex = (b.get("rule") or {}).get("exit")
     if ex and ex != "s0:t2:book":
         # выход книги модели (спека 19 §11.9): `s<стоп %>:t<×обещания>:<book|eq>`
@@ -1029,8 +1037,11 @@ def _register_model_books(path=None):
             continue
         MODEL_BOOKS[k] = b
         START_TS[k] = float(b["born_at"])
-        kind_ru = {"entry": "вход по правилу", "exit": "свой выход"}.get(b.get("kind"), "фильтр входов")
-        kind_en = {"entry": "own entry rule", "exit": "own exit rule"}.get(b.get("kind"), "entry filter")
+        kind_ru = "вход по правилу" if b.get("kind") == "entry" else "фильтр входов"
+        kind_en = "own entry rule" if b.get("kind") == "entry" else "entry filter"
+        if b.get("kind") == "entry" and b.get("exit_rules"):
+            kind_ru += " и выход"
+            kind_en += " + exit"
         gone = " · отставлена" if b.get("status") == "retired" else ""
         gone_en = " · retired" if b.get("status") == "retired" else ""
         BRANCHES[k] = {"base": MODEL_BASE, "rule": "model", "value": float(str(b["id"])[1:]), "default": False}

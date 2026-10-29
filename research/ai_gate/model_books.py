@@ -55,7 +55,7 @@ TICK = os.path.join(OUT, "record", "model_tick.json")
 BASE = "optimal_h"                 # основная книга: Depth Short
 CAP_LIVE = 10                      # живых модельных книг (владелец 21.10)
 CAP_ENTRY = 3                      # из них книг ТВХ — каждая свой реплей каждый час
-CAP_EXIT = 3                       # книг «свой выход» (§11.10) — реплей только подходящих
+MAX_EXIT_RULES = 3                 # правил выхода у книги ТВХ (§11.10): первое подходящее в час входа решает
 PER_WEEK = 2                       # новых за скользящие 7 суток (владелец 21.10)
 SOFT_MIN = 10                      # случаев (фильтр) / сработавших (ТВХ) на всём окне
 SOFT_P = 0.20                      # случайные не хуже — не больше этой доли из 400
@@ -133,7 +133,7 @@ def rule_text(kind, rule):
     w = " и ".join(f"{c['field']} {c['op']} {float(c['value']):g}" for c in rule["when"])
     if kind == "exit":
         import entry_search as ES                              # noqa: E402
-        return f"выход при {w}: {ES.exit_text(rule.get('exit') or BOOK_EXIT)}"
+        return f"{w} → {ES.exit_text(rule.get('exit') or BOOK_EXIT)}"
     w += (f", окно {rule['W']} ч" if kind == "entry" else "")
     if rule.get("exit") and rule["exit"] != BOOK_EXIT:
         import entry_search as ES                              # noqa: E402
@@ -241,9 +241,38 @@ def entry_candidates(search, rules_file):
     return out
 
 
+def exit_rules_for_birth(cands):
+    """Правила выхода для новой книги ТВХ (§11.10): прошедшие порог, по p и числу,
+    не больше MAX_EXIT_RULES; первое подходящее в час входа решает."""
+    ok = [c for c in cands if c["kind"] == "exit" and not c["fail"]]
+    ok.sort(key=lambda c: (c["p"] if c["p"] is not None else 1.0, -c["n"]))
+    return [{"when": c["rule"]["when"], "exit": c["rule"]["exit"], "why": c.get("why"), "gate": c.get("gate")}
+            for c in ok[:MAX_EXIT_RULES]]
+
+
+def exit_for(b, f, at):
+    """Ячейка выхода книги ТВХ для входа в момент `at` по состоянию `f` часа входа:
+    первое правило выхода, чьи условия выполнены (только с `exit_since`), иначе
+    выход правила входа или книги. → (ячейка, номер правила или None, значения)."""
+    default = (b.get("rule") or {}).get("exit") or BOOK_EXIT
+    since = b.get("exit_since")
+    rules = b.get("exit_rules") or []
+    if not rules or since is None or float(at) < float(since):
+        return default, None, None
+    vals = {}
+    for i, r in enumerate(rules):
+        for c in r["when"]:
+            vals[c["field"]] = f.get(c["field"])
+        if matches(r, f):
+            return r["exit"], i, vals
+    return default, None, vals
+
+
 def births(reg, cands, now):
-    """Рождение по порогу и пределам (§12.2–12.3) → (родились, ждут мест)."""
+    """Рождение по порогу и пределам (§12.2–12.3) → (родились, ждут мест).
+    Книга ТВХ рождается со своими правилами выхода (§11.10)."""
     have = {b["sig"] for b in reg["books"]}
+    xr = exit_rules_for_birth(cands)
     ok, seen = [], set()
     for c in cands:
         s = sig(c["kind"], c["rule"])
@@ -256,9 +285,10 @@ def births(reg, cands, now):
     lv = live(reg)
     room_live = CAP_LIVE - len(lv)
     room_entry = CAP_ENTRY - sum(1 for b in lv if b["kind"] == "entry")
-    room_exit = CAP_EXIT - sum(1 for b in lv if b["kind"] == "exit")
     born, wait = [], []
     for c in ok:
+        if c["kind"] == "exit":
+            continue                                            # правила выхода живут в книгах ТВХ, не сами по себе
         if room_week <= 0:
             wait.append({"rule": rule_text(c["kind"], c["rule"]), "why": f"предел {PER_WEEK} новых за 7 суток"})
             continue
@@ -268,21 +298,19 @@ def births(reg, cands, now):
         if c["kind"] == "entry" and room_entry <= 0:
             wait.append({"rule": rule_text(c["kind"], c["rule"]), "why": f"книг ТВХ уже {CAP_ENTRY}"})
             continue
-        if c["kind"] == "exit" and room_exit <= 0:
-            wait.append({"rule": rule_text(c["kind"], c["rule"]), "why": f"книг «свой выход» уже {CAP_EXIT}"})
-            continue
         bid = next_id(reg)
         b = {"id": bid, "key": key_of_book(bid), "kind": c["kind"], "rule": c["rule"], "sig": c["sig"],
              "why": c["why"], "text": c["text"], "source": c["source"], "gate": c["gate"],
              "decided_at": now, "born_at": float((int(now // H) + 1) * H), "status": "live"}
+        if c["kind"] == "entry":
+            b["exit_rules"] = xr
+            b["exit_since"] = b["born_at"]
         reg["books"].append(b)
         born.append(b)
         room_week -= 1
         room_live -= 1
         if c["kind"] == "entry":
             room_entry -= 1
-        if c["kind"] == "exit":
-            room_exit -= 1
     return born, wait
 
 
@@ -357,40 +385,14 @@ def entry_decide(b, legs, feat, state, now):
                 break
         if got == "wait":
             continue
-        mine[sk] = {"k": -1 if got is None else int(got), "t": round(now), "vals": vals}
+        d = {"k": -1 if got is None else int(got), "t": round(now), "vals": vals}
+        if got is not None:
+            # свой выход (§11.10): правило выхода судится состоянием ЧАСА ВХОДА
+            ex, i, xv = exit_for(b, f, at)
+            d.update(exit=ex, exit_rule=i, exit_vals=xv)
+        mine[sk] = d
         new += 1
     return new
-
-
-def exit_decide(b, legs, feat, state, now):
-    """Книга «свой выход» (§11.10): правило судится в час сигнала (k = 0), когда
-    сводка часа легла; решение с числами полей замораживается."""
-    mine = state.setdefault(b["id"], {})
-    hi = float(b["retired_at"]) if b.get("retired_at") else None
-    new = 0
-    for g in legs:
-        at = float(g["at"])
-        sk = f"{g['sym']}|{int(at)}"
-        if at < float(b["born_at"]) or (hi is not None and at >= hi) or sk in mine or now < at + EDGE_S:
-            continue
-        f = feat(g, 0)
-        vals = {c["field"]: f.get(c["field"]) for c in b["rule"]["when"]}
-        mine[sk] = {"k": 0 if matches(b["rule"], f) else -1, "t": round(now), "vals": vals}
-        new += 1
-    return new
-
-
-def matched_legs(b, legs, state):
-    """Входы книги «свой выход», где правило выполнено: вход в час сигнала, свой выход."""
-    mine = state.get(b["id"]) or {}
-    out, seen = [], set()
-    for g in sorted(legs, key=lambda g: float(g["at"])):
-        d = mine.get(f"{g['sym']}|{int(float(g['at']))}")
-        if not d or d["k"] != 0 or (g["sym"], float(g["at"])) in seen:
-            continue
-        seen.add((g["sym"], float(g["at"])))
-        out.append(dict(g, at=float(g["at"]), at_signal=float(g["at"])))
-    return out
 
 
 def shifted_legs(b, legs, state):
@@ -405,7 +407,8 @@ def shifted_legs(b, legs, state):
         if (g["sym"], at) in seen:
             continue
         seen.add((g["sym"], at))
-        out.append(dict(g, at=at, at_signal=float(g["at"])))
+        out.append(dict(g, at=at, at_signal=float(g["at"]),
+                        exit=d.get("exit") or (b.get("rule") or {}).get("exit") or BOOK_EXIT))
     return out
 
 
@@ -413,9 +416,9 @@ def tick(log=print, now=None, dry=False):
     """Часовой проход книг ТВХ: решения о часе входа и реплей сдвинутых входов."""
     now = now or time.time()
     reg = load()
-    books = [b for b in reg["books"] if b["kind"] in ("entry", "exit")]
+    books = [b for b in reg["books"] if b["kind"] == "entry"]
     if not books:
-        return {"books": 0, "why": "книг ТВХ и «свой выход» нет"}
+        return {"books": 0, "why": "книг ТВХ нет"}
     import model_branch as MB                                  # noqa: E402
     import run_short as S                                      # noqa: E402
     import entry_search as ES                                  # noqa: E402
@@ -432,15 +435,15 @@ def tick(log=print, now=None, dry=False):
     if act and legs:
         feat = ES.feature_env(legs, days=min(45, int((now - lo) / DAY) + 3))
         for b in act:
-            n = (entry_decide if b["kind"] == "entry" else exit_decide)(b, legs, feat, state, now)
+            n = entry_decide(b, legs, feat, state, now)
             new += n
-            log(f"{b['id']}: новых решений {'о часе входа' if b['kind'] == 'entry' else 'о выходе'} {n}")
+            log(f"{b['id']}: новых решений о часе входа {n}")
     cache, _why = MB.read_cache(log=log)
     # к реплею — по ячейке выхода книги (§11.9): у каждой своя ячейка ядра
     need, by_leg = {}, {}
     for b in books:
-        ex = (b["rule"].get("exit") or BOOK_EXIT)
-        for g in (shifted_legs if b["kind"] == "entry" else matched_legs)(b, legs, state):
+        for g in shifted_legs(b, legs, state):
+            ex = g["exit"]                                      # ячейка выхода — у входа (§11.10)
             k = (b["id"], g["sym"], round(float(g["at"]), 3))
             r = cache.get(k)
             if r is None or r.get("state") != "closed":
@@ -513,9 +516,6 @@ def run(log=print, now=None, dry=False, client_cands=None):
         if b["kind"] == "skip":
             win = MB.window(base_all, b)
             return GB.filt(win, BASE, eidx.get(b["id"], {}))[0], win
-        if b["kind"] == "exit":
-            win = MB.window(base_all, b)
-            return MB.exit_recs(b["key"], win, cache=cache, log=lambda *a: None, book=b)[0], win
         mine = MB.window([r for (bid, _s, _a), r in cache.items() if bid == b["id"]], b)
         return E.book_chain(mine, lambda *a: None, now), None
 
@@ -541,9 +541,6 @@ def run(log=print, now=None, dry=False, client_cands=None):
                     "not_worse_share": (round(sum(1 for f in fs if st_.get("final") is not None and f >= st_["final"])
                                               / len(fs), 2) if fs and st_.get("final") is not None else None),
                     "cut": sum(nbh.values())}
-        elif b["kind"] == "exit":
-            null = {"what": "основная книга на тех же входах (её выход)", "median_final": bst.get("final"),
-                    "not_worse_share": None, "replaced": sum(1 for r in recs if r.get("mbook") == b["id"])}
         elif b["kind"] == "entry":
             sigs = {(r["sym"], int(float(r.get("at_signal", r["at"])))) for r in recs}
             same = [r for r in base_all if (r["sym"], int(float(r["at"]))) in sigs]
@@ -553,6 +550,8 @@ def run(log=print, now=None, dry=False, client_cands=None):
         per[b["key"]] = days
         res["books"].append({"id": b["id"], "key": b["key"], "kind": b["kind"], "status": b["status"],
                              "rule": rule_text(b["kind"], b["rule"]), "why": b.get("why"),
+                             "exit_rules": [rule_text("exit", r) for r in (b.get("exit_rules") or [])],
+                             "exit_since": b.get("exit_since"),
                              "born_at": b["born_at"], "retired_why": b.get("retired_why"),
                              "days": round((now - lo) / DAY, 2), "book": st_, "base": bst, "null": null})
     _bs, per[BASE] = cash_days(base_all, now, ctx)
@@ -590,7 +589,7 @@ def run(log=print, now=None, dry=False, client_cands=None):
                 "live": len(lv), "group": {"live_with_cash": sum(1 for x in res["books"] if x["status"] == "live"
                                                                  and x["book"].get("final") is not None),
                                            "better_than_base": len(better)},
-                "limits": {"cap_live": CAP_LIVE, "cap_entry": CAP_ENTRY, "cap_exit": CAP_EXIT, "per_week": PER_WEEK, "soft_min": SOFT_MIN,
+                "limits": {"cap_live": CAP_LIVE, "cap_entry": CAP_ENTRY, "max_exit_rules": MAX_EXIT_RULES, "per_week": PER_WEEK, "soft_min": SOFT_MIN,
                            "soft_p": SOFT_P, "retire_min_d": RETIRE_MIN_D, "window_d": WINDOW_D, "idle_d": IDLE_D},
                 "secs": round(time.time() - t0, 1)})
     if not dry:
@@ -620,7 +619,7 @@ def report(r):
         nl = x.get("null") or {}
         nt = pct(nl.get("median_final")) + (f" (не хуже {nl['not_worse_share']})" if nl.get("not_worse_share") is not None else "")
         st_ = "живая" if x["status"] == "live" else f"отставлена: {x.get('retired_why')}"
-        L.append(f"| {x['id']} | { {'skip': 'фильтр', 'exit': 'выход'}.get(x['kind'], 'ТВХ') } | `{x['rule']}` | {x['days']} | "
+        L.append(f"| {x['id']} | {'фильтр' if x['kind'] == 'skip' else 'ТВХ'} | `{x['rule']}` | {x['days']} | "
                  f"{x['book'].get('n') or 0} | {pct(x['book'].get('final'))} | {pct(x['base'].get('final'))} | {nt} | {st_} |")
     if not r["books"]:
         L.append("| — | | книг ещё нет | | | | | | |")
@@ -630,6 +629,8 @@ def report(r):
     for x in r["books"]:
         if x.get("why"):
             L.append(f"- {x['id']}: {x['why']}")
+            for xr in x.get("exit_rules") or []:
+                L.append(f"  · выход: `{xr}`")
     L += ["", "## Наблюдения недели и порог", "",
           "| вид | правило | случаев | случайные не хуже | вердикт |", "|---|---|---|---|---|"]
     for c in r["candidates"]:
@@ -640,11 +641,44 @@ def report(r):
     return "\n".join(L) + "\n"
 
 
+def attach_exits(log=print, now=None, dry=False):
+    """Живые книги ТВХ без правил выхода получают прошедшие порог правила выхода
+    последнего поиска с `exit_since` = следующий час (решение владельца 29.10:
+    «в книге со своим входом — и свой выход»). Прежние входы книги не
+    пересчитываются: выход по состоянию — с часа подключения."""
+    import entry_search as ES                                  # noqa: E402
+    now = now or time.time()
+    reg = load()
+    try:
+        with open(ES.LATEST, encoding="utf-8") as f:
+            search = json.load(f)
+        with open(ES.RULES_FILE, encoding="utf-8") as f:
+            rfile = json.load(f)
+    except (OSError, ValueError) as e:
+        return {"error": f"поиск или правила не прочитаны: {type(e).__name__}"}
+    xr = exit_rules_for_birth(exit_candidates(search, rfile))
+    if not xr:
+        return {"error": "прошедших порог правил выхода нет"}
+    since = float((int(now // H) + 1) * H)
+    done = []
+    for b in reg["books"]:
+        if b["kind"] == "entry" and b["status"] == "live" and not b.get("exit_rules"):
+            b["exit_rules"] = xr
+            b["exit_since"] = since
+            done.append(b["id"])
+            log(f"{b['id']}: правил выхода {len(xr)}, с {time.strftime('%Y-%m-%d %H:%M', time.gmtime(since))} UTC")
+    if done and not dry:
+        save(reg)
+    return {"attached": done, "rules": [rule_text("exit", r) for r in xr], "since": since}
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--tick", action="store_true", help="часовой проход книг ТВХ и «свой выход»")
+    ap.add_argument("--tick", action="store_true", help="часовой проход книг ТВХ")
     ap.add_argument("--dry", action="store_true", help="без записи реестра, состояния и кэша")
     ap.add_argument("--no-publish", action="store_true")
+    ap.add_argument("--attach-exits", action="store_true",
+                    help="разово: живым книгам ТВХ без правил выхода — правила выхода последнего поиска (владелец 29.10)")
     a = ap.parse_args(argv)
     try:
         sys.stdout.reconfigure(line_buffering=True)
@@ -652,6 +686,12 @@ def main(argv=None):
         pass
     import arm_book as AB                                     # noqa: E402
     log = AB.guarded(print, limit=2500)
+    if a.attach_exits:
+        r = attach_exits(log=log, dry=a.dry)
+        print(json.dumps(r, ensure_ascii=False))
+        if not r.get("error") and not a.dry and not a.no_publish:
+            subprocess.run([os.path.join(ROOT, "tools", "publish.sh"), "книги ТВХ: правила выхода подключены"], cwd=ROOT, check=False)
+        return 0 if not r.get("error") else 1
     if a.tick:
         s = tick(log=log, dry=a.dry)
         print(json.dumps(s, ensure_ascii=False))

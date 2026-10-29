@@ -441,7 +441,9 @@ class App:
         R = TRADES.rules()
         head = {"book": book, "id": bid, "kind": "model_" + str(b.get("kind")), "status": b.get("status"),
                 "born_at": b.get("born_at"), "retired_why": b.get("retired_why"),
-                "rule": R.model_rule_text(b), "why": b.get("why"), "gate": b.get("gate"), "W": rule.get("W")}
+                "rule": R.model_rule_text(b), "why": b.get("why"), "gate": b.get("gate"), "W": rule.get("W"),
+                "exit_rules": [{"when": r.get("when"), "exit": r.get("exit"), "why": r.get("why")}
+                               for r in (b.get("exit_rules") or [])], "exit_since": b.get("exit_since")}
         thr = {c["field"]: (c["op"], c["value"]) for c in rule.get("when") or []}
 
         def words(vals):
@@ -460,26 +462,7 @@ class App:
             st_, tk, lev = (str(ex or "").split(":") + ["", "", ""])[:3]
             return ((f"stop {st_[1:]} %" if st_ not in ("s0", "") else "no stop") + f", take ×{tk[1:] or '2'}"
                     + (", equal-risk leverage" if lev == "eq" else ", book leverage"))
-        if b.get("kind") == "exit":
-            try:
-                with open(self.AI_MODEL_ENTRY, encoding="utf-8") as f:
-                    st = (json.load(f) or {}).get(bid) or {}
-            except (OSError, ValueError):
-                st = {}
-            ew = exit_words(rule.get("exit"))
-            for sk, d in st.items():
-                sym, _, at_s = sk.partition("|")
-                try:
-                    at_sig = float(at_s)
-                except ValueError:
-                    continue
-                own = int(d.get("k", -1)) == 0
-                entries.append({"key": f"{bid}|{sk}", "book": book, "sym": sym, "side": "short",
-                                "signal_at": at_sig, "at": at_sig, "t": d.get("t"), "k": 0 if own else None, "W": None,
-                                "decision": "open" if own else "skip", "no_verdict": None,
-                                "reasons": ([f"the rule held at the signal hour: own exit ({ew})"] if own
-                                            else ["the rule did not hold: the book's exit"]) + words(d.get("vals"))})
-        elif b.get("kind") == "entry":
+        if b.get("kind") == "entry":
             try:
                 with open(self.AI_MODEL_ENTRY, encoding="utf-8") as f:
                     st = (json.load(f) or {}).get(bid) or {}
@@ -500,7 +483,11 @@ class App:
                                 "decision": "open" if entered else "skip", "no_verdict": None,
                                 "reasons": ([f"entered {k} h after the signal: the rule held"] if entered
                                             else [f"the rule did not hold in any of the {W + 1} hours after the signal"])
-                                + words(d.get("vals"))})
+                                + words(d.get("vals"))
+                                + ([f"own exit: {exit_words(d['exit'])}"
+                                    + (f" (exit rule {int(d['exit_rule']) + 1} held at the entry hour)"
+                                       if d.get("exit_rule") is not None else " (no exit rule held: the book's exit)")]
+                                   if entered and d.get("exit") else [])})
         else:
             try:
                 names = sorted(f for f in os.listdir(self.AI_DIR) if f.startswith("decisions-") and f.endswith(".jsonl"))
