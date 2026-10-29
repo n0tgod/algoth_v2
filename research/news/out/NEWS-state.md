@@ -1,13 +1,13 @@
 # Новостной фон (спека 19 §4)
 
-Срез 2026-10-29T20:45:02Z, новых 0, за сутки 32 (с привязкой к нашим именам 14).
+Срез 2026-10-29T21:00:03Z, новых 1, за сутки 33 (с привязкой к нашим именам 15).
 
 | лента | статей в ответе | новых | отказ |
 |---|---|---|---|
 | coindesk | — | — | HTTP 403 |
 | cointelegraph | 30 | 0 |  |
-| theblock | 20 | 0 |  |
+| theblock | 20 | 1 |  |
 
-Чаще всего за сутки: BTCUSDT 6, HYPEUSDT 2, CCUSDT 2, ETHUSDT 2, TRXUSDT 2, SOLUSDT 2, UNIUSDT 1, REDUSDT 1, XLMUSDT 1
+Чаще всего за сутки: BTCUSDT 7, HYPEUSDT 2, CCUSDT 2, ETHUSDT 2, TRXUSDT 2, SOLUSDT 2, UNIUSDT 1, REDUSDT 1, XLMUSDT 1
 
 Календарь на 48 ч: 2026-10-30T08:00Z monthly Deribit options expiry
