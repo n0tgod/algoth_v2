@@ -6,3 +6,18 @@ m01: правил выхода 3, с 2026-10-29 07:00 UTC
 m02: правил выхода 3, с 2026-10-29 07:00 UTC
 m03: правил выхода 3, с 2026-10-29 07:00 UTC
 {"attached": ["m01", "m02", "m03"], "rules": ["name_floor_share >= 0.282 → стоп 3 %, тейк обещание ×3, равный риск", "depth_eat_bid <= 220 → стоп 3 %, тейк обещание ×2, равный риск", "spread_bp >= 9 → стоп 8 %, тейк обещание ×3, плечо книги"], "since": 1793257200.0}
+ВНИМАНИЕ: 2026-10-29T06:53:57Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nc24.log                    |  20 +++
+ jobs/done/nc26.done                   |   1 +
+ jobs/done/nc26.log                    |   8 +
+ jobs/poke.log                         |   5 +
+ jobs/queue-state.md                   |   2 +-
+ research/ai_gate/out/model_books.json | 317 +++++++++++++++++++++++++++-------
+ research/s8_loop/out/day_brake.json   |   2 +-
+ 7 files changed, 292 insertions(+), 63 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   aadf73e8c..8fb660ed5  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-29T06:54:02Z, код 0
