@@ -37,3 +37,22 @@
 | oi_1h >= 0.03 и px_1h >= 0.02 и crowd_bybit_shift <= -0.05, до 12 ч | 671 | +0.38 % | +2.71 % | -0.45 % | 1.0 | 252: -0.11 %; 419: -0.79 % |
 | btc_1h >= 0.004 и buy_share >= 0.6, до 8 ч | 145 | +1.67 % | +6.19 % | -0.19 % | 0.99 | 72: -0.08 %; 73: -0.30 % |
 
+ВНИМАНИЕ: 2026-10-29T11:38:55Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nc29.log                       |  9 ++++++++
+ jobs/done/nc30.done                      |  1 +
+ jobs/done/nc30.log                       | 39 ++++++++++++++++++++++++++++++++
+ jobs/poke.log                            |  3 +++
+ jobs/queue-state.md                      |  2 +-
+ research/ai_gate/out/CLOSE-SEARCH.md     |  5 ++--
+ research/ai_gate/out/close_search.json   |  2 +-
+ research/dca_paper/out/DCA-pair.md       | 26 ++++++++++-----------
+ research/dca_paper/out/watch/latest.json |  2 +-
+ research/dca_paper/out/watch/pair.json   |  2 +-
+ research/s8_loop/out/day_brake.json      |  2 +-
+ 11 files changed, 73 insertions(+), 20 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   b19989a1a..647f1d76b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-29T11:39:00Z, код 0
