@@ -795,7 +795,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L293 `report(r)`
 - L332 `main(argv=None)`
 
-## research/ai_gate/gate_run.py · 515 строк
+## research/ai_gate/gate_run.py · 516 строк
 
 Запись вперёд судьи (спека 19, этап N3): решения в реальном времени.
 
@@ -837,8 +837,8 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L192 `model_pass(recs, dec_by, dossier_of, now, out_rows, full, build…` — Решения книг-фильтров модели (спека 19 §12.1) по входам Depth Short.
 - L240 `candidates(log)` — Позиции книг Depth так, как они живут (шорты — после возраста и охраны).
 - L258 `run(log=print, client=None, dry=False, now=None)`
-- L447 `summary(rows, now, stats, t0, fresh, news_age, ms_age)`
-- L487 `main(argv=None)`
+- L448 `summary(rows, now, stats, t0, fresh, news_age, ms_age)`
+- L488 `main(argv=None)`
 
 ## research/ai_gate/judge.py · 314 строк
 
@@ -862,7 +862,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L118 `review_dossier(entry_dossier, decision_row, outcome, path)` — Досье разбора (§11.3): досье на момент входа КАК БЫЛО, решение с причинами, исход и путь. Ничего из будущего…
 - L128 `ask_review(client, d)` — Один вызов разбора → строка журнала (`kind: review`); та же дорога, что `ask`.
 - L135 `SYSTEM_LEARN_ADD = <текст, 3 строк>`
-- L138 `PROMPT_V_LEARN = 'learn-v1-2026-10-20'`
+- L138 `PROMPT_V_LEARN = 'learn-v2-2026-10-29'`
 - L141 `ask_learn(client, dossier)` — Учащаяся ветка (§11.4): промпт входа + пояснение двух блоков досье.
 - L150 `schema(words)`
 - L160 `KINDS = {'entry': (SYSTEM_ENTRY, ('open', 'skip…`
@@ -878,48 +878,55 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L293 `market_news(items, at_ms, hours=24, cap=10)`
 - L300 `dossier(kind, rec, book, side, at_s, *, px=None, crowd=None, ma…` — Досье для судьи. news=None — ветка без новостей (`ai_plain`): блоков новостей нет вовсе.
 
-## research/ai_gate/lessons.py · 472 строк
+## research/ai_gate/lessons.py · 580 строк
 
 Уроки судьи: предложение моделью, приём ЧИСЛОМ (спека 19 §11.4, U2).
 
-- L40 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L41 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L46 `LESSONS = os.path.join(HERE, 'out', 'lessons.json…`
-- L47 `OUT = os.path.join(HERE, 'out')`
-- L48 `LATEST = os.path.join(OUT, 'lessons_latest.json')`
-- L49 `REPORT = os.path.join(OUT, 'LESSONS.md')`
-- L50 `PATHS = os.path.join(OUT, 'reviews')`
-- L52 `MIN_CASES = 20`
-- L53 `MIN_HALF = 8`
-- L54 `P_MAX = 0.1`
-- L55 `DRAWS = 400`
-- L56 `MAX_RULES = 20`
-- L57 `REVIEW_DAYS = 7`
-- L58 `OPS = ('<', '<=', '>', '>=')`
-- L59 `SKIP_KEYS = ('news_on_this_coin_72h', 'market_headl…`
-- L64 `leaves(d, pre='')`
-- L72 `fields_of(dossier)` — Числовые поля досье плоско + два производных (объявлены здесь).
-- L85 `catalog(cases)`
-- L96 `load_dossiers()`
-- L115 `load_paths()`
-- L127 `cases(decisions=None, dossiers=None, paths=None)` — Входы ai_news, решённые моделью, с досье и закрытым путём.
-- L153 `rule_id(rule)`
-- L158 `valid(rule, cat)` — → причина отказа или None. Поле — из каталога, знак — из словаря, число — число.
-- L177 `matches(rule, f)`
-- L188 `_half(xs, rule, rng)`
-- L202 `test_rule(rule, cs, seed=0)` — Обе половины по времени; всего; вердикт по объявленным порогам.
-- L227 `SYSTEM_LESSONS = 'You are improving the entry judge of a…`
-- L236 `schema_lessons()`
-- L247 `parse_lessons(stop, text)`
-- L261 `propose(client, cs, cat, state, now)`
-- L279 `SIMILAR_K = 5`
-- L280 `SIMILAR_SAME = 3`
-- L283 `similar(cs, sym, side, crowd_now, at_s, k=SIMILAR_K)` — Похожие закрытые случаи ДО момента решения: то же имя (свежие, до `SIMILAR_SAME`), затем та же сторона с ближ…
-- L305 `load_state(path=None)`
-- L314 `lessons_text(state)` — Принятые уроки словами — для досье и промпта учащейся ветки.
-- L326 `run(log=print, now=None, client=None, dry=False, cs=None, path=…`
-- L403 `report(state, out)`
-- L430 `main(argv=None)`
+- L49 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L50 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L55 `LESSONS = os.path.join(HERE, 'out', 'lessons.json…`
+- L56 `OUT = os.path.join(HERE, 'out')`
+- L57 `LATEST = os.path.join(OUT, 'lessons_latest.json')`
+- L58 `REPORT = os.path.join(OUT, 'LESSONS.md')`
+- L59 `PATHS = os.path.join(OUT, 'reviews')`
+- L61 `MIN_CASES = 20`
+- L62 `MIN_HALF = 8`
+- L63 `P_MAX = 0.1`
+- L64 `DRAWS = 400`
+- L65 `MAX_RULES = 20`
+- L66 `REVIEW_DAYS = 7`
+- L67 `DOS = ('skip', 'take')`
+- L68 `MIN_TAKE_REJECTED = 5`
+- L69 `MISTAKE_DAYS = 30`
+- L70 `MISTAKE_K = 5`
+- L71 `OPS = ('<', '<=', '>', '>=')`
+- L72 `SKIP_KEYS = ('news_on_this_coin_72h', 'market_headl…`
+- L77 `leaves(d, pre='')`
+- L85 `fields_of(dossier)` — Числовые поля досье плоско + два производных (объявлены здесь).
+- L98 `catalog(cases)`
+- L109 `load_dossiers()`
+- L128 `load_paths()`
+- L140 `cases(decisions=None, dossiers=None, paths=None)` — Входы ai_news, решённые моделью, с досье и закрытым путём.
+- L167 `rule_id(rule)`
+- L174 `valid(rule, cat)` — → причина отказа или None. Поле — из каталога, знак — из словаря, число — число.
+- L193 `matches(rule, f)`
+- L204 `_half(xs, rule, rng)` — `p_random` — доля случайных выборок того же размера, НЕ ЛУЧШИХ правила: у skip — не хуже подходящих (средний…
+- L223 `test_rule(rule, cs, seed=0)` — Обе половины по времени; всего; вердикт по объявленным порогам.
+- L253 `SYSTEM_LESSONS = 'You are improving the entry judge of a…`
+- L262 `schema_lessons()`
+- L273 `parse_lessons(stop, text)`
+- L287 `propose(client, cs, cat, state, now)`
+- L311 `SIMILAR_K = 5`
+- L312 `SIMILAR_SAME = 3`
+- L315 `_utc(ts)`
+- L319 `mistakes(cs, at_s, days=MISTAKE_DAYS, k=MISTAKE_K)` — Свои ошибки ДО момента решения (§11.4, 29.10): отклонённые входы последних `days` суток, вышедшие в плюс у ба…
+- L342 `similar(cs, sym, side, crowd_now, at_s, k=SIMILAR_K)` — Похожие закрытые случаи ДО момента решения: то же имя (свежие, до `SIMILAR_SAME`), затем та же сторона с ближ…
+- L364 `load_state(path=None)`
+- L373 `lessons_text(state)` — Принятые уроки словами — для досье и промпта учащейся ветки.
+- L386 `learn_still_rejects(state, cs, decisions)` — Мера обучения: сколько входов, подходящих под ПРИНЯТОЕ правило take, ветка `ai_learn` всё же отклонила после…
+- L403 `run(log=print, now=None, client=None, dry=False, cs=None, path=…`
+- L492 `report(state, out)`
+- L538 `main(argv=None)`
 
 ## research/ai_gate/model_books.py · 913 строк
 
