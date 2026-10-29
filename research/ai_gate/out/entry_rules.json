@@ -273,9 +273,98 @@
    "W": 4,
    "why": "Longs are crowded and paying positive funding while price stalls or dips. Trapped longs who are bleeding funding tend to unwind, which favours the short with limited upside risk.",
    "proposed_at": "2026-10-28T22:45:23Z"
+  },
+  {
+   "when": [
+    {
+     "field": "since_signal",
+     "op": ">=",
+     "value": 0.02
+    },
+    {
+     "field": "buy_share",
+     "op": "<=",
+     "value": 0.48
+    }
+   ],
+   "W": 6,
+   "why": "Price has already squeezed up since the signal, but buying has faded (sellers dominate the tape). Shorting after the exhausted pop gives a better price and less room for a further run against us.",
+   "proposed_at": "2026-10-29T11:35:51Z"
+  },
+  {
+   "when": [
+    {
+     "field": "oi_1h",
+     "op": "<=",
+     "value": -0.01
+    },
+    {
+     "field": "px_1h",
+     "op": ">=",
+     "value": 0.0
+    }
+   ],
+   "W": 4,
+   "why": "Price is rising while open interest falls, so shorts are covering (squeeze fuel being burned) rather than new longs building. Once the forced buying ends, adverse excursion should be small, which suits a 3% stop at equal risk.",
+   "exit": "s3:t2:eq",
+   "proposed_at": "2026-10-29T11:35:51Z"
+  },
+  {
+   "when": [
+    {
+     "field": "burst_ratio",
+     "op": "<=",
+     "value": 0.5
+    },
+    {
+     "field": "px_4h",
+     "op": ">=",
+     "value": 0.03
+    }
+   ],
+   "W": 6,
+   "why": "After a 4h run-up, trade bursts have died out: buying exhaustion. Entering into a quiet top limits the move against us, so a short stop can survive.",
+   "exit": "s3:t2:eq",
+   "proposed_at": "2026-10-29T11:35:51Z"
+  },
+  {
+   "when": [
+    {
+     "field": "crowd_bybit_shift",
+     "op": ">=",
+     "value": 0.03
+    },
+    {
+     "field": "btc_1h",
+     "op": "<=",
+     "value": 0.0
+    }
+   ],
+   "W": 5,
+   "why": "The crowd is flipping long (late longs chasing) while BTC is not supporting the move. That leaves trapped longs as downside fuel without market-wide upward pressure.",
+   "exit": "s5:t2:book",
+   "proposed_at": "2026-10-29T11:35:51Z"
+  },
+  {
+   "when": [
+    {
+     "field": "funding",
+     "op": ">=",
+     "value": 0.0001
+    },
+    {
+     "field": "crowd_bybit",
+     "op": ">=",
+     "value": 0.55
+    }
+   ],
+   "W": 6,
+   "why": "Positive funding and a long-heavy crowd mean longs pay to stay in and are crowded. A short pays no carry and benefits from the long unwind.",
+   "exit": "s5:t2:eq",
+   "proposed_at": "2026-10-29T11:35:51Z"
   }
  ],
- "updated": "2026-10-28T22:45:23Z",
+ "updated": "2026-10-29T11:35:51Z",
  "exit_rules": [
   {
    "when": [
@@ -324,6 +413,110 @@
    "exit": "s8:t2:book",
    "why": "When BTC is already falling over 24h, the market tailwind supports the short. A wide stop is enough to cap a rare reversal without cutting the trend move; this gain held in both halves.",
    "proposed_at": "2026-10-28T22:45:23Z"
+  },
+  {
+   "when": [
+    {
+     "field": "name_floor_share",
+     "op": ">=",
+     "value": 0.282
+    },
+    {
+     "field": "spread_bp",
+     "op": ">=",
+     "value": 7.0
+    }
+   ],
+   "exit": "s3:t3:eq",
+   "why": "Coins that often hit the book's floor in thin books blow far against the position. A 3% equal-risk stop cuts the tail early while the take ×3 keeps the winners.",
+   "proposed_at": "2026-10-29T11:35:51Z"
+  },
+  {
+   "when": [
+    {
+     "field": "depth_eat_bid",
+     "op": "<=",
+     "value": 220.0
+    },
+    {
+     "field": "depth_eat_ask",
+     "op": "<=",
+     "value": 221.0
+    }
+   ],
+   "exit": "s3:t2:eq",
+   "why": "Shallow book on both sides means moves are noisy, and losers run when they run. A 3% stop at equal risk caps them, and the take ×2 is unchanged.",
+   "proposed_at": "2026-10-29T11:35:51Z"
+  },
+  {
+   "when": [
+    {
+     "field": "name_floor_share",
+     "op": ">=",
+     "value": 0.35
+    }
+   ],
+   "exit": "s2:t3:eq",
+   "why": "For the most floor-prone names, the deep floor is the main loss source. A 2% stop with equal-risk sizing replaces the large floor losses with small ones.",
+   "proposed_at": "2026-10-29T11:35:51Z"
+  },
+  {
+   "when": [
+    {
+     "field": "spread_bp",
+     "op": ">=",
+     "value": 9.0
+    },
+    {
+     "field": "btc_24h",
+     "op": "<=",
+     "value": -0.0038
+    }
+   ],
+   "exit": "s8:t3:book",
+   "why": "Wide-spread coins in a falling BTC tape tend to trend down. A wider 8% stop and take ×3 let the trend run instead of being taken early.",
+   "proposed_at": "2026-10-29T11:35:51Z"
+  }
+ ],
+ "close_rules": [
+  {
+   "when": [
+    {
+     "field": "oi_1h",
+     "op": ">=",
+     "value": 0.03
+    },
+    {
+     "field": "px_1h",
+     "op": ">=",
+     "value": 0.02
+    },
+    {
+     "field": "crowd_bybit_shift",
+     "op": "<=",
+     "value": -0.05
+    }
+   ],
+   "H": 12,
+   "why": "Open interest rebuilds on a price rise while the crowd shifts short: fresh shorts are piling in against a rising price, which sets up a new squeeze. That breaks the short thesis, so close.",
+   "proposed_at": "2026-10-29T11:35:51Z"
+  },
+  {
+   "when": [
+    {
+     "field": "btc_1h",
+     "op": ">=",
+     "value": 0.004
+    },
+    {
+     "field": "buy_share",
+     "op": ">=",
+     "value": 0.6
+    }
+   ],
+   "H": 8,
+   "why": "BTC turns up sharply together with heavy aggressive buying in the coin. A market-wide bid works against the short early in its life, so close.",
+   "proposed_at": "2026-10-29T11:35:51Z"
   }
  ]
 }

@@ -1,0 +1,18 @@
+== задание nc29 ==
+строка: run research/ai_gate/patterns.py
+начало: 2026-10-29T11:35:27Z
+запускаю: .venv/bin/python research/ai_gate/patterns.py 
+правила входа от модели: новых 5, отвергнуто формой 0; правила выхода: новых 4, отвергнуто 0; правила закрытия: новых 2, отвергнуто 0
+since_signal >= 0.02 и buy_share <= 0.48, окно 6 ч — Price has already squeezed up since the signal, but buying has faded (sellers dominate the tape). Shorting after the exhausted pop gives a better price and less room for a further run against us.
+oi_1h <= -0.01 и px_1h >= 0, окно 4 ч — Price is rising while open interest falls, so shorts are covering (squeeze fuel being burned) rather than new longs building. Once the forced buying ends, adverse excursion should be small, which suits a 3% stop at equal risk.
+burst_ratio <= 0.5 и px_4h >= 0.03, окно 6 ч — After a 4h run-up, trade bursts have died out: buying exhaustion. Entering into a quiet top limits the move against us, so a short stop can survive.
+crowd_bybit_shift >= 0.03 и btc_1h <= 0, окно 5 ч — The crowd is flipping long (late longs chasing) while BTC is not supporting the move. That leaves trapped longs as downside fuel without market-wide upward pressure.
+funding >= 0.0001 и crowd_bybit >= 0.55, окно 6 ч — Positive funding and a long-heavy crowd mean longs pay to stay in and are crowded. A short pays no carry and benefits from the long unwind.
+выход: name_floor_share >= 0.282 и spread_bp >= 7 → s3:t3:eq — Coins that often hit the book's floor in thin books blow far against the position. A 3% equal-risk stop cuts the tail early while the take ×3 keeps the winners.
+выход: depth_eat_bid <= 220 и depth_eat_ask <= 221 → s3:t2:eq — Shallow book on both sides means moves are noisy, and losers run when they run. A 3% stop at equal risk caps them, and the take ×2 is unchanged.
+выход: name_floor_share >= 0.35 → s2:t3:eq — For the most floor-prone names, the deep floor is the main loss source. A 2% stop with equal-risk sizing replaces the large floor losses with small ones.
+выход: spread_bp >= 9 и btc_24h <= -0.0038 → s8:t3:book — Wide-spread coins in a falling BTC tape tend to trend down. A wider 8% stop and take ×3 let the trend run instead of being taken early.
+закрытие: oi_1h >= 0.03 и px_1h >= 0.02 и crowd_bybit_shift <= -0.05, до 12 ч — Open interest rebuilds on a price rise while the crowd shifts short: fresh shorts are piling in against a rising price, which sets up a new squeeze. That breaks the short thesis, so close.
+закрытие: btc_1h >= 0.004 и buy_share >= 0.6, до 8 ч — BTC turns up sharply together with heavy aggressive buying in the coin. A market-wide bid works against the short early in its life, so close.
+модель: Entry rules target exhaustion and short-covering states after the signal, so that the adverse excursion is smaller and 3-5% stops are viable. Exit rules extend the robust name_floor_share and thin-depth findings with a short stop at equal risk. Close rules are few, because the state terciles show early closing mostly loses.
+стоимость: 0.118604 $
