@@ -4,3 +4,31 @@
 запускаю: .venv/bin/python tools/app_api/restart.py 
 порт 443: слушает
 конец: 2026-10-29T11:27:13Z, код 0
+ВНИМАНИЕ: 2026-10-29T11:27:14Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nc27.done                                |    1 +
+ jobs/done/nc27.log                                 |    5 +
+ jobs/done/nc28.done                                |    1 +
+ jobs/done/nc28.log                                 |    6 +
+ jobs/poke.log                                      |    4 +
+ jobs/queue-state.md                                |    2 +-
+ research/dca_paper/out/DCA-pair.md                 |  218 +-
+ research/dca_paper/out/DCA-paper.json              | 2224 ++++++++++----------
+ research/dca_paper/out/DCA-paper.md                |   36 +-
+ research/dca_paper/out/DCA-short.md                |  164 +-
+ research/dca_paper/out/fixed_pair-2026-10-29.jsonl |   30 +
+ .../dca_paper/out/fixed_short-2026-10-28.jsonl     |    4 +
+ .../dca_paper/out/fixed_short-2026-10-29.jsonl     |   41 +
+ research/dca_paper/out/pair-2026-10-29.jsonl       |   28 +
+ research/dca_paper/out/short-2026-10-28.jsonl      |    4 +
+ research/dca_paper/out/short-2026-10-29.jsonl      |   38 +
+ research/dca_paper/out/watch/h24.json              |    2 +-
+ research/dca_paper/out/watch/latest.json           |    2 +-
+ research/dca_paper/out/watch/pair.json             |    2 +-
+ research/dca_paper/out/watch/sit.json              |    2 +-
+ research/s8_loop/out/day_brake.json                |    2 +-
+ 21 files changed, 1489 insertions(+), 1327 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   97c753952..50cd9a630  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

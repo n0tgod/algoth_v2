@@ -134,7 +134,7 @@
 - `regime_split.py` · 213 строк — Разрез исходов короткого входа по состоянию имени и рынка (вопрос владельца 25.10: как ловить трендовые паден…
 - `trade_path.py` · 134 строк — Путь цены ВНУТРИ сделки числами (спека 19 §11.2, этап U0).
 - тесты: `test_close_search.py` (94), `test_entry_search.py` (150), `test_entry_shift.py` (93), `test_gate_books.py` (82), `test_gate_run.py` (209), `test_judge.py` (137), `test_lessons.py` (103), `test_model_books.py` (347), `test_path_review.py` (135), `test_patterns.py` (68), `test_trade_path.py` (53)
-- отчёты в `out/` (8): AI-dry-hour.md, AI-gate-books.md, CROWD-gate.md, ENTRY-SEARCH.md, ENTRY-SHIFT.md, LESSONS.md, MODEL-BOOKS.md, REGIME-split.md
+- отчёты в `out/` (9): AI-dry-hour.md, AI-gate-books.md, CLOSE-SEARCH.md, CROWD-gate.md, ENTRY-SEARCH.md, ENTRY-SHIFT.md, LESSONS.md, MODEL-BOOKS.md, REGIME-split.md
 
 ## research/asset_groups — A3 — группы активов, ликвидность, кандидаты пар
 
