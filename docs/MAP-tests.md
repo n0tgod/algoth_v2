@@ -314,7 +314,7 @@
 - L49 `R_NOISE = {'text': 'fear', 'when': [{'field': 'ma…`
 - L52 `main()`
 
-## research/ai_gate/test_model_books.py · 251 строк
+## research/ai_gate/test_model_books.py · 257 строк
 
 Книги модели (спека 19 §12): мягкий порог, пределы, подпись, рождение с нуля в следующий час, отставка по окн…
 
@@ -326,8 +326,8 @@
 - L78 `test_entry_hour_first_match_frozen_and_dedup()`
 - L108 `test_skip_pass_in_judge_and_rules_registration()`
 - L154 `test_exit_cell_in_signature_candidates_and_words()` — Выход книги модели (§11.9): подпись без выхода — прежняя (m01/m02 не меняются), с выходом — другая; кандидат…
-- L173 `test_exit_book_kind_candidates_decisions_and_records()` — Книга «свой выход» (§11.10): кандидат из разреза правил выхода с мягким порогом; подпись несёт ячейку; предел…
-- L241 `main()`
+- L173 `test_entry_book_carries_exit_rules_judged_at_entry_hour()` — Свой выход у книги ТВХ (§11.10, владелец 29.10): кандидаты правил выхода с мягким порогом; книга ТВХ рождаетс…
+- L247 `main()`
 
 ## research/ai_gate/test_path_review.py · 135 строк
 

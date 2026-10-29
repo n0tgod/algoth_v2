@@ -32,7 +32,67 @@
    },
    "decided_at": 1792569038.3967063,
    "born_at": 1792569600.0,
-   "status": "live"
+   "status": "live",
+   "exit_rules": [
+    {
+     "when": [
+      {
+       "field": "spread_bp",
+       "op": ">=",
+       "value": 9.0
+      }
+     ],
+     "exit": "s8:t3:book",
+     "why": "Wide-spread, illiquid names make noisy swings that tighter stops would cut. A wide 8% stop with a 3x take lets the larger moves play out; this gain held in both halves.",
+     "gate": {
+      "matched": 941,
+      "mean_cell": 0.02266,
+      "mean_book": 0.01814,
+      "gain": 0.00129,
+      "p_random": 0.0,
+      "search_at": "2026-10-28T22:48:25Z"
+     }
+    },
+    {
+     "when": [
+      {
+       "field": "name_floor_share",
+       "op": ">=",
+       "value": 0.282
+      }
+     ],
+     "exit": "s3:t3:eq",
+     "why": "Coins that often hit the book's floor have large, fast losses. A 3% stop at equal risk cuts those losers early and still lets a 3x take capture the winners; this gain held in both halves.",
+     "gate": {
+      "matched": 533,
+      "mean_cell": 0.00165,
+      "mean_book": -0.05775,
+      "gain": 0.00961,
+      "p_random": 0.0,
+      "search_at": "2026-10-28T22:48:25Z"
+     }
+    },
+    {
+     "when": [
+      {
+       "field": "depth_eat_bid",
+       "op": "<=",
+       "value": 220.0
+      }
+     ],
+     "exit": "s3:t2:eq",
+     "why": "Thin bid-side depth consumption at the signal means little aggressive pressure is present. Adverse moves tend to be contained, so a 3% stop rarely cuts winners; this gain held in both halves.",
+     "gate": {
+      "matched": 477,
+      "mean_cell": 0.00402,
+      "mean_book": -0.01864,
+      "gain": 0.00328,
+      "p_random": 0.0,
+      "search_at": "2026-10-28T22:48:25Z"
+     }
+    }
+   ],
+   "exit_since": 1793257200.0
   },
   {
    "id": "m02",
@@ -66,7 +126,67 @@
    },
    "decided_at": 1792569038.3967063,
    "born_at": 1792569600.0,
-   "status": "live"
+   "status": "live",
+   "exit_rules": [
+    {
+     "when": [
+      {
+       "field": "spread_bp",
+       "op": ">=",
+       "value": 9.0
+      }
+     ],
+     "exit": "s8:t3:book",
+     "why": "Wide-spread, illiquid names make noisy swings that tighter stops would cut. A wide 8% stop with a 3x take lets the larger moves play out; this gain held in both halves.",
+     "gate": {
+      "matched": 941,
+      "mean_cell": 0.02266,
+      "mean_book": 0.01814,
+      "gain": 0.00129,
+      "p_random": 0.0,
+      "search_at": "2026-10-28T22:48:25Z"
+     }
+    },
+    {
+     "when": [
+      {
+       "field": "name_floor_share",
+       "op": ">=",
+       "value": 0.282
+      }
+     ],
+     "exit": "s3:t3:eq",
+     "why": "Coins that often hit the book's floor have large, fast losses. A 3% stop at equal risk cuts those losers early and still lets a 3x take capture the winners; this gain held in both halves.",
+     "gate": {
+      "matched": 533,
+      "mean_cell": 0.00165,
+      "mean_book": -0.05775,
+      "gain": 0.00961,
+      "p_random": 0.0,
+      "search_at": "2026-10-28T22:48:25Z"
+     }
+    },
+    {
+     "when": [
+      {
+       "field": "depth_eat_bid",
+       "op": "<=",
+       "value": 220.0
+      }
+     ],
+     "exit": "s3:t2:eq",
+     "why": "Thin bid-side depth consumption at the signal means little aggressive pressure is present. Adverse moves tend to be contained, so a 3% stop rarely cuts winners; this gain held in both halves.",
+     "gate": {
+      "matched": 477,
+      "mean_cell": 0.00402,
+      "mean_book": -0.01864,
+      "gain": 0.00328,
+      "p_random": 0.0,
+      "search_at": "2026-10-28T22:48:25Z"
+     }
+    }
+   ],
+   "exit_since": 1793257200.0
   },
   {
    "id": "m03",
@@ -105,7 +225,67 @@
    },
    "decided_at": 1793176505.9269378,
    "born_at": 1793178000.0,
-   "status": "live"
+   "status": "live",
+   "exit_rules": [
+    {
+     "when": [
+      {
+       "field": "spread_bp",
+       "op": ">=",
+       "value": 9.0
+      }
+     ],
+     "exit": "s8:t3:book",
+     "why": "Wide-spread, illiquid names make noisy swings that tighter stops would cut. A wide 8% stop with a 3x take lets the larger moves play out; this gain held in both halves.",
+     "gate": {
+      "matched": 941,
+      "mean_cell": 0.02266,
+      "mean_book": 0.01814,
+      "gain": 0.00129,
+      "p_random": 0.0,
+      "search_at": "2026-10-28T22:48:25Z"
+     }
+    },
+    {
+     "when": [
+      {
+       "field": "name_floor_share",
+       "op": ">=",
+       "value": 0.282
+      }
+     ],
+     "exit": "s3:t3:eq",
+     "why": "Coins that often hit the book's floor have large, fast losses. A 3% stop at equal risk cuts those losers early and still lets a 3x take capture the winners; this gain held in both halves.",
+     "gate": {
+      "matched": 533,
+      "mean_cell": 0.00165,
+      "mean_book": -0.05775,
+      "gain": 0.00961,
+      "p_random": 0.0,
+      "search_at": "2026-10-28T22:48:25Z"
+     }
+    },
+    {
+     "when": [
+      {
+       "field": "depth_eat_bid",
+       "op": "<=",
+       "value": 220.0
+      }
+     ],
+     "exit": "s3:t2:eq",
+     "why": "Thin bid-side depth consumption at the signal means little aggressive pressure is present. Adverse moves tend to be contained, so a 3% stop rarely cuts winners; this gain held in both halves.",
+     "gate": {
+      "matched": 477,
+      "mean_cell": 0.00402,
+      "mean_book": -0.01864,
+      "gain": 0.00328,
+      "p_random": 0.0,
+      "search_at": "2026-10-28T22:48:25Z"
+     }
+    }
+   ],
+   "exit_since": 1793257200.0
   },
   {
    "id": "m04",
@@ -141,5 +321,5 @@
    "status": "live"
   }
  ],
- "updated": "2026-10-28T08:35:09Z"
+ "updated": "2026-10-29T06:49:21Z"
 }

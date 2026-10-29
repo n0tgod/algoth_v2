@@ -1,0 +1,28 @@
+== задание nc24 ==
+строка: run research/ai_gate/model_books.py --attach-exits
+начало: 2026-10-29T06:49:20Z
+запускаю: .venv/bin/python research/ai_gate/model_books.py --attach-exits
+m01: правил выхода 3, с 2026-10-29 07:00 UTC
+m02: правил выхода 3, с 2026-10-29 07:00 UTC
+m03: правил выхода 3, с 2026-10-29 07:00 UTC
+{"attached": ["m01", "m02", "m03"], "rules": ["spread_bp >= 9 → стоп 8 %, тейк обещание ×3, плечо книги", "name_floor_share >= 0.282 → стоп 3 %, тейк обещание ×3, равный риск", "depth_eat_bid <= 220 → стоп 3 %, тейк обещание ×2, равный риск"], "since": 1793257200.0}
+ВНИМАНИЕ: 2026-10-29T06:49:21Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nc24.done                                |   1 +
+ jobs/done/nc24.log                                 |   8 +
+ jobs/done/nc25.done                                |   1 +
+ jobs/done/nc25.log                                 |   4 +
+ jobs/poke.log                                      |   4 +
+ jobs/queue-state.md                                |   2 +-
+ .../out/decisions/decisions-2026-10-29.jsonl       |   1 +
+ research/ai_gate/out/latest.json                   |   2 +-
+ research/ai_gate/out/model_books.json              | 188 ++++++++++++++++++++-
+ research/s8_loop/out/day_brake.json                |   2 +-
+ 10 files changed, 206 insertions(+), 7 deletions(-)
+ОТКАЗ: файл больше 5 МБ: research/dca_paper/out/DCA-pair.json (7 МБ)
+  Ряды и записи в git не идут — правила .gitignore этапа.
+ОТКАЗ: файл больше 5 МБ: research/dca_paper/out/DCA-short.json (6 МБ)
+  Ряды и записи в git не идут — правила .gitignore этапа.
+
+Проверка сохранности данных: docs/DATA-SAFETY.md
+конец: 2026-10-29T06:49:26Z, код 0
