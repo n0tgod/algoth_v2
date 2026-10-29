@@ -552,7 +552,7 @@ class App:
 
         def one(r):
             t = r.get("test") or {}
-            return {"text": r.get("text"), "status": r.get("status"), "why": r.get("why"),
+            return {"text": r.get("text"), "do": r.get("do") or "skip", "status": r.get("status"), "why": r.get("why"),
                     "when": " and ".join(f"{c.get('field')} {c.get('op')} {c.get('value')}" for c in (r.get("when") or [])),
                     "matched": (t.get("all") or {}).get("matched"), "mean_matched": (t.get("all") or {}).get("mean_matched"),
                     "mean_rest": (t.get("all") or {}).get("mean_rest"),

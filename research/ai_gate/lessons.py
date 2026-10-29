@@ -3,9 +3,11 @@
 
 Раз в неделю модель читает разборы своих сделок (U1) за неделю, каталог
 полей досье с диапазонами и действующие уроки — и предлагает до
-`MAX_RULES` правил вида «когда <поля досье с порогами> → skip». Правило
-пишется МАШИННО (поле из каталога, знак, число), рядом — словами. Дальше
-решает не модель, а этот код:
+`MAX_RULES` правил вида «когда <поля досье с порогами> → skip» и — с
+29.10, по слову владельца «судья должен становиться умнее и не отклонять
+сделки, которые должны выйти в плюс», — «когда <…> → take»: брать вопреки
+своим привычным доводам. Правило пишется МАШИННО (поле из каталога, знак,
+число), рядом — словами. Дальше решает не модель, а этот код:
 
 * случаи — входы ветки `ai_news`, решённые моделью, у которых есть досье
   на момент входа (запись) и закрытый путь (U0): исход берётся у БАЗОВОЙ
@@ -16,10 +18,17 @@
   выборок того же размера из той же половины не меньше чем в
   `1 − P_MAX` долях из `DRAWS` (урок проекта: фильтр, режущий сделки,
   сравнивается со случайной выборкой того же размера, многими зёрнами);
-* всего подходящих ≥ `MIN_CASES`.
+* всего подходящих ≥ `MIN_CASES`;
+* правило `take` судится той же мерой с ОБРАТНЫМ знаком: подходящие ЛУЧШЕ
+  остальных и лучше случайных выборок того же размера; и среди подходящих
+  ≥ `MIN_TAKE_REJECTED` входов, которые судья тогда ОТКЛОНИЛ, — иначе
+  правило ничего в его решениях не меняет.
 
 Прошло обе половины — `accepted`, и учащаяся ветка `ai_learn` читает его
-в каждом досье. Не прошло — остаётся `proposed` с числами и ждёт данных.
+в каждом досье — вместе с блоком `own_mistakes` (`mistakes`): свои
+отклонённые входы последних `MISTAKE_DAYS` суток, вышедшие в плюс или
+признанные в разборе ошибкой, с ТОГДАШНИМИ доводами, исходом и путём; всё
+только до момента решения. Не прошло — остаётся `proposed` с числами и ждёт данных.
 Принятый урок, у которого на всей выборке подходящие перестали быть хуже
 остальных, — `revoked`. Пороги объявлены здесь ДО первого прогона и по
 результатам не меняются.
@@ -55,6 +64,10 @@ P_MAX = 0.10            # доля случайных выборок того ж
 DRAWS = 400             # зёрен на половину
 MAX_RULES = 20
 REVIEW_DAYS = 7
+DOS = ("skip", "take")
+MIN_TAKE_REJECTED = 5   # правило take: подходящих среди ОТКЛОНЁННЫХ тогда входов, всего ≥
+MISTAKE_DAYS = 30       # окно своих ошибок в досье ai_learn
+MISTAKE_K = 5           # зря отклонённых примеров в досье, лучшие по исходу
 OPS = ("<", "<=", ">", ">=")
 SKIP_KEYS = ("news_on_this_coin_72h", "market_headlines_24h")
 
@@ -142,7 +155,8 @@ def cases(decisions=None, dossiers=None, paths=None):
             continue
         rv = reviews.get(k) or {}
         out.append({"key": k, "sym": r.get("sym"), "side": r.get("side"), "at": float(r["at"]),
-                    "decision": r["decision"], "pnl": float(p["pnl_frac"]), "exit": p.get("exit"),
+                    "decision": r["decision"], "reasons": r.get("reasons") or [], "confidence": r.get("confidence"),
+                    "pnl": float(p["pnl_frac"]), "exit": p.get("exit"),
                     "exit_ts": float(p["exit_ts"]), "path_words": p.get("words_en"), "f": fields_of(d),
                     "review": {k2: rv.get(k2) for k2 in ("verdict", "failed", "saved", "notes", "lesson")} if rv else None})
     return sorted(out, key=lambda c: c["at"])
@@ -152,13 +166,15 @@ def cases(decisions=None, dossiers=None, paths=None):
 
 def rule_id(rule):
     sig = json.dumps(sorted((c["field"], c["op"], round(float(c["value"]), 6)) for c in rule["when"]))
+    if rule.get("do", "skip") != "skip":
+        sig += "|" + rule["do"]                               # skip 2026-10-20 без хвоста — старые id не меняются
     return hashlib.sha256(sig.encode()).hexdigest()[:10]
 
 
 def valid(rule, cat):
     """→ причина отказа или None. Поле — из каталога, знак — из словаря, число — число."""
-    if rule.get("do") != "skip":
-        return "проверяемы только правила skip"
+    if rule.get("do") not in DOS:
+        return "проверяемы только правила skip и take"
     w = rule.get("when")
     if not isinstance(w, list) or not (1 <= len(w) <= 3):
         return "условий должно быть 1–3"
@@ -186,15 +202,20 @@ def matches(rule, f):
 
 
 def _half(xs, rule, rng):
+    """`p_random` — доля случайных выборок того же размера, НЕ ЛУЧШИХ правила:
+    у skip — не хуже подходящих (средний результат ≤), у take — не лучше (≥)."""
+    take = rule.get("do") == "take"
     m = [c["pnl"] for c in xs if matches(rule, c["f"])]
     rest = [c["pnl"] for c in xs if not matches(rule, c["f"])]
     out = {"n": len(xs), "matched": len(m), "mean_matched": round(st.mean(m), 4) if m else None,
-           "mean_rest": round(st.mean(rest), 4) if rest else None, "p_random": None, "floors_matched": None}
+           "mean_rest": round(st.mean(rest), 4) if rest else None, "p_random": None, "floors_matched": None,
+           "rejected_matched": sum(1 for c in xs if c.get("decision") == "skip" and matches(rule, c["f"]))}
     if m and rest:
         mm = st.mean(m)
         allp = [c["pnl"] for c in xs]
-        as_bad = sum(1 for _ in range(DRAWS) if st.mean(rng.sample(allp, len(m))) <= mm)
-        out["p_random"] = round(as_bad / DRAWS, 3)
+        as_good = sum(1 for _ in range(DRAWS) if (st.mean(rng.sample(allp, len(m))) >= mm if take
+                                                   else st.mean(rng.sample(allp, len(m))) <= mm))
+        out["p_random"] = round(as_good / DRAWS, 3)
     out["floors_matched"] = sum(1 for c in xs if matches(rule, c["f"]) and c["exit"] == "пол")
     return out
 
@@ -205,15 +226,20 @@ def test_rule(rule, cs, seed=0):
     mid = len(cs) // 2
     a, b = cs[:mid], cs[mid:]
     ha, hb, hall = _half(a, rule, rng), _half(b, rule, rng), _half(cs, rule, rng)
+    take = rule.get("do") == "take"
 
     def ok(h):
         return (h["matched"] >= MIN_HALF and h["mean_matched"] is not None and h["mean_rest"] is not None
-                and h["mean_matched"] < h["mean_rest"] and h["p_random"] is not None and h["p_random"] <= P_MAX)
-    passed = ok(ha) and ok(hb) and hall["matched"] >= MIN_CASES
+                and (h["mean_matched"] > h["mean_rest"] if take else h["mean_matched"] < h["mean_rest"])
+                and h["p_random"] is not None and h["p_random"] <= P_MAX)
+    enough_rej = (not take) or hall["rejected_matched"] >= MIN_TAKE_REJECTED
+    passed = ok(ha) and ok(hb) and hall["matched"] >= MIN_CASES and enough_rej
     why = None
     if not passed:
         if hall["matched"] < MIN_CASES:
             why = f"подходящих {hall['matched']} < {MIN_CASES}"
+        elif not enough_rej:
+            why = f"отклонённых среди подходящих {hall['rejected_matched']} < {MIN_TAKE_REJECTED}"
         elif not ok(ha):
             why = "первая половина не держит"
         else:
@@ -226,9 +252,9 @@ def test_rule(rule, cs, seed=0):
 
 SYSTEM_LESSONS = """You are improving the entry judge of a paper-trading book of crypto perpetual futures on Bybit. You are given a week of the judge's own post-trade reviews (each with the decision, the outcome, the price path inside the trade, and the judge's verdict on its decision), the catalog of numeric dossier fields with their ranges, and the current lessons with their test results.
 
-Propose at most %d rules that would make the judge SKIP entries that tend to go badly. Each rule is a conjunction of 1 to 3 conditions on catalog fields ("field", "op" one of < <= > >=, numeric "value"), plus a short "text" in plain words and the mechanism in "why". Use only fields from the catalog, with thresholds inside their observed range.
+Propose at most %d rules of two kinds. "do": "skip" — make the judge SKIP entries that tend to go badly. "do": "take" — make the judge TAKE entries it tends to reject although they go well: look at the block "rejected_went_well" (entries the judge skipped whose base-book outcome was positive, with the reasons it gave then) and name the conditions under which those reasons should not stop an entry. Each rule is a conjunction of 1 to 3 conditions on catalog fields ("field", "op" one of < <= > >=, numeric "value"), plus a short "text" in plain words and the mechanism in "why". Use only fields from the catalog, with thresholds inside their observed range.
 
-Every rule will be tested by numbers, not by your judgement: on both halves of past entries split by time, the matched entries must do worse than the rest and worse than random samples of the same size. So prefer rules with a mechanism that should hold out of sample, and do not tune a threshold to one or two trades. Repeating a current rule unchanged is useless; refine or drop it. Returning fewer rules, or none, is a valid answer.
+Every rule will be tested by numbers, not by your judgement: on both halves of past entries split by time, the matched entries must do worse (skip) or better (take) than the rest and than random samples of the same size; a take rule must also cover enough entries the judge actually rejected. So prefer rules with a mechanism that should hold out of sample, and do not tune a threshold to one or two trades. Repeating a current rule unchanged is useless; refine or drop it. Returning fewer rules, or none, is a valid answer.
 
 Return only the JSON object required by the schema.""" % MAX_RULES
 
@@ -238,7 +264,7 @@ def schema_lessons():
                                              "value": {"type": "number"}},
             "required": ["field", "op", "value"], "additionalProperties": False}
     rule = {"type": "object", "properties": {"text": {"type": "string"}, "when": {"type": "array", "items": cond},
-                                             "do": {"type": "string", "enum": ["skip"]}, "why": {"type": "string"}},
+                                             "do": {"type": "string", "enum": list(DOS)}, "why": {"type": "string"}},
             "required": ["text", "when", "do", "why"], "additionalProperties": False}
     return {"type": "object", "properties": {"rules": {"type": "array", "items": rule}, "notes": {"type": "string"}},
             "required": ["rules", "notes"], "additionalProperties": False}
@@ -260,7 +286,13 @@ def parse_lessons(stop, text):
 
 def propose(client, cs, cat, state, now):
     week = [c for c in cs if c["exit_ts"] >= now - REVIEW_DAYS * 86400 and c.get("review")]
+    missed = sorted([c for c in cs if c["decision"] == "skip" and c["pnl"] > 0 and c["exit_ts"] <= now],
+                    key=lambda c: -c["pnl"])[:MAX_RULES]
     payload = {"kind": "lessons",
+               "rejected_went_well": [{"symbol": c["sym"], "side": c["side"], "entered_utc": _utc(c["at"]),
+                                       "reasons_given_then": c["reasons"], "exit": c["exit"],
+                                       "result_on_margin_if_taken": round(c["pnl"], 4), "path": c["path_words"],
+                                       "dossier_fields": {k: round(v, 4) for k, v in c["f"].items()}} for c in missed],
                "reviews_last_week": [{"symbol": c["sym"], "side": c["side"], "decision": c["decision"],
                                       "exit": c["exit"], "result_on_margin": round(c["pnl"], 4),
                                       "path": c["path_words"], "review": c["review"],
@@ -274,10 +306,37 @@ def propose(client, cs, cat, state, now):
     return row, len(week)
 
 
-# ------------------------------------------------------------ похожие случаи
+# ------------------------------------------------------------ похожие случаи и свои ошибки
 
 SIMILAR_K = 5
 SIMILAR_SAME = 3
+
+
+def _utc(ts):
+    return time.strftime("%Y-%m-%d %H:%M", time.gmtime(ts))
+
+
+def mistakes(cs, at_s, days=MISTAKE_DAYS, k=MISTAKE_K):
+    """Свои ошибки ДО момента решения (§11.4, 29.10): отклонённые входы
+    последних `days` суток, вышедшие в плюс у базовой книги или признанные в
+    разборе ошибкой, — с тогдашними доводами, исходом и путём; лучшие `k` по
+    исходу. Рядом — счёт отклонённых и принятых за то же окно, чтобы модель
+    видела цену обеих ошибок, а не только упущенного. Будущего нет: берутся
+    только вышедшие раньше `at_s`."""
+    win = [c for c in cs if at_s - days * 86400 <= c["exit_ts"] < at_s]
+    rej = [c for c in win if c["decision"] == "skip"]
+    acc = [c for c in win if c["decision"] == "open"]
+    wrong = [c for c in rej if c["pnl"] > 0 or (c.get("review") or {}).get("verdict") == "wrong"]
+    wrong.sort(key=lambda c: -c["pnl"])
+    mean = lambda xs: round(st.mean([c["pnl"] for c in xs]), 4) if xs else None      # noqa: E731
+    return {"window_days": days,
+            "rejected": {"n": len(rej), "went_well": sum(1 for c in rej if c["pnl"] > 0), "mean_result_if_taken": mean(rej)},
+            "accepted": {"n": len(acc), "hit_floor": sum(1 for c in acc if c["exit"] == "пол"), "mean_result": mean(acc)},
+            "rejected_wrongly": [{"symbol": c["sym"], "entered_utc": _utc(c["at"]), "reasons_given_then": c["reasons"],
+                                  "exit": c["exit"], "result_on_margin_if_taken": round(c["pnl"], 4),
+                                  "price_path": c["path_words"],
+                                  "own_review": ({kk: c["review"].get(kk) for kk in ("verdict", "failed")}
+                                                 if c.get("review") else None)} for c in wrong[:k]]}
 
 
 def similar(cs, sym, side, crowd_now, at_s, k=SIMILAR_K):
@@ -293,7 +352,7 @@ def similar(cs, sym, side, crowd_now, at_s, k=SIMILAR_K):
     else:
         rest.sort(key=lambda c: -c["at"])
     pick = same + rest[:max(0, k - len(same))]
-    return [{"symbol": c["sym"], "entered_utc": time.strftime("%Y-%m-%d %H:%M", time.gmtime(c["at"])),
+    return [{"symbol": c["sym"], "entered_utc": _utc(c["at"]),
              "crowd_bybit_at_entry": c["f"].get("crowd_positioning.bybit.now"), "exit": c["exit"],
              "result_on_margin": round(c["pnl"], 4), "price_path": c["path_words"], "decision_then": c["decision"],
              "own_review": ({kk: c["review"].get(kk) for kk in ("verdict", "failed", "saved")} if c.get("review") else None)}
@@ -316,18 +375,39 @@ def lessons_text(state):
     acc = state.get("accepted") or []
     if not acc:
         return []
-    return [{"rule": r["text"], "when": " and ".join(f"{c['field']} {c['op']} {c['value']}" for c in r["when"]),
+    return [{"rule": r["text"], "do": r.get("do", "skip"),
+             "when": " and ".join(f"{c['field']} {c['op']} {c['value']}" for c in r["when"]),
              "why": r.get("why"), "evidence": {"matched": (r.get("test") or {}).get("all", {}).get("matched"),
                                                "mean_matched": (r.get("test") or {}).get("all", {}).get("mean_matched"),
                                                "mean_rest": (r.get("test") or {}).get("all", {}).get("mean_rest")}}
             for r in acc]
 
 
-def run(log=print, now=None, client=None, dry=False, cs=None, path=None):
+def learn_still_rejects(state, cs, decisions):
+    """Мера обучения: сколько входов, подходящих под ПРИНЯТОЕ правило take,
+    ветка `ai_learn` всё же отклонила после его приёма (и сколько взяла)."""
+    learn = {r["key"]: r.get("decision") for r in decisions
+             if r.get("kind") == "entry" and r.get("branch") == "ai_learn" and r.get("decision") in ("open", "skip")}
+    out = []
+    for r in state.get("accepted") or []:
+        if r.get("do") != "take":
+            continue
+        since = r.get("accepted_at") or ""
+        xs = [c for c in cs if matches(r, c["f"]) and c["key"] in learn
+              and time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(c["at"])) >= since]
+        out.append({"text": r["text"], "since": since, "learn_judged": len(xs),
+                    "learn_rejected": sum(1 for c in xs if learn[c["key"]] == "skip")})
+    return out
+
+
+def run(log=print, now=None, client=None, dry=False, cs=None, path=None, decisions=None):
     path = path or LESSONS
     t0 = time.time()
     now = now or time.time()
-    cs = cs if cs is not None else cases()
+    if cs is None:
+        decisions = decisions if decisions is not None else G.read_decisions()
+        cs = cases(decisions=decisions)
+    decisions = decisions or []
     cat = catalog(cs)
     state = load_state(path)
     out = {"computed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)), "cases": len(cs),
@@ -352,7 +432,7 @@ def run(log=print, now=None, client=None, dry=False, cs=None, path=None):
                 continue
             r = {"text": str(r["text"])[:300], "when": [{"field": c["field"], "op": c["op"], "value": float(c["value"])}
                                                        for c in r["when"]],
-                 "do": "skip", "why": str(r.get("why") or "")[:300], "proposed_at": out["computed_at"], "status": "proposed"}
+                 "do": r["do"], "why": str(r.get("why") or "")[:300], "proposed_at": out["computed_at"], "status": "proposed"}
             r["id"] = rule_id(r)
             if r["id"] in known:
                 continue
@@ -378,7 +458,8 @@ def run(log=print, now=None, client=None, dry=False, cs=None, path=None):
         if r.get("tested_at") != out["computed_at"]:
             r["test"] = test_rule(r, cs); r["tested_at"] = out["computed_at"]
         a = r["test"]["all"]
-        if a["mean_matched"] is not None and a["mean_rest"] is not None and a["mean_matched"] >= a["mean_rest"]:
+        flipped = (a["mean_matched"] <= a["mean_rest"]) if r.get("do") == "take" else (a["mean_matched"] >= a["mean_rest"])
+        if a["mean_matched"] is not None and a["mean_rest"] is not None and flipped:
             r["status"] = "revoked"; r["revoked_at"] = out["computed_at"]
             state.setdefault("revoked", []).append(r)
             out["revoked_now"].append(r["text"])
@@ -393,6 +474,14 @@ def run(log=print, now=None, client=None, dry=False, cs=None, path=None):
         os.replace(path + ".tmp", path)
     out["state"] = {k: len(state.get(k) or []) for k in ("accepted", "proposed", "rejected", "revoked")}
     out["version"] = state["version"]
+    out["take_vs_learn"] = learn_still_rejects(state, cs, decisions)
+    rej = [c for c in cs if c["decision"] == "skip"]
+    out["rejected"] = {"n": len(rej), "went_well": sum(1 for c in rej if c["pnl"] > 0),
+                       "sum_if_taken": round(sum(c["pnl"] for c in rej), 4),
+                       "sum_went_well": round(sum(c["pnl"] for c in rej if c["pnl"] > 0), 4),
+                       "top": [{"sym": c["sym"], "at": _utc(c["at"]), "pnl": round(c["pnl"], 4), "exit": c["exit"],
+                                "reasons": c["reasons"][:3], "verdict": (c.get("review") or {}).get("verdict")}
+                               for c in sorted(rej, key=lambda c: -c["pnl"])[:10]]}
     out["secs"] = round(time.time() - t0, 1)
     out["report"] = report(state, out)
     log(f"уроки: случаев {len(cs)}, новых правил {out['new_rules']}, принято сейчас {len(out['accepted_now'])}, "
@@ -412,18 +501,37 @@ def report(state, out):
         if not rs:
             L += ["нет", ""]
             continue
-        L += ["| правило | условие | подходит (1-я / 2-я) | результат: подходящие vs остальные (всего) | случайные не хуже (1-я / 2-я) | почему не принято |",
-              "|---|---|---|---|---|---|"]
+        L += ["| что | правило | условие | подходит (1-я / 2-я) | результат: подходящие vs остальные (всего) | случайные не лучше правила (1-я / 2-я) | почему не принято |",
+              "|---|---|---|---|---|---|---|"]
         for r in rs:
             t = r.get("test") or {}
             f, s, a = t.get("first") or {}, t.get("second") or {}, t.get("all") or {}
             cond = " и ".join(f"{c['field']} {c['op']} {c['value']:g}" for c in r["when"])
-            L.append(f"| {r['text']} | `{cond}` | {f.get('matched')} / {s.get('matched')} | "
+            L.append(f"| {'брать' if r.get('do') == 'take' else 'не брать'} | {r['text']} | `{cond}` | {f.get('matched')} / {s.get('matched')} | "
                      f"{pct(a.get('mean_matched'))} vs {pct(a.get('mean_rest'))} | {f.get('p_random')} / {s.get('p_random')} | "
                      f"{t.get('why') or '—'} |")
         L.append("")
     if out.get("invalid"):
         L += ["## Отвергнуто формой", ""] + [f"- {x['text']}: {x['why']}" for x in out["invalid"]] + [""]
+    rj = out.get("rejected") or {}
+    L += ["## Отклонено зря (исход базовой книги у входов, которые судья не взял)", ""]
+    if not rj.get("n"):
+        L += ["отклонённых с закрытым путём нет", ""]
+    else:
+        L += [f"Отклонено {rj['n']}, из них вышли бы в плюс {rj['went_well']} "
+              f"({100 * rj['went_well'] / rj['n']:.0f} %); сумма на маржу всех {pct(rj['sum_if_taken'])}, "
+              f"только плюсовых {pct(rj['sum_went_well'])}. Правило take принимается числом (см. выше), "
+              f"не этой таблицей.", "",
+              "| имя | вход UTC | было бы | выход | доводы тогда | разбор |", "|---|---|--:|---|---|---|"]
+        for x in rj["top"]:
+            L.append(f"| {x['sym']} | {x['at']} | {pct(x['pnl'])} | {x['exit'] or '—'} | "
+                     f"{'; '.join(str(z) for z in x['reasons'])[:160]} | {x['verdict'] or '—'} |")
+        L.append("")
+    tv = out.get("take_vs_learn") or []
+    if tv:
+        L += ["## Учится ли ветка ai_learn у правил take", ""] + \
+             [f"- «{x['text']}» (с {x['since'][:10]}): подходящих входов судила {x['learn_judged']}, "
+              f"отклонила всё же {x['learn_rejected']}" for x in tv] + [""]
     return "\n".join(L) + "\n"
 
 

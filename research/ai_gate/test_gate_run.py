@@ -197,6 +197,9 @@ def test_learn_branch():
         sim = seen[0]["similar_past_cases"]
         assert [x["symbol"] for x in sim] == ["NEWUSDT"], ("случай, вышедший ПОСЛЕ входа, не виден", sim)
         assert sim[0]["exit"] == "пол" and sim[0]["own_review"]["verdict"] == "unclear"
+        om = seen[0]["own_mistakes"]
+        assert om["rejected"]["n"] == 0 and om["accepted"]["n"] == 1 and om["rejected_wrongly"] == [], \
+            ("свои ошибки: только вышедшие ДО входа, обе стороны счёта", om)
         assert {x["branch"] for x in rs if x["sym"] == "OLDUSDT"} == {"ai_news", "ai_plain"}
     print("ok  ai_learn: с дня рождения; похожие случаи только вышедшие до входа; уроки в досье; прежние ветки как прежде")
 

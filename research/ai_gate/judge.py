@@ -134,8 +134,8 @@ def ask_review(client, d):
 
 SYSTEM_LEARN_ADD = """
 
-This dossier has two extra blocks. "similar_past_cases": closed trades of this book that resemble this one (the same coin first, then the same side with the closest crowd positioning), each with its exit, result on margin, the price path inside the trade, the decision taken then and your own review of that decision. "accepted_lessons": rules proposed from your reviews that then PASSED a numerical test on both halves of past entries against random samples of the same size. Treat both as evidence about this setup, not as orders: a lesson applies only when its condition holds in this dossier, and the base instruction above still stands."""
-PROMPT_V_LEARN = "learn-v1-2026-10-20"
+This dossier has three extra blocks. "similar_past_cases": closed trades of this book that resemble this one (the same coin first, then the same side with the closest crowd positioning), each with its exit, result on margin, the price path inside the trade, the decision taken then and your own review of that decision. "accepted_lessons": rules proposed from your reviews that then PASSED a numerical test on both halves of past entries against random samples of the same size; "do": "skip" means entries matching the condition tend to go badly, "do": "take" means entries matching it tend to go well even though you used to reject them. "own_mistakes": your own recent record — how many entries you rejected and how many of those would have made money, how many you accepted and how they did, and the rejections that cost the most, each with the reasons you gave then, the exit and the result the book got without you. Treat all three as evidence about this setup, not as orders: a lesson applies only when its condition holds in this dossier, a past missed trade does not make every similar-looking entry good, and the base instruction above still stands. But when the reasons you are about to give repeat the reasons that proved wrong in "own_mistakes", and nothing in this dossier is worse than there, that is a reason to open, not to skip."""
+PROMPT_V_LEARN = "learn-v2-2026-10-29"
 
 
 def ask_learn(client, dossier):

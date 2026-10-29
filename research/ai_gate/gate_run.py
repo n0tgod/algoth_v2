@@ -340,8 +340,9 @@ def run(log=print, client=None, dry=False, now=None):
                     learn_lessons = LS.lessons_text(LS.load_state())
                 import lessons as LS                           # noqa: E402
                 crowd_now = ((kw.get("crowd") or {}).get("bybit") or {}).get("now")
+                # и свои ошибки до момента входа: зря отклонённые с тогдашними доводами (29.10)
                 d = dict(d, similar_past_cases=LS.similar(learn_cs, r["sym"], side, crowd_now, float(r["at"])),
-                         accepted_lessons=learn_lessons or [])
+                         accepted_lessons=learn_lessons or [], own_mistakes=LS.mistakes(learn_cs, float(r["at"])))
             if branch == "ai_news":
                 dossier_of[k] = d
             res = call("entry", d, learn=(branch == "ai_learn"))

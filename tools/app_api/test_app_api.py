@@ -379,6 +379,7 @@ def test_ai_log_for_operator_groups_entries_and_names_news():
                   open(app.AI_LESSONS, "w"))
         ls = app.ai_log(acc)[1]["lessons"]
         assert ls["accepted"][0]["when"] == "crowd_positioning.bybit.now < 0.3" and ls["accepted"][0]["halves"] == [0.02, 0.05]
+        assert ls["accepted"][0]["do"] == "skip", "урок без поля do (до 29.10) — skip"
         assert app.ai_log(acc, "1999-01-01")[1]["day"] == "2026-10-19", "неизвестный день — последний"
     print("ok  журнал судьи оператору: вход одной строкой (с новостями, без, повтор), сторож, заголовки новостей, итоги")
 
