@@ -16,3 +16,22 @@ funding >= 0.0001 и crowd_bybit >= 0.55, окно 6 ч — Positive funding and
 закрытие: btc_1h >= 0.004 и buy_share >= 0.6, до 8 ч — BTC turns up sharply together with heavy aggressive buying in the coin. A market-wide bid works against the short early in its life, so close.
 модель: Entry rules target exhaustion and short-covering states after the signal, so that the adverse excursion is smaller and 3-5% stops are viable. Exit rules extend the robust name_floor_share and thin-depth findings with a short stop at equal risk. Close rules are few, because the state terciles show early closing mostly loses.
 стоимость: 0.118604 $
+ВНИМАНИЕ: 2026-10-29T11:35:52Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (6 МБ) research/dca_paper/out/DCA-short.json (6 МБ)
+публикуется в ветку main:
+ jobs/done/nc29.done                      |   1 +
+ jobs/done/nc29.log                       |  18 +++
+ jobs/poke.log                            |   3 +
+ jobs/queue-state.md                      |   2 +-
+ research/ai_gate/out/entry_rules.json    | 195 ++++++++++++++++++++++++++++++-
+ research/dca_paper/out/DCA-pair.md       |  28 ++---
+ research/dca_paper/out/DCA-short.md      |  50 ++++----
+ research/dca_paper/out/watch/h24.json    |   2 +-
+ research/dca_paper/out/watch/latest.json |   2 +-
+ research/dca_paper/out/watch/pair.json   |   2 +-
+ research/s8_loop/out/day_brake.json      |   2 +-
+ 11 files changed, 260 insertions(+), 45 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   4c12a0737..29ca02cb4  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-10-29T11:35:57Z, код 0
