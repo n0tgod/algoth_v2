@@ -26,3 +26,23 @@ m03: правил выхода 3, с 2026-10-29 07:00 UTC
 
 Проверка сохранности данных: docs/DATA-SAFETY.md
 конец: 2026-10-29T06:49:26Z, код 0
+ВНИМАНИЕ: 2026-10-29T06:49:27Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (6 МБ)
+публикуется в ветку main:
+ docs/MAP-symbols.md                                | 392 ++++++++++-----------
+ docs/MAP-tests.md                                  |   6 +-
+ docs/MAP.md                                        |  16 +-
+ jobs/done/nc24.done                                |   1 +
+ jobs/done/nc24.log                                 |  28 ++
+ jobs/done/nc25.done                                |   1 +
+ jobs/done/nc25.log                                 |  28 ++
+ jobs/poke.log                                      |   4 +
+ jobs/queue-state.md                                |   6 +-
+ .../out/decisions/decisions-2026-10-29.jsonl       |   1 +
+ research/ai_gate/out/latest.json                   |   2 +-
+ research/ai_gate/out/model_books.json              | 188 +++++++++-
+ research/s8_loop/out/day_brake.json                |   2 +-
+ 13 files changed, 459 insertions(+), 216 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   9b52ef371..c99487207  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

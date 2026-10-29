@@ -1,0 +1,8 @@
+== задание nc26 ==
+строка: run research/ai_gate/model_books.py --attach-exits --force
+начало: 2026-10-29T06:53:56Z
+запускаю: .venv/bin/python research/ai_gate/model_books.py --attach-exits --force
+m01: правил выхода 3, с 2026-10-29 07:00 UTC
+m02: правил выхода 3, с 2026-10-29 07:00 UTC
+m03: правил выхода 3, с 2026-10-29 07:00 UTC
+{"attached": ["m01", "m02", "m03"], "rules": ["name_floor_share >= 0.282 → стоп 3 %, тейк обещание ×3, равный риск", "depth_eat_bid <= 220 → стоп 3 %, тейк обещание ×2, равный риск", "spread_bp >= 9 → стоп 8 %, тейк обещание ×3, плечо книги"], "since": 1793257200.0}

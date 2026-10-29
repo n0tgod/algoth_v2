@@ -890,7 +890,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L403 `report(state, out)`
 - L430 `main(argv=None)`
 
-## research/ai_gate/model_books.py · 719 строк
+## research/ai_gate/model_books.py · 727 строк
 
 Книги, которые заводит модель (спека 19 §12, решение владельца 2026-10-21).
 
@@ -934,20 +934,20 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L207 `skip_candidates(lstate)`
 - L221 `entry_candidates(search, rules_file)`
 - L244 `exit_rules_for_birth(cands)` — Правила выхода для новой книги ТВХ (§11.10): прошедшие порог, по p и числу, не больше MAX_EXIT_RULES; первое…
-- L253 `exit_for(b, f, at)` — Ячейка выхода книги ТВХ для входа в момент `at` по состоянию `f` часа входа: первое правило выхода, чьи услов…
-- L271 `births(reg, cands, now)` — Рождение по порогу и пределам (§12.2–12.3) → (родились, ждут мест). Книга ТВХ рождается со своими правилами в…
-- L319 `day_str(t)`
-- L323 `retire_why(b, days_book, days_base, now)` — Причина отставки (§12.5) или None. `days_*` — {день: (usd, позиций)}.
-- L343 `retire(reg, days_of, now)` — `days_of(key)` → {день: (usd, позиций)} или None (книга не посчитана).
-- L360 `entry_decide(b, legs, feat, state, now)` — Первый час k ≤ W по условию для сигналов после рождения → новые решения.
-- L398 `shifted_legs(b, legs, state)` — Сдвинутые входы книги: вход в час срабатывания; один на (имя, час).
-- L415 `tick(log=print, now=None, dry=False)` — Часовой проход книг ТВХ: решения о часе входа и реплей сдвинутых входов.
-- L475 `cash_days(recs, now, ctx)` — Нетто ячейки $10k тем же путём, что книги: итог и {день: (usd, позиций)}.
-- L490 `run(log=print, now=None, dry=False, client_cands=None)`
-- L600 `pct(x)`
-- L604 `report(r)`
-- L644 `attach_exits(log=print, now=None, dry=False)` — Живые книги ТВХ без правил выхода получают прошедшие порог правила выхода последнего поиска с `exit_since` =…
-- L675 `main(argv=None)`
+- L257 `exit_for(b, f, at)` — Ячейка выхода книги ТВХ для входа в момент `at` по состоянию `f` часа входа: первое правило выхода, чьи услов…
+- L275 `births(reg, cands, now)` — Рождение по порогу и пределам (§12.2–12.3) → (родились, ждут мест). Книга ТВХ рождается со своими правилами в…
+- L323 `day_str(t)`
+- L327 `retire_why(b, days_book, days_base, now)` — Причина отставки (§12.5) или None. `days_*` — {день: (usd, позиций)}.
+- L347 `retire(reg, days_of, now)` — `days_of(key)` → {день: (usd, позиций)} или None (книга не посчитана).
+- L364 `entry_decide(b, legs, feat, state, now)` — Первый час k ≤ W по условию для сигналов после рождения → новые решения.
+- L402 `shifted_legs(b, legs, state)` — Сдвинутые входы книги: вход в час срабатывания; один на (имя, час).
+- L419 `tick(log=print, now=None, dry=False)` — Часовой проход книг ТВХ: решения о часе входа и реплей сдвинутых входов.
+- L479 `cash_days(recs, now, ctx)` — Нетто ячейки $10k тем же путём, что книги: итог и {день: (usd, позиций)}.
+- L494 `run(log=print, now=None, dry=False, client_cands=None)`
+- L604 `pct(x)`
+- L608 `report(r)`
+- L648 `attach_exits(log=print, now=None, dry=False, force=False)` — Живые книги ТВХ без правил выхода получают прошедшие порог правила выхода последнего поиска с `exit_since` =…
+- L682 `main(argv=None)`
 
 ## research/ai_gate/path_review.py · 247 строк
 
