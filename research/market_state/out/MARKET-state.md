@@ -1,6 +1,6 @@
 # Состояние рынка (спека 19 §3b)
 
-Срез 2026-10-30T15:13:53Z, прогон 831.2 с, строк записано 2161 (из них докачка 0).
+Срез 2026-10-30T16:13:54Z, прогон 832.7 с, строк записано 2174 (из них докачка 0).
 
 | источник | имён получено | из | % |
 |---|---|---|---|
@@ -8,9 +8,9 @@
 | binance | 457 | 457 | 100.0 |
 | okx | 453 | 457 | 99.1 |
 
-Рынок: fng 30, fng_label Fear, btc_dom 59.17, mcap_usd 2630934222528, mcap_24h_pct -6.39, insurance_usdt 535227359, stables_usd 300627228130, trending ['BTC', 'HYPE', 'SOL', 'BEAM', 'SUI', 'PENGU', 'PEARL', 'BNB', 'AAVE', 'LINK', 'KNTQ', 'AERO', 'NEAR', 'FET', 'DOGE']
+Рынок: fng 30, fng_label Fear, btc_dom 59.26, mcap_usd 2622735648427, mcap_24h_pct -7.26, insurance_usdt 535228728, stables_usd 300592852819, trending ['BTC', 'HYPE', 'BNB', 'PENGU', 'PEARL', 'KNTQ', 'PEPE', 'LIT', 'NEAR', 'TAO', 'QNT', 'XRP', 'SUI', 'ENA', 'ZEC']
 
-Толпа в лонге сильнее всего: GOOGLUSDT 0.89, INTCUSDT 0.87, XAGUSDT 0.85, MELANIAUSDT 0.85, GRAMUSDT 0.83, MNTUSDT 0.82, APPSTOCKUSDT 0.82, LABUSDT 0.82, ESPORTSUSDT 0.82, ONDOUSDT 0.81
-Толпа в шорте сильнее всего: BKNGUSDT 0.16, XLIUSDT 0.22, HMSTRUSDT 0.30, EWZSUSDT 0.32, TBTUSDT 0.32, BZUSDT 0.35, AXPUSDT 0.36, CSTOCKUSDT 0.36, CLUSDT 0.37, WENSTOCKUSDT 0.37
+Толпа в лонге сильнее всего: GOOGLUSDT 0.90, INTCUSDT 0.87, XAGUSDT 0.86, MELANIAUSDT 0.84, GRAMUSDT 0.83, MNTUSDT 0.83, APPSTOCKUSDT 0.82, LABUSDT 0.82, ESPORTSUSDT 0.81, ONDOUSDT 0.81
+Толпа в шорте сильнее всего: HMSTRUSDT 0.30, TBTUSDT 0.33, BKNGUSDT 0.33, LGELECTRONICSUSDT 0.34, BZUSDT 0.35, TWSTUSDT 0.35, STMUSDT 0.35, AXPUSDT 0.36, ACNUSDT 0.36, EWZSUSDT 0.36
 
 Событий за сутки: 10.
