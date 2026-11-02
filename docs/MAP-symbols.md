@@ -795,7 +795,7 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L293 `report(r)`
 - L332 `main(argv=None)`
 
-## research/ai_gate/gate_run.py · 516 строк
+## research/ai_gate/gate_run.py · 521 строк
 
 Запись вперёд судьи (спека 19, этап N3): решения в реальном времени.
 
@@ -835,10 +835,10 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L164 `watch_triggers(w, sym, now_ms, news, events, crowd_now)` — Событие для сторожа с прошлой проверки → список причин (пусто — нет события).
 - L180 `write_rows(rows, full=None)`
 - L192 `model_pass(recs, dec_by, dossier_of, now, out_rows, full, build…` — Решения книг-фильтров модели (спека 19 §12.1) по входам Depth Short.
-- L240 `candidates(log)` — Позиции книг Depth так, как они живут (шорты — после возраста и охраны).
-- L258 `run(log=print, client=None, dry=False, now=None)`
-- L448 `summary(rows, now, stats, t0, fresh, news_age, ms_age)`
-- L488 `main(argv=None)`
+- L245 `candidates(log)` — Позиции книг Depth так, как они живут (шорты — после возраста и охраны).
+- L263 `run(log=print, client=None, dry=False, now=None)`
+- L453 `summary(rows, now, stats, t0, fresh, news_age, ms_age)`
+- L493 `main(argv=None)`
 
 ## research/ai_gate/judge.py · 314 строк
 
