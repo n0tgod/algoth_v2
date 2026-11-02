@@ -3341,6 +3341,45 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L427 `publish(name)`
 - L433 `main(argv=None)`
 
+## research/dca_paper/reserve_rung.py · 497 строк
+
+Резервный рунг ниже плановой лестницы у длинных книг (спека 14 §Р1).
+
+- L68 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L69 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L80 `OUT = os.path.join(HERE, 'out')`
+- L81 `CACHE_DIR = os.path.join(HERE, 'cache', 'reserve')`
+- L82 `REPORT = os.path.join(OUT, 'DCA-reserve-rung.md')`
+- L83 `LATEST = os.path.join(OUT, 'reserve_rung.json')`
+- L84 `BOOKS = ['safe', 'optimal', 'aggr']`
+- L85 `DEPTHS = {'s1': ('sigma', 1.0), 's2': ('sigma', …`
+- L86 `RESERVE_W = 0.25`
+- L87 `CAPITAL_RES = 1.0 + RESERVE_W`
+- L88 `CELLS = ['book'] + [f'{v}:{d}' for d in DEPTHS …`
+- L89 `CHUNK = 12`
+- L90 `MEM_LIMIT_MB = 2400`
+- L91 `HOUR = 3600`
+- L92 `CELL_RU = {'book': 'книга', 'ticket': 'билет ×1.2…`
+- L101 `reserve_px(pl, depth)` — Цена резервного рунга; None — меры нет (σ) или рунг ушёл в ноль.
+- L117 `cell_geometry(pl, depth, rule, param, look, lev_look)` — Лестница с резервом и забор на ней. None — ячейка не применима (нет σ, рунг в нуле, забор отказал пятирунгово…
+- L132 `record(g, pl, r, lev, capital)` — Запись позиции в формате `run_d6.one_position` (та же раздача кассы читает её), плюс маржа в билетах и цена р…
+- L150 `leg_cells(g, bars, ts, look, lev_look, rule, param, cells=CELLS)` — Все ячейки одной ноги одной линейки → {ячейка: запись} или None. `why` в записи `book` — почему резерв не при…
+- L191 `cache_path(cell)`
+- L195 `cell_sig(cell)`
+- L199 `read_caches(log=print)`
+- L209 `write_caches(caches)`
+- L215 `pairs_of(books)`
+- L224 `replay(legs, pairs, caches, src, log=print, chunk=CHUNK, limit=…` — Досчёт всех ячеек по именам, кэш на диск после каждого куска. Пересчитываются решения, которых нет или которы…
+- L293 `_finish_states(caches, src, data_end=None)`
+- L306 `stats(rows, bk, dep, ctx, since=None, until=None)`
+- L320 `events(caches, pr, cell)` — Позиции, где резерв заполнился: результат на T против книги (те же позиции), добитые резервом раньше своего в…
+- L350 `measure(caches, books, deps, log=print, now=None)`
+- L387 `rows_for(recs, bk, now)` — Раздача кассы книги, где маржа записи = билет × `capital_t` (1 T у книги и усечённых лестниц, 1.25 T у позици…
+- L407 `pct(x)`
+- L411 `report(r)`
+- L450 `run(books, deps, log=print, limit=None, now=None, src=None, leg…`
+- L468 `main(argv=None)`
+
 ## research/dca_paper/rules.py · 2227 строк
 
 Правила бумажных DCA-книг: три депозита, одни правила.

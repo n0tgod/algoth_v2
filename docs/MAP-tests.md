@@ -1827,6 +1827,19 @@
 - L108 `test_verdict_and_report_have_no_holes()`
 - L160 `test_run_both_sides_offline_smoke_on_core_shaped_records()` — Обе стороны проходят свою дорогу кассы целиком на подставных кэшах: короткие — записи ядра `run_d10` (с `pnl_…
 
+## research/dca_paper/test_reserve_rung.py · 133 строк
+
+Резервный рунг (спека 14 §Р1): на синтетических барах — ячейка книги совпадает с ядром бит в бит; резерв запо…
+
+- L12 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L20 `T0 = 1792400000 - 1792400000 % 3600`
+- L21 `ENTRY = 1.0`
+- L24 `bars_path(seed=1, dip=0.2, recover=0.03)` — Сутки до входа — шум вокруг 1.0; после входа цена за 30 ч уходит на `dip` вниз, потом за остаток 72 ч возвращ…
+- L46 `LEVELS = np.array([ENTRY * 0.98, ENTRY * 0.96, E…`
+- L47 `LEG = {'sym': 'SYNUSDT', 'at': float(T0), 'fa…`
+- L50 `look(_notl)`
+- L54 `main()`
+
 ## research/dca_paper/test_short.py · 491 строк
 
 Проверки коротких книг на сигнале h24 и общей статистики.

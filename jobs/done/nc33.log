@@ -1,0 +1,7 @@
+== задание nc33 ==
+строка: run research/dca_paper/reserve_rung.py --limit 12 --no-publish
+начало: 2026-11-02T10:29:45Z
+запускаю: .venv/bin/python research/dca_paper/reserve_rung.py --limit 12 --no-publish
+ноги листа из кэша: 8739 под гейтом края и RR (legs_cache.pkl)
+резерв: ног 7054, имён к досчёту 12 из 482
+кэш хранилища: снято 1268 файлов, осталось 1.80 ГБ при пределе 2
