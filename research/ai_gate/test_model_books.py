@@ -113,25 +113,35 @@ def test_skip_pass_in_judge_and_rules_registration():
     with tempfile.TemporaryDirectory() as d:
         path = os.path.join(d, "model_books.json")
         rule = {"when": [{"field": "price_moves_to_decision.4h_pct", "op": ">=", "value": 10.0}]}
+        rule2 = {"when": [{"field": "book_rules.lev", "op": ">=", "value": 20.0},
+                          {"field": "price_moves_to_decision.4h_pct", "op": ">=", "value": 10.0}]}
         json.dump({"books": [{"id": "m91", "key": "optimal_h_m91", "kind": "skip", "rule": rule, "status": "live",
-                              "born_at": born, "why": "pump still running", "sig": "s"}]}, open(path, "w"))
+                              "born_at": born, "why": "pump still running", "sig": "s"},
+                             {"id": "m92", "key": "optimal_h_m92", "kind": "skip", "rule": rule2, "status": "live",
+                              "born_at": born, "why": "lev and pump", "sig": "s2"}]}, open(path, "w"))
         recs = [{"sym": "PUMPUSDT", "at": born + H, "lev": 5, "exit_ts": born + 20 * H, "fwd": 50},
                 {"sym": "CALMUSDT", "at": born + H, "lev": 5, "exit_ts": born + 20 * H, "fwd": 40},
                 {"sym": "CALMUSDT", "at": born + 2 * H, "lev": 5, "exit_ts": born + 21 * H, "fwd": 40},
                 {"sym": "NOFLDUSDT", "at": born + H, "lev": 5, "exit_ts": born + 20 * H, "fwd": 30},
                 {"sym": "EARLYUSDT", "at": born - H, "lev": 5, "exit_ts": born + 20 * H, "fwd": 30}]
-        dos = {G.key_of("optimal_h", recs[0]): {"price_moves_to_decision": {"4h_pct": 14.0}},
-               G.key_of("optimal_h", recs[1]): {"price_moves_to_decision": {"4h_pct": 2.0}},
-               G.key_of("optimal_h", recs[3]): {"price_moves_to_decision": {}}}
+        dos = {G.key_of("optimal_h", recs[0]): {"price_moves_to_decision": {"4h_pct": 14.0}, "book_rules": {"lev": 5}},
+               G.key_of("optimal_h", recs[1]): {"price_moves_to_decision": {"4h_pct": 2.0}, "book_rules": {"lev": 5}},
+               G.key_of("optimal_h", recs[3]): {"price_moves_to_decision": {}, "book_rules": {"lev": 5}}}
         out, full, dec_by = [], [], {}
         n = G.model_pass(recs, dec_by, dict(dos), NOW, out, full, lambda r: (_ for _ in ()).throw(AssertionError("build")),
                          log=lambda *a: None, registry=path)
-        by = {(r["sym"], r["at"]): r for r in out}
+        by = {(r["sym"], r["at"]): r for r in out if r["branch"] == "m91"}
+        by2 = {(r["sym"], r["at"]): r for r in out if r["branch"] == "m92"}
+        # поле пропало, но измеренное условие (плечо 5 при ≥ 20) уже упало — решение достоверно, без «нет поля»
+        nf2 = by2[("NOFLDUSDT", born + H)]
+        assert nf2["decision"] == "open" and nf2["no_verdict"] is None, ("упавшее измеренное условие решает само", nf2)
+        assert by2[("PUMPUSDT", born + H)]["decision"] == "open" and by2[("PUMPUSDT", born + H)]["no_verdict"] is None
+        out = [r for r in out if r["branch"] == "m91"]
         assert by[("PUMPUSDT", born + H)]["decision"] == "skip" and by[("CALMUSDT", born + H)]["decision"] == "open"
         assert by[("CALMUSDT", born + 2 * H)]["decision"] == "held", "повтор по держимому имени — held"
         nf = by[("NOFLDUSDT", born + H)]
         assert nf["decision"] == "open" and "нет поля" in nf["no_verdict"], "нет поля — открыть со словами"
-        assert ("EARLYUSDT", born - H) not in by and n == 4 and all(r["branch"] == "m91" and r["cost_usd"] == 0 for r in out)
+        assert ("EARLYUSDT", born - H) not in by and n == 8 and all(r["branch"] == "m91" and r["cost_usd"] == 0 for r in out)
         n2 = G.model_pass(recs, dec_by, dos, NOW + 60, out, full, None, log=lambda *a: None, registry=path)
         assert n2 == 0, "второй проход не решает тех же"
         # регистрация книги: корень AI lab, старт с нуля, суффикс снимается

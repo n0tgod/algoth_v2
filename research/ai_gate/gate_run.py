@@ -226,8 +226,13 @@ def model_pass(recs, dec_by, dossier_of, now, out_rows, full, build, log=print, 
                     dossier_of[k] = d
                 f = LS.fields_of(d)
                 miss = [c["field"] for c in b["rule"]["when"] if f.get(c["field"]) is None]
+                # «без вердикта» — лишь когда решает именно пропавшее поле: все
+                # измеренные условия держат. Упало измеренное (плечо 1 при
+                # правиле ≥ 20 у свежего имени без суток истории, 02.11) —
+                # решение «открыть» достоверно, поле не нужно
+                rest_hold = MBK.matches({"when": [c for c in b["rule"]["when"] if f.get(c["field"]) is not None]}, f)
                 row.update(decision="open" if miss or not MBK.matches(b["rule"], f) else "skip",
-                           no_verdict=(f"нет поля: {', '.join(miss)}" if miss else None),
+                           no_verdict=(f"нет поля: {', '.join(miss)}" if miss and rest_hold else None),
                            values={c["field"]: f.get(c["field"]) for c in b["rule"]["when"]})
             dec[k] = row["decision"]
             out_rows.append(row)
