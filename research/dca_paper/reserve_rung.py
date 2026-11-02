@@ -182,6 +182,10 @@ def leg_cells(g, bars, ts, look, lev_look, rule, param, cells=CELLS):
         rec = record(g, pl, r, geo["lev"], CAPITAL_RES)
         rec["reserve_px"] = geo["reserve_px"]
         rec["binder"] = geo["binder"]
+        # плечо КНИГИ едет в запись: гейт плеча Gated судит решение входа по
+        # геометрии книги, иначе пониженное забором пяти рунгов плечо меняло
+        # бы состав книги, и вопрос «усреднять глубже» подменился бы составом
+        rec["lev_book"] = float(base["lev"])
         out[c] = rec
     return out
 
@@ -193,7 +197,7 @@ def cache_path(cell):
 
 
 def cell_sig(cell):
-    return dict(RP.cache_sig(), reserve_cell=cell, reserve_w=RESERVE_W, depths=DEPTHS.get(cell.split(":")[-1]))
+    return dict(RP.cache_sig(), reserve_cell=cell, reserve_w=RESERVE_W, depths=DEPTHS.get(cell.split(":")[-1]), v=2)
 
 
 def read_caches(log=print):
@@ -241,7 +245,8 @@ def replay(legs, pairs, caches, src, log=print, chunk=CHUNK, limit=None, data_en
         syms = syms[:limit]
     log(f"резерв: ног {len(by_leg)}, имён к досчёту {len(syms)} из {len({s for s, _ in by_leg})}")
     tiers_all = D2.instruments_tiers()
-    n = {"legs": 0, "mismatch": 0, "checked": 0, "truncated": 0, "no_geo": 0, "events": 0}
+    n = {"legs": 0, "mismatch": 0, "checked": 0, "truncated": 0, "no_geo": 0, "events": 0,
+         "mismatch_lev": 0, "mismatch_exit": 0, "mismatch_pnl": 0}
     said = time.time()
     book_cache, _why = RP.read_cache()
     for i0 in range(0, len(syms), chunk):
@@ -270,9 +275,16 @@ def replay(legs, pairs, caches, src, log=print, chunk=CHUNK, limit=None, data_en
                     if old is not None and old.get("state") == "closed":
                         n["checked"] += 1
                         b = cells["book"]
-                        if (abs(float(old["pnl"]) - b["pnl"]) > 1e-9 or old.get("exit") != b["exit"]
-                                or abs(float(old["lev"]) - b["lev"]) > 1e-9):
+                        d_lev = abs(float(old["lev"]) - b["lev"]) > 1e-9
+                        d_exit = old.get("exit") != b["exit"]
+                        d_pnl = abs(float(old["pnl"]) - b["pnl"]) > 1e-9
+                        if d_lev or d_exit or d_pnl:
+                            # расхождение с кэшем книги — диагностика, не вердикт: тиры площадки
+                            # читаются по текущему состоянию (плечо), хвост ленты дописан позже (исход)
                             n["mismatch"] += 1
+                            n["mismatch_lev"] += int(d_lev)
+                            n["mismatch_exit"] += int(d_exit)
+                            n["mismatch_pnl"] += int(d_pnl and not d_lev)
                     c1 = cells[f"res:{next(iter(DEPTHS))}"]
                     if c1.get("why") == "усечённая лестница":
                         n["truncated"] += 1
@@ -387,18 +399,23 @@ def measure(caches, books, deps, log=print, now=None):
 def rows_for(recs, bk, now):
     """Раздача кассы книги, где маржа записи = билет × `capital_t` (1 T у
     книги и усечённых лестниц, 1.25 T у позиций с резервом и у контроля
-    билета). Единственная подмена — множитель доли в `run_d6.ration`; сама
+    билета). Две подмены на время раздачи: множитель доли в `run_d6.ration`
+    и гейт плеча — он применяется ЗДЕСЬ по плечу книги (`lev_book`, у записей
+    книги — её собственное), чтобы состав у всех ячеек был один; сама
     раздача, порядок и отказы — те же, что у книги."""
-    orig = D6.ration
+    ml = R.min_lev_of(bk)
+    if ml is not None:
+        recs = [r for r in recs if float(r.get("lev_book", r["lev"])) >= ml]
+    orig, orig_ml = D6.ration, R.min_lev_of
 
     def ration(plan, share, **kw):
         base = share if callable(share) else (lambda _r: share)
         return orig(plan, lambda r: base(r) * float(r.get("capital_t") or 1.0), **kw)
-    D6.ration = ration
+    D6.ration, R.min_lev_of = ration, (lambda _k: None)
     try:
         rows, _c, _o, _l = RP.build_rows({bk: recs}, now=now, keys=[bk], log=lambda *a: None)
     finally:
-        D6.ration = orig
+        D6.ration, R.min_lev_of = orig, orig_ml
     return rows
 
 
@@ -411,7 +428,9 @@ def pct(x):
 def report(r):
     L_ = ["# Резервный рунг ниже плановой лестницы (спека 14 §Р1; владелец 02.11)", "",
           f"Посчитано {r['computed_at']}; ног {r['replay']['legs']}, сверено с кэшем книги {r['replay']['checked']}, "
-          f"расхождений {r['replay']['mismatch']}; усечённых лестниц (резерв не применяется) {r['replay']['truncated']}, "
+          f"расхождений {r['replay']['mismatch']} (плечо {r['replay'].get('mismatch_lev')}, выход {r['replay'].get('mismatch_exit')}, "
+          f"только деньги {r['replay'].get('mismatch_pnl')}; тиры площадки читаются по сегодняшнему состоянию, хвост ленты "
+          f"дописан позже — диагностика, не вердикт; все ячейки считаны одним проходом на одних данных); усечённых лестниц (резерв не применяется) {r['replay']['truncated']}, "
           f"без σ / забор отказал {r['replay']['no_geo']}. Резерв 0.25 T, маржа позиции 1.25 T, забор на пяти рунгах; "
           f"глубины: 1σ, 2σ, 3σ ниже глубочайшего планового рунга и удвоенная глубина лестницы. "
           f"Деньги нетто; половины по времени входа; вперёд с {R.FAMILY_SINCE.get('sit')}.", "",

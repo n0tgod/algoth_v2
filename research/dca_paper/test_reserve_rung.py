@@ -112,6 +112,12 @@ def main():
     assert m1 and abs(m2[("AUSDT", 10000)] / m1[("AUSDT", 10000)] - RR.CAPITAL_RES) < 1e-6, (m1, m2)
     assert abs(m2[("BUSDT", 10000)] - m1[("BUSDT", 10000)]) < 1e-6 or True   # второй — сложный процент после первого, может отличаться
     assert D6.ration.__name__ == "ration" and D6.ration.__module__ == D6.__name__, "подмена раздачи снята"
+    # гейт плеча Gated — по плечу КНИГИ: запись с резервом (плечо 2 после забора пяти рунгов, книжное 9) берётся,
+    # запись книги с плечом 2 — нет; подмена гейта снята после раздачи
+    recs3 = [dict(recs1[0], lev=2.0, lev_book=9.0, capital_t=RR.CAPITAL_RES), dict(recs1[1], lev=2.0)]
+    rows3 = RR.rows_for(recs3, "aggr", now=base["exit_ts"] + 10 * 86400)
+    assert {r["sym"] for r in rows3} == {"AUSDT"}, {r["sym"] for r in rows3}
+    assert R.min_lev_of("aggr") is not None, "гейт плеча книги возвращён"
     # кэш ячеек: своя подпись, чужая не читается
     with tempfile.TemporaryDirectory() as d:
         RR.CACHE_DIR = d
