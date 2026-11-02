@@ -3341,7 +3341,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L427 `publish(name)`
 - L433 `main(argv=None)`
 
-## research/dca_paper/reserve_rung.py · 497 строк
+## research/dca_paper/reserve_rung.py · 516 строк
 
 Резервный рунг ниже плановой лестницы у длинных книг (спека 14 §Р1).
 
@@ -3364,21 +3364,21 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L117 `cell_geometry(pl, depth, rule, param, look, lev_look)` — Лестница с резервом и забор на ней. None — ячейка не применима (нет σ, рунг в нуле, забор отказал пятирунгово…
 - L132 `record(g, pl, r, lev, capital)` — Запись позиции в формате `run_d6.one_position` (та же раздача кассы читает её), плюс маржа в билетах и цена р…
 - L150 `leg_cells(g, bars, ts, look, lev_look, rule, param, cells=CELLS)` — Все ячейки одной ноги одной линейки → {ячейка: запись} или None. `why` в записи `book` — почему резерв не при…
-- L191 `cache_path(cell)`
-- L195 `cell_sig(cell)`
-- L199 `read_caches(log=print)`
-- L209 `write_caches(caches)`
-- L215 `pairs_of(books)`
-- L224 `replay(legs, pairs, caches, src, log=print, chunk=CHUNK, limit=…` — Досчёт всех ячеек по именам, кэш на диск после каждого куска. Пересчитываются решения, которых нет или которы…
-- L293 `_finish_states(caches, src, data_end=None)`
-- L306 `stats(rows, bk, dep, ctx, since=None, until=None)`
-- L320 `events(caches, pr, cell)` — Позиции, где резерв заполнился: результат на T против книги (те же позиции), добитые резервом раньше своего в…
-- L350 `measure(caches, books, deps, log=print, now=None)`
-- L387 `rows_for(recs, bk, now)` — Раздача кассы книги, где маржа записи = билет × `capital_t` (1 T у книги и усечённых лестниц, 1.25 T у позици…
-- L407 `pct(x)`
-- L411 `report(r)`
-- L450 `run(books, deps, log=print, limit=None, now=None, src=None, leg…`
-- L468 `main(argv=None)`
+- L195 `cache_path(cell)`
+- L199 `cell_sig(cell)`
+- L203 `read_caches(log=print)`
+- L213 `write_caches(caches)`
+- L219 `pairs_of(books)`
+- L228 `replay(legs, pairs, caches, src, log=print, chunk=CHUNK, limit=…` — Досчёт всех ячеек по именам, кэш на диск после каждого куска. Пересчитываются решения, которых нет или которы…
+- L305 `_finish_states(caches, src, data_end=None)`
+- L318 `stats(rows, bk, dep, ctx, since=None, until=None)`
+- L332 `events(caches, pr, cell)` — Позиции, где резерв заполнился: результат на T против книги (те же позиции), добитые резервом раньше своего в…
+- L362 `measure(caches, books, deps, log=print, now=None)`
+- L399 `rows_for(recs, bk, now)` — Раздача кассы книги, где маржа записи = билет × `capital_t` (1 T у книги и усечённых лестниц, 1.25 T у позици…
+- L424 `pct(x)`
+- L428 `report(r)`
+- L469 `run(books, deps, log=print, limit=None, now=None, src=None, leg…`
+- L487 `main(argv=None)`
 
 ## research/dca_paper/rules.py · 2227 строк
 

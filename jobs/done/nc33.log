@@ -128,3 +128,14 @@ aggr $10000 ticket: n 19 полов 1 резерв заполнен 0 usd 73.24 
 
 
 конец: 2026-11-02T10:31:58Z, код 0
+ВНИМАНИЕ: 2026-11-02T10:31:59Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (7 МБ)
+публикуется в ветку main:
+ jobs/done/nc33.log                         | 122 +++++++++++++++++++++++++++++
+ jobs/queue-state.md                        |   2 +-
+ research/dca_paper/out/DCA-reserve-rung.md |  84 ++++++++++++++++++++
+ research/dca_paper/out/reserve_rung.json   |   1 +
+ 4 files changed, 208 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   4c3f529be..20ef823ae  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

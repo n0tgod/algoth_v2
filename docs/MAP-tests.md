@@ -1827,7 +1827,7 @@
 - L108 `test_verdict_and_report_have_no_holes()`
 - L160 `test_run_both_sides_offline_smoke_on_core_shaped_records()` — Обе стороны проходят свою дорогу кассы целиком на подставных кэшах: короткие — записи ядра `run_d10` (с `pnl_…
 
-## research/dca_paper/test_reserve_rung.py · 133 строк
+## research/dca_paper/test_reserve_rung.py · 139 строк
 
 Резервный рунг (спека 14 §Р1): на синтетических барах — ячейка книги совпадает с ядром бит в бит; резерв запо…
 
