@@ -432,7 +432,8 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
                  take_px=None, floor_frac=None, track=False,
                  checkpoints=None, take_rule=None, side="long",
                  adds=None, adds_max=None, adds_if_profit=False,
-                 adds_min_profit=None, take_events=None, stop_frac=None):
+                 adds_min_profit=None, take_events=None, stop_frac=None,
+                 adds_below_avg=False):
     """DCA на РЕАЛЬНЫХ барах: доливы против хода, тейк по ходу, пол.
 
     Вход в `bars[0][1]` (открытие первого бара после решения, next_open) —
@@ -630,6 +631,12 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
                 continue
             if add_gate is not None and not (d * (qty * op - cash) / capital > add_gate):
                 continue                       # не дотянула до порога — кандидат пропущен
+            # Долив по повтору «не выше средней» (правило длинных книг с
+            # 04.11, спека 14 §18): цена открытия бара долива не хуже
+            # средней на НАЧАЛО бара (у лонга — не выше). Выше — кандидат
+            # пропущен, следующий повтор судится своим баром.
+            if adds_below_avg and d * (op - cash / qty) > 0:
+                continue
             if cash + w_add * notional > notional * (1.0 + 1e-9):
                 continue                       # резерв маржи исчерпан
             cash += w_add * notional

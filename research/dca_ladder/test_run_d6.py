@@ -693,6 +693,76 @@ CONTROLS = [("бюджет не вычитается", _control_no_budget),
              _control_open_dd_counts_the_closing_hour)]
 
 
+def test_repeat_add_is_one_add_on_the_first_repeat_not_above_average():
+    """Долив по повтору (спека 14 §18): маржа 1.25 билета, веса плановых рунгов
+    0.2 от неё (та же четверть билета), долив на ПЕРВОМ повторе, где цена
+    открытия бара не выше средней; выше — повтор пропущен; без доливов —
+    прежняя запись бит в бит; повторы берутся из полного списка ног при
+    инкрементальном проходе."""
+    import math
+    import numpy as np
+    H = 3600.0
+    T0 = 1_792_400_000 - 1_792_400_000 % 3600
+    rng = np.random.default_rng(3)
+    bars = []
+    for i in range(24 * 60):
+        t = T0 - (24 * 60 - i) * 60
+        px = 1.0 * (1 + 0.003 * math.sin(i / 40.0)) * (1 + rng.normal(0, 0.0005))
+        bars.append((float(t), px, px * 1.0005, px * 0.9995, px, 1000.0))
+    for i in range(72 * 60):
+        t = T0 + i * 60
+        if i < 120:
+            lvl = 1.0 + 0.01 * i / 120                       # первые 2 ч — вверх на 1 %
+        elif i < 10 * 60:
+            lvl = 1.01 - 0.07 * (i - 120) / (8 * 60)         # к 10 ч — −6 %
+        else:
+            lvl = 0.94 + 0.07 * (i - 600) / (62 * 60)        # к сроку — +1 %
+        px = lvl * (1 + rng.normal(0, 0.0003))
+        bars.append((float(t), px, px * 1.0005, px * 0.9995, px, 1000.0))
+    ts = [b[0] for b in bars]
+    g = {"sym": "REPUSDT", "at": float(T0), "fav": 300.0, "adv_q": -150.0, "fwd": 300.0, "side": "long"}
+    look = lambda _n: D2.FLAT_MMR                                   # noqa: E731
+    was = D2.build_levels
+    D2.build_levels = lambda win, now_i: np.array([0.98, 0.96, 0.94])
+    try:
+        base = D6.one_position(g, bars, ts, look, "sigma", 6.0)
+        same = D6.one_position(g, bars, ts, look, "sigma", 6.0, adds=None, add_w=0.25)
+        assert base == same and "capital_t" not in base and "adds" not in base, "без доливов — прежняя запись"
+        # повторы: +1 ч (цена +0.5 %, ВЫШЕ средней — пропуск) и +5 ч (−2 %, ниже — долив)
+        r = D6.one_position(g, bars, ts, look, "sigma", 6.0,
+                            adds=[T0 + H, T0 + 5 * H], add_w=0.25, adds_below_avg=True)
+        assert r["capital_t"] == 1.25 and r["adds"] == 1 and r["lev"] == base["lev"], r
+        add = [f for f in r["fills"][1:] if f[1] not in (0.98, 0.96, 0.94)]       # не плановый рунг — долив
+        assert len(add) == 1 and abs(add[0][0] - (T0 + 5 * H)) < 60 and abs(add[0][2] - 0.2) < 1e-12, r["fills"]
+        assert all(abs(f[2] - 0.2) < 1e-12 for f in r["fills"]) and len(r["fills"]) == len(base["fills"]) + 1
+        # без условия «не выше средней» долив идёт на первом повторе (+1 ч)
+        r2 = D6.one_position(g, bars, ts, look, "sigma", 6.0, adds=[T0 + H, T0 + 5 * H], add_w=0.25)
+        assert r2["adds"] == 1 and any(abs(f[0] - (T0 + H)) < 60 and abs(f[2] - 0.2) < 1e-12 for f in r2["fills"])
+        # инкрементальный проход: повтор — из ПОЛНОГО списка ног, не из подмножества `only`
+        class Src:
+            def bars(self, sym, a, b):
+                return bars
+        legs = [g, dict(g, at=T0 + 5 * H)]
+        ti = D2.instruments_tiers
+        D2.instruments_tiers = lambda: {}
+        try:
+            got = D6.collect_recs(rulers=[("sigma", 6.0, "long")], legs=legs, src=Src(),
+                                  log=lambda *a: None, only=[("REPUSDT", T0)])
+        finally:
+            D2.instruments_tiers = ti
+        recs = got["recs"][("sigma", 6.0, "long")]
+        assert len(recs) == 1 and recs[0]["adds"] == 1 and recs[0]["capital_t"] == 1.25, recs
+        assert D6.repeats_of(g, legs) == [T0 + 5 * H] and D6.repeats_of(legs[1], legs) == []
+        assert D6.add_policy("short") is None and D6.add_policy("long") == {"add_w": 0.25, "adds_below_avg": True}
+    finally:
+        D2.build_levels = was
+    print("ok  долив по повтору: один долив на первом повторе не выше средней, маржа 1.25 билета, "
+          "без доливов — прежняя запись; повторы из полного списка ног")
+
+
+TESTS.append(test_repeat_add_is_one_add_on_the_first_repeat_not_above_average)
+
+
 def main():
     for t in TESTS:
         t()

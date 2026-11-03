@@ -2360,7 +2360,7 @@ def test_short_legs_go_only_into_short_books():
     seen = []
 
     def fake_one(g, bars, ts, look, rule, param, hold_h=None,
-                 ckpt_h=None, lev_look=None):
+                 ckpt_h=None, lev_look=None, **_adds):
         seen.append(((g.get("side") or "long"), rule, param))
         return dict(_rec(g["at"], sym=g["sym"]), side=g.get("side") or "long")
 
@@ -2406,7 +2406,7 @@ def test_record_end_comes_from_the_source_not_from_the_replayed_subset():
     far = T0 + 10 * 86400.0                     # сборщик пишет и сейчас
 
     def fake_one(g, bars, ts, look, rule, param, hold_h=None,
-                 ckpt_h=None, lev_look=None):
+                 ckpt_h=None, lev_look=None, **_adds):
         r = dict(_rec(g["at"], sym=g["sym"]), side="long", exit="срок")
         # бары кончились через час после входа, срок 72 ч
         r["end_ts"] = float(g["at"]) + 3600.0
@@ -2481,7 +2481,7 @@ def test_venue_leverage_cap_reaches_the_fence():
     seen = {}
 
     def fake_one(g, bars, ts, look, rule, param, hold_h=None,
-                 ckpt_h=None, lev_look=None):
+                 ckpt_h=None, lev_look=None, **_adds):
         seen[g["sym"]] = lev_look
         return dict(_rec(g["at"], sym=g["sym"]), side="long")
 
@@ -3179,7 +3179,7 @@ def _control_venue_cap_out_of_the_replay_signature():
     без предела, взялся бы молча — и книга осталась бы с плечом, которого
     биржа не даёт, при исправном коде забора."""
     return _poison_run_paper(
-        '            "lev_cap": 1}', "            }",
+        '            "lev_cap": 1,\n', "",
         test_venue_cap_is_in_the_replay_signature)
 
 
@@ -3262,14 +3262,14 @@ def _control_venue_cap_not_passed():
     # в файле есть и второй такой вызов (внутри `one_position`), а его
     # тест подменяет спионом — подделка там ничего бы не значила.
     lit = ("hold_h=hold_h, ckpt_h=ckpt_h,\n"
-           "                                 lev_look=lev_look)")
+           "                                 lev_look=lev_look,\n")
     assert lit in src, "подделка НЕ легла: литерала нет"
     keep = os.path.join(tempfile.mkdtemp(prefix="run_d6-"), "run_d6.py")
     shutil.copy(path, keep)
     cache = os.path.join(os.path.dirname(path), "__pycache__")
     try:
         open(path, "w", encoding="utf-8").write(
-            src.replace(lit, "hold_h=hold_h, ckpt_h=ckpt_h)", 1))
+            src.replace(lit, "hold_h=hold_h, ckpt_h=ckpt_h,\n", 1))
         if os.path.isdir(cache):
             for f in os.listdir(cache):
                 if f.startswith("run_d6."):

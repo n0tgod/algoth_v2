@@ -399,23 +399,21 @@ def measure(caches, books, deps, log=print, now=None):
 def rows_for(recs, bk, now):
     """Раздача кассы книги, где маржа записи = билет × `capital_t` (1 T у
     книги и усечённых лестниц, 1.25 T у позиций с резервом и у контроля
-    билета). Две подмены на время раздачи: множитель доли в `run_d6.ration`
-    и гейт плеча — он применяется ЗДЕСЬ по плечу книги (`lev_book`, у записей
-    книги — её собственное), чтобы состав у всех ячеек был один; сама
-    раздача, порядок и отказы — те же, что у книги."""
+    билета) — это считает сама касса книги. Подмена одна: гейт плеча
+    применяется ЗДЕСЬ по плечу книги (`lev_book`, у записей книги — её
+    собственное), чтобы состав у всех ячеек был один; сама раздача,
+    порядок и отказы — те же, что у книги."""
     ml = R.min_lev_of(bk)
     if ml is not None:
         recs = [r for r in recs if float(r.get("lev_book", r["lev"])) >= ml]
-    orig, orig_ml = D6.ration, R.min_lev_of
-
-    def ration(plan, share, **kw):
-        base = share if callable(share) else (lambda _r: share)
-        return orig(plan, lambda r: base(r) * float(r.get("capital_t") or 1.0), **kw)
-    D6.ration, R.min_lev_of = ration, (lambda _k: None)
+    orig_ml = R.min_lev_of
+    # маржу × `capital_t` касса книги считает сама (`build_rows`, правило с
+    # 04.11); здесь подменяется только гейт плеча
+    R.min_lev_of = lambda _k: None
     try:
         rows, _c, _o, _l = RP.build_rows({bk: recs}, now=now, keys=[bk], log=lambda *a: None)
     finally:
-        D6.ration, R.min_lev_of = orig, orig_ml
+        R.min_lev_of = orig_ml
     return rows
 
 

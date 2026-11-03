@@ -205,8 +205,19 @@ def plan_position(g, bars, ts, look, rule, param, hold_h=None,
 
 
 def one_position(g, bars, ts, look, rule, param, hold_h=None,
-                 ckpt_h=None, lev_look=None):
+                 ckpt_h=None, lev_look=None, adds=None, add_w=None,
+                 adds_below_avg=False):
     """Исход одной позиции при заданной линейке забора. Гейты — D2.
+
+    `adds` — моменты ДОЛИВА ПО ПОВТОРУ (правило длинных книг с 04.11,
+    спека 14 §18): повторные выборы листом того же имени; `add_w` — доля
+    билета на долив (0.25), зарезервированная НА ВХОДЕ: маржа позиции
+    `1 + add_w` билета, плановые рунги и долив — той же долей нотионала
+    (четверть билета × плечо), плечо — забора плановой лестницы. Долив
+    один, на первом повторе, где держит условие (`adds_below_avg`: цена
+    открытия бара не выше средней). Запись несёт `capital_t` (маржа в
+    билетах) и `adds` (сколько доливов состоялось). Без `adds` — прежний
+    счёт бит в бит.
 
     Возвращает запись для раздачи: когда решение, когда выход, доля
     капитала, плечо и почасовые отметки (для кривой счёта).
@@ -240,10 +251,20 @@ def one_position(g, bars, ts, look, rule, param, hold_h=None,
     entry, take, rungs, lev = pl["entry"], pl["take"], pl["rungs"], pl["lev"]
     cps = ([float(g["at"]) + float(h) * HOUR for h in ckpt_h]
            if ckpt_h else None)
-    r = L.simulate_dca(hold, rungs, D2.WEIGHTS[:len(rungs)], 1.0, lev,
-                       look(1.0 * lev), take_rule=take,
+    capital = 1.0
+    weights = D2.WEIGHTS[:len(rungs)]
+    kw = {}
+    if adds and add_w:
+        # резерв на долив в марже позиции: веса плановых рунгов — те же
+        # четверти билета, выраженные долей увеличенной маржи
+        capital = 1.0 + float(add_w)
+        weights = [w / capital for w in weights]
+        kw = {"adds": [(float(t), float(add_w) / capital) for t in adds],
+              "adds_max": 1, "adds_below_avg": bool(adds_below_avg)}
+    r = L.simulate_dca(hold, rungs, weights, capital, lev,
+                       look(capital * lev), take_rule=take,
                        floor_frac=D2.FLOOR_FRAC, track=True,
-                       checkpoints=cps, side=side)
+                       checkpoints=cps, side=side, **kw)
     marks, prev = [], 0.0
     for (hr, _cash, pnl) in r["track"]:
         marks.append((hr, pnl - prev))     # приращение отметки за час
@@ -277,9 +298,34 @@ def one_position(g, bars, ts, look, rule, param, hold_h=None,
            "depth": int(r["depth"]),
            "fills": [[float(a), float(b), float(c)]
                      for (a, b, c) in (r.get("fills") or [])]}
+    if adds and add_w:
+        # маржа в билетах и число доливов — только у записей с резервом:
+        # запись без полей читается прежним образцом (1 билет, без доливов)
+        out["capital_t"] = float(capital)
+        out["adds"] = int(r.get("adds") or 0)
     if ckpt_h:
         out["ckpt"] = r.get("ckpt")
     return out
+
+
+def repeats_of(g, same_sym_legs, hold_h=None):
+    """Повторные выборы того же имени ПОСЛЕ входа в пределах срока — моменты
+    долива по повтору. Берутся из ПОЛНОГО списка ног имени: инкрементальный
+    прогон реплеит часть решений, а повторы — у всех."""
+    at = float(g["at"])
+    hi = at + (D2.HOLD_H if hold_h is None else float(hold_h)) * HOUR
+    side = g.get("side") or "long"
+    return sorted(float(x["at"]) for x in same_sym_legs
+                  if at < float(x["at"]) < hi and (x.get("side") or "long") == side)
+
+
+def add_policy(side):
+    """Политика долива по повтору из правил книги: у длинных книг семейства
+    `sit` (`rules.REPEAT_ADD_W`, `REPEAT_ADD_COND`), у коротких — нет."""
+    w = getattr(R_BOOK, "REPEAT_ADD_W", None)
+    if side != "long" or not w:
+        return None
+    return {"add_w": float(w), "adds_below_avg": getattr(R_BOOK, "REPEAT_ADD_COND", "down") == "down"}
 
 
 # Допуски классификации. `SCHED_TOL` — тот же, что у D7: бар не встаёт
@@ -906,6 +952,10 @@ def collect_recs(limit=None, src=None, log=print, rulers=None,
     longs = list(legs) if legs is not None else gated_legs(limit=limit, log=log)
     if legs is not None and limit:
         longs = longs[:limit]
+    # повторы считаются по ПОЛНОМУ списку ног до отбора `only`
+    all_by_sym = {}
+    for g in longs:
+        all_by_sym.setdefault(g["sym"], []).append(g)
     if only is not None:
         # Инкрементальный проход: реплеятся только названные решения.
         # Кэш держит уже посчитанные, и это законно ровно для ЗАКРЫТЫХ:
@@ -965,9 +1015,14 @@ def collect_recs(limit=None, src=None, log=print, rulers=None,
                 # значило бы читать одни файлы дважды.
                 if (k[2] if len(k) > 2 else "long") != g_side:
                     continue
+                pol = add_policy(g_side)
+                reps = (repeats_of(g, all_by_sym.get(g["sym"], ()), hold_h)
+                        if pol else None)
                 r = one_position(g, bars, ts, look, k[0], k[1],
                                  hold_h=hold_h, ckpt_h=ckpt_h,
-                                 lev_look=lev_look)
+                                 lev_look=lev_look,
+                                 adds=reps, add_w=(pol or {}).get("add_w"),
+                                 adds_below_avg=(pol or {}).get("adds_below_avg", False))
                 if r is not None:
                     recs[k].append(r)
                     got = 1

@@ -107,7 +107,10 @@ def cache_sig():
             # плечо, которого биржа не даёт, — это не консервативная
             # оценка, а сделка, которой не было. Кэш, посчитанный без
             # предела, описывает другую книгу.
-            "lev_cap": 1}
+            "lev_cap": 1,
+            # Долив по повтору (спека 14 §18): меняет ИСХОД позиции —
+            # запись прежнего правила описывает другую книгу.
+            "repeat_add": [R.REPEAT_ADD_W, R.REPEAT_ADD_COND]}
 
 
 def read_cache(path=None, sig=None):
@@ -469,8 +472,10 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
             # может быть УМЕНЬШЕН объявленным правилом семейства
             # (`rules.share_in`) — так владелец 07.09 задал долю короткой
             # стороны 0.25 у общей оптимальной и общей агрессивной.
+            # маржа позиции — билет × `capital_t` записи: у длинных книг с
+            # резервом на долив по повтору 1.25 билета (спека 14 §18)
             c = D6.ration(plan, (lambda r, _d=dep, _rk=rk:
-                                 R.share_in(_rk, r.get("book") or _rk, _d)),
+                                 R.share_in(_rk, r.get("book") or _rk, _d) * R.capital_t_of(r)),
                           deposit=dep,
                           min_notional=R.MIN_NOTIONAL, keep_rows=rows,
                           sizing=sizing)
@@ -526,6 +531,11 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
                     fr = R.family_rules(rk)
                     if fr is not None:
                         row["book_rules"] = int(fr)
+                    # резерв на долив по повтору: маржа в билетах и число
+                    # доливов — только у записей, где они есть
+                    if r.get("capital_t"):
+                        row["capital_t"] = float(r["capital_t"])
+                        row["adds"] = int(r.get("adds") or 0)
                     out.append(row)
                     continue
                 item = {"sym": r["sym"], "at": float(r["at"]),
@@ -1760,6 +1770,7 @@ def rules_snapshot(keys=None):
             "SURVIVE_MULT": R.SURVIVE_MULT,
             "AGGR_MIN_LEV": R.AGGR_MIN_LEV,
             "FLOOR_FRAC": R.FLOOR_FRAC,
+            "REPEAT_ADD": {"w": R.REPEAT_ADD_W, "cond": R.REPEAT_ADD_COND},
             "RULERS": {k: dict(R.RULERS[k]) for k in keys},
             # Версия правил семейства и ДЕНЬ её смены: страница обязана
             # сказать, почему «записанное вперёд» начинается не с начала
