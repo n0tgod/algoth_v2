@@ -368,8 +368,10 @@ def measure(caches, books, deps, log=print, now=None):
                 c = {"all": RR.stats(rows, bk, dep, ctx), "first": RR.stats(rows, bk, dep, ctx, until=mid),
                      "second": RR.stats(rows, bk, dep, ctx, since=mid),
                      "forward": RR.stats(rows, bk, dep, ctx, since=fwd_ts) if fwd_ts else None}
-                c["all"]["adds"] = sum(1 for r in rows if r.get("ruler") == bk and int(r.get("dep", 0)) == int(dep)
-                                       and r.get("adds"))
+                # строки кассы поля `adds` не несут — доливы считаются по ЗАПИСЯМ взятых позиций
+                taken = {(r.get("sym"), round(float(r["at"]), 3)) for r in rows
+                         if r.get("ruler") == bk and int(r.get("dep", 0)) == int(dep) and r.get("usd") is not None}
+                c["all"]["adds"] = sum(1 for r in recs if r.get("adds") and (r.get("sym"), round(float(r["at"]), 3)) in taken)
                 c["secs"] = round(time.time() - t1, 1)
                 res["books"][bk].setdefault(cell, {})[str(int(dep))] = c
                 a = c["all"]
