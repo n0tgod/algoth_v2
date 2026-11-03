@@ -3299,7 +3299,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L188 `report(r)`
 - L222 `main(argv=None)`
 
-## research/dca_paper/repeat_add.py · 484 строк
+## research/dca_paper/repeat_add.py · 486 строк
 
 Долив по повторному выбору листа у длинных книг (владелец 03.11: «давай затестим, если усредняться не просто…
 
@@ -3339,10 +3339,10 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L305 `null_rows_stats(caches, pr, cond, bk, dep, ctx, now, n_adds, fw…` — Нуль: столько же доливов в случайные часы у случайных позиций того же условия; касса на каждом зерне → распре…
 - L334 `null_summary(z, usd, fwd_usd)`
 - L347 `measure(caches, books, deps, log=print, now=None)`
-- L395 `pct(x)`
-- L399 `report(r)`
-- L437 `run(books, deps, log=print, limit=None, now=None, src=None, leg…`
-- L455 `main(argv=None)`
+- L397 `pct(x)`
+- L401 `report(r)`
+- L439 `run(books, deps, log=print, limit=None, now=None, src=None, leg…`
+- L457 `main(argv=None)`
 
 ## research/dca_paper/repeat_entry.py · 449 строк
 
