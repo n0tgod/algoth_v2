@@ -99,3 +99,23 @@ aggr $10000 ticket: n 19 полов 1 доливов 0 usd 73.24 итог +0.73 
 
 
 конец: 2026-11-03T17:36:40Z, код 0
+ВНИМАНИЕ: 2026-11-03T17:36:41Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (7 МБ)
+публикуется в ветку main:
+ jobs/done/nc35.done                      |   1 +
+ jobs/done/nc35.log                       | 101 ++++++++++++++++++++
+ jobs/poke.log                            |   3 +
+ jobs/queue-state.md                      |   2 +-
+ research/dca_paper/out/DCA-pair.md       |  26 ++---
+ research/dca_paper/out/DCA-paper.json    | 158 +++++++++++++++----------------
+ research/dca_paper/out/DCA-paper.md      |   2 +-
+ research/dca_paper/out/DCA-repeat-add.md |  69 ++++++++++++++
+ research/dca_paper/out/repeat_add.json   |   1 +
+ research/dca_paper/out/watch/latest.json |   2 +-
+ research/dca_paper/out/watch/pair.json   |   2 +-
+ research/dca_paper/out/watch/sit.json    |   2 +-
+ research/s8_loop/out/day_brake.json      |   2 +-
+ 13 files changed, 273 insertions(+), 98 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   61be27504..debc5f6a7  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
