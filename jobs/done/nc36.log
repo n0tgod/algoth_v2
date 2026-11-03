@@ -398,3 +398,14 @@ To github.com:n0tgod/algoth_v2.git
 branch 'main' set up to track 'origin/main'.
 опубликовано
 конец: 2026-11-03T21:03:23Z, код 0
+ВНИМАНИЕ: 2026-11-03T21:03:24Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (7 МБ)
+публикуется в ветку main:
+ jobs/done/nc36.log                                 | 211 ++-------------------
+ jobs/queue-state.md                                |   2 +-
+ .../dca_paper/out/fixed_short-2026-11-02.jsonl     |   8 +
+ research/dca_paper/out/short-2026-11-02.jsonl      |   8 +
+ 4 files changed, 29 insertions(+), 200 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   9d78a38de..c4ffc3fc1  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
