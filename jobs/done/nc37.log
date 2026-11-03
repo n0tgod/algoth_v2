@@ -49,3 +49,22 @@ sub_3f11698eb30279fa: статусу 2014306 с, режим live, позиций
 sub_b0b417879b985874: статусу 1654007 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
   чужое на счёте: нет
 конец: 2026-11-03T22:26:47Z
+ВНИМАНИЕ: 2026-11-03T22:26:47Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (7 МБ)
+публикуется в ветку main:
+ jobs/done/nc37.log                       |  51 +++++++++++
+ jobs/poke.log                            |   2 +
+ jobs/queue-state.md                      |   2 +-
+ research/dca_paper/out/DCA-pair.md       |  46 +++++-----
+ research/dca_paper/out/DCA-paper.json    | 152 +++++++++++++++----------------
+ research/dca_paper/out/DCA-paper.md      |   2 +-
+ research/dca_paper/out/DCA-short.md      |  92 +++++++++----------
+ research/dca_paper/out/watch/h24.json    |   2 +-
+ research/dca_paper/out/watch/latest.json |   2 +-
+ research/dca_paper/out/watch/pair.json   |   2 +-
+ research/dca_paper/out/watch/sit.json    |   2 +-
+ research/s8_loop/out/day_brake.json      |   2 +-
+ 12 files changed, 205 insertions(+), 152 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   360c8f6c8..0bf0f1ace  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
