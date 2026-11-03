@@ -3299,6 +3299,51 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L188 `report(r)`
 - L222 `main(argv=None)`
 
+## research/dca_paper/repeat_add.py · 484 строк
+
+Долив по повторному выбору листа у длинных книг (владелец 03.11: «давай затестим, если усредняться не просто…
+
+- L54 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L55 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L66 `OUT = os.path.join(HERE, 'out')`
+- L67 `CACHE_DIR = os.path.join(HERE, 'cache', 'repeat')`
+- L68 `REPORT = os.path.join(OUT, 'DCA-repeat-add.md')`
+- L69 `LATEST = os.path.join(OUT, 'repeat_add.json')`
+- L70 `BOOKS = ['safe', 'optimal', 'aggr']`
+- L71 `CONDS = ('any', 'down', 'deep')`
+- L72 `ADD_W = 0.25`
+- L73 `CAPITAL = 1.0 + ADD_W`
+- L74 `RND_K = 3`
+- L75 `NULL_SEEDS = 20`
+- L76 `CELLS = ['book', 'idle'] + [f'rep_{c}' for c in…`
+- L77 `MAIN_CELLS = ['book', 'idle', 'rep_any', 'rep_down',…`
+- L78 `CHUNK = 12`
+- L79 `MEM_LIMIT_MB = 2400`
+- L80 `HOUR = 3600`
+- L81 `CELL_RU = {'book': 'книга', 'idle': 'резерв лежит…`
+- L88 `idle_rec(base)` — Запись книги на маржe 1.25 T с лежащим резервом: деньги те же, доля меньше.
+- L95 `bar_at(hold, t)` — Первый бар с меткой ≥ t (так исполняет долив ядро) → (индекс, бар) или None.
+- L103 `avg_before(base, t_bar, entry_px)` — Средняя цена входа по заполнениям книги ДО бара долива: до долива путь позиции тот же, что у книги, и её запо…
+- L114 `condition_ok(cond, base, pl, hold, t_add)` — Ценовое условие ячейки на баре долива. → (True/False, бар долива или None).
+- L134 `simulate_add(g, pl, look, t_add)`
+- L146 `repeats_of(g, same_sym_legs, exit_ts)` — Повторные выборы того же имени строго между входом и выходом книги, по времени.
+- L152 `random_hours(g, exit_ts, k=RND_K)` — `k` случайных часов жизни позиции [вход + 1 ч, выход книги), зерно — от имени и входа.
+- L161 `leg_cells(g, bars, ts, look, lev_look, rule, param, same_sym_le…` — Все ячейки одной ноги одной линейки → {ячейка: запись}; у `rnd_*` — только когда условие в случайный час выпо…
+- L191 `cache_path(cell)`
+- L195 `cell_sig(cell)`
+- L199 `read_caches(log=print)`
+- L209 `write_caches(caches)`
+- L215 `book_base(log=print)` — Записи книги из кэша замера резервного рунга (то же ядро, закрытые — окончательны): ноги с готовой закрытой з…
+- L224 `replay(legs, pairs, caches, src, log=print, chunk=CHUNK, limit=…`
+- L284 `events(caches, pr, cell)`
+- L305 `null_rows_stats(caches, pr, cond, bk, dep, ctx, now, n_adds, fw…` — Нуль: столько же доливов в случайные часы у случайных позиций того же условия; касса на каждом зерне → распре…
+- L334 `null_summary(z, usd, fwd_usd)`
+- L347 `measure(caches, books, deps, log=print, now=None)`
+- L395 `pct(x)`
+- L399 `report(r)`
+- L437 `run(books, deps, log=print, limit=None, now=None, src=None, leg…`
+- L455 `main(argv=None)`
+
 ## research/dca_paper/repeat_entry.py · 449 строк
 
 Пропустить первый вход: насколько «ювелирны» второй, третий, четвёртый выбор имени моделью — и что это даёт к…

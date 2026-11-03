@@ -1810,6 +1810,14 @@
 - L83 `test_fund_key_prefers_rate_good_for_shorts_and_sends_unknown_la…`
 - L94 `test_verdict_threshold_and_report()`
 
+## research/dca_paper/test_repeat_add.py · 82 строк
+
+Долив по повторному выбору: на синтетических барах — долив на первом повторе, где держит условие ячейки (люба…
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L18 `H = 3600.0`
+- L21 `main()`
+
 ## research/dca_paper/test_repeat_entry.py · 234 строк
 
 Проверки замера «пропустить первый вход»: разметка номера входа по имени (как «одна на имя»), склейка двух ру…
