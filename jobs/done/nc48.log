@@ -1,0 +1,50 @@
+== задание nc48 ==
+строка: status
+начало: 2026-11-04T12:28:36Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   80G   65G  56% /
+/dev/sdb        147G   52G   88G  38% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 653249     100 .venv/bin/python research/b1_book/collect.py --http 8765
+3587476 1002515 /root/algoth_v2/bot/target/release/bot ladder --dir /root/algoth_v2/bot/out/dca/sub_13a2aa113c4cad59 --base https://api.bybit.com --keys-stdin -
+--- убийства ядра по памяти за сутки ---
+0 (подробно: run tools/memtop.py)
+--- обучение S8 ---
+обучение S8: веса от 2026-11-04 00:08 UTC, 12.3 ч назад (каденция 24, тревога с 36 ч); последний цикл 12:10 UTC: весам 12.0 ч при каденции 24
+--- идущие прогоны ---
+нет
+--- статус сбора ---
+{"t": 1793795180.2, "uptime_sec": 31257.8, "rss_mb": 3685, "mem_guard": {"drops": 143, "dies": 0, "max_rss_mb": 3911}, "messages": 88105052, "trades": 7620905, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 11487516, "snapshot_errors": 5, "last_snap_age_sec": 4.4, "snap_pass_sec": 0.396, "net_minute": {"lag_max_s": 46.41, "stall_max_s": 1.99, "drops": 24, "ready": 568, "books": 819, "at": 1793795170.8}, "drops": 7291, "stalls_over_5s": 0, "writes": {"trades": 7620887, "book": 11487516, "raw": 333314, "liq": 1552, "metrics": 79443}, "write_age_sec": {"trades": 19.4, "book": 4.4, "raw": 3.9, "liq": 198.6, "metrics": 174.0}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.1595, "ask": 0.1596
+--- живой исполнитель ---
+{
+  "at_ms": 1792064189590,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 268.11562509,
+    "equity": 264.97302509
+  }
+}
+--- исполнитель Ladder ---
+
+sub_0a1d813d9612bc11: статусу 1047518 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+sub_13a2aa113c4cad59: статусу 1 с, режим live, позиций 0 (отметка у 0), пауза None, без входов False, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+sub_3f11698eb30279fa: статусу 2064816 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+sub_b0b417879b985874: статусу 1704517 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+конец: 2026-11-04T12:28:37Z

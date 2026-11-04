@@ -19,3 +19,31 @@ Already up to date.
 == перезапускаю циклы обучения ==
   не запущен: s8_loop/train.py --pretest
   остановлен, сторож поднимет: s8_loop/train.py$
+ВНИМАНИЕ: 2026-11-04T12:27:09Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (7 МБ)
+публикуется в ветку main:
+ jobs/done/nc46.log                                 |   10 +
+ jobs/done/nc47.done                                |    1 +
+ jobs/done/nc47.log                                 |   21 +
+ jobs/poke.log                                      |    3 +
+ jobs/queue-state.md                                |    2 +-
+ research/dca_paper/out/DCA-pair.md                 |  206 +-
+ research/dca_paper/out/DCA-paper.json              | 9116 +++++++-------------
+ research/dca_paper/out/DCA-paper.md                |  123 +-
+ .../dca_paper/out/fixed_journal-2026-08-11.jsonl   |    8 +
+ .../dca_paper/out/fixed_journal-2026-08-28.jsonl   |    8 +
+ research/dca_paper/out/fixed_pair-2026-08-11.jsonl |   24 +
+ research/dca_paper/out/fixed_pair-2026-08-28.jsonl |   27 +
+ research/dca_paper/out/journal-2026-08-11.jsonl    |    8 +
+ research/dca_paper/out/journal-2026-08-28.jsonl    |    8 +
+ research/dca_paper/out/pair-2026-08-11.jsonl       |   24 +
+ research/dca_paper/out/pair-2026-08-28.jsonl       |   26 +
+ research/dca_paper/out/watch/latest.json           |    2 +-
+ research/dca_paper/out/watch/log.jsonl             |  134 +-
+ research/dca_paper/out/watch/pair.json             |    2 +-
+ research/dca_paper/out/watch/sit.json              |    2 +-
+ research/s8_loop/out/day_brake.json                |    2 +-
+ 21 files changed, 3675 insertions(+), 6082 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   2c4466da5..cf4ebc845  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
