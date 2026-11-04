@@ -1,6 +1,6 @@
 # Состояние рынка (спека 19 §3b)
 
-Срез 2026-11-04T10:14:05Z, прогон 843.8 с, строк записано 2186 (из них докачка 0).
+Срез 2026-11-04T11:14:08Z, прогон 846.3 с, строк записано 2178 (из них докачка 0).
 
 | источник | имён получено | из | % |
 |---|---|---|---|
@@ -8,9 +8,9 @@
 | binance | 457 | 457 | 100.0 |
 | okx | 461 | 466 | 98.9 |
 
-Рынок: fng 34, fng_label Fear, btc_dom 59.95, mcap_usd 2623420382418, mcap_24h_pct -0.9, insurance_usdt 535833249, stables_usd 295457599122, trending ['PENGU', 'LIT', 'PEARL', 'KNTQ', 'PEPE', 'TRUMP', 'ZEC', 'UAI', 'BTC', 'NEAR', 'QTC', 'HYPE', 'AERO', 'UNI', 'INJ']
+Рынок: fng 34, fng_label Fear, btc_dom 59.94, mcap_usd 2630889833103, mcap_24h_pct -0.74, insurance_usdt 535833585, stables_usd 295442885751, trending ['DACITYCOIN', 'TAO', 'BTC', 'LIT', 'SOL', 'KNTQ', 'CARDS', 'AKE', 'NEAR', 'AXIS', 'TRUMP', 'XRP', 'SUI', 'HYPE', 'PENGU']
 
-Толпа в лонге сильнее всего: GOOGLUSDT 0.89, INTCUSDT 0.88, XAGUSDT 0.86, MELANIAUSDT 0.84, GRAMUSDT 0.82, MNTUSDT 0.82, LABUSDT 0.82, LONGXIAUSDT 0.81, APPSTOCKUSDT 0.80, ONDOUSDT 0.80
-Толпа в шорте сильнее всего: ACNUSDT 0.29, HMSTRUSDT 0.31, EVAAUSDT 0.32, PGUSDT 0.32, FLUIDUSDT 0.34, MDTSTOCKUSDT 0.34, MAGMAUSDT 0.34, CVNAUSDT 0.35, WENSTOCKUSDT 0.36, VKTXUSDT 0.37
+Толпа в лонге сильнее всего: GOOGLUSDT 0.89, INTCUSDT 0.88, XAGUSDT 0.86, MELANIAUSDT 0.84, MNTUSDT 0.82, GRAMUSDT 0.82, LABUSDT 0.82, APPSTOCKUSDT 0.80, LONGXIAUSDT 0.80, ONDOUSDT 0.80
+Толпа в шорте сильнее всего: ACNUSDT 0.27, HMSTRUSDT 0.31, EVAAUSDT 0.32, FLUIDUSDT 0.33, PGUSDT 0.34, MDTSTOCKUSDT 0.34, MAGMAUSDT 0.35, CVNAUSDT 0.35, TBTUSDT 0.36, CSTOCKUSDT 0.36
 
-Событий за сутки: 11.
+Событий за сутки: 10.
