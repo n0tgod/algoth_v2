@@ -48,3 +48,17 @@ optimal $10k: позиций 1508, с доливом 552 (37 %), capital_t {1.25
 aggr $10k: позиций 653, с доливом 312 (48 %), capital_t {1.25: 624, None: 29}, usd 2873 (с доливом 1755); дни записи {'11-04': 653}
    последняя с доливом: POLUSDT вход 10-31 02:10 заполнения [(0.094, 0.2), (0.09328, 0.2), (0.09243, 0.2), (0.09033, 0.2), (0.08889, 0.2)] маржа 45.3086 плечо 10.841 выход срок usd -23.3756
 конец: 2026-11-04T05:13:39Z, код 0
+ВНИМАНИЕ: 2026-11-04T05:13:40Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (9 МБ) research/dca_paper/out/DCA-short.json (7 МБ)
+публикуется в ветку main:
+ jobs/done/nc41.log                    | 13 +++++++++
+ jobs/done/nc42.done                   |  1 +
+ jobs/done/nc42.log                    | 50 +++++++++++++++++++++++++++++++++++
+ jobs/poke.log                         |  3 +++
+ jobs/queue-state.md                   |  2 +-
+ research/ai_gate/out/model_entry.json |  2 +-
+ research/s8_loop/out/day_brake.json   |  2 +-
+ 7 files changed, 70 insertions(+), 3 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   0ffbf2a0b..be0ddbd95  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
