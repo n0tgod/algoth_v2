@@ -2920,6 +2920,14 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L150 `report(res)`
 - L199 `main(argv=None)`
 
+## research/dca_paper/journal_check.py · 60 строк
+
+Перепись журнала книг на сервере (только чтение): куски и их размер, строки по семействам и версиям правил, у…
+
+- L16 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L20 `OUT = os.path.join(HERE, 'out')`
+- L23 `main()`
+
 ## research/dca_paper/lev_cap_branch.py · 116 строк
 
 Ветвь с потолком плеча (спека 18, ось `lev_cap`; владелец 25.10).

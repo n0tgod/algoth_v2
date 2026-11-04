@@ -1,0 +1,50 @@
+== задание nc42 ==
+строка: run research/dca_paper/journal_check.py
+начало: 2026-11-04T05:13:15Z
+запускаю: .venv/bin/python research/dca_paper/journal_check.py 
+файлов журнала 366; > 5 МБ: journal.jsonl (5.1 МБ)
+последние куски: short-2026-10-29.jsonl (1274 КБ), short-2026-10-30.jsonl (1065 КБ), short-2026-10-31.jsonl (915 КБ), short-2026-11-01.jsonl (529 КБ), short-2026-11-02.jsonl (867 КБ), short-2026-11-03.jsonl (552 КБ)
+строк всего 795816
+  семейство h24: rules 6, book_rules 1: 5052
+  семейство h24: rules 6, book_rules 2: 5736
+  семейство h24: rules 6, book_rules 3: 8986
+  семейство h24: rules 6, book_rules 4: 11126
+  семейство h24: rules 6, book_rules None: 5352
+  семейство h24: rules 7, book_rules 4: 12976
+  семейство h24: rules 7, book_rules 5: 12977
+  семейство h24: rules 7, book_rules 6: 11613
+  семейство h24: rules 7, book_rules 7: 105195
+  семейство pair: rules 6, book_rules 2: 12147
+  семейство pair: rules 6, book_rules 3: 12209
+  семейство pair: rules 6, book_rules 4: 12178
+  семейство pair: rules 6, book_rules 5: 12061
+  семейство pair: rules 6, book_rules 6: 12860
+  семейство pair: rules 6, book_rules 7: 17121
+  семейство pair: rules 6, book_rules 8: 19797
+  семейство pair: rules 6, book_rules None: 9743
+  семейство pair: rules 7, book_rules 10: 21276
+  семейство pair: rules 7, book_rules 11: 21304
+  семейство pair: rules 7, book_rules 12: 19760
+  семейство pair: rules 7, book_rules 13: 98542
+  семейство pair: rules 7, book_rules 14: 96062
+  семейство pair: rules 7, book_rules 8: 22689
+  семейство pair: rules 7, book_rules 9: 21496
+  семейство sit: rules 1, book_rules None: 20316
+  семейство sit: rules 2, book_rules None: 23994
+  семейство sit: rules 3, book_rules None: 12344
+  семейство sit: rules 4, book_rules None: 12180
+  семейство sit: rules 5, book_rules None: 10300
+  семейство sit: rules 6, book_rules None: 22516
+  семейство sit: rules 7, book_rules 1: 19094
+  семейство sit: rules 7, book_rules 2: 18491
+  семейство sit: rules 7, book_rules 3: 27633
+  семейство sit: rules 7, book_rules 4: 18907
+  семейство sit: rules 7, book_rules None: 21783
+текущих строк 215796
+safe $10k: позиций 1485, с доливом 548 (37 %), capital_t {1.25: 1178, None: 307}, usd 1108 (с доливом 564); дни записи {'11-04': 1485}
+   последняя с доливом: TRXUSDT вход 10-31 08:11 заполнения [(0.3216, 0.2), (0.3193, 0.2)] маржа 34.6981 плечо 1.0 выход срок usd 0.0283
+optimal $10k: позиций 1508, с доливом 552 (37 %), capital_t {1.25: 1195, None: 313}, usd 2250 (с доливом 1301); дни записи {'11-04': 1508}
+   последняя с доливом: TRXUSDT вход 10-31 08:11 заполнения [(0.3216, 0.2), (0.3193, 0.2)] маржа 38.262 плечо 1.0 выход срок usd 0.0312
+aggr $10k: позиций 653, с доливом 312 (48 %), capital_t {1.25: 624, None: 29}, usd 2873 (с доливом 1755); дни записи {'11-04': 653}
+   последняя с доливом: POLUSDT вход 10-31 02:10 заполнения [(0.094, 0.2), (0.09328, 0.2), (0.09243, 0.2), (0.09033, 0.2), (0.08889, 0.2)] маржа 45.3086 плечо 10.841 выход срок usd -23.3756
+конец: 2026-11-04T05:13:39Z, код 0
