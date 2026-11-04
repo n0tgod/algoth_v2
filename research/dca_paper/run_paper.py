@@ -110,7 +110,7 @@ def cache_sig():
             "lev_cap": 1,
             # Долив по повтору (спека 14 §18): меняет ИСХОД позиции —
             # запись прежнего правила описывает другую книгу.
-            "repeat_add": [R.REPEAT_ADD_W, R.REPEAT_ADD_COND]}
+            "repeat_add": [R.REPEAT_ADD_W, R.REPEAT_ADD_COND, "reserve-always"]}
 
 
 def read_cache(path=None, sig=None):

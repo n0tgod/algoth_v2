@@ -89,7 +89,7 @@ def test_rule_is_declared_for_short_books_with_versions_and_page_text():
         assert R.wave_guard_of(pk) == 4.0, pk          # и у короткой стороны общего счёта
     for lk in ("safe", "optimal", "aggr"):
         assert R.wave_guard_of(lk) is None, lk         # длинные не трогаются
-    assert R.FAMILY_RULES == {"pair": 14, "h24": 7, "sit": 4}, R.FAMILY_RULES
+    assert R.FAMILY_RULES == {"pair": 15, "h24": 7, "sit": 5}, R.FAMILY_RULES
     # день записи вперёд: h24 — 16.10 (охрана 4 %); sit и pair — 04.11 (долив по повтору)
     assert R.FAMILY_SINCE == {"pair": "2026-11-04", "h24": "2026-10-16",
                               "sit": "2026-11-04"}, R.FAMILY_SINCE

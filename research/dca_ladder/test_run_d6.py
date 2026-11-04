@@ -726,8 +726,13 @@ def test_repeat_add_is_one_add_on_the_first_repeat_not_above_average():
     D2.build_levels = lambda win, now_i: np.array([0.98, 0.96, 0.94])
     try:
         base = D6.one_position(g, bars, ts, look, "sigma", 6.0)
-        same = D6.one_position(g, bars, ts, look, "sigma", 6.0, adds=None, add_w=0.25)
-        assert base == same and "capital_t" not in base and "adds" not in base, "без доливов — прежняя запись"
+        same = D6.one_position(g, bars, ts, look, "sigma", 6.0, adds=None, add_w=None)
+        assert base == same and "capital_t" not in base and "adds" not in base, "без правила — прежняя запись"
+        # правило действует, повторов нет: резерв всё равно в марже (1.25 T), доливов 0,
+        # деньги те же — доля меньше; маржа не зависит от того, придёт ли повтор
+        idle = D6.one_position(g, bars, ts, look, "sigma", 6.0, adds=[], add_w=0.25, adds_below_avg=True)
+        assert idle["capital_t"] == 1.25 and idle["adds"] == 0 and abs(idle["pnl"] - base["pnl"] / 1.25) < 1e-9 \
+            and idle["exit"] == base["exit"] and all(abs(f[2] - 0.2) < 1e-12 for f in idle["fills"]), idle
         # повторы: +1 ч (цена +0.5 %, ВЫШЕ средней — пропуск) и +5 ч (−2 %, ниже — долив)
         r = D6.one_position(g, bars, ts, look, "sigma", 6.0,
                             adds=[T0 + H, T0 + 5 * H], add_w=0.25, adds_below_avg=True)

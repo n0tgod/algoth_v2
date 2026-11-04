@@ -254,12 +254,16 @@ def one_position(g, bars, ts, look, rule, param, hold_h=None,
     capital = 1.0
     weights = D2.WEIGHTS[:len(rungs)]
     kw = {}
-    if adds and add_w:
-        # резерв на долив в марже позиции: веса плановых рунгов — те же
-        # четверти билета, выраженные долей увеличенной маржи
+    if add_w:
+        # Резерв на долив — в марже позиции ВСЕГДА, когда правило действует,
+        # а не только у ног, у которых повтор потом случился: придёт ли
+        # повтор, на входе неизвестно, и маржа, зависящая от этого, была бы
+        # знанием будущего (дефект версии sit 4, 04.11: 20 % позиций без
+        # повтора шли билетом 1 T и освобождали кассу). Веса плановых
+        # рунгов — те же четверти билета, выраженные долей увеличенной маржи.
         capital = 1.0 + float(add_w)
         weights = [w / capital for w in weights]
-        kw = {"adds": [(float(t), float(add_w) / capital) for t in adds],
+        kw = {"adds": [(float(t), float(add_w) / capital) for t in (adds or ())],
               "adds_max": 1, "adds_below_avg": bool(adds_below_avg)}
     r = L.simulate_dca(hold, rungs, weights, capital, lev,
                        look(capital * lev), take_rule=take,
@@ -298,7 +302,7 @@ def one_position(g, bars, ts, look, rule, param, hold_h=None,
            "depth": int(r["depth"]),
            "fills": [[float(a), float(b), float(c)]
                      for (a, b, c) in (r.get("fills") or [])]}
-    if adds and add_w:
+    if add_w:
         # маржа в билетах и число доливов — только у записей с резервом:
         # запись без полей читается прежним образцом (1 билет, без доливов)
         out["capital_t"] = float(capital)
