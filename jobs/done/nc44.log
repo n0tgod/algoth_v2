@@ -1,0 +1,54 @@
+== задание nc44 ==
+строка: status
+начало: 2026-11-04T05:54:51Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   79G   65G  55% /
+/dev/sdb        147G   53G   87G  38% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 478428    7771 .venv/bin/python research/b1_book/collect.py --http 8765
+2219444 1254290 .venv/bin/python research/s8_loop/train.py
+3587476  978890 /root/algoth_v2/bot/target/release/bot ladder --dir /root/algoth_v2/bot/out/dca/sub_13a2aa113c4cad59 --base https://api.bybit.com --keys-stdin -
+--- убийства ядра по памяти за сутки ---
+0 (подробно: run tools/memtop.py)
+--- обучение S8 ---
+обучение S8: веса от 2026-11-04 00:08 UTC, 5.8 ч назад (каденция 24, тревога с 36 ч); последний цикл 05:15 UTC: весам 5.1 ч при каденции 24
+--- идущие прогоны ---
+462114 /root/algoth_v2/.venv/bin/python /root/algoth_v2/research/factory/mech_run.py judge 1793760301.659 -- /root/algoth_v2/.venv/bin/python research/factory/run_day.py --tag 1m --no-declare
+462120 /root/algoth_v2/.venv/bin/python research/factory/run_day.py --tag 1m --no-declare
+524370 bash -c              nice -n 10 .venv/bin/python research/dca_paper/run_paper.py --no-publish                 >> research/dca_paper/out/daily.log 2>&1             nice -n 10 .venv/bin/python research/dca_paper/run_pair.py --no-publish                 >> research/dca_paper/out/pair.log 2>&1
+524380 .venv/bin/python research/dca_paper/run_paper.py --no-publish
+--- статус сбора ---
+{"t": 1793771688.4, "uptime_sec": 7766.0, "rss_mb": 3596, "mem_guard": {"drops": 9, "dies": 0, "max_rss_mb": 3663}, "messages": 31356628, "trades": 2685737, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 3865553, "snapshot_errors": 1, "last_snap_age_sec": 0.6, "snap_pass_sec": 1.507, "net_minute": {"lag_max_s": 42.9, "stall_max_s": 2.73, "drops": 21, "ready": 819, "books": 819, "at": 1793771650.1}, "drops": 1183, "stalls_over_5s": 0, "writes": {"trades": 2685721, "book": 3865553, "raw": 109850, "liq": 533, "metrics": 20475}, "write_age_sec": {"trades": 6.9, "book": 0.6, "raw": 0.5, "liq": 52.6, "metrics": 21.4}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.1592, "ask": 0.1593, "resets"
+--- живой исполнитель ---
+{
+  "at_ms": 1792064189590,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 268.11562509,
+    "equity": 264.97302509
+  }
+}
+--- исполнитель Ladder ---
+
+sub_0a1d813d9612bc11: статусу 1023893 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+sub_13a2aa113c4cad59: статусу 1 с, режим live, позиций 0 (отметка у 0), пауза None, без входов False, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+sub_3f11698eb30279fa: статусу 2041191 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+sub_b0b417879b985874: статусу 1680892 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+конец: 2026-11-04T05:54:51Z
