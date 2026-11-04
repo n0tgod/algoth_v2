@@ -1022,7 +1022,7 @@
 - L467 `CONTROLS = [('нулевая σ пропускается', _control_si…`
 - L476 `main()`
 
-## research/dca_ladder/test_run_d6.py · 776 строк
+## research/dca_ladder/test_run_d6.py · 781 строк
 
 Тесты D6 — нормировка кассы.
 
@@ -1063,7 +1063,7 @@
 - L666 `TESTS = [test_budget_is_respected, test_money_r…`
 - L683 `CONTROLS = [('бюджет не вычитается', _control_no_b…`
 - L696 `test_repeat_add_is_one_add_on_the_first_repeat_not_above_averag…` — Долив по повтору (спека 14 §18): маржа 1.25 билета, веса плановых рунгов 0.2 от неё (та же четверть билета),…
-- L766 `main()`
+- L771 `main()`
 
 ## research/dca_ladder/test_run_d7.py · 283 строк
 
