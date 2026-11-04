@@ -1,6 +1,6 @@
 # Состояние рынка (спека 19 §3b)
 
-Срез 2026-11-04T15:21:52Z, прогон 1310.0 с, строк записано 2201 (из них докачка 0).
+Срез 2026-11-04T16:13:43Z, прогон 821.3 с, строк записано 2165 (из них докачка 0).
 
 | источник | имён получено | из | % |
 |---|---|---|---|
@@ -8,9 +8,9 @@
 | binance | 457 | 457 | 100.0 |
 | okx | 461 | 466 | 98.9 |
 
-Рынок: fng 34, fng_label Fear, btc_dom 59.42, mcap_usd 2726529632358, mcap_24h_pct 1.14, insurance_usdt 535837608, stables_usd 295322121465, trending ['DACITYCOIN', 'PEARL', 'NEAR', 'BTC', 'SOL', 'ETH', 'LIT', 'TRUMP', 'XMR', 'UNI', 'PENGU', 'HYPE', 'SUI', 'ZEC', 'AERO']
+Рынок: fng 34, fng_label Fear, btc_dom 59.46, mcap_usd 2718639829720, mcap_24h_pct 0.49, insurance_usdt 535841903, stables_usd 295062323853, trending ['PEARL', 'NEAR', 'ETH', 'DACITYCOIN', 'BTC', 'PENGU', 'XMR', 'TRUMP', 'HYPE', 'PONS', 'MON', 'ETC', 'PEPE', 'AERO', 'LIT']
 
-Толпа в лонге сильнее всего: INTCUSDT 0.89, GOOGLUSDT 0.89, XAGUSDT 0.86, MELANIAUSDT 0.84, MNTUSDT 0.83, GRAMUSDT 0.82, LABUSDT 0.82, LONGXIAUSDT 0.81, SOXLUSDT 0.80, BEUSDT 0.80
-Толпа в шорте сильнее всего: ACNUSDT 0.29, EVAAUSDT 0.30, HMSTRUSDT 0.30, WENSTOCKUSDT 0.32, FLUIDUSDT 0.32, AKAMUSDT 0.33, SQQQUSDT 0.33, MDTSTOCKUSDT 0.36, MAGMAUSDT 0.36, EWZSUSDT 0.38
+Толпа в лонге сильнее всего: INTCUSDT 0.89, GOOGLUSDT 0.89, XAGUSDT 0.86, MELANIAUSDT 0.84, GRAMUSDT 0.83, MNTUSDT 0.82, LABUSDT 0.82, LONGXIAUSDT 0.82, SOXLUSDT 0.81, BEUSDT 0.80
+Толпа в шорте сильнее всего: EVAAUSDT 0.30, HMSTRUSDT 0.30, ACNUSDT 0.32, WENSTOCKUSDT 0.35, BKNGUSDT 0.36, MDTSTOCKUSDT 0.36, MAGMAUSDT 0.36, FLUIDUSDT 0.37, VKTXUSDT 0.39, ANETUSDT 0.39
 
 Событий за сутки: 10.
