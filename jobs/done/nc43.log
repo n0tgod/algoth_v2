@@ -52,3 +52,16 @@ sub_3f11698eb30279fa: статусу 2038993 с, режим live, позиций
 sub_b0b417879b985874: статусу 1678694 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
   чужое на счёте: нет
 конец: 2026-11-04T05:18:14Z
+ВНИМАНИЕ: 2026-11-04T05:18:14Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (9 МБ) research/dca_paper/out/DCA-short.json (7 МБ)
+публикуется в ветку main:
+ jobs/done/nc43.log                                 | 54 ++++++++++++++++
+ jobs/poke.log                                      |  2 +
+ jobs/queue-state.md                                |  2 +-
+ .../out/decisions/decisions-2026-11-04.jsonl       | 73 ++++++++++++++++++++++
+ research/ai_gate/out/latest.json                   |  2 +-
+ research/s8_loop/out/day_brake.json                |  2 +-
+ 6 files changed, 132 insertions(+), 3 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   cb2ddeb76..0b9c4f359  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
