@@ -1,4 +1,3 @@
-2026-11-04T10:30:04Z · origin/main не получен (сеть или доступ) — задания могут быть не видны
 2026-11-04T10:40:03Z · origin/main не получен (сеть или доступ) — задания могут быть не видны
 2026-11-04T10:45:03Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-short.json (7 МБ)
 2026-11-04T10:50:08Z · origin/main не получен (сеть или доступ) — задания могут быть не видны
@@ -18,3 +17,4 @@
 2026-11-04T11:30:06Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (8 МБ) research/dca_paper/out/DCA-short.json (7 МБ)
 2026-11-04T11:30:20Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (8 МБ) research/dca_paper/out/DCA-short.json (7 МБ)
 2026-11-04T11:45:02Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (8 МБ) research/dca_paper/out/DCA-short.json (7 МБ)
+2026-11-04T11:56:15Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (7 МБ)
