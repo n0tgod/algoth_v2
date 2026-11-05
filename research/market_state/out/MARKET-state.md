@@ -1,6 +1,6 @@
 # Состояние рынка (спека 19 §3b)
 
-Срез 2026-11-05T19:13:34Z, прогон 812.8 с, строк записано 2186 (из них докачка 0).
+Срез 2026-11-05T20:13:41Z, прогон 819.0 с, строк записано 2176 (из них докачка 0).
 
 | источник | имён получено | из | % |
 |---|---|---|---|
@@ -8,9 +8,9 @@
 | binance | 457 | 457 | 100.0 |
 | okx | 461 | 466 | 98.9 |
 
-Рынок: fng 50, fng_label Neutral, btc_dom 59.21, mcap_usd 2567305099470, mcap_24h_pct -7.4, insurance_usdt 536159183, stables_usd 294101097022, trending ['BTC', 'SOL', 'HYPE', 'PENGU', 'INJ', 'TRUMP', 'NEAR', 'ETH', 'PEARL', 'PUMP', 'LIT', 'VVV', 'BP', 'ZEC', 'SUI']
+Рынок: fng 50, fng_label Neutral, btc_dom 59.21, mcap_usd 2579522730348, mcap_24h_pct -6.63, insurance_usdt 536159859, stables_usd 294050521794, trending ['BTC', 'ZEC', 'HYPE', 'PENGU', 'SOL', 'INJ', 'TRUMP', 'LIT', 'SUI', 'NEAR', 'ETH', 'PEARL', 'TAO', 'AAVE', 'LINK']
 
-Толпа в лонге сильнее всего: INTCUSDT 0.89, GOOGLUSDT 0.88, MNTUSDT 0.83, GRAMUSDT 0.83, XAGUSDT 0.83, MELANIAUSDT 0.83, ONDOUSDT 0.83, SOXLUSDT 0.83, LABUSDT 0.82, SNDKUSDT 0.82
-Толпа в шорте сильнее всего: SOXSUSDT 0.29, HMSTRUSDT 0.30, CAPUSDT 0.31, USDBRLUSDT 0.32, POPMARTUSDT 0.33, EVAAUSDT 0.35, TWSTUSDT 0.35, BKNGUSDT 0.36, WENSTOCKUSDT 0.37, UVXYUSDT 0.37
+Толпа в лонге сильнее всего: INTCUSDT 0.88, GOOGLUSDT 0.88, GRAMUSDT 0.84, MNTUSDT 0.84, XAGUSDT 0.83, MELANIAUSDT 0.83, ONDOUSDT 0.83, SNDKUSDT 0.83, LABUSDT 0.82, SOXLUSDT 0.82
+Толпа в шорте сильнее всего: SOXSUSDT 0.27, AKAMUSDT 0.30, HMSTRUSDT 0.30, CAPUSDT 0.31, TWSTUSDT 0.31, USDBRLUSDT 0.35, POPMARTUSDT 0.35, BKNGUSDT 0.35, EVAAUSDT 0.35, WENSTOCKUSDT 0.36
 
 Событий за сутки: 8.
