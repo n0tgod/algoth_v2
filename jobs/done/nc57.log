@@ -17,3 +17,27 @@ Already up to date.
 [       2 с] страница наблюдения: http://<адрес сервера>:8765/?k=<ключ из out/token.txt>
 [       7 с] очередь сжатия: 200 файлов
 == цикл обучения НЕ трогаю: идёт обучение (RSS 4773 МБ > 2000); код цикл подхватит при следующем подъёме; принудительно — FORCE_CYCLE=1 ==
+ВНИМАНИЕ: 2026-11-06T20:17:57Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (8 МБ)
+публикуется в ветку main:
+ jobs/done/nc57.done                                |   1 +
+ jobs/done/nc57.log                                 |  19 ++
+ jobs/poke.log                                      |   3 +
+ jobs/queue-state.md                                |   2 +-
+ research/dca_paper/out/DCA-pair.md                 | 218 ++++++++++-----------
+ research/dca_paper/out/DCA-short.md                | 190 +++++++++---------
+ research/dca_paper/out/fixed_pair-2026-11-05.jsonl |  37 ++++
+ .../dca_paper/out/fixed_short-2026-11-05.jsonl     |  59 ++++++
+ .../dca_paper/out/fixed_short-2026-11-06.jsonl     |   3 +
+ research/dca_paper/out/pair-2026-11-05.jsonl       |  31 +++
+ research/dca_paper/out/short-2026-11-05.jsonl      |  47 +++++
+ research/dca_paper/out/short-2026-11-06.jsonl      |   3 +
+ research/dca_paper/out/watch/h24.json              |   2 +-
+ research/dca_paper/out/watch/latest.json           |   2 +-
+ research/dca_paper/out/watch/log.jsonl             |  14 +-
+ research/dca_paper/out/watch/pair.json             |   2 +-
+ research/s8_loop/out/day_brake.json                |   2 +-
+ 17 files changed, 419 insertions(+), 216 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   13c2b8139..aa86fd56b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
