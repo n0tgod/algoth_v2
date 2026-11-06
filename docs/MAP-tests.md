@@ -586,6 +586,13 @@
 - L9229 `test_acme_challenge_served_without_page_key_and_nothing_else()` — L2 спеки 16: проверочный файл Let's Encrypt отдаётся на порту 80 без ключа страниц — только из каталога вызов…
 - L9279 `main()`
 
+## research/b1_book/test_dca_lock.py · 65 строк
+
+Кеш кусков DCA под замком (дефект 06.11): два потока читают журналы разом — кеш не падает «dictionary changed…
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L18 `main()`
+
 ## research/b1_book/test_dca_marks_family.py · 188 строк
 
 Живая отметка DCA-книги читается из артефакта ЕЁ семейства.
