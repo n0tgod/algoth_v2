@@ -1,0 +1,32 @@
+== задание nc59 ==
+строка: restart-book
+начало: 2026-11-06T21:01:14Z
+перезапуск сборщика и циклов
+== останавливаю прежний ==
+жду закрытия файлов.........................
+== обновляю код ==
+Already up to date.
+== запускаю ==
+== поднялся, хвост журнала ==
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/root/algoth_v2/research/b1_book/web.py", line 12640, in do_GET
+    t0 = time.time()
+         ^^^^
+NameError: name 'time' is not defined. Did you forget to import 'time'
+----------------------------------------
+[       7 с] очередь сжатия: 100 файлов
+== цикл обучения НЕ трогаю: идёт обучение (RSS 5127 МБ > 2000); код цикл подхватит при следующем подъёме; принудительно — FORCE_CYCLE=1 ==
+ВНИМАНИЕ: 2026-11-06T21:01:53Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (8 МБ)
+публикуется в ветку main:
+ docs/MAP-symbols.md                      | 15 ++++++++-------
+ docs/MAP.md                              |  6 +++---
+ jobs/done/nc59.done                      |  1 +
+ jobs/done/nc59.log                       | 19 +++++++++++++++++++
+ jobs/poke.log                            |  3 +++
+ jobs/queue-state.md                      |  4 ++--
+ research/dca_paper/out/DCA-pair.md       | 26 +++++++++++++-------------
+ research/dca_paper/out/watch/latest.json |  2 +-
+ research/dca_paper/out/watch/pair.json   |  2 +-
+ 9 files changed, 51 insertions(+), 27 deletions(-)
+fatal: cannot lock ref 'HEAD': is at 91ca26038019b5b6141b95af4137288444a30ddf but expected b3e74a8f8ad8c9f1771d6601ba94c22d78d6530a
