@@ -3865,11 +3865,30 @@ class Collector:
         if gone_any:
             MG.malloc_trim()
 
-    def _dca_sig(self, DR):
+    # Подпись свода — не чаще раза в `DCA_SIG_TTL` секунд (06.11): 600
+    # `os.stat` и `glob` на каждый запрос стоили 0.4–1.8 с под нагрузкой —
+    # каждый системный вызов отпускает GIL, и поток страницы ждёт его
+    # заново у полусотни потоков сборщика (`X-Took: paper=1844` при своде
+    # из кеша; 27 мс в тишине). Файлы книг меняются раз в пять минут —
+    # десять секунд старения подписи ответа не меняют.
+    DCA_SIG_TTL = 10.0
+
+    def _dca_sig(self, DR, now=None):
         """Подпись всего, из чего собирается свод DCA: куски шести
         журналов и три артефакта (путь, mtime, размер). Та же подпись —
         тот же ответ; книги дописывают раз в час, и свод пересобирается
-        тогда, а не раз в две минуты по часам."""
+        тогда, а не раз в две минуты по часам. Считается не чаще раза в
+        `DCA_SIG_TTL` с (`now` — для памятки; None — без памятки)."""
+        if now is not None:
+            at, memo = getattr(self, "_dca_sig_memo", (None, None))
+            if at is not None and 0 <= now - at < self.DCA_SIG_TTL:
+                return memo
+        sig = self._dca_sig_now(DR)
+        if now is not None:
+            self._dca_sig_memo = (now, sig)
+        return sig
+
+    def _dca_sig_now(self, DR):
         sig = []
         twin = getattr(DR, "fixed_twin", None)
         for attr in ("JOURNAL", "H24_JOURNAL", "PAIR_JOURNAL"):
@@ -4314,7 +4333,7 @@ class Collector:
         # собирать все книги заново при тех же файлах, а свежесть
         # обновляется на каждом ответе (`_dca_freshen`). Ответов в кеше
         # не больше трёх: каждый весит десятки МБ.
-        sig = self._dca_sig(DR)
+        sig = self._dca_sig(DR, now)
         cat, cached = getattr(self, "_dca_cache", (0.0, {}))
         if cat == sig and key in cached:
             return self._dca_freshen(cached[key], DR, now)

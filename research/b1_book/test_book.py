@@ -8253,7 +8253,7 @@ def test_dca_serves_last_answer_while_rebuilding():
     real = C.Collector.dca_paper
     gate = TH.Event()
 
-    def fake_sig(DR):
+    def fake_sig(DR, now=None):
         return len(calls)
     c._dca_sig = fake_sig
     first = real(c)                      # холодный: собирает сам
@@ -8313,6 +8313,24 @@ def test_dca_focus_slims_other_books_and_keeps_the_cache():
     check("свод фокуса: копии книг в short/pair сняты, признак свежести остался",
           "books" not in s["short"] and s["pair"]["stale"] is True, str(s["pair"]))
     check("свод фокуса: свод в кеше не изменён", json.dumps(d, sort_keys=True) == before)
+
+
+def test_dca_sig_is_remembered_for_ten_seconds():
+    """Подпись свода (06.11): в пределах `DCA_SIG_TTL` файлы не
+    опрашиваются заново; по истечении — опрашиваются; без `now` —
+    всегда заново."""
+    import collect as C
+    c = C.Collector.__new__(C.Collector)
+    n = []
+    c._dca_sig_now = lambda DR: (n.append(1), ("sig", len(n)))[1]
+    s1 = c._dca_sig(None, 100.0)
+    s2 = c._dca_sig(None, 105.0)
+    check("подпись свода: в пределах десяти секунд — та же, файлы не опрошены", s1 == s2 == ("sig", 1) and len(n) == 1)
+    s3 = c._dca_sig(None, 100.0 + C.Collector.DCA_SIG_TTL)
+    check("подпись свода: по истечении — заново", s3 == ("sig", 2) and len(n) == 2)
+    s4 = c._dca_sig(None)
+    check("подпись свода: без времени — всегда заново, памятка не трогается",
+          s4 == ("sig", 3) and c._dca_sig(None, 100.0 + C.Collector.DCA_SIG_TTL + 1) == ("sig", 2))
 
 
 def test_dca_bytes_cache_serves_the_same_summary_once():
@@ -9119,7 +9137,8 @@ def test_dca_summary_is_rebuilt_by_file_signature_not_by_clock():
 
         def row(sym, at):
             return {"dep": 1000, "at": at, "exit_ts": at + 3600, "sym": sym, "usd": 1.0,
-                    "written_at": at + 600, "rules": DR.RULES, "ruler": "safe", "lev": 2.0, "margin": 25.0,
+                    "written_at": at + 600, "rules": DR.RULES, "book_rules": DR.FAMILY_RULES["sit"],
+                    "ruler": "safe", "lev": 2.0, "margin": 25.0,
                     "pnl_frac": 0.04, "exit": "тейк", "entry_px": 2.0, "exit_px": 2.2, "avg": 1.9,
                     "depth": 1, "fills": [[at, 2.0, 0.25]], "fav_bp": 500.0}
         with open(DR.JOURNAL, "w", encoding="utf-8") as f:
@@ -9140,12 +9159,18 @@ def test_dca_summary_is_rebuilt_by_file_signature_not_by_clock():
               o1 is o2 and o1["present"] and o1["books"]["safe:1000"]["n_journal"] == 1, str(o1.get("read")))
         with open(DR.JOURNAL, "a", encoding="utf-8") as f:
             f.write(_json.dumps(row("BBBUSDT", t0 + 60)) + "\n")
-        o3 = c.dca_paper()
+        # подпись файлов помнится `DCA_SIG_TTL` секунд (06.11): дописанное
+        # видно следующим опросом файлов — часы сборщика сдвигаются
+        real_time = C.time.time
+        C.time.time = lambda: real_time() + C.Collector.DCA_SIG_TTL + 1
+        try:
+            o3 = c.dca_paper()
+        finally:
+            C.time.time = real_time
         check("дописанная строка журнала меняет подпись — свод пересобран",
               o3 is not o2 and o3["books"]["safe:1000"]["n_journal"] == 2, str(o3["books"]["safe:1000"].get("n_journal")))
         # свежесть — на каждом ответе: файлы те же, прошло 40 часов (часы
         # сборщика подменены), книги не писали — свод обязан стать устаревшим
-        real_time = C.time.time
         C.time.time = lambda: real_time() + 40 * 3600
         try:
             o4 = c.dca_paper()
