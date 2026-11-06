@@ -1636,7 +1636,7 @@ A3 — кандидаты в пары на момент окна.
 - L279 `_parse(f, parse=json.loads)` — Разобрать построчно. Возвращает `(записи, дочитано ли до конца)`.
 - L298 `_salvage(path, log, parse=json.loads)` — Разобрать сжатый файл по членам, пропуская испорченные.
 
-## research/b1_book/web.py · 12713 строк
+## research/b1_book/web.py · 12742 строк
 
 Страница наблюдения: стакан, лента, глубина и журнал живьём.
 
@@ -1677,12 +1677,15 @@ A3 — кандидаты в пары на момент окна.
 - L11985 `news_state_json(path=NEWS_LATEST, now=None)` — Срез новостного фона (спека 19 §4): тот же читатель, порог 45 мин.
 - L11990 `market_state_json(path=MARKET_LATEST, now=None, stale_s=None)` — Срез сборщика состояния рынка (спека 19 §3b) с возрастом и вердиктом.
 - L12016 `MARKETPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L12224 `slim_dca(d, focus)` — Свод `/dca` для экрана одной книги: у книг, кроме `focus`, нет списка сделок (`trades`; `trades_omitted: true…
-- L12249 `SITE_HOST = 'algoth.trade'`
-- L12250 `ACME_PREFIX = '/.well-known/acme-challenge/'`
-- L12251 `ACME_NAME = re.compile('^[A-Za-z0-9_-]{16,128}$')`
-- L12252 `ACME_DIR = os.path.join(os.path.dirname(os.path.di…`
-- L12256 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
+- L12230 `SLIM_BOOK_DROP = ('restored', 'separate', 'parts', 'dups…` — Что снимается у книг ВНЕ фокуса (06.11, «давай ускорим»): разделы, которые читает только экран выбранной книг…
+- L12231 `SLIM_STAT_DROP = ('open_days',)`
+- L12232 `SLIM_POS_DROP = ('walk', 'levels', 'fills', 'take_frac')`
+- L12235 `slim_dca(d, focus)` — Свод `/dca` для экрана одной книги: у книг, кроме `focus`, нет списка сделок (`trades`; `trades_omitted: true…
+- L12278 `SITE_HOST = 'algoth.trade'`
+- L12279 `ACME_PREFIX = '/.well-known/acme-challenge/'`
+- L12280 `ACME_NAME = re.compile('^[A-Za-z0-9_-]{16,128}$')`
+- L12281 `ACME_DIR = os.path.join(os.path.dirname(os.path.di…`
+- L12285 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
 
 ## research/d1_seconds/detect.py · 367 строк
 
