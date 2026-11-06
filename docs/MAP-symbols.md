@@ -1636,7 +1636,7 @@ A3 — кандидаты в пары на момент окна.
 - L279 `_parse(f, parse=json.loads)` — Разобрать построчно. Возвращает `(записи, дочитано ли до конца)`.
 - L298 `_salvage(path, log, parse=json.loads)` — Разобрать сжатый файл по членам, пропуская испорченные.
 
-## research/b1_book/web.py · 12742 строк
+## research/b1_book/web.py · 12783 строк
 
 Страница наблюдения: стакан, лента, глубина и журнал живьём.
 
@@ -1681,11 +1681,15 @@ A3 — кандидаты в пары на момент окна.
 - L12231 `SLIM_STAT_DROP = ('open_days',)`
 - L12232 `SLIM_POS_DROP = ('walk', 'levels', 'fills', 'take_frac')`
 - L12235 `slim_dca(d, focus)` — Свод `/dca` для экрана одной книги: у книг, кроме `focus`, нет списка сделок (`trades`; `trades_omitted: true…
-- L12278 `SITE_HOST = 'algoth.trade'`
-- L12279 `ACME_PREFIX = '/.well-known/acme-challenge/'`
-- L12280 `ACME_NAME = re.compile('^[A-Za-z0-9_-]{16,128}$')`
-- L12281 `ACME_DIR = os.path.join(os.path.dirname(os.path.di…`
-- L12285 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
+- L12285 `DCA_BYTES_MAX = 4` — Байты ответа `/dca?focus=` — по подписи свода (06.11, «давай ускорим»): срез, сериализация и gzip 6.8 МБ стои…
+- L12286 `_DCA_BYTES = {}`
+- L12287 `_DCA_BYTES_LOCK = threading.Lock()`
+- L12290 `dca_bytes(collector, d, key, focus, gz)` — (тело, Content-Encoding или None) ответа `/dca` с фокусом: из кеша байтов, если свод тот же; иначе собирается…
+- L12314 `SITE_HOST = 'algoth.trade'`
+- L12315 `ACME_PREFIX = '/.well-known/acme-challenge/'`
+- L12316 `ACME_NAME = re.compile('^[A-Za-z0-9_-]{16,128}$')`
+- L12317 `ACME_DIR = os.path.join(os.path.dirname(os.path.di…`
+- L12321 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
 
 ## research/d1_seconds/detect.py · 367 строк
 
