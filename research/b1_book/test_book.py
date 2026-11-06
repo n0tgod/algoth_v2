@@ -8280,15 +8280,36 @@ def test_dca_focus_slims_other_books_and_keeps_the_cache():
     число сделок и итоги остаются; копии книг в `short`/`pair` сняты;
     свод в кеше не меняется."""
     import web as W
-    d = {"books": {"a:100": {"all": {"n": 3}, "trades": [1, 2, 3], "trades_total": 3, "trades_shown": 3},
-                   "b:100": {"all": {"n": 2}, "trades": [4, 5], "trades_total": 2, "trades_shown": 2}},
+    pos = {"sym": "XUSDT", "mark_usd": -1.5, "mark_frac": -0.01, "walk": [1, 2], "levels": {"a": 1},
+           "fills": [[1, 2]], "take_frac": 0.5}
+    heavy = {"restored": {"n": 1}, "parts": {"a": 1}, "separate": {"b": 2}, "dups": [], "collisions": [],
+             "costs": {"fee_usd": 1}, "open": {"mark_usd": -1.5, "positions": [pos], "cut": [pos]}}
+    d = {"books": {"a:100": dict({"all": {"n": 3, "days_rows": [1], "open_days": [2]}, "trades": [1, 2, 3],
+                                  "trades_total": 3, "trades_shown": 3}, **heavy),
+                   "b:100": dict({"all": {"n": 2, "days_rows": [1], "open_days": [2]}, "forward": {"n": 1},
+                                  "trades": [4, 5], "trades_total": 2, "trades_shown": 2}, **heavy)},
          "short": {"stale": False, "books": {"x": 1}}, "pair": {"stale": True, "books": {"y": 2}}}
     before = json.dumps(d, sort_keys=True)
     s = W.slim_dca(d, "a:100")
-    check("свод фокуса: у выбранной книги сделки целиком", s["books"]["a:100"]["trades"] == [1, 2, 3])
+    a = s["books"]["a:100"]
+    check("свод фокуса: у выбранной книги сделки целиком", a["trades"] == [1, 2, 3])
+    check("свод фокуса: у выбранной книги всё остальное целиком",
+          all(f in a for f in W.SLIM_BOOK_DROP) and a["all"]["open_days"] == [2]
+          and a["open"]["positions"][0]["walk"] == [1, 2] and not a.get("slim"), str(list(a)))
     b = s["books"]["b:100"]
     check("свод фокуса: у прочих нет сделок, число и итог есть",
           "trades" not in b and b["trades_omitted"] is True and b["trades_total"] == 2 and b["all"]["n"] == 2, str(b))
+    check("свод фокуса (06.11): у прочих нет разделов экрана книги и дневных рядов открытых, "
+          "дневные ряды итогов и forward есть, пометка slim",
+          not any(f in b for f in W.SLIM_BOOK_DROP) and "open_days" not in b["all"] and b["all"]["days_rows"] == [1]
+          and b["forward"] == {"n": 1} and b.get("slim") is True, str(b))
+    op = b["open"]
+    check("свод фокуса (06.11): открытые и оборванные прочих книг — списком, без лесенки, уровней и рунгов, "
+          "с отметкой",
+          len(op["positions"]) == 1 and len(op["cut"]) == 1 and op["mark_usd"] == -1.5
+          and not any(f in op["positions"][0] for f in W.SLIM_POS_DROP)
+          and not any(f in op["cut"][0] for f in W.SLIM_POS_DROP)
+          and op["positions"][0]["mark_usd"] == -1.5 and op["positions"][0]["sym"] == "XUSDT", str(op))
     check("свод фокуса: копии книг в short/pair сняты, признак свежести остался",
           "books" not in s["short"] and s["pair"]["stale"] is True, str(s["pair"]))
     check("свод фокуса: свод в кеше не изменён", json.dumps(d, sort_keys=True) == before)

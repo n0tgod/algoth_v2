@@ -12221,22 +12221,51 @@ loadGate(); setInterval(loadGate, 60000);
 """
 
 
+# Что снимается у книг ВНЕ фокуса (06.11, «давай ускорим»): разделы, которые
+# читает только экран выбранной книги, и тяжёлые поля открытых позиций —
+# лесенка (`walk`), уровни исполнителя, рунги. Сами открытые позиции
+# остаются списком: рейтинг и карточки считают их число и читают отметку.
+# Замер 06.11: свод с фокусом 15.5 МБ, из них открытые всех 344 книг 5.2,
+# `restored`/`parts`/`separate` 5.1, дневные ряды открытых 1.3.
+SLIM_BOOK_DROP = ("restored", "separate", "parts", "dups", "collisions", "costs")
+SLIM_STAT_DROP = ("open_days",)
+SLIM_POS_DROP = ("walk", "levels", "fills", "take_frac")
+
+
 def slim_dca(d, focus):
     """Свод `/dca` для экрана одной книги: у книг, кроме `focus`, нет
     списка сделок (`trades`; `trades_omitted: true`, число `trades_total`
-    остаётся), у разделов `short`/`pair` — их копий книг. Итоги, дневные
-    ряды и открытые позиции всех книг остаются: их читают рейтинг и плитки.
-    Исходный свод (он в кеше) не меняется."""
+    остаётся), нет разделов экрана книги (`SLIM_BOOK_DROP`), у открытых
+    позиций — лесенок и уровней (`SLIM_POS_DROP`); пометка `slim: true`.
+    У разделов `short`/`pair` — нет их копий книг. Итоги, дневные ряды
+    (`days_rows`), число и отметка открытых всех книг остаются: их читают
+    рейтинг и плитки. Исходный свод (он в кеше) не меняется."""
     if not isinstance(d, dict):
         return d
     out = dict(d)
     books = {}
     for k, b in (d.get("books") or {}).items():
-        if k != focus and isinstance(b, dict) and "trades" in b:
+        if k != focus and isinstance(b, dict):
             b = dict(b)
-            b.pop("trades", None)
-            b["trades_shown"] = 0
-            b["trades_omitted"] = True
+            if "trades" in b:
+                b.pop("trades", None)
+                b["trades_shown"] = 0
+                b["trades_omitted"] = True
+            for f in SLIM_BOOK_DROP:
+                b.pop(f, None)
+            for f in ("all", "forward"):
+                st = b.get(f)
+                if isinstance(st, dict) and any(x in st for x in SLIM_STAT_DROP):
+                    b[f] = {x: v for x, v in st.items() if x not in SLIM_STAT_DROP}
+            op = b.get("open")
+            if isinstance(op, dict):
+                op = dict(op)
+                for f in ("positions", "cut"):
+                    if isinstance(op.get(f), list):
+                        op[f] = [({x: v for x, v in q.items() if x not in SLIM_POS_DROP}
+                                  if isinstance(q, dict) else q) for q in op[f]]
+                b["open"] = op
+            b["slim"] = True
         books[k] = b
     out["books"] = books
     for sec in ("short", "pair"):
