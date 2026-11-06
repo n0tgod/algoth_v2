@@ -1636,7 +1636,7 @@ A3 — кандидаты в пары на момент окна.
 - L279 `_parse(f, parse=json.loads)` — Разобрать построчно. Возвращает `(записи, дочитано ли до конца)`.
 - L298 `_salvage(path, log, parse=json.loads)` — Разобрать сжатый файл по членам, пропуская испорченные.
 
-## research/b1_book/web.py · 12783 строк
+## research/b1_book/web.py · 12794 строк
 
 Страница наблюдения: стакан, лента, глубина и журнал живьём.
 
@@ -1685,11 +1685,11 @@ A3 — кандидаты в пары на момент окна.
 - L12286 `_DCA_BYTES = {}`
 - L12287 `_DCA_BYTES_LOCK = threading.Lock()`
 - L12290 `dca_bytes(collector, d, key, focus, gz)` — (тело, Content-Encoding или None) ответа `/dca` с фокусом: из кеша байтов, если свод тот же; иначе собирается…
-- L12314 `SITE_HOST = 'algoth.trade'`
-- L12315 `ACME_PREFIX = '/.well-known/acme-challenge/'`
-- L12316 `ACME_NAME = re.compile('^[A-Za-z0-9_-]{16,128}$')`
-- L12317 `ACME_DIR = os.path.join(os.path.dirname(os.path.di…`
-- L12321 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
+- L12325 `SITE_HOST = 'algoth.trade'`
+- L12326 `ACME_PREFIX = '/.well-known/acme-challenge/'`
+- L12327 `ACME_NAME = re.compile('^[A-Za-z0-9_-]{16,128}$')`
+- L12328 `ACME_DIR = os.path.join(os.path.dirname(os.path.di…`
+- L12332 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
 
 ## research/d1_seconds/detect.py · 367 строк
 
