@@ -398,3 +398,13 @@
        850        1      4  535:32  /usr/lib/systemd/systemd-logind
    1466840        1      4   12:49  /usr/lib/polkit-1/polkitd --no-debug
 конец: 2026-11-06T19:15:26Z, код 0
+ВНИМАНИЕ: 2026-11-06T19:15:26Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (8 МБ) research/dca_paper/out/DCA-short.json (8 МБ)
+публикуется в ветку main:
+ jobs/done/nc51.done |   1 +
+ jobs/done/nc51.log  | 400 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/queue-state.md |   2 +-
+ 3 files changed, 402 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   78509d0db..791b37f62  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
