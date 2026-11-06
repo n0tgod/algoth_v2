@@ -12285,6 +12285,9 @@ def slim_dca(d, focus):
 DCA_BYTES_MAX = 4
 _DCA_BYTES = {}
 _DCA_BYTES_LOCK = threading.Lock()
+# попадания и промахи кеша байтов — в заголовок ответа `X-Took` (замер
+# времени ответа без правки тела: тело в кеше)
+_DCA_BYTES_STATS = {"hit": 0, "miss": 0}
 
 
 def dca_bytes(collector, d, key, focus, gz):
@@ -12309,6 +12312,7 @@ def dca_bytes(collector, d, key, focus, gz):
           age("short"), age("pair"))
     with _DCA_BYTES_LOCK:
         hit = _DCA_BYTES.get(ck)
+        _DCA_BYTES_STATS["hit" if hit is not None else "miss"] += 1
     if hit is not None:
         return hit
     body = json.dumps(slim_dca(d, focus), ensure_ascii=False).encode("utf-8")
@@ -12342,16 +12346,19 @@ def serve(collector, port, token, log):
         protocol_version = "HTTP/1.1"
         timeout = 65                      # праздное соединение не держим
 
-        def _ok(self, body, ctype, encoded=None):
+        def _ok(self, body, ctype, encoded=None, took=None):
             # Сжатие: первый ответ весит под полсотни килобайт, и на
             # мобильной связи это разница между «открылось» и «висит».
-            # `encoded` — тело уже сжато вызывающим (кеш байтов `/dca`).
+            # `encoded` — тело уже сжато вызывающим (кеш байтов `/dca`);
+            # `took` — замер стадий ответа, заголовком `X-Took`.
             enc = (self.headers.get("Accept-Encoding") or "")
             gz = encoded == "gzip" or ("gzip" in enc and len(body) > 1024)
             if gz and not encoded:
                 body = gzip.compress(body, 6)
             self.send_response(200)
             self.send_header("Content-Type", ctype)
+            if took:
+                self.send_header("X-Took", took)
             if gz:
                 self.send_header("Content-Encoding", "gzip")
             self.send_header("Content-Length", str(len(body)))
@@ -12630,11 +12637,13 @@ def serve(collector, port, token, log):
                 # целиком. Снять предел у всех разом нельзя: закрытых
                 # позиций тысячи на книгу, а книг девять, и ответ вырос
                 # бы на порядок ради строк, которых никто не смотрит.
+                t0 = time.time()
                 d = collector.dca_paper(q.get("dep", [None])[0],
                                         q.get("ruler", [None])[0],
                                         q.get("full", [None])[0],
                                         q.get("sizing", [None])[0],
                                         wait=False)
+                t1 = time.time()
                 # `focus` — ключ книги, которую смотрит приложение: её список
                 # сделок отдаётся, у остальных — нет (13.10: свод весил
                 # 14.5 МБ, из них 10.2 — хвосты сделок всех 72 книг, а экран
@@ -12645,7 +12654,9 @@ def serve(collector, port, token, log):
                         collector, d, (q.get("dep", [None])[0], q.get("ruler", [None])[0],
                                        q.get("full", [None])[0], q.get("sizing", [None])[0]),
                         focus, "gzip" in (self.headers.get("Accept-Encoding") or ""))
-                    return self._ok(body, "application/json; charset=utf-8", encoded=enc)
+                    took = (f"paper={int((t1 - t0) * 1000)} bytes={int((time.time() - t1) * 1000)} "
+                            f"hit={_DCA_BYTES_STATS['hit']} miss={_DCA_BYTES_STATS['miss']}")
+                    return self._ok(body, "application/json; charset=utf-8", encoded=enc, took=took)
                 return self._ok(json.dumps(d, ensure_ascii=False).encode("utf-8"),
                                 "application/json; charset=utf-8")
             if u.path == "/dca_marks":
