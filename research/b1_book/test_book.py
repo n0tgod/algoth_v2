@@ -8350,6 +8350,15 @@ def test_dca_bytes_cache_serves_the_same_summary_once():
     b5, _ = W.dca_bytes(c, d, ("100", None, None, None), "a:100", False)
     check("кеш байтов: новая подпись свода — новые байты", b5 is not b4)
     check("кеш байтов: записей не больше предела", len(W._DCA_BYTES) <= W.DCA_BYTES_MAX, str(len(W._DCA_BYTES)))
+    # пересборка: копии прежнего свода с пометкой — те же байты, пока прежний свод тот же
+    c._dca_last = {":100::": d}
+    r1, _ = W.dca_bytes(c, dict(d, rebuilding=True), ("100", None, None, None), "a:100", False)
+    r2, _ = W.dca_bytes(c, dict(d, rebuilding=True), ("100", None, None, None), "a:100", False)
+    check("кеш байтов: копии свода во время пересборки — те же байты, с пометкой",
+          r1 is r2 and json.loads(r1)["rebuilding"] is True and r1 is not b5)
+    c._dca_last = {":100::": dict(d)}
+    r3, _ = W.dca_bytes(c, dict(d, rebuilding=True), ("100", None, None, None), "a:100", False)
+    check("кеш байтов: пересборка кончилась, прежний свод сменился — новые байты", r3 is not r1)
     check("кеш байтов: свод в кеше не изменён", json.dumps(d, sort_keys=True) == before.replace('"age_h": 1.0', '"age_h": 1.1'))
     W._DCA_BYTES.clear()
 

@@ -12294,7 +12294,18 @@ def dca_bytes(collector, d, key, focus, gz):
         b = d.get(sec)
         return b.get("age_h") if isinstance(b, dict) else None
     sig = (getattr(collector, "_dca_cache", None) or (None,))[0]
-    ck = (sig, id(d), key, focus, bool(gz), d.get("age_h"), d.get("rebuilding"),
+    ident = id(d)
+    if d.get("rebuilding"):
+        # Во время пересборки `dca_paper` отдаёт КОПИЮ прежнего свода с
+        # пометкой — объект каждый раз новый, а свод тот же: ключ — сам
+        # прежний свод (`_dca_last` по ключу запроса, как в `dca_paper`).
+        # Без этого пересборка (1–2 мин каждые 5, замер 06.11) шла мимо кеша.
+        dep, ruler, full, sizing = key
+        base = (getattr(collector, "_dca_last", None) or {}).get(
+            f"{ruler or ''}:{dep or ''}:{full or ''}:{sizing or ''}")
+        if base is not None:
+            ident = ("last", id(base))
+    ck = (sig, ident, key, focus, bool(gz), d.get("age_h"), d.get("rebuilding"),
           age("short"), age("pair"))
     with _DCA_BYTES_LOCK:
         hit = _DCA_BYTES.get(ck)
