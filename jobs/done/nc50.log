@@ -1,0 +1,54 @@
+== задание nc50 ==
+строка: status
+начало: 2026-11-06T19:06:31Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   81G   64G  56% /
+/dev/sdb        147G   49G   91G  35% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 737283  180935 .venv/bin/python research/b1_book/collect.py --http 8765
+1046134  124289 .venv/bin/python research/s8_loop/train.py
+3587476 1199189 /root/algoth_v2/bot/target/release/bot ladder --dir /root/algoth_v2/bot/out/dca/sub_13a2aa113c4cad59 --base https://api.bybit.com --keys-stdin -
+--- убийства ядра по памяти за сутки ---
+0 (подробно: run tools/memtop.py)
+--- обучение S8 ---
+обучение S8: веса от 2026-11-05 18:29 UTC, 24.6 ч назад (каденция 24, тревога с 36 ч); последний цикл 18:09 UTC: весам 23.7 ч при каденции 24
+--- идущие прогоны ---
+1719286 bash -c              nice -n 15 .venv/bin/python research/market_state/collect.py                 >> research/market_state/out/collect.log 2>&1
+1719291 .venv/bin/python research/market_state/collect.py
+--- статус сбора ---
+{"t": 1793991990.2, "uptime_sec": 180933.2, "rss_mb": 3828, "mem_guard": {"drops": 2896, "dies": 0, "max_rss_mb": 4209}, "messages": 226704756, "trades": 17508494, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 29488604, "snapshot_errors": 45, "last_snap_age_sec": 14.4, "snap_pass_sec": 0.379, "net_minute": {"lag_max_s": 35.68, "stall_max_s": 1.39, "drops": 14, "ready": 739, "books": 819, "at": 1793991936.2}, "drops": 62394, "stalls_over_5s": 6, "writes": {"book": 29488604, "trades": 17508476, "raw": 679586, "liq": 5033, "metrics": 443079}, "write_age_sec": {"book": 14.4, "trades": 29.7, "raw": 27.3, "liq": 279.8, "metrics": 381.0}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.1511, "a
+--- живой исполнитель ---
+{
+  "at_ms": 1792064189590,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 268.11562509,
+    "equity": 264.97302509
+  }
+}
+--- исполнитель Ladder ---
+
+sub_0a1d813d9612bc11: статусу 1244192 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+sub_13a2aa113c4cad59: статусу 0 с, режим live, позиций 2 (отметка у 2), пауза None, без входов False, ошибка None, стоп пола на бирже у 2 из 2, цель лимиткой у 2 из 2
+    CLANKERUSDT long глубина 1/1: средняя 22.959, цель 32.067, пол 2.2959, стоп биржи 2.295, рунгов лежит 0, закрытие None
+    RPLUSDT long глубина 1/1: средняя 1.423, цель 1.484, пол 0.14229999999999998, стоп биржи 0.14200000000000002, рунгов лежит 0, закрытие None
+  чужое на счёте: нет
+sub_3f11698eb30279fa: статусу 2261490 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+sub_b0b417879b985874: статусу 1901191 с, режим live, позиций 0 (отметка у 0), пауза None, без входов True, ошибка None, стоп пола на бирже у 0 из 0, цель лимиткой у 0 из 0
+  чужое на счёте: нет
+конец: 2026-11-06T19:06:31Z
