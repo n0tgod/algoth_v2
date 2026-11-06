@@ -8315,6 +8315,101 @@ def test_dca_focus_slims_other_books_and_keeps_the_cache():
     check("свод фокуса: свод в кеше не изменён", json.dumps(d, sort_keys=True) == before)
 
 
+def test_dca_bytes_cache_serves_the_same_summary_once():
+    """Кеш байтов `/dca?focus=` (06.11): тот же свод — те же байты без
+    пересборки; изменившийся возраст, пересборка, другой фокус, другой
+    запрос или новая подпись — новые байты; сжатие по просьбе клиента;
+    записей не больше `DCA_BYTES_MAX`; свод в кеше не тронут."""
+    import gzip
+
+    import web as W
+
+    class C:
+        _dca_cache = (("sig1",), {})
+    c = C()
+    d = {"present": True, "age_h": 1.0, "books": {"a:100": {"trades": [1] * 400, "trades_total": 400},
+                                                   "b:100": {"trades": [2] * 400, "trades_total": 400}},
+         "short": {"present": True, "age_h": 0.5}, "pair": {"present": True, "age_h": 0.5}}
+    before = json.dumps(d, sort_keys=True)
+    W._DCA_BYTES.clear()
+    b1, e1 = W.dca_bytes(c, d, ("100", None, None, None), "a:100", False)
+    b2, e2 = W.dca_bytes(c, d, ("100", None, None, None), "a:100", False)
+    check("кеш байтов: тот же свод — те же байты, без сжатия", b1 is b2 and e1 is None and e2 is None)
+    got = json.loads(b1.decode("utf-8"))
+    check("кеш байтов: тело — срез с фокусом", got["focus"] == "a:100" and len(got["books"]["a:100"]["trades"]) == 400
+          and got["books"]["b:100"].get("trades_omitted") is True, str(list(got["books"]["b:100"])))
+    g1, ge = W.dca_bytes(c, d, ("100", None, None, None), "a:100", True)
+    check("кеш байтов: сжатие по просьбе клиента — gzip того же тела",
+          ge == "gzip" and gzip.decompress(g1) == b1 and len(g1) < len(b1))
+    b3, _ = W.dca_bytes(c, d, ("100", None, None, None), "b:100", False)
+    check("кеш байтов: другой фокус — другие байты", b3 is not b1 and json.loads(b3)["focus"] == "b:100")
+    d["age_h"] = 1.1
+    b4, _ = W.dca_bytes(c, d, ("100", None, None, None), "a:100", False)
+    check("кеш байтов: сменился возраст — новые байты", b4 is not b1 and json.loads(b4)["age_h"] == 1.1)
+    c._dca_cache = (("sig2",), {})
+    b5, _ = W.dca_bytes(c, d, ("100", None, None, None), "a:100", False)
+    check("кеш байтов: новая подпись свода — новые байты", b5 is not b4)
+    check("кеш байтов: записей не больше предела", len(W._DCA_BYTES) <= W.DCA_BYTES_MAX, str(len(W._DCA_BYTES)))
+    check("кеш байтов: свод в кеше не изменён", json.dumps(d, sort_keys=True) == before.replace('"age_h": 1.0', '"age_h": 1.1'))
+    W._DCA_BYTES.clear()
+
+
+def test_dca_focus_over_http_is_sliced_cached_and_gzipped():
+    """Дорога `/dca?focus=` целиком (06.11): ответ — срез с фокусом; с
+    `Accept-Encoding: gzip` — сжатый, с заголовком; второй ответ — из кеша
+    байтов, свод у сборщика не спрашивается заново на сериализацию
+    (`dca_paper` зовётся, но байты те же); без фокуса — свод целиком."""
+    import gzip
+    import http.client
+    import socket
+    import web as W
+    calls = []
+    d = {"present": True, "age_h": 2.0, "books": {"a:100": {"trades": [1] * 300, "trades_total": 300},
+                                                   "b:100": {"trades": [2] * 300, "trades_total": 300}}}
+
+    class Stub:
+        _dca_cache = (("sigX",), {})
+
+        def dca_paper(self, *a, **k):
+            calls.append(a)
+            return d
+
+        def __getattr__(self, _k):
+            return lambda *a, **k: {}
+    with socket.socket() as so:
+        so.bind(("127.0.0.1", 0))
+        port = so.getsockname()[1]
+    W._DCA_BYTES.clear()
+    W.serve(Stub(), port, "SECRETKEY", log=lambda *a: None)
+
+    def get(path, gz=False):
+        c = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+        c.request("GET", path, headers={"Accept-Encoding": "gzip"} if gz else {})
+        r = c.getresponse()
+        body = r.read()
+        c.close()
+        return r.status, r.getheader("Content-Encoding"), body
+    st, enc, body = get("/dca?k=SECRETKEY&focus=a:100")
+    j = json.loads(body.decode("utf-8"))
+    check("дорога /dca?focus: 200, без сжатия, срез с фокусом",
+          st == 200 and enc is None and j["focus"] == "a:100" and j["books"]["b:100"].get("trades_omitted") is True
+          and len(j["books"]["a:100"]["trades"]) == 300, (st, enc, str(list(j))))
+    st, enc, gzb = get("/dca?k=SECRETKEY&focus=a:100", gz=True)
+    check("дорога /dca?focus: с Accept-Encoding gzip — сжатый ответ того же тела",
+          st == 200 and enc == "gzip" and gzip.decompress(gzb) == body, (st, enc))
+    n = len(W._DCA_BYTES)
+    st2, enc2, gzb2 = get("/dca?k=SECRETKEY&focus=a:100", gz=True)
+    # `serve` греет свод сам при подъёме (`collector.dca_paper()`) — вызовов
+    # на один больше числа запросов
+    check("дорога /dca?focus: повтор — те же байты из кеша, записей не прибавилось",
+          gzb2 == gzb and len(W._DCA_BYTES) == n and len(calls) == 4, (len(W._DCA_BYTES), n, len(calls)))
+    st3, enc3, full = get("/dca?k=SECRETKEY")
+    j3 = json.loads(full.decode("utf-8"))
+    check("дорога /dca без фокуса: свод целиком, не из кеша байтов",
+          st3 == 200 and "focus" not in j3 and len(j3["books"]["b:100"]["trades"]) == 300 and len(W._DCA_BYTES) == n)
+    W._DCA_BYTES.clear()
+
+
 def test_dca_trades_speak_the_language_of_the_chart():
     """Позиции DCA-книги едут графику В ЕГО ФОРМЕ, и ТВХ приходит готовой.
 

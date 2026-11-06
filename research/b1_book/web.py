@@ -12275,6 +12275,42 @@ def slim_dca(d, focus):
     return out
 
 
+# Байты ответа `/dca?focus=` — по подписи свода (06.11, «давай ускорим»):
+# срез, сериализация и gzip 6.8 МБ стоили 1.2–2.4 с до первого байта даже
+# при своде ИЗ КЕША — поток страницы делит GIL с полусотней потоков
+# сборщика. Ключ: подпись файлов свода и сам объект свода, запрос, поля
+# свежести (меняются между ответами) и признак пересборки. Записей не
+# больше `DCA_BYTES_MAX` (≤ 7 МБ каждая, сжатая ≤ 0.7), свод без фокуса
+# (71 МБ, страница сборщика) не кешируется.
+DCA_BYTES_MAX = 4
+_DCA_BYTES = {}
+_DCA_BYTES_LOCK = threading.Lock()
+
+
+def dca_bytes(collector, d, key, focus, gz):
+    """(тело, Content-Encoding или None) ответа `/dca` с фокусом: из кеша
+    байтов, если свод тот же; иначе собирается и запоминается."""
+    def age(sec):
+        b = d.get(sec)
+        return b.get("age_h") if isinstance(b, dict) else None
+    sig = (getattr(collector, "_dca_cache", None) or (None,))[0]
+    ck = (sig, id(d), key, focus, bool(gz), d.get("age_h"), d.get("rebuilding"),
+          age("short"), age("pair"))
+    with _DCA_BYTES_LOCK:
+        hit = _DCA_BYTES.get(ck)
+    if hit is not None:
+        return hit
+    body = json.dumps(slim_dca(d, focus), ensure_ascii=False).encode("utf-8")
+    enc = None
+    if gz and len(body) > 1024:
+        body, enc = gzip.compress(body, 6), "gzip"
+    with _DCA_BYTES_LOCK:
+        while len(_DCA_BYTES) >= DCA_BYTES_MAX:
+            _DCA_BYTES.pop(next(iter(_DCA_BYTES)))
+        _DCA_BYTES[ck] = (body, enc)
+    return body, enc
+
+
 SITE_HOST = "algoth.trade"
 ACME_PREFIX = "/.well-known/acme-challenge/"
 ACME_NAME = re.compile(r"^[A-Za-z0-9_-]{16,128}$")
@@ -12295,12 +12331,13 @@ def serve(collector, port, token, log):
         protocol_version = "HTTP/1.1"
         timeout = 65                      # праздное соединение не держим
 
-        def _ok(self, body, ctype):
+        def _ok(self, body, ctype, encoded=None):
             # Сжатие: первый ответ весит под полсотни килобайт, и на
             # мобильной связи это разница между «открылось» и «висит».
+            # `encoded` — тело уже сжато вызывающим (кеш байтов `/dca`).
             enc = (self.headers.get("Accept-Encoding") or "")
-            gz = "gzip" in enc and len(body) > 1024
-            if gz:
+            gz = encoded == "gzip" or ("gzip" in enc and len(body) > 1024)
+            if gz and not encoded:
                 body = gzip.compress(body, 6)
             self.send_response(200)
             self.send_header("Content-Type", ctype)
@@ -12593,7 +12630,11 @@ def serve(collector, port, token, log):
                 # показывает одну). Свод из кеша не трогается — копия.
                 focus = q.get("focus", [None])[0]
                 if focus:
-                    d = slim_dca(d, focus)
+                    body, enc = dca_bytes(
+                        collector, d, (q.get("dep", [None])[0], q.get("ruler", [None])[0],
+                                       q.get("full", [None])[0], q.get("sizing", [None])[0]),
+                        focus, "gzip" in (self.headers.get("Accept-Encoding") or ""))
+                    return self._ok(body, "application/json; charset=utf-8", encoded=enc)
                 return self._ok(json.dumps(d, ensure_ascii=False).encode("utf-8"),
                                 "application/json; charset=utf-8")
             if u.path == "/dca_marks":
