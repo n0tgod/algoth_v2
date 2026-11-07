@@ -1622,3 +1622,5 @@
 {"at": 1793950808.751, "role": "declare", "status": "ok", "started": 1793950801.66, "ended": 1793950808.751, "dry": false, "note": "код возврата 0"}
 {"at": 1793951101.487, "role": "task", "status": "start", "started": 1793951101.486, "ended": 1793951101.487, "dry": false, "pid": 1493441}
 {"at": 1793951101.66, "role": "task", "status": "ok", "started": 1793951101.486, "ended": 1793951101.66, "dry": false, "note": "код возврата 0"}
+{"at": 1794016802.048, "role": "scout", "status": "start", "started": 1794016802.0, "ended": 1794016802.048, "dry": false, "pid": 1863560}
+{"at": 1794016803.408, "role": "scout", "status": "no-auth", "started": 1794016802.0, "ended": 1794016803.408, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
