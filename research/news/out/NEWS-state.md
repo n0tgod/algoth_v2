@@ -1,13 +1,13 @@
 # Новостной фон (спека 19 §4)
 
-Срез 2026-11-09T14:00:03Z, новых 1, за сутки 23 (с привязкой к нашим именам 12).
+Срез 2026-11-09T14:15:04Z, новых 1, за сутки 24 (с привязкой к нашим именам 13).
 
 | лента | статей в ответе | новых | отказ |
 |---|---|---|---|
 | coindesk | — | — | HTTP 403 |
-| cointelegraph | 30 | 1 |  |
-| theblock | 20 | 0 |  |
+| cointelegraph | 30 | 0 |  |
+| theblock | 20 | 1 |  |
 
-Чаще всего за сутки: BTCUSDT 6, ETHUSDT 3, ZECUSDT 2, SOLUSDT 1, FORMUSDT 1, IBITUSDT 1
+Чаще всего за сутки: BTCUSDT 6, ETHUSDT 3, ZECUSDT 2, AVAXUSDT 1, SOLUSDT 1, FORMUSDT 1, IBITUSDT 1
 
 Календарь на 48 ч: 2026-11-10T13:30Z US CPI for 2026-10
