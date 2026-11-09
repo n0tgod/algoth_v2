@@ -681,6 +681,19 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L191 `report(s)`
 - L217 `main(argv=None)`
 
+## research/ai_gate/entry_gap_check.py · 127 строк
+
+Диагностика книг ТВХ модели (только чтение, 09.11): решения о часе входа, принятые на ПУСТЫХ полях правила, —…
+
+- L14 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L15 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L20 `H = 3600.0`
+- L21 `SUM = os.path.join(ROOT, 'research', 's8_loop…`
+- L24 `ts(t)`
+- L28 `file_info(p)`
+- L36 `hours_in(sym, day)`
+- L51 `main()`
+
 ## research/ai_gate/entry_search.py · 820 строк
 
 Поиск новой ТВХ по состоянию рынка (спека 19 §11.8, U4c).
