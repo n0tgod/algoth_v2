@@ -102,3 +102,20 @@ research/ai_gate/out/model_books_latest.json: есть, mtime 11-09 08:25, 22157
   досчитано записей 0 по 9 решениям, ячеек 1
   {"books": 5, "legs": 1756, "new_decisions": 0, "closes": 0, "replayed": 40}
 конец: 2026-11-09T23:49:51Z, код 0
+ВНИМАНИЕ: 2026-11-09T23:49:52Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (7 МБ) research/dca_paper/out/DCA-short.json (7 МБ)
+публикуется в ветку main:
+ jobs/done/nc62.done                      |   1 +
+ jobs/done/nc62.log                       | 104 +++++++++++++++++++++++++++++++
+ jobs/poke.log                            |   3 +
+ jobs/queue-state.md                      |   2 +-
+ research/dca_paper/out/DCA-pair.md       |  26 ++++----
+ research/dca_paper/out/DCA-short.md      |  54 ++++++++--------
+ research/dca_paper/out/watch/h24.json    |   2 +-
+ research/dca_paper/out/watch/latest.json |   2 +-
+ research/dca_paper/out/watch/pair.json   |   2 +-
+ research/s8_loop/out/day_brake.json      |   2 +-
+ 10 files changed, 153 insertions(+), 45 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   61b71c26f..652e301c4  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
