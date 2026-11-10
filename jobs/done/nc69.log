@@ -19,3 +19,14 @@ d_bybit_shift <= -0.06 и px_1h >= 0.005, окно 4 ч` | 20.0 | 68 | -0.08 % |
 книг ТВХ 5, сигналов после рождения 1822, новых решений 9, закрытий по состоянию 0, к реплею 50
 сейчас 10:16
 конец: 2026-11-10T10:16:40Z, код 0
+ВНИМАНИЕ: 2026-11-10T10:16:40Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (8 МБ) research/dca_paper/out/DCA-short.json (8 МБ)
+публикуется в ветку main:
+ jobs/done/nc69.done |  1 +
+ jobs/done/nc69.log  | 21 +++++++++++++++++++++
+ jobs/poke.log       |  3 +++
+ jobs/queue-state.md |  2 +-
+ 4 files changed, 26 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   0dfc5148a..9353b8d29  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
