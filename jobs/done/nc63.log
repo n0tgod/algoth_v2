@@ -21,3 +21,24 @@
 итог: входов 15, по-прежнему нет входа 142, не измерено 0, ждут 0
 сухой прогон: ничего не записано (--apply — записать и дорешать)
 конец: 2026-11-10T08:50:16Z, код 0
+ВНИМАНИЕ: 2026-11-10T08:50:17Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (8 МБ) research/dca_paper/out/DCA-short.json (8 МБ)
+публикуется в ветку main:
+ jobs/done/nc63.done                      |   1 +
+ jobs/done/nc63.log                       |  23 ++
+ jobs/poke.log                            |   3 +
+ jobs/queue-state.md                      |   2 +-
+ research/dca_paper/out/DCA-pair.md       |  26 +-
+ research/dca_paper/out/DCA-paper.json    | 460 ++++++++++++++++---------------
+ research/dca_paper/out/DCA-paper.md      |   2 +-
+ research/dca_paper/out/DCA-short.md      |  54 ++--
+ research/dca_paper/out/watch/h24.json    |   2 +-
+ research/dca_paper/out/watch/latest.json |   2 +-
+ research/dca_paper/out/watch/log.jsonl   |  32 +--
+ research/dca_paper/out/watch/pair.json   |   2 +-
+ research/dca_paper/out/watch/sit.json    |   2 +-
+ research/s8_loop/out/day_brake.json      |   2 +-
+ 14 files changed, 327 insertions(+), 286 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   a6724acdd..11bd0ee66  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
