@@ -561,7 +561,7 @@ def shifted_legs(b, legs, state):
     out, seen = [], set()
     for g in sorted(legs, key=lambda g: float(g["at"])):
         d = mine.get(f"{g['sym']}|{int(float(g['at']))}")
-        if not d or d["k"] < 0:
+        if not d or d["k"] < 0 or d.get("no_cell"):
             continue
         at = float(g["at"]) + d["k"] * H
         if (g["sym"], at) in seen:
@@ -570,6 +570,25 @@ def shifted_legs(b, legs, state):
         out.append(dict(g, at=at, at_signal=float(g["at"]),
                         exit=d.get("exit") or (b.get("rule") or {}).get("exit") or BOOK_EXIT))
     return out
+
+
+def mark_no_cell(state, pairs, now, ex, book_lev=None):
+    """Вход без ячейки выхода (10.11): правило сработало, но ячейка «равный
+    риск» у позиции не строится (`run_d10.eq_leverage` → None: при плече книги
+    равный риск требует плеча выше потолка или ликвидации ближе 1.5 стопа).
+    Так же, как в таблице поиска, где такой исход — NaN, то есть «сделки
+    нет»: решение получает пометку `no_cell`, позиции нет, реплей больше не
+    повторяется. `pairs` — [(книга, нога со сдвигом)]. → число пометок."""
+    n = 0
+    for bid, g in pairs:
+        d = (state.get(bid) or {}).get(f"{g['sym']}|{int(float(g['at_signal']))}")
+        if d is None or d.get("no_cell"):
+            continue
+        d["no_cell"] = {"t": round(now), "exit": ex,
+                        "book_lev": None if book_lev is None else round(float(book_lev), 3),
+                        "why": "ячейки выхода «равный риск» у позиции нет — сделки нет, как в таблице поиска"}
+        n += 1
+    return n
 
 
 def tick(log=print, now=None, dry=False):
@@ -619,22 +638,39 @@ def tick(log=print, now=None, dry=False):
     log(f"книг ТВХ {len(books)}, сигналов после рождения {len(legs)}, новых решений {new}, закрытий по состоянию {closes}, "
         f"к реплею {n_need}")
     rk = S.BOOKS[BASE]
+    no_cell = 0
     for ex, legs_ex in need.items():
         cell, pol = ES.exit_cell(ex)
         out, _tail = S.replay_cells(list(legs_ex.values()), [cell], log=log, rulers=[rk],
                                     adds_of=(lambda g, key, _p=pol: _p) if pol else None)
+        got = set()
         for (r_rk, sym, at), r in (out.get(cell[0]) or {}).items():
             if r_rk != rk:
                 continue
+            got.add((sym, round(float(at), 3)))
             for bid, g in by_leg.get((ex, sym, at), []):
                 cache[(bid, sym, at)] = dict(r, at_signal=g["at_signal"], mbook=bid)
+        # Нет записи в ячейке «равный риск» (10.11): та же ячейка с плечом
+        # книги. Есть запись там — данных хватает, а ячейки равного риска у
+        # позиции нет: «не вошли» явно, без повтора реплея каждый час. Нет и
+        # там — данных ещё нет (свежий вход), реплей повторится.
+        miss = {kk: g for kk, g in legs_ex.items() if kk not in got}
+        if miss and pol and pol.get("lev_risk"):
+            out2, _t2 = S.replay_cells(list(miss.values()), [cell], log=log, rulers=[rk],
+                                       adds_of=lambda g, key, _p=dict(pol, lev_risk=False): _p)
+            for (r_rk, sym, at), r in (out2.get(cell[0]) or {}).items():
+                if r_rk == rk:
+                    no_cell += mark_no_cell(state, by_leg.get((ex, sym, at), []), now, ex, r.get("lev"))
     if not dry:
         MB.write_cache(cache)
         os.makedirs(OUT, exist_ok=True)
         with open(ENTRY_STATE + ".tmp", "w", encoding="utf-8") as f:
             json.dump(state, f, ensure_ascii=False)
         os.replace(ENTRY_STATE + ".tmp", ENTRY_STATE)
-    return {"books": len(books), "legs": len(legs), "new_decisions": new, "closes": closes, "replayed": n_need}
+    if no_cell:
+        log(f"входов без ячейки равного риска: {no_cell} — помечены «не вошли» (как в таблице поиска)")
+    return {"books": len(books), "legs": len(legs), "new_decisions": new, "closes": closes, "replayed": n_need,
+            "no_cell": no_cell}
 
 
 # ------------------------------------------------------------ касса и отчёт

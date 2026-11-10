@@ -484,7 +484,10 @@ class App:
                 except ValueError:
                     continue
                 k = int(d.get("k", -1))
-                entered = k >= 0
+                # правило сработало, а ячейки выхода «равный риск» у позиции нет
+                # (10.11): сделки нет — как в таблице поиска, где нашлось правило
+                nc = d.get("no_cell") if k >= 0 else None
+                entered = k >= 0 and not nc
                 # «не измерено» (k = -2, 09.11): сводка часа не легла за сутки —
                 # это не «правило не сработало», и в счёт решений не идёт
                 unmeasured = k == -2
@@ -498,6 +501,10 @@ class App:
                                 "no_verdict": (f"not measured: the summary of hour {d.get('hour')} after the signal "
                                                "did not land within 24 h") if unmeasured else None,
                                 "reasons": ([f"entered {k} h after the signal: the rule held"] if entered
+                                            else [f"the rule held {k} h after the signal, but its own exit "
+                                                  f"({exit_words(nc.get('exit'))}) cannot be built for this position"
+                                                  + (f" at the book's {nc['book_lev']:g}× leverage" if nc.get("book_lev") else "")
+                                                  + ": no position, as in the search table that found the rule"] if nc
                                             else ["no decision: the market data for the hour never arrived"] if unmeasured
                                             else [f"the rule did not hold in any of the {W + 1} hours after the signal"])
                                 + again

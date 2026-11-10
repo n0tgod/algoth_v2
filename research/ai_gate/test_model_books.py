@@ -142,6 +142,26 @@ def test_entry_hour_waits_for_the_summary_to_land():
     print("ok  книга ТВХ: час судится по лёгшей сводке, не легла за сутки — «не измерено», не «не сработало»")
 
 
+def test_entry_without_equal_risk_cell_is_no_position():
+    """10.11: вход, у которого ячейки «равный риск» нет, помечается «не вошли»
+    (как NaN в таблице поиска) и выпадает из сдвинутых входов — реплей и ранний
+    выход его больше не судят; пометка одна, повтор ничего не меняет."""
+    b = {"id": "m95", "kind": "entry", "born_at": NOW - 30 * H, "status": "live",
+         "rule": {"when": [{"field": "px_1h", "op": "<=", "value": -0.01}], "W": 3}}
+    legs = [{"sym": "AUSDT", "at": NOW - 10 * H}, {"sym": "BUSDT", "at": NOW - 10 * H}]
+    state = {"m95": {f"AUSDT|{int(NOW - 10 * H)}": {"k": 2, "t": NOW, "exit": "s3:t2:eq"},
+                     f"BUSDT|{int(NOW - 10 * H)}": {"k": 1, "t": NOW, "exit": "s3:t2:eq"}}}
+    sh = MB.shifted_legs(b, legs, state)
+    assert sorted(g["sym"] for g in sh) == ["AUSDT", "BUSDT"]
+    a = next(g for g in sh if g["sym"] == "AUSDT")
+    assert MB.mark_no_cell(state, [("m95", a)], NOW, "s3:t2:eq", 1.0) == 1
+    d = state["m95"][f"AUSDT|{int(NOW - 10 * H)}"]
+    assert d["no_cell"]["exit"] == "s3:t2:eq" and d["no_cell"]["book_lev"] == 1.0 and d["k"] == 2, "решение о часе не стёрто"
+    assert [g["sym"] for g in MB.shifted_legs(b, legs, state)] == ["BUSDT"], "без ячейки — не позиция"
+    assert MB.mark_no_cell(state, [("m95", a)], NOW + H, "s3:t2:eq", 1.0) == 0, "пометка одна"
+    print("ok  книга ТВХ: нет ячейки «равный риск» — «не вошли» явно, реплей не повторяется")
+
+
 def test_landed_reads_content():
     import entry_search as ES
 
@@ -404,7 +424,8 @@ def main():
     n = 0
     for f in (test_entry_book_closes_early_on_state_change, test_entry_book_carries_exit_rules_judged_at_entry_hour, test_exit_cell_in_signature_candidates_and_words, test_soft_gate_quota_and_signature, test_retire_window_and_idle,
               test_entry_hour_first_match_frozen_and_dedup, test_entry_hour_waits_for_the_summary_to_land,
-              test_landed_reads_content, test_skip_pass_in_judge_and_rules_registration):
+              test_landed_reads_content, test_entry_without_equal_risk_cell_is_no_position,
+              test_skip_pass_in_judge_and_rules_registration):
         f()
         n += 1
     print(f"\nвсе {n} проверки прошли")

@@ -288,7 +288,9 @@ def test_book_ai_log_is_public_per_book_with_learn_and_model_books():
                            "DUSDT|1792540800": {"k": -2, "t": 1792640000, "hour": 3, "vals": {"oi_1h": None},
                                                 "why": "не измерено"},
                            "EUSDT|1792540800": {"k": 1, "t": 1794268800, "redecided": 1794268800.0,
-                                                "vals": {"oi_1h": -0.03}}}},
+                                                "vals": {"oi_1h": -0.03}},
+                           "FUSDT|1792540800": {"k": 2, "t": 1794268800, "exit": "s3:t2:eq", "vals": {"oi_1h": -0.04},
+                                                "no_cell": {"t": 1794300000, "exit": "s3:t2:eq", "book_lev": 1.0}}}},
                   open(app.AI_MODEL_ENTRY, "w"))
         st, r = app.book_ai_log("optimal_h_m01")
         assert st == 200 and r["kind"] == "model_entry" and "oi_1h <= -0.02" in r["rule"] and r["why"] == "squeeze is over"
@@ -304,7 +306,10 @@ def test_book_ai_log_is_public_per_book_with_learn_and_model_books():
             and "never arrived" in dd["reasons"][0], "«не измерено» — не «правило не сработало» (09.11)"
         ee = next(e for e in r["entries"] if e["sym"] == "EUSDT")
         assert ee["decision"] == "open" and any("decided again on 2026-11-10" in x for x in ee["reasons"]), ee["reasons"]
-        assert r["summary"] == {"entries": 5, "opened": 3, "skipped": 1, "held": 0, "no_verdict": 1}, r["summary"]
+        ff = next(e for e in r["entries"] if e["sym"] == "FUSDT")
+        assert ff["decision"] == "skip" and ff["k"] is None and "cannot be built" in ff["reasons"][0] \
+            and "stop 3 %" in ff["reasons"][0] and "1× leverage" in ff["reasons"][0] and "no position" in ff["reasons"][0], ff
+        assert r["summary"] == {"entries": 6, "opened": 3, "skipped": 2, "held": 0, "no_verdict": 1}, r["summary"]
         st, r = app.book_ai_log("optimal_h_m05")
         assert st == 200 and r["kind"] == "model_skip" and len(r["entries"]) == 1
         e = r["entries"][0]
