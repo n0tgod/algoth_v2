@@ -21,3 +21,14 @@ m06: решений 312, входов 65, без ячейки 4
 {"books": 5, "legs": 1828, "new_decisions": 11, "closes": 0, "replayed": 50, "no_cell": 45}
 сейчас 10:55
 конец: 2026-11-10T10:55:46Z, код 0
+ВНИМАНИЕ: 2026-11-10T10:55:47Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (8 МБ) research/dca_paper/out/DCA-short.json (8 МБ)
+публикуется в ветку main:
+ jobs/done/nc71.done |  1 +
+ jobs/done/nc71.log  | 23 +++++++++++++++++++++++
+ jobs/poke.log       |  3 +++
+ jobs/queue-state.md |  2 +-
+ 4 files changed, 28 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   6dd97d07d..50f0f916e  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
