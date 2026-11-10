@@ -1,0 +1,6 @@
+== задание nc65 ==
+строка: run tools/app_api/restart.py
+начало: 2026-11-10T08:52:10Z
+запускаю: .venv/bin/python tools/app_api/restart.py 
+порт 443: слушает
+конец: 2026-11-10T08:52:15Z, код 0

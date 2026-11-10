@@ -66,3 +66,12 @@ m06: новых решений о часе входа 0
 досчитано записей 2 по 2 решениям, ячеек 1
 {"books": 5, "legs": 1816, "new_decisions": 0, "closes": 0, "replayed": 54}
 конец: 2026-11-10T08:51:18Z, код 0
+ВНИМАНИЕ: 2026-11-10T08:51:19Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (8 МБ) research/dca_paper/out/DCA-short.json (8 МБ)
+публикуется в ветку main:
+ jobs/done/nc64.log  | 64 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/queue-state.md |  2 +-
+ 2 files changed, 65 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   63831654d..2c663b32b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
