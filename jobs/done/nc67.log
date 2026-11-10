@@ -59,3 +59,15 @@ EQ_LEV_CAP 25.0, EQ_LIQ_MULT 1.5
   11-08 20:00 JCTUSDT выход s3:t3:eq: ячейки равного риска нет; с плечом книги 1.0× стоп, нетто None
   11-08 21:00 BLENDUSDT выход s3:t2:eq: ячейки равного риска нет; с плечом книги 1.0× срок, нетто None
 конец: 2026-11-10T09:19:31Z, код 0
+ВНИМАНИЕ: 2026-11-10T09:19:31Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (8 МБ) research/dca_paper/out/DCA-short.json (8 МБ)
+публикуется в ветку main:
+ jobs/done/nc66.log  | 18 ++++++++++++++++
+ jobs/done/nc67.done |  1 +
+ jobs/done/nc67.log  | 61 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log       |  3 +++
+ jobs/queue-state.md |  2 +-
+ 5 files changed, 84 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   de7d60129..cae40deee  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
