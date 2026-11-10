@@ -485,12 +485,22 @@ class App:
                     continue
                 k = int(d.get("k", -1))
                 entered = k >= 0
+                # «не измерено» (k = -2, 09.11): сводка часа не легла за сутки —
+                # это не «правило не сработало», и в счёт решений не идёт
+                unmeasured = k == -2
+                again = ([f"decided again on {time.strftime('%Y-%m-%d', time.gmtime(float(d['redecided'])))} "
+                          "after the hour summary landed: the first decision had been taken on empty data"]
+                         if d.get("redecided") else [])
                 entries.append({"key": f"{bid}|{sk}", "book": book, "sym": sym, "side": "short",
                                 "signal_at": at_sig, "at": at_sig + k * 3600 if entered else at_sig,
                                 "t": d.get("t"), "k": k if entered else None, "W": W,
-                                "decision": "open" if entered else "skip", "no_verdict": None,
+                                "decision": "open" if entered else "skip",
+                                "no_verdict": (f"not measured: the summary of hour {d.get('hour')} after the signal "
+                                               "did not land within 24 h") if unmeasured else None,
                                 "reasons": ([f"entered {k} h after the signal: the rule held"] if entered
+                                            else ["no decision: the market data for the hour never arrived"] if unmeasured
                                             else [f"the rule did not hold in any of the {W + 1} hours after the signal"])
+                                + again
                                 + words(d.get("vals"))
                                 + ([f"own exit: {exit_words(d['exit'])}"
                                     + (f" (exit rule {int(d['exit_rule']) + 1} held at the entry hour)"

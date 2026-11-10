@@ -284,7 +284,11 @@ def test_book_ai_log_is_public_per_book_with_learn_and_model_books():
                   open(app.AI_MODEL_REG, "w"))
         json.dump({"m01": {"AUSDT|1792544400": {"k": 2, "t": 1792552000, "vals": {"oi_1h": -0.031}},
                            "BUSDT|1792544400": {"k": -1, "t": 1792566000, "vals": {"oi_1h": 0.004}},
-                           "CUSDT|1792540800": {"k": 1, "t": 1792550000}}},
+                           "CUSDT|1792540800": {"k": 1, "t": 1792550000},
+                           "DUSDT|1792540800": {"k": -2, "t": 1792640000, "hour": 3, "vals": {"oi_1h": None},
+                                                "why": "не измерено"},
+                           "EUSDT|1792540800": {"k": 1, "t": 1794268800, "redecided": 1794268800.0,
+                                                "vals": {"oi_1h": -0.03}}}},
                   open(app.AI_MODEL_ENTRY, "w"))
         st, r = app.book_ai_log("optimal_h_m01")
         assert st == 200 and r["kind"] == "model_entry" and "oi_1h <= -0.02" in r["rule"] and r["why"] == "squeeze is over"
@@ -295,7 +299,12 @@ def test_book_ai_log_is_public_per_book_with_learn_and_model_books():
         assert bb["decision"] == "skip" and bb["k"] is None and "any of the 6 hours" in bb["reasons"][0]
         c = next(e for e in r["entries"] if e["sym"] == "CUSDT")
         assert "not recorded" in c["reasons"][1], "решение до записи значений — словами, не «нет значения»"
-        assert r["summary"] == {"entries": 3, "opened": 2, "skipped": 1, "held": 0, "no_verdict": 0}
+        dd = next(e for e in r["entries"] if e["sym"] == "DUSDT")
+        assert dd["decision"] == "skip" and "not measured" in dd["no_verdict"] and "hour 3" in dd["no_verdict"] \
+            and "never arrived" in dd["reasons"][0], "«не измерено» — не «правило не сработало» (09.11)"
+        ee = next(e for e in r["entries"] if e["sym"] == "EUSDT")
+        assert ee["decision"] == "open" and any("decided again on 2026-11-10" in x for x in ee["reasons"]), ee["reasons"]
+        assert r["summary"] == {"entries": 5, "opened": 3, "skipped": 1, "held": 0, "no_verdict": 1}, r["summary"]
         st, r = app.book_ai_log("optimal_h_m05")
         assert st == 200 and r["kind"] == "model_skip" and len(r["entries"]) == 1
         e = r["entries"][0]

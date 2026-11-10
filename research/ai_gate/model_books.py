@@ -67,6 +67,13 @@ IDLE_D = 30                        # простой без позиций, су�
 DEP = 10000                        # ячейка суда
 SEEDS = 20                         # нуль фильтра: случайные фильтры той же доли
 EDGE_S = 300                       # сводка часа ложится 2–3 мин — решение по часу не раньше
+# Час судится, когда его сводка ЛЕГЛА (содержимое), а не по часам (09.11):
+# сводки пишет цикл S8, и пока он учится, часы ложатся с опозданием на
+# часы — проход читал пустые поля и записывал «входа нет» навсегда (157
+# отказов за 4 суток, 15 из них были бы входами). Не легла за LATE_S —
+# решение «не измерено» (k = -2), отдельным исходом, а не «не сработало».
+LATE_S = 24 * 3600
+UNMEASURED = -2
 H = 3600
 DAY = 86400
 WEEK_S = 7 * DAY
@@ -377,7 +384,9 @@ def day_str(t):
 
 
 def retire_why(b, days_book, days_base, now):
-    """Причина отставки (§12.5) или None. `days_*` — {день: (usd, позиций)}."""
+    """Причина отставки (§12.5) или None. `days_*` — {день: (usd, позиций)}.
+    Отставляется книга, чьё нетто за окно ниже основной книги И меньше нуля
+    (с 10.11), или простаивающая без позиций `IDLE_D` суток."""
     born = float(b["born_at"])
     pos_days = sorted(d for d, (_u, n) in days_book.items() if n)
     last = (calendar.timegm(time.strptime(pos_days[-1], "%Y-%m-%d")) + DAY) if pos_days else born
@@ -391,8 +400,12 @@ def retire_why(b, days_book, days_base, now):
         return None
     mine = sum(days_book.get(d, (0.0, 0))[0] for d in days)
     base = sum(days_base.get(d, (0.0, 0))[0] for d in days)
-    if mine < base:
-        return f"за {WINDOW_D} суток {mine:+.2f} $ против основной книги {base:+.2f} $ (ячейка ${DEP})"
+    # Отставка — только книги В МИНУСЕ за окно (решение владельца 10.11):
+    # книга в плюсе, но ниже основной, остаётся (m04 08.11: +271.57 $
+    # против +319.38 $ ушла бы сегодня в отставку).
+    if mine < base and mine < 0:
+        return (f"за {WINDOW_D} суток {mine:+.2f} $ — в минусе и ниже основной книги {base:+.2f} $ "
+                f"(ячейка ${DEP})")
     return None
 
 
@@ -428,9 +441,15 @@ def entry_decide(b, legs, feat, state, now):
         if at < float(b["born_at"]) or (hi is not None and at >= hi) or sk in mine:
             continue
         got, vals = None, None
+        landed = getattr(feat, "landed", None)
+        fields = [c["field"] for c in b["rule"]["when"]]
         for k in range(W + 1):
             if now < at + k * H + EDGE_S:
                 got = "wait"
+                break
+            tm = at + k * H - 1.0                       # последний закрытый час — его сводка нужна
+            if landed is not None and not landed(g["sym"], tm, fields):
+                got = "late" if now >= tm + 1.0 + LATE_S else "wait"
                 break
             f = feat(g, k)
             # значения полей правила на решающем часе — в запись: журнал
@@ -440,6 +459,11 @@ def entry_decide(b, legs, feat, state, now):
                 got = k
                 break
         if got == "wait":
+            continue
+        if got == "late":
+            mine[sk] = {"k": UNMEASURED, "t": round(now), "vals": vals, "hour": k,
+                        "why": f"не измерено: сводка часа {k} после сигнала не легла за {LATE_S // 3600} ч"}
+            new += 1
             continue
         d = {"k": -1 if got is None else int(got), "t": round(now), "vals": vals}
         if got is not None:
@@ -473,7 +497,17 @@ def close_decide(b, legs_shifted, feat, state, now):
         if d["close"] is not None:
             continue
         h = d["h_done"] + 1
+        landed = getattr(feat, "landed", None)
+        fields = sorted({c["field"] for r in rules for c in r["when"]})
         while h <= hmax and now >= at + h * H + EDGE_S:
+            tm = at + h * H - 1.0
+            if landed is not None and not landed(g["sym"], tm, fields):
+                if now < tm + 1.0 + LATE_S:
+                    break                                # час ещё ляжет — ждать
+                d.setdefault("unmeasured", []).append(h)  # не легла за сутки — час не судится
+                d["h_done"] = h
+                h += 1
+                continue
             f = feat(g, h)
             for i, r in enumerate(rules):
                 if h <= int(r.get("H") or CLOSE_HMAX) and matches(r, f):

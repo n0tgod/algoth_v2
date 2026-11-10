@@ -61,7 +61,9 @@ def test_retire_window_and_idle():
     born = NOW - 15 * DAY
     b = {"born_at": born}
     days = lambda f: {MB.day_str(NOW - i * DAY): (f(i), 3) for i in range(1, 15)}   # noqa: E731
-    assert MB.retire_why(b, days(lambda i: 5.0), days(lambda i: 10.0), NOW).startswith("за 10 суток"), "ниже основной"
+    assert MB.retire_why(b, days(lambda i: -5.0), days(lambda i: 10.0), NOW).startswith("за 10 суток"), "в минусе и ниже основной"
+    assert MB.retire_why(b, days(lambda i: 5.0), days(lambda i: 10.0), NOW) is None, "ниже основной, но в плюсе — остаётся (10.11)"
+    assert MB.retire_why(b, days(lambda i: -5.0), days(lambda i: -10.0), NOW) is None, "в минусе, но лучше основной — остаётся"
     assert MB.retire_why(b, days(lambda i: 12.0), days(lambda i: 10.0), NOW) is None
     assert MB.retire_why({"born_at": NOW - 5 * DAY}, days(lambda i: -50.0), days(lambda i: 10.0), NOW) is None, "моложе 10 суток"
     assert MB.retire_why({"born_at": NOW - 10.2 * DAY}, days(lambda i: -50.0), days(lambda i: 10.0), NOW) is None, \
@@ -71,8 +73,10 @@ def test_retire_window_and_idle():
     assert "простой" in MB.retire_why({"born_at": NOW - 31 * DAY}, {}, {}, NOW), "ни одной позиции с рождения"
     reg = {"books": [{"id": "m01", "key": "optimal_h_m01", "status": "live", "born_at": born}]}
     gone = MB.retire(reg, lambda k: days(lambda i: 1.0) if k == "optimal_h_m01" else days(lambda i: 9.0), NOW)
+    assert not gone and reg["books"][0]["status"] == "live", "в плюсе — не отставляется"
+    gone = MB.retire(reg, lambda k: days(lambda i: -1.0) if k == "optimal_h_m01" else days(lambda i: 9.0), NOW)
     assert gone and reg["books"][0]["status"] == "retired" and reg["books"][0]["retired_at"] == NOW
-    print("ok  отставка: ниже основной за 10 полных суток после рождения, простой 30 суток; моложе — не судится")
+    print("ok  отставка: в минусе и ниже основной за 10 полных суток после рождения, простой 30 суток; моложе — не судится")
 
 
 def test_entry_hour_first_match_frozen_and_dedup():
@@ -103,6 +107,58 @@ def test_entry_hour_first_match_frozen_and_dedup():
     assert ats == [("AUSDT", born + 3 * H)], ats                  # второй сигнал A (k=1) — тот же час: один вход
     assert sh[0]["at_signal"] == born + H
     print("ok  книга ТВХ: первый час по условию, ждёт сводку часа, решение заморожено, один вход на имя и час")
+
+
+def test_entry_hour_waits_for_the_summary_to_land():
+    """09.11: час судится, когда сводка часа легла (содержимое), а не по часам;
+    не легла за сутки — «не измерено» (k = -2), а не «не сработало»."""
+    born = NOW - 30 * H
+    b = {"id": "m05", "kind": "entry", "born_at": born, "status": "live",
+         "rule": {"when": [{"field": "px_1h", "op": "<=", "value": -0.01}], "W": 3}}
+    g_late, g_ok, g_dead = ({"sym": "AUSDT", "at": NOW - 6 * H}, {"sym": "BUSDT", "at": NOW - 6 * H},
+                            {"sym": "CUSDT", "at": NOW - 28 * H})
+    have = {"AUSDT": NOW - 5 * H, "BUSDT": NOW, "CUSDT": NOW - 27 * H}   # до какого момента лежат сводки имени
+
+    def feat(g, k):
+        tm = g["at"] + k * H - 1.0
+        return {"px_1h": (-0.02 if k == 2 else 0.0) if tm < have[g["sym"]] else None}
+    feat.landed = lambda sym, ts, fields=(): ts < have[sym]
+    state = {}
+    MB.entry_decide(b, [g_late, g_ok, g_dead], feat, state, NOW)
+    m = state["m05"]
+    assert f"AUSDT|{int(g_late['at'])}" not in m, "час 1 не лёг — решение ждёт, а не «входа нет»"
+    assert m[f"BUSDT|{int(g_ok['at'])}"]["k"] == 2, "часы легли — первый час по условию"
+    dead = m[f"CUSDT|{int(g_dead['at'])}"]
+    assert dead["k"] == MB.UNMEASURED and dead["hour"] == 2 and "не измерено" in dead["why"], dead
+    assert MB.shifted_legs(b, [g_late, g_ok, g_dead], state) and all(
+        x["sym"] == "BUSDT" for x in MB.shifted_legs(b, [g_late, g_ok, g_dead], state)), "«не измерено» — не вход"
+    have["AUSDT"] = NOW                                              # сводка легла
+    MB.entry_decide(b, [g_late], feat, state, NOW + 60)
+    assert m[f"AUSDT|{int(g_late['at'])}"]["k"] == 2, "сводка легла — решение принято тем же правилом"
+    # без проверки «лёг ли час» (прежний читатель) — прежнее поведение
+    st2 = {}
+    MB.entry_decide(b, [g_late], lambda g, k: feat(g, k), st2, NOW)
+    assert st2["m05"][f"AUSDT|{int(g_late['at'])}"]["k"] == 2
+    print("ok  книга ТВХ: час судится по лёгшей сводке, не легла за сутки — «не измерено», не «не сработало»")
+
+
+def test_landed_reads_content():
+    import entry_search as ES
+
+    class Hrs:
+        def __init__(self, rows):
+            self.rows = rows
+
+        def row(self, sym, ts):
+            return self.rows.get((sym, int(ts // H)))
+    t = NOW - 1.0
+    hr = int(t // H)
+    hs = Hrs({("AUSDT", hr): {}, ("BTCUSDT", hr - 1): {}, ("CUSDT", hr + 2): {}})
+    assert ES.landed(hs, "AUSDT", t) is True
+    assert ES.landed(hs, "AUSDT", t, ["btc_1h"]) is False, "правило читает BTC — его час не лёг"
+    assert ES.landed(hs, "BUSDT", t) is False
+    assert ES.landed(hs, "CUSDT", t) is True, "у имени есть более поздний час: этот прошёл без записи"
+    print("ok  лёг ли час — по строке сводки имени (и BTC для полей btc_), не по часам")
 
 
 def test_skip_pass_in_judge_and_rules_registration():
@@ -208,7 +264,7 @@ def test_entry_book_carries_exit_rules_judged_at_entry_hour():
     assert len(born) == 1 and born[0]["kind"] == "entry" and born[0]["exit_rules"] == xr and born[0]["exit_since"] == born[0]["born_at"]
     assert not wait and all(b["kind"] != "exit" for b in reg["books"])
     # выход в час входа: первое выполненное правило; до exit_since — выход книги
-    b = dict(born[0], id="m05", born_at=NOW - 10 * H, exit_since=NOW - 5 * H)
+    b = dict(born[0], id="m95", born_at=NOW - 10 * H, exit_since=NOW - 5 * H)
     assert MB.exit_for(b, {"crowd_bybit": 0.3, "spread_bp": 12}, NOW - H)[0] == "s3:t2:book", "первое правило по порядку"
     ex, i, vals = MB.exit_for(b, {"crowd_bybit": 0.9, "spread_bp": 12}, NOW - H)
     assert ex == "s8:t3:book" and i == 1 and vals == {"crowd_bybit": 0.9, "spread_bp": 12}
@@ -221,7 +277,7 @@ def test_entry_book_carries_exit_rules_judged_at_entry_hour():
              ("BUSDT", 0): {"oi_1h": -0.05, "crowd_bybit": 0.9, "spread_bp": 2}, ("BUSDT", 1): {"oi_1h": -0.05, "crowd_bybit": 0.3, "spread_bp": 2}}
     state = {}
     MB.entry_decide(b, legs, lambda g, k: feats[(g["sym"], k)], state, NOW)
-    m = state["m05"]
+    m = state["m95"]
     a_, b_ = m[f"AUSDT|{int(NOW - 4 * H)}"], m[f"BUSDT|{int(NOW - 4 * H)}"]
     assert a_["k"] == 1 and a_["exit"] == "s3:t2:book" and a_["exit_rule"] == 0 and a_["exit_vals"]["crowd_bybit"] == 0.3
     assert b_["k"] == 0 and b_["exit"] == MB.BOOK_EXIT and b_["exit_rule"] is None, "в час входа ни одно правило выхода не держит"
@@ -231,8 +287,8 @@ def test_entry_book_carries_exit_rules_judged_at_entry_hour():
     import entry_search as ES                                  # noqa: E402
     with tempfile.TemporaryDirectory() as d:
         reg_p = os.path.join(d, "model_books.json")
-        old = dict(b, exit_rules=None, exit_since=None, sig="z", key="optimal_h_m05")
-        skip = {"id": "m06", "key": "optimal_h_m06", "kind": "skip", "status": "live", "rule": {"when": []}, "born_at": NOW, "sig": "q"}
+        old = dict(b, exit_rules=None, exit_since=None, sig="z", key="optimal_h_m95")
+        skip = {"id": "m96", "key": "optimal_h_m96", "kind": "skip", "status": "live", "rule": {"when": []}, "born_at": NOW, "sig": "q"}
         json.dump({"books": [old, skip]}, open(reg_p, "w"))
         json.dump(search, open(os.path.join(d, "s.json"), "w")); json.dump(rf, open(os.path.join(d, "r.json"), "w"))
         was = (MB.REGISTRY, ES.LATEST, ES.RULES_FILE)
@@ -242,7 +298,7 @@ def test_entry_book_carries_exit_rules_judged_at_entry_hour():
             got = json.load(open(reg_p))["books"]
         finally:
             MB.REGISTRY, ES.LATEST, ES.RULES_FILE = was
-        assert r["attached"] == ["m05"] and got[0]["exit_rules"] == xr and got[0]["exit_since"] == float((int(NOW // H) + 1) * H)
+        assert r["attached"] == ["m95"] and got[0]["exit_rules"] == xr and got[0]["exit_since"] == float((int(NOW // H) + 1) * H)
         assert "exit_rules" not in got[1] and got[0]["born_at"] == b["born_at"]
         r2 = MB.attach_exits(log=lambda *a: None, now=NOW + H)
         assert r2["attached"] == [], "повторно без --force не трогает"
@@ -252,10 +308,10 @@ def test_entry_book_carries_exit_rules_judged_at_entry_hour():
             got = json.load(open(reg_p))["books"]
         finally:
             MB.REGISTRY, ES.LATEST, ES.RULES_FILE = was
-        assert r3["attached"] == ["m05"] and got[0]["exit_history"][0]["rules"] == xr and got[0]["exit_since"] == float((int((NOW + H) // H) + 1) * H)
+        assert r3["attached"] == ["m95"] and got[0]["exit_history"][0]["rules"] == xr and got[0]["exit_since"] == float((int((NOW + H) // H) + 1) * H)
         R._register_model_books(reg_p)
-        k = "optimal_h_m05"
-        assert R.RULERS[k]["branch"]["title_en"] == "m05 · own entry rule + exit"
+        k = "optimal_h_m95"
+        assert R.RULERS[k]["branch"]["title_en"] == "m95 · own entry rule + exit", R.RULERS[k]["branch"]
         t = R.model_rule_text(R.MODEL_BOOKS[k])
         assert t.startswith("oi_1h <= -0.02, окно 4 ч; выход по состоянию часа входа: crowd_bybit <= 0.4 → стоп 3 %, тейк ×2; "
                             "spread_bp >= 9 → стоп 8 %, тейк ×3; иначе выход книги"), t
@@ -287,7 +343,7 @@ def test_entry_book_closes_early_on_state_change():
     born, _w = MB.births(reg, [ent] + cc, NOW)
     assert born[0]["close_rules"] == cr and born[0]["close_since"] == born[0]["born_at"] and all(b["kind"] == "entry" for b in reg["books"])
     # решения по прожитым часам: вход в NOW−5ч, толпа развернулась на 3-м часе; сводка 5-го часа ещё не легла
-    b = dict(born[0], id="m07", born_at=NOW - 10 * H, close_since=NOW - 10 * H)
+    b = dict(born[0], id="m97", born_at=NOW - 10 * H, close_since=NOW - 10 * H)
     at = NOW - 5 * H + 60                                        # пятый час ещё не прожит целиком (EDGE_S)
     legs = [{"sym": "AUSDT", "at": at, "at_signal": at, "exit": MB.BOOK_EXIT},
             {"sym": "OLDUSDT", "at": NOW - 8 * H, "at_signal": NOW - 8 * H, "exit": MB.BOOK_EXIT}]
@@ -300,7 +356,7 @@ def test_entry_book_closes_early_on_state_change():
     state = {}
     b["close_since"] = NOW - 10 * H
     n = MB.close_decide(b, [legs[0]], feat, state, NOW)
-    d = state["closes"]["m07"][f"AUSDT|{int(at)}"]
+    d = state["closes"]["m97"][f"AUSDT|{int(at)}"]
     assert n == 1 and d["close"]["h"] == 3 and d["close"]["rule"] == 0 and d["close"]["vals"] == {"crowd_bybit": 0.7} and d["h_done"] == 3
     assert [h for s_, h in calls] == [1, 2, 3], calls                 # после решения часы не судятся
     crowd[("AUSDT", 3)] = 0.1
@@ -309,12 +365,12 @@ def test_entry_book_closes_early_on_state_change():
     b2 = dict(b, close_since=NOW - 4 * H)
     assert MB.close_decide(b2, [legs[0]], feat, {}, NOW) == 0
     st2 = {}
-    assert MB.close_decide(b, [legs[1]], feat, st2, NOW) == 0 and st2["closes"]["m07"][f"OLDUSDT|{int(NOW - 8 * H)}"]["h_done"] == 7
+    assert MB.close_decide(b, [legs[1]], feat, st2, NOW) == 0 and st2["closes"]["m97"][f"OLDUSDT|{int(NOW - 8 * H)}"]["h_done"] == 7
     # применение: закрыть на отметке часа после решения словом «смена»; вышедшая раньше — как есть
     rec = {"sym": "AUSDT", "at": at, "marks": [[at + (k - 1) * H, 0.01] for k in range(1, 13)], "state": "open", "pnl": 0.12,
            "pnl_net": 0.11, "exit": "срок", "exit_ts": at + 24 * H, "side": "short", "lev": 2.0, "fills": []}
     early = dict(rec, sym="AUSDT", at=at, marks=rec["marks"][:2], state="closed", exit="пол", exit_ts=at + 2 * H - 1)
-    st_apply = {"closes": {"m07": {f"AUSDT|{int(at)}": d}}}
+    st_apply = {"closes": {"m97": {f"AUSDT|{int(at)}": d}}}
     out, n_cl = MB.apply_closes([rec], b, st_apply, R.RULE_EXIT)
     assert n_cl == 1 and out[0]["exit"] == "смена" and out[0]["state"] == "closed" and len(out[0]["marks"]) == 4, out[0]
     assert abs(out[0]["pnl"] - 0.04) < 1e-9 and abs(out[0]["pnl_net"] - 0.03) < 1e-9
@@ -327,7 +383,7 @@ def test_entry_book_closes_early_on_state_change():
     import entry_search as ES                                  # noqa: E402
     with tempfile.TemporaryDirectory() as dd:
         reg_p = os.path.join(dd, "model_books.json")
-        json.dump({"books": [dict(b, close_rules=None, close_since=None, sig="z", key="optimal_h_m07")]}, open(reg_p, "w"))
+        json.dump({"books": [dict(b, close_rules=None, close_since=None, sig="z", key="optimal_h_m97")]}, open(reg_p, "w"))
         json.dump(cs_, open(os.path.join(dd, "c.json"), "w")); json.dump(rf, open(os.path.join(dd, "r.json"), "w"))
         was = (MB.REGISTRY, CS.LATEST, ES.RULES_FILE)
         try:
@@ -336,9 +392,9 @@ def test_entry_book_closes_early_on_state_change():
             got = json.load(open(reg_p))["books"]
         finally:
             MB.REGISTRY, CS.LATEST, ES.RULES_FILE = was
-        assert r["attached"] == ["m07"] and got[0]["close_rules"] == cr and got[0]["close_since"] == float((int(NOW // H) + 1) * H)
+        assert r["attached"] == ["m97"] and got[0]["close_rules"] == cr and got[0]["close_since"] == float((int(NOW // H) + 1) * H)
         R._register_model_books(reg_p)
-        k = "optimal_h_m07"
+        k = "optimal_h_m97"
         assert R.RULERS[k]["branch"]["title_en"].endswith("+ early close") and "ранний выход по смене состояния: crowd_bybit >= 0.6 (до 12 ч)" in R.model_rule_text(R.MODEL_BOOKS[k])
     print("ok  ранний выход книги ТВХ: кандидаты и порог, при рождении, решение по прожитому часу заморожено, "
           "закрытие словом «смена» на отметке часа после решения, подключение живым")
@@ -347,7 +403,8 @@ def test_entry_book_closes_early_on_state_change():
 def main():
     n = 0
     for f in (test_entry_book_closes_early_on_state_change, test_entry_book_carries_exit_rules_judged_at_entry_hour, test_exit_cell_in_signature_candidates_and_words, test_soft_gate_quota_and_signature, test_retire_window_and_idle,
-              test_entry_hour_first_match_frozen_and_dedup, test_skip_pass_in_judge_and_rules_registration):
+              test_entry_hour_first_match_frozen_and_dedup, test_entry_hour_waits_for_the_summary_to_land,
+              test_landed_reads_content, test_skip_pass_in_judge_and_rules_registration):
         f()
         n += 1
     print(f"\nвсе {n} проверки прошли")

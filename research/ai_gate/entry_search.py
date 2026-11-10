@@ -690,8 +690,27 @@ def feature_env(legs, days=45):
     state, market_rows, _ev = CTX.load_state(days=days, syms=syms)
     hours = WV.Hours()
     mkt = WV.Market(hours=hours)
-    return lambda g, k: features(g, k, hours, mkt, state, market_rows, hist(g["sym"], float(g["at"])),
-                                 CTX.crowd_of, CTX.at_or_before)
+
+    def feat(g, k):
+        return features(g, k, hours, mkt, state, market_rows, hist(g["sym"], float(g["at"])),
+                        CTX.crowd_of, CTX.at_or_before)
+    feat.landed = lambda sym, ts, fields=(): landed(hours, sym, ts, fields)
+    return feat
+
+
+def landed(hours, sym, ts, fields=()):
+    """Легла ли сводка часа `ts` у имени (и у BTC, если правило читает его
+    ход): строка часа есть — или есть строка более позднего часа (час прошёл,
+    а у имени в нём не было записи). Судится содержимым, а не часами (09.11):
+    цикл S8 пишет сводки с опозданием, пока учится."""
+    need = [sym] + (["BTCUSDT"] if any(str(f).startswith("btc_") for f in fields) else [])
+    for s_ in need:
+        if hours.row(s_, ts) is not None:
+            continue
+        if any(hours.row(s_, float(ts) + j * H) is not None for j in (1, 2, 3)):
+            continue
+        return False
+    return True
 
 
 def report(r):
