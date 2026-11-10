@@ -19,3 +19,31 @@ d_bybit_shift <= -0.06 и px_1h >= 0.005, окно 4 ч` | 20.0 | 68 | -0.08 % |
 книг ТВХ 5, сигналов после рождения 1822, новых решений 9, закрытий по состоянию 0, к реплею 50
 сейчас 10:27
 конец: 2026-11-10T10:27:29Z, код 0
+ВНИМАНИЕ: 2026-11-10T10:27:30Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (8 МБ) research/dca_paper/out/DCA-short.json (8 МБ)
+публикуется в ветку main:
+ jobs/done/nc69.log                                 |   11 +
+ jobs/done/nc70.done                                |    1 +
+ jobs/done/nc70.log                                 |   21 +
+ jobs/poke.log                                      |    3 +
+ jobs/queue-state.md                                |    2 +-
+ .../out/decisions/decisions-2026-11-10.jsonl       |   15 +
+ research/ai_gate/out/latest.json                   |    2 +-
+ research/dca_paper/out/DCA-pair.md                 |  242 ++---
+ research/dca_paper/out/DCA-paper.json              | 1007 ++++++++++----------
+ research/dca_paper/out/DCA-paper.md                |    2 +-
+ research/dca_paper/out/DCA-short.md                |  176 ++--
+ research/dca_paper/out/fixed_pair-2026-11-10.jsonl |   34 +
+ .../dca_paper/out/fixed_short-2026-11-10.jsonl     |   41 +
+ research/dca_paper/out/pair-2026-11-10.jsonl       |   31 +
+ research/dca_paper/out/short-2026-11-10.jsonl      |   38 +
+ research/dca_paper/out/watch/h24.json              |    2 +-
+ research/dca_paper/out/watch/latest.json           |    2 +-
+ research/dca_paper/out/watch/log.jsonl             |  182 ++--
+ research/dca_paper/out/watch/pair.json             |    2 +-
+ research/dca_paper/out/watch/sit.json              |    2 +-
+ research/s8_loop/out/day_brake.json                |    2 +-
+ 21 files changed, 991 insertions(+), 827 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   0a59bee59..81f00aed0  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
