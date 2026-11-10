@@ -1082,6 +1082,16 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L44 `ts(t)`
 - L48 `main(argv=None)`
 
+## research/ai_gate/redecide_trace.py · 75 строк
+
+Где теряются дорешённые входы книг ТВХ (10.11), только чтение: каждый дорешённый вход проводится по шагам кни…
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L12 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L17 `H = 3600.0`
+- L20 `ts(t)`
+- L24 `main()`
+
 ## research/ai_gate/regime_split.py · 213 строк
 
 Разрез исходов короткого входа по состоянию имени и рынка (вопрос владельца 25.10: как ловить трендовые паден…
