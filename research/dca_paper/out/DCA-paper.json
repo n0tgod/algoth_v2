@@ -14,9 +14,9 @@
    "all": {
     "n": 88,
     "days": 55,
-    "usd": 24.65,
-    "final": 0.2465,
-    "max_dd": -0.1639,
+    "usd": 24.64,
+    "final": 0.2464,
+    "max_dd": -0.164,
     "max_dd_usd": -24.44,
     "day_median": -0.00024,
     "day_median_usd": -0.02,
@@ -1030,7 +1030,7 @@
    "forward": {
     "n": 3,
     "days": 3,
-    "usd": -11.45,
+    "usd": -11.46,
     "final": -0.1145,
     "max_dd": -0.0513,
     "max_dd_usd": -11.45,
@@ -1049,7 +1049,7 @@
     "top_day": "2026-11-09",
     "usd_wo_top3d": null,
     "worst_day": "2026-11-03",
-    "max_dd_wo_worst": -0.003,
+    "max_dd_wo_worst": -0.0031,
     "max_dd_wo_top3d": null,
     "names": 3,
     "fills": 8,
@@ -1647,20 +1647,20 @@
     "n": 88,
     "applied": 88,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 1.82,
     "slip_usd": 0.71,
     "fund_usd": 6.83,
     "gross_usd": 20.34,
-    "net_usd": 24.65,
+    "net_usd": 24.64,
     "fee_bp": 4.5,
     "fee_mean_bp": 6.2,
     "fee_worst_bp": 2.0,
     "slip_bp": 1.7,
     "slip_mean_bp": 2.4,
     "slip_worst_bp": 0.9,
-    "fund_bp": -1.2,
-    "fund_mean_bp": 22.2,
+    "fund_bp": -1.1,
+    "fund_mean_bp": 21.9,
     "fund_worst_bp": -46.8,
     "cost_usd": -4.3
    },
@@ -1754,7 +1754,7 @@
     ],
     "mark_usd": -0.44,
     "priced": 1,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "compound"
    }
   },
@@ -3338,10 +3338,10 @@
     "n": 77,
     "applied": 77,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 1.51,
     "slip_usd": 0.59,
-    "fund_usd": 6.33,
+    "fund_usd": 6.32,
     "gross_usd": 16.54,
     "net_usd": 20.77,
     "fee_bp": 4.4,
@@ -3350,10 +3350,10 @@
     "slip_bp": 1.7,
     "slip_mean_bp": 2.4,
     "slip_worst_bp": 0.9,
-    "fund_bp": -1.1,
-    "fund_mean_bp": 26.6,
+    "fund_bp": -1.0,
+    "fund_mean_bp": 26.3,
     "fund_worst_bp": -46.8,
-    "cost_usd": -4.23
+    "cost_usd": -4.22
    },
    "n_forward": 3,
    "n_restored": 74,
@@ -3445,7 +3445,7 @@
     ],
     "mark_usd": -0.42,
     "priced": 1,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "fixed"
    }
   },
@@ -3478,7 +3478,7 @@
     "top_sym": "IRYSUSDT",
     "usd_wo_top": 161.5,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 47.34,
+    "usd_wo_top3d": 47.33,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0285,
     "max_dd_wo_top3d": -0.0322,
@@ -4652,10 +4652,10 @@
    "forward": {
     "n": 5,
     "days": 3,
-    "usd": -18.61,
+    "usd": -18.62,
     "final": -0.0186,
     "max_dd": -0.0049,
-    "max_dd_usd": -18.61,
+    "max_dd_usd": -18.62,
     "day_median": -0.00458,
     "day_median_usd": -4.51,
     "day_worst": -0.0138,
@@ -5449,10 +5449,10 @@
     "n": 466,
     "applied": 466,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 11.29,
     "slip_usd": 4.14,
-    "fund_usd": 10.76,
+    "fund_usd": 10.75,
     "gross_usd": 179.87,
     "net_usd": 175.19,
     "fee_bp": 4.8,
@@ -5464,7 +5464,7 @@
     "fund_bp": -0.8,
     "fund_mean_bp": 6.3,
     "fund_worst_bp": -46.8,
-    "cost_usd": 4.67
+    "cost_usd": 4.68
    },
    "n_forward": 5,
    "n_restored": 461,
@@ -5556,7 +5556,7 @@
     ],
     "mark_usd": -0.48,
     "priced": 1,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "compound"
    }
   },
@@ -5572,7 +5572,7 @@
    "all": {
     "n": 484,
     "days": 73,
-    "usd": 178.41,
+    "usd": 178.4,
     "final": 0.1784,
     "max_dd": -0.0303,
     "max_dd_usd": -30.7,
@@ -7560,12 +7560,12 @@
     "n": 484,
     "applied": 484,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 10.91,
     "slip_usd": 3.95,
     "fund_usd": 9.05,
     "gross_usd": 184.22,
-    "net_usd": 178.41,
+    "net_usd": 178.4,
     "fee_bp": 4.8,
     "fee_mean_bp": 7.2,
     "fee_worst_bp": 1.7,
@@ -7667,7 +7667,7 @@
     ],
     "mark_usd": -0.42,
     "priced": 1,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "fixed"
    }
   },
@@ -7700,7 +7700,7 @@
     "top_sym": "IRYSUSDT",
     "usd_wo_top": 1025.29,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 95.41,
+    "usd_wo_top3d": 95.4,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0026,
     "max_dd_wo_top3d": -0.0043,
@@ -8429,10 +8429,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -0.27,
+      "usd": -0.28,
       "n": 1,
       "bt": 0,
-      "long": -0.27,
+      "long": -0.28,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -8925,10 +8925,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -0.27,
+      "usd": -0.28,
       "n": 1,
       "bt": 0,
-      "long": -0.27,
+      "long": -0.28,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -9676,10 +9676,10 @@
     "n": 1550,
     "applied": 1550,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 41.32,
     "slip_usd": 13.34,
-    "fund_usd": 1.13,
+    "fund_usd": 1.12,
     "gross_usd": 1091.77,
     "net_usd": 1038.23,
     "fee_bp": 6.0,
@@ -9691,7 +9691,7 @@
     "fund_bp": -1.2,
     "fund_mean_bp": 0.1,
     "fund_worst_bp": -46.8,
-    "cost_usd": 53.53
+    "cost_usd": 53.54
    },
    "n_forward": 5,
    "n_restored": 1545,
@@ -9783,7 +9783,7 @@
     ],
     "mark_usd": -0.47,
     "priced": 1,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "compound"
    }
   },
@@ -11792,7 +11792,7 @@
     "n": 1545,
     "applied": 1545,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 39.51,
     "slip_usd": 12.64,
     "fund_usd": 0.52,
@@ -11899,7 +11899,7 @@
     ],
     "mark_usd": -0.42,
     "priced": 1,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "fixed"
    }
   },
@@ -11915,7 +11915,7 @@
    "all": {
     "n": 1685,
     "days": 74,
-    "usd": 6857.23,
+    "usd": 6857.22,
     "final": 0.0686,
     "max_dd": -0.0025,
     "max_dd_usd": -252.59,
@@ -11930,9 +11930,9 @@
     "hold_med_h": 22.1,
     "bite": 18.7,
     "top_sym": "IRYSUSDT",
-    "usd_wo_top": 6769.28,
+    "usd_wo_top": 6769.27,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 450.17,
+    "usd_wo_top3d": 450.16,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0015,
     "max_dd_wo_top3d": -0.0025,
@@ -12671,10 +12671,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -1.53,
+      "usd": -1.54,
       "n": 1,
       "bt": 0,
-      "long": -1.53,
+      "long": -1.54,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -13126,10 +13126,10 @@
    "forward": {
     "n": 5,
     "days": 3,
-    "usd": -97.23,
+    "usd": -97.24,
     "final": -0.001,
     "max_dd": -0.0003,
-    "max_dd_usd": -97.23,
+    "max_dd_usd": -97.24,
     "day_median": -0.00024,
     "day_median_usd": -23.69,
     "day_worst": -0.0007,
@@ -13141,7 +13141,7 @@
     "hold_med_h": 72.0,
     "bite": null,
     "top_sym": "TRXUSDT",
-    "usd_wo_top": -97.46,
+    "usd_wo_top": -97.47,
     "top_day": "2026-11-09",
     "usd_wo_top3d": null,
     "worst_day": "2026-11-03",
@@ -13172,10 +13172,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -1.53,
+      "usd": -1.54,
       "n": 1,
       "bt": 0,
-      "long": -1.53,
+      "long": -1.54,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -13933,12 +13933,12 @@
     "n": 1685,
     "applied": 1685,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 263.63,
     "slip_usd": 81.09,
-    "fund_usd": -0.23,
+    "fund_usd": -0.24,
     "gross_usd": 7202.19,
-    "net_usd": 6857.23,
+    "net_usd": 6857.22,
     "fee_bp": 6.3,
     "fee_mean_bp": 8.4,
     "fee_worst_bp": 1.7,
@@ -13948,7 +13948,7 @@
     "fund_bp": -1.2,
     "fund_mean_bp": -0.1,
     "fund_worst_bp": -46.8,
-    "cost_usd": 344.95
+    "cost_usd": 344.96
    },
    "n_forward": 5,
    "n_restored": 1680,
@@ -14040,7 +14040,7 @@
     ],
     "mark_usd": -2.61,
     "priced": 1,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "compound"
    }
   },
@@ -14056,7 +14056,7 @@
    "all": {
     "n": 1684,
     "days": 74,
-    "usd": 6721.75,
+    "usd": 6721.74,
     "final": 0.0672,
     "max_dd": -0.0025,
     "max_dd_usd": -252.51,
@@ -14071,9 +14071,9 @@
     "hold_med_h": 22.1,
     "bite": 19.9,
     "top_sym": "IRYSUSDT",
-    "usd_wo_top": 6638.64,
+    "usd_wo_top": 6638.63,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 403.98,
+    "usd_wo_top3d": 403.97,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0015,
     "max_dd_wo_top3d": -0.0025,
@@ -14812,10 +14812,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -1.43,
+      "usd": -1.44,
       "n": 1,
       "bt": 0,
-      "long": -1.43,
+      "long": -1.44,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -15262,10 +15262,10 @@
    "forward": {
     "n": 5,
     "days": 3,
-    "usd": -90.65,
+    "usd": -90.66,
     "final": -0.0009,
     "max_dd": -0.0002,
-    "max_dd_usd": -90.65,
+    "max_dd_usd": -90.66,
     "day_median": -0.00022,
     "day_median_usd": -22.1,
     "day_worst": -0.0007,
@@ -15277,7 +15277,7 @@
     "hold_med_h": 72.0,
     "bite": null,
     "top_sym": "TRXUSDT",
-    "usd_wo_top": -90.87,
+    "usd_wo_top": -90.88,
     "top_day": "2026-11-09",
     "usd_wo_top3d": null,
     "worst_day": "2026-11-03",
@@ -15308,10 +15308,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -1.43,
+      "usd": -1.44,
       "n": 1,
       "bt": 0,
-      "long": -1.43,
+      "long": -1.44,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -16069,12 +16069,12 @@
     "n": 1684,
     "applied": 1684,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 256.44,
     "slip_usd": 78.33,
-    "fund_usd": -2.54,
+    "fund_usd": -2.55,
     "gross_usd": 7059.07,
-    "net_usd": 6721.75,
+    "net_usd": 6721.74,
     "fee_bp": 6.3,
     "fee_mean_bp": 8.4,
     "fee_worst_bp": 1.7,
@@ -16084,7 +16084,7 @@
     "fund_bp": -1.2,
     "fund_mean_bp": -0.1,
     "fund_worst_bp": -46.8,
-    "cost_usd": 337.31
+    "cost_usd": 337.32
    },
    "n_forward": 5,
    "n_restored": 1679,
@@ -16176,7 +16176,7 @@
     ],
     "mark_usd": -2.45,
     "priced": 1,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "fixed"
    }
   },
@@ -17205,7 +17205,7 @@
     "days": 3,
     "usd": -52.38,
     "final": -0.5238,
-    "max_dd": -0.2732,
+    "max_dd": -0.2733,
     "max_dd_usd": -52.38,
     "day_median": -0.2653,
     "day_median_usd": -17.38,
@@ -17820,10 +17820,10 @@
     "n": 91,
     "applied": 91,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 8.12,
     "slip_usd": 2.66,
-    "fund_usd": 43.64,
+    "fund_usd": 43.63,
     "gross_usd": 21.19,
     "net_usd": 54.05,
     "fee_bp": 7.8,
@@ -17833,9 +17833,9 @@
     "slip_mean_bp": 4.8,
     "slip_worst_bp": 0.9,
     "fund_bp": -1.2,
-    "fund_mean_bp": 99.3,
+    "fund_mean_bp": 98.2,
     "fund_worst_bp": -46.8,
-    "cost_usd": -32.86
+    "cost_usd": -32.85
    },
    "n_forward": 3,
    "n_restored": 88,
@@ -17890,7 +17890,7 @@
     ],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "compound"
    }
   },
@@ -17906,8 +17906,8 @@
    "all": {
     "n": 110,
     "days": 58,
-    "usd": 80.53,
-    "final": 0.8053,
+    "usd": 80.52,
+    "final": 0.8052,
     "max_dd": -0.3495,
     "max_dd_usd": -96.97,
     "day_median": 0.00076,
@@ -19564,20 +19564,20 @@
     "n": 110,
     "applied": 110,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 6.26,
     "slip_usd": 1.89,
     "fund_usd": 30.58,
     "gross_usd": 58.09,
-    "net_usd": 80.53,
+    "net_usd": 80.52,
     "fee_bp": 8.1,
     "fee_mean_bp": 18.2,
     "fee_worst_bp": 2.0,
     "slip_bp": 2.6,
     "slip_mean_bp": 5.5,
     "slip_worst_bp": 0.9,
-    "fund_bp": -0.7,
-    "fund_mean_bp": 89.8,
+    "fund_bp": -0.6,
+    "fund_mean_bp": 89.0,
     "fund_worst_bp": -46.8,
     "cost_usd": -22.43
    },
@@ -19634,7 +19634,7 @@
     ],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "fixed"
    }
   },
@@ -19650,7 +19650,7 @@
    "all": {
     "n": 478,
     "days": 74,
-    "usd": 171.06,
+    "usd": 171.05,
     "final": 0.1711,
     "max_dd": -0.1182,
     "max_dd_usd": -138.76,
@@ -19665,7 +19665,7 @@
     "hold_med_h": 42.1,
     "bite": 12.8,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 70.93,
+    "usd_wo_top": 70.92,
     "top_day": "2026-08-21",
     "usd_wo_top3d": -174.0,
     "worst_day": "2026-09-15",
@@ -20406,10 +20406,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -0.3,
+      "usd": -0.31,
       "n": 1,
       "bt": 0,
-      "long": -0.3,
+      "long": -0.31,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -20902,10 +20902,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -0.3,
+      "usd": -0.31,
       "n": 1,
       "bt": 0,
-      "long": -0.3,
+      "long": -0.31,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -21663,12 +21663,12 @@
     "n": 478,
     "applied": 478,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 26.94,
     "slip_usd": 9.16,
     "fund_usd": 54.31,
     "gross_usd": 152.84,
-    "net_usd": 171.06,
+    "net_usd": 171.05,
     "fee_bp": 7.9,
     "fee_mean_bp": 15.9,
     "fee_worst_bp": 2.0,
@@ -21676,7 +21676,7 @@
     "slip_mean_bp": 5.4,
     "slip_worst_bp": 0.9,
     "fund_bp": -1.2,
-    "fund_mean_bp": 31.3,
+    "fund_mean_bp": 31.2,
     "fund_worst_bp": -92.4,
     "cost_usd": -18.21
    },
@@ -21770,7 +21770,7 @@
     ],
     "mark_usd": -0.47,
     "priced": 1,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "compound"
    }
   },
@@ -23794,7 +23794,7 @@
     "n": 508,
     "applied": 508,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 25.56,
     "slip_usd": 8.58,
     "fund_usd": 45.76,
@@ -23807,7 +23807,7 @@
     "slip_mean_bp": 5.4,
     "slip_worst_bp": 0.9,
     "fund_bp": -1.2,
-    "fund_mean_bp": 28.9,
+    "fund_mean_bp": 28.8,
     "fund_worst_bp": -92.4,
     "cost_usd": -11.62
    },
@@ -23901,7 +23901,7 @@
     ],
     "mark_usd": -0.42,
     "priced": 1,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "fixed"
    }
   },
@@ -25118,10 +25118,10 @@
    "forward": {
     "n": 5,
     "days": 4,
-    "usd": -61.27,
+    "usd": -61.28,
     "final": -0.0061,
     "max_dd": -0.0031,
-    "max_dd_usd": -61.27,
+    "max_dd_usd": -61.28,
     "day_median": -0.00152,
     "day_median_usd": -15.17,
     "day_worst": -0.0031,
@@ -25935,7 +25935,7 @@
     "n": 1571,
     "applied": 1571,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 95.87,
     "slip_usd": 30.22,
     "fund_usd": 39.03,
@@ -26042,7 +26042,7 @@
     ],
     "mark_usd": -0.51,
     "priced": 1,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "compound"
    }
   },
@@ -28071,7 +28071,7 @@
     "n": 1565,
     "applied": 1565,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 87.18,
     "slip_usd": 27.12,
     "fund_usd": 30.27,
@@ -28178,7 +28178,7 @@
     ],
     "mark_usd": -0.42,
     "priced": 1,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "fixed"
    }
   },
@@ -28194,10 +28194,10 @@
    "all": {
     "n": 1703,
     "days": 74,
-    "usd": 13530.94,
+    "usd": 13530.92,
     "final": 0.1353,
     "max_dd": -0.0058,
-    "max_dd_usd": -658.19,
+    "max_dd_usd": -658.2,
     "day_median": 0.0,
     "day_median_usd": 0.28,
     "day_worst": -0.0034,
@@ -28209,9 +28209,9 @@
     "hold_med_h": 21.6,
     "bite": 10.3,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 12924.77,
+    "usd_wo_top": 12924.76,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 548.63,
+    "usd_wo_top3d": 548.62,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0057,
     "max_dd_wo_top3d": -0.0065,
@@ -28950,10 +28950,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -1.64,
+      "usd": -1.65,
       "n": 1,
       "bt": 0,
-      "long": -1.64,
+      "long": -1.65,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -29400,10 +29400,10 @@
    "forward": {
     "n": 5,
     "days": 4,
-    "usd": -332.66,
+    "usd": -332.68,
     "final": -0.0033,
     "max_dd": -0.0017,
-    "max_dd_usd": -332.66,
+    "max_dd_usd": -332.68,
     "day_median": -0.00083,
     "day_median_usd": -82.35,
     "day_worst": -0.0017,
@@ -29415,7 +29415,7 @@
     "hold_med_h": 72.0,
     "bite": null,
     "top_sym": "TRXUSDT",
-    "usd_wo_top": -332.91,
+    "usd_wo_top": -332.92,
     "top_day": "2026-11-09",
     "usd_wo_top3d": -166.33,
     "worst_day": "2026-10-31",
@@ -29456,10 +29456,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -1.64,
+      "usd": -1.65,
       "n": 1,
       "bt": 0,
-      "long": -1.64,
+      "long": -1.65,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -30217,12 +30217,12 @@
     "n": 1703,
     "applied": 1703,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 593.21,
     "slip_usd": 178.91,
-    "fund_usd": 198.85,
+    "fund_usd": 198.84,
     "gross_usd": 14104.2,
-    "net_usd": 13530.94,
+    "net_usd": 13530.92,
     "fee_bp": 9.1,
     "fee_mean_bp": 18.1,
     "fee_worst_bp": 2.0,
@@ -30232,7 +30232,7 @@
     "fund_bp": -1.8,
     "fund_mean_bp": 5.4,
     "fund_worst_bp": -106.1,
-    "cost_usd": 573.27
+    "cost_usd": 573.28
    },
    "n_forward": 5,
    "n_restored": 1698,
@@ -30324,7 +30324,7 @@
     ],
     "mark_usd": -2.78,
     "priced": 1,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "compound"
    }
   },
@@ -30340,10 +30340,10 @@
    "all": {
     "n": 1703,
     "days": 74,
-    "usd": 13046.34,
+    "usd": 13046.33,
     "final": 0.1305,
-    "max_dd": -0.005,
-    "max_dd_usd": -573.78,
+    "max_dd": -0.0051,
+    "max_dd_usd": -573.79,
     "day_median": 0.0,
     "day_median_usd": 0.25,
     "day_worst": -0.0034,
@@ -30355,9 +30355,9 @@
     "hold_med_h": 21.6,
     "bite": 11.9,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 12512.72,
+    "usd_wo_top": 12512.71,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 395.6,
+    "usd_wo_top3d": 395.59,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.005,
     "max_dd_wo_top3d": -0.0057,
@@ -31096,10 +31096,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -1.43,
+      "usd": -1.44,
       "n": 1,
       "bt": 0,
-      "long": -1.43,
+      "long": -1.44,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -31546,10 +31546,10 @@
    "forward": {
     "n": 5,
     "days": 4,
-    "usd": -290.3,
+    "usd": -290.31,
     "final": -0.0029,
     "max_dd": -0.0015,
-    "max_dd_usd": -290.29,
+    "max_dd_usd": -290.31,
     "day_median": -0.00072,
     "day_median_usd": -71.86,
     "day_worst": -0.0015,
@@ -31561,7 +31561,7 @@
     "hold_med_h": 72.0,
     "bite": null,
     "top_sym": "TRXUSDT",
-    "usd_wo_top": -290.51,
+    "usd_wo_top": -290.52,
     "top_day": "2026-11-09",
     "usd_wo_top3d": -145.14,
     "worst_day": "2026-10-31",
@@ -31602,10 +31602,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -1.43,
+      "usd": -1.44,
       "n": 1,
       "bt": 0,
-      "long": -1.43,
+      "long": -1.44,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -32363,12 +32363,12 @@
     "n": 1703,
     "applied": 1703,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 559.18,
     "slip_usd": 166.77,
-    "fund_usd": 165.85,
+    "fund_usd": 165.84,
     "gross_usd": 13606.45,
-    "net_usd": 13046.34,
+    "net_usd": 13046.33,
     "fee_bp": 9.1,
     "fee_mean_bp": 18.1,
     "fee_worst_bp": 2.0,
@@ -32378,7 +32378,7 @@
     "fund_bp": -1.8,
     "fund_mean_bp": 5.4,
     "fund_worst_bp": -106.1,
-    "cost_usd": 560.1
+    "cost_usd": 560.11
    },
    "n_forward": 5,
    "n_restored": 1698,
@@ -32470,7 +32470,7 @@
     ],
     "mark_usd": -2.45,
     "priced": 1,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "fixed"
    }
   },
@@ -33492,7 +33492,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "compound"
    }
   },
@@ -34504,7 +34504,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "fixed"
    }
   },
@@ -35521,7 +35521,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "compound"
    }
   },
@@ -36538,7 +36538,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "fixed"
    }
   },
@@ -37560,7 +37560,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "compound"
    }
   },
@@ -38582,7 +38582,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "fixed"
    }
   },
@@ -39604,7 +39604,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "compound"
    }
   },
@@ -40626,7 +40626,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "fixed"
    }
   },
@@ -40645,8 +40645,8 @@
     "usd": -29.15,
     "final": -0.2915,
     "max_dd": -0.5682,
-    "max_dd_usd": -93.24,
-    "day_median": -0.00346,
+    "max_dd_usd": -93.25,
+    "day_median": -0.00347,
     "day_median_usd": -0.42,
     "day_worst": -0.302,
     "day_worst_usd": -38.86,
@@ -40778,10 +40778,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -0.18,
+      "usd": -0.19,
       "n": 1,
       "bt": 0,
-      "long": -0.18,
+      "long": -0.19,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -40944,10 +40944,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -0.18,
+      "usd": -0.19,
       "n": 1,
       "bt": 0,
-      "long": -0.18,
+      "long": -0.19,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -41085,7 +41085,7 @@
     "n": 17,
     "applied": 17,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 1.47,
     "slip_usd": 0.41,
     "fund_usd": 3.85,
@@ -41097,8 +41097,8 @@
     "slip_bp": 1.7,
     "slip_mean_bp": 7.4,
     "slip_worst_bp": 0.9,
-    "fund_bp": 0.2,
-    "fund_mean_bp": 66.2,
+    "fund_bp": 0.0,
+    "fund_mean_bp": 62.3,
     "fund_worst_bp": -14.9,
     "cost_usd": -1.97
    },
@@ -41118,7 +41118,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "compound"
    }
   },
@@ -41154,7 +41154,7 @@
     "usd_wo_top3d": -95.23,
     "worst_day": "2026-10-29",
     "max_dd_wo_worst": -0.2482,
-    "max_dd_wo_top3d": -0.9361,
+    "max_dd_wo_top3d": -0.9362,
     "names": 13,
     "fills": 46,
     "days_rows": [
@@ -41374,7 +41374,7 @@
     "final": -0.0851,
     "max_dd": -0.0027,
     "max_dd_usd": -8.51,
-    "day_median": -0.04267,
+    "day_median": -0.04268,
     "day_median_usd": -4.26,
     "day_worst": -0.0826,
     "day_worst_usd": -8.26,
@@ -41557,7 +41557,7 @@
     "n": 17,
     "applied": 17,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 1.48,
     "slip_usd": 0.28,
     "fund_usd": 2.73,
@@ -41569,8 +41569,8 @@
     "slip_bp": 1.9,
     "slip_mean_bp": 5.3,
     "slip_worst_bp": 0.9,
-    "fund_bp": -0.2,
-    "fund_mean_bp": 54.7,
+    "fund_bp": -0.4,
+    "fund_mean_bp": 51.4,
     "fund_worst_bp": -18.8,
     "cost_usd": -0.97
    },
@@ -41590,7 +41590,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "fixed"
    }
   },
@@ -41606,7 +41606,7 @@
    "all": {
     "n": 67,
     "days": 15,
-    "usd": -71.87,
+    "usd": -71.88,
     "final": -0.0719,
     "max_dd": -0.098,
     "max_dd_usd": -100.8,
@@ -42119,12 +42119,12 @@
     "n": 67,
     "applied": 67,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 3.57,
     "slip_usd": 1.09,
     "fund_usd": 5.61,
     "gross_usd": -72.82,
-    "net_usd": -71.87,
+    "net_usd": -71.88,
     "fee_bp": 4.6,
     "fee_mean_bp": 17.1,
     "fee_worst_bp": 2.1,
@@ -42132,7 +42132,7 @@
     "slip_mean_bp": 5.3,
     "slip_worst_bp": 0.9,
     "fund_bp": 0.0,
-    "fund_mean_bp": 27.2,
+    "fund_mean_bp": 26.8,
     "fund_worst_bp": -25.8,
     "cost_usd": -0.95
    },
@@ -42152,7 +42152,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "compound"
    }
   },
@@ -42183,11 +42183,11 @@
     "hold_med_h": 72.0,
     "bite": 3.1,
     "top_sym": "IRYSUSDT",
-    "usd_wo_top": -116.09,
+    "usd_wo_top": -116.1,
     "top_day": "2026-10-23",
     "usd_wo_top3d": -128.73,
     "worst_day": "2026-10-29",
-    "max_dd_wo_worst": -0.0591,
+    "max_dd_wo_worst": -0.0592,
     "max_dd_wo_top3d": -0.1336,
     "names": 60,
     "fills": 136,
@@ -42681,7 +42681,7 @@
     "n": 67,
     "applied": 67,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 3.59,
     "slip_usd": 1.1,
     "fund_usd": 5.62,
@@ -42694,7 +42694,7 @@
     "slip_mean_bp": 5.3,
     "slip_worst_bp": 0.9,
     "fund_bp": 0.0,
-    "fund_mean_bp": 27.2,
+    "fund_mean_bp": 26.8,
     "fund_worst_bp": -25.8,
     "cost_usd": -0.93
    },
@@ -42714,7 +42714,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "fixed"
    }
   },
@@ -42896,10 +42896,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -0.24,
+      "usd": -0.25,
       "n": 1,
       "bt": 0,
-      "long": -0.24,
+      "long": -0.25,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -43072,10 +43072,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -0.24,
+      "usd": -0.25,
       "n": 1,
       "bt": 0,
-      "long": -0.24,
+      "long": -0.25,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -43243,7 +43243,7 @@
     "n": 77,
     "applied": 77,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 3.68,
     "slip_usd": 1.16,
     "fund_usd": 5.64,
@@ -43255,8 +43255,8 @@
     "slip_bp": 1.8,
     "slip_mean_bp": 4.8,
     "slip_worst_bp": 0.9,
-    "fund_bp": -0.1,
-    "fund_mean_bp": 23.7,
+    "fund_bp": -0.2,
+    "fund_mean_bp": 23.4,
     "fund_worst_bp": -25.8,
     "cost_usd": -0.8
    },
@@ -43276,7 +43276,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "compound"
    }
   },
@@ -43805,7 +43805,7 @@
     "n": 77,
     "applied": 77,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 3.68,
     "slip_usd": 1.16,
     "fund_usd": 5.64,
@@ -43817,8 +43817,8 @@
     "slip_bp": 1.8,
     "slip_mean_bp": 4.8,
     "slip_worst_bp": 0.9,
-    "fund_bp": -0.1,
-    "fund_mean_bp": 23.7,
+    "fund_bp": -0.2,
+    "fund_mean_bp": 23.4,
     "fund_worst_bp": -25.8,
     "cost_usd": -0.8
    },
@@ -43838,7 +43838,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "fixed"
    }
   },
@@ -43854,10 +43854,10 @@
    "all": {
     "n": 77,
     "days": 15,
-    "usd": -401.19,
+    "usd": -401.2,
     "final": -0.004,
     "max_dd": -0.0057,
-    "max_dd_usd": -574.27,
+    "max_dd_usd": -574.28,
     "day_median": -0.00024,
     "day_median_usd": -23.96,
     "day_worst": -0.0024,
@@ -43869,9 +43869,9 @@
     "hold_med_h": 72.0,
     "bite": 3.1,
     "top_sym": "IRYSUSDT",
-    "usd_wo_top": -657.12,
+    "usd_wo_top": -657.13,
     "top_day": "2026-10-23",
-    "usd_wo_top3d": -729.88,
+    "usd_wo_top3d": -729.89,
     "worst_day": "2026-10-29",
     "max_dd_wo_worst": -0.0034,
     "max_dd_wo_top3d": -0.0076,
@@ -44020,10 +44020,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -1.42,
+      "usd": -1.43,
       "n": 1,
       "bt": 0,
-      "long": -1.42,
+      "long": -1.43,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -44140,10 +44140,10 @@
    "forward": {
     "n": 5,
     "days": 4,
-    "usd": -289.83,
+    "usd": -289.84,
     "final": -0.0029,
     "max_dd": -0.0015,
-    "max_dd_usd": -289.83,
+    "max_dd_usd": -289.84,
     "day_median": -0.00072,
     "day_median_usd": -71.72,
     "day_worst": -0.0014,
@@ -44155,7 +44155,7 @@
     "hold_med_h": 72.0,
     "bite": null,
     "top_sym": "TRXUSDT",
-    "usd_wo_top": -290.05,
+    "usd_wo_top": -290.06,
     "top_day": "2026-11-09",
     "usd_wo_top3d": -144.97,
     "worst_day": "2026-10-31",
@@ -44196,10 +44196,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -1.42,
+      "usd": -1.43,
       "n": 1,
       "bt": 0,
-      "long": -1.42,
+      "long": -1.43,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -44367,22 +44367,22 @@
     "n": 77,
     "applied": 77,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 21.36,
     "slip_usd": 6.71,
-    "fund_usd": 32.71,
+    "fund_usd": 32.7,
     "gross_usd": -405.84,
-    "net_usd": -401.19,
+    "net_usd": -401.2,
     "fee_bp": 4.4,
     "fee_mean_bp": 15.3,
     "fee_worst_bp": 2.1,
     "slip_bp": 1.8,
     "slip_mean_bp": 4.8,
     "slip_worst_bp": 0.9,
-    "fund_bp": -0.1,
-    "fund_mean_bp": 23.7,
+    "fund_bp": -0.2,
+    "fund_mean_bp": 23.4,
     "fund_worst_bp": -25.8,
-    "cost_usd": -4.64
+    "cost_usd": -4.63
    },
    "n_forward": 5,
    "n_restored": 72,
@@ -44400,7 +44400,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "compound"
    }
   },
@@ -44416,10 +44416,10 @@
    "all": {
     "n": 77,
     "days": 15,
-    "usd": -401.18,
+    "usd": -401.19,
     "final": -0.004,
     "max_dd": -0.0057,
-    "max_dd_usd": -574.58,
+    "max_dd_usd": -574.59,
     "day_median": -0.00024,
     "day_median_usd": -23.93,
     "day_worst": -0.0024,
@@ -44431,9 +44431,9 @@
     "hold_med_h": 72.0,
     "bite": 3.1,
     "top_sym": "IRYSUSDT",
-    "usd_wo_top": -656.84,
+    "usd_wo_top": -656.85,
     "top_day": "2026-10-23",
-    "usd_wo_top3d": -730.12,
+    "usd_wo_top3d": -730.13,
     "worst_day": "2026-10-29",
     "max_dd_wo_worst": -0.0034,
     "max_dd_wo_top3d": -0.0076,
@@ -44582,10 +44582,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -1.43,
+      "usd": -1.44,
       "n": 1,
       "bt": 0,
-      "long": -1.43,
+      "long": -1.44,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -44702,10 +44702,10 @@
    "forward": {
     "n": 5,
     "days": 4,
-    "usd": -290.3,
+    "usd": -290.31,
     "final": -0.0029,
     "max_dd": -0.0015,
-    "max_dd_usd": -290.29,
+    "max_dd_usd": -290.31,
     "day_median": -0.00072,
     "day_median_usd": -71.86,
     "day_worst": -0.0015,
@@ -44717,7 +44717,7 @@
     "hold_med_h": 72.0,
     "bite": null,
     "top_sym": "TRXUSDT",
-    "usd_wo_top": -290.51,
+    "usd_wo_top": -290.52,
     "top_day": "2026-11-09",
     "usd_wo_top3d": -145.14,
     "worst_day": "2026-10-31",
@@ -44758,10 +44758,10 @@
      },
      {
       "d": "2026-11-09",
-      "usd": -1.43,
+      "usd": -1.44,
       "n": 1,
       "bt": 0,
-      "long": -1.43,
+      "long": -1.44,
       "short": null,
       "n_long": 1,
       "n_short": 0
@@ -44929,22 +44929,22 @@
     "n": 77,
     "applied": 77,
     "not_measured": 0,
-    "no_funding": 1,
+    "no_funding": 0,
     "fee_usd": 21.36,
     "slip_usd": 6.71,
-    "fund_usd": 32.71,
+    "fund_usd": 32.7,
     "gross_usd": -405.82,
-    "net_usd": -401.18,
+    "net_usd": -401.19,
     "fee_bp": 4.4,
     "fee_mean_bp": 15.3,
     "fee_worst_bp": 2.1,
     "slip_bp": 1.8,
     "slip_mean_bp": 4.8,
     "slip_worst_bp": 0.9,
-    "fund_bp": -0.1,
-    "fund_mean_bp": 23.7,
+    "fund_bp": -0.2,
+    "fund_mean_bp": 23.4,
     "fund_worst_bp": -25.8,
-    "cost_usd": -4.64
+    "cost_usd": -4.63
    },
    "n_forward": 5,
    "n_restored": 72,
@@ -44962,7 +44962,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794282907.079152,
+    "at": 1794284705.879848,
     "sizing": "fixed"
    }
   }
@@ -45008,13 +45008,13 @@
   ],
   "applied": 19612,
   "no_fills": 0,
-  "no_funding": 24,
+  "no_funding": 0,
   "fee_usd": 4498.15,
   "slip_usd": 1302.35,
-  "fund_usd": 1561.56,
-  "n_funding_rows": 19588,
+  "fund_usd": 1561.46,
+  "n_funding_rows": 19612,
   "taker_fallback": 92,
-  "cost_usd": 4238.94,
+  "cost_usd": 4239.04,
   "cover": 1.0,
   "error": null,
   "n_funding": 1139
@@ -47132,7 +47132,7 @@
      "exit_ts": 1794236820.0,
      "lev": 1.0,
      "margin": 23.4858,
-     "usd": -0.18,
+     "usd": -0.19,
      "usd_gross": -0.18,
      "ret": -0.0079,
      "exit": "срок",
@@ -206934,7 +206934,7 @@
    ],
    "mark_usd": -0.44,
    "priced": 1,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "compound"
   },
   "safe:100:fixed": {
@@ -207016,7 +207016,7 @@
    ],
    "mark_usd": -0.42,
    "priced": 1,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "fixed"
   },
   "safe:1000": {
@@ -207098,7 +207098,7 @@
    ],
    "mark_usd": -0.48,
    "priced": 1,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "compound"
   },
   "safe:1000:fixed": {
@@ -207180,7 +207180,7 @@
    ],
    "mark_usd": -0.42,
    "priced": 1,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "fixed"
   },
   "safe:10000": {
@@ -207262,7 +207262,7 @@
    ],
    "mark_usd": -0.47,
    "priced": 1,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "compound"
   },
   "safe:10000:fixed": {
@@ -207344,7 +207344,7 @@
    ],
    "mark_usd": -0.42,
    "priced": 1,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "fixed"
   },
   "safe:100000": {
@@ -207426,7 +207426,7 @@
    ],
    "mark_usd": -2.61,
    "priced": 1,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "compound"
   },
   "safe:100000:fixed": {
@@ -207508,7 +207508,7 @@
    ],
    "mark_usd": -2.45,
    "priced": 1,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "fixed"
   },
   "optimal:100": {
@@ -207553,7 +207553,7 @@
    ],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "compound"
   },
   "optimal:100:fixed": {
@@ -207598,7 +207598,7 @@
    ],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "fixed"
   },
   "optimal:1000": {
@@ -207680,7 +207680,7 @@
    ],
    "mark_usd": -0.47,
    "priced": 1,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "compound"
   },
   "optimal:1000:fixed": {
@@ -207762,7 +207762,7 @@
    ],
    "mark_usd": -0.42,
    "priced": 1,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "fixed"
   },
   "optimal:10000": {
@@ -207844,7 +207844,7 @@
    ],
    "mark_usd": -0.51,
    "priced": 1,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "compound"
   },
   "optimal:10000:fixed": {
@@ -207926,7 +207926,7 @@
    ],
    "mark_usd": -0.42,
    "priced": 1,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "fixed"
   },
   "optimal:100000": {
@@ -208008,7 +208008,7 @@
    ],
    "mark_usd": -2.78,
    "priced": 1,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "compound"
   },
   "optimal:100000:fixed": {
@@ -208090,7 +208090,7 @@
    ],
    "mark_usd": -2.45,
    "priced": 1,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "fixed"
   },
   "aggr:100": {
@@ -208098,7 +208098,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "compound"
   },
   "aggr:100:fixed": {
@@ -208106,7 +208106,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "fixed"
   },
   "aggr:1000": {
@@ -208114,7 +208114,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "compound"
   },
   "aggr:1000:fixed": {
@@ -208122,7 +208122,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "fixed"
   },
   "aggr:10000": {
@@ -208130,7 +208130,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "compound"
   },
   "aggr:10000:fixed": {
@@ -208138,7 +208138,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "fixed"
   },
   "aggr:100000": {
@@ -208146,7 +208146,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "compound"
   },
   "aggr:100000:fixed": {
@@ -208154,7 +208154,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "fixed"
   },
   "optimal_ai:100": {
@@ -208162,7 +208162,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "compound"
   },
   "optimal_ai:100:fixed": {
@@ -208170,7 +208170,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "fixed"
   },
   "optimal_ai:1000": {
@@ -208178,7 +208178,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "compound"
   },
   "optimal_ai:1000:fixed": {
@@ -208186,7 +208186,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "fixed"
   },
   "optimal_ai:10000": {
@@ -208194,7 +208194,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "compound"
   },
   "optimal_ai:10000:fixed": {
@@ -208202,7 +208202,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "fixed"
   },
   "optimal_ai:100000": {
@@ -208210,7 +208210,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "compound"
   },
   "optimal_ai:100000:fixed": {
@@ -208218,7 +208218,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794282907.079152,
+   "at": 1794284705.879848,
    "sizing": "fixed"
   }
  },
@@ -208256,645 +208256,638 @@
   "closed_tail": 1138,
   "closed_all": 19577
  },
- "computed_at": "2026-11-10 03:55",
+ "computed_at": "2026-11-10 04:25",
  "watch": {
-  "at": 1794282914.493712,
-  "prev_at": 1794282608.200388,
+  "at": 1794284709.6251893,
+  "prev_at": 1794284158.0855126,
   "cells": 32,
   "findings": [],
   "n": 0,
   "day": {
    "n": 400,
    "by_kind": {
-    "open_late": 364,
-    "open_vanished": 36
+    "open_late": 123,
+    "open_vanished": 12,
+    "recount": 265
    },
    "items": [
     {
-     "t": 1794280938.7855716,
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "aggr_h_g4i2:10000",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "aggr_h_g4i2:10000:fixed",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "aggr_h_g4i2:100000",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "aggr_h_g4i2:100000:fixed",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "safe_h_cr47:100:fixed",
+     "kind": "recount",
+     "gap_usd": -0.13,
+     "new_closed": 0,
+     "d_usd": -0.13,
+     "d_n": 0,
+     "text": "итог изменился на -0.13 $, новые закрытые дают +0.00 $: пересчёт истории на -0.13 $ (закрытых 692 → 692)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "optimal_h_cr47:100:fixed",
+     "kind": "recount",
+     "gap_usd": -0.12,
+     "new_closed": 0,
+     "d_usd": -0.12,
+     "d_n": 0,
+     "text": "итог изменился на -0.12 $, новые закрытые дают +0.00 $: пересчёт истории на -0.12 $ (закрытых 984 → 984)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "aggr_h_cr47:100",
+     "kind": "recount",
+     "gap_usd": -0.43,
+     "new_closed": 0,
+     "d_usd": -0.43,
+     "d_n": 0,
+     "text": "итог изменился на -0.43 $, новые закрытые дают +0.00 $: пересчёт истории на -0.43 $ (закрытых 1231 → 1231)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "aggr_h_cr47:100",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "aggr_h_cr47:100:fixed",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "aggr_h_cr47:1000",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "aggr_h_cr47:1000:fixed",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "aggr_h_cr47:10000",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "aggr_h_cr47:10000:fixed",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "aggr_h_cr47:100000",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "aggr_h_cr47:100000:fixed",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "optimal_h_ai:100:fixed",
+     "kind": "recount",
+     "gap_usd": -0.13,
+     "new_closed": 0,
+     "d_usd": -0.13,
+     "d_n": 0,
+     "text": "итог изменился на -0.13 $, новые закрытые дают +0.00 $: пересчёт истории на -0.13 $ (закрытых 140 → 140)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "optimal_h_ai:1000",
+     "kind": "open_late",
+     "pos": "PIEVERSEUSDT:1794283200",
+     "sym": "PIEVERSEUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "optimal_h_ai:1000:fixed",
+     "kind": "open_late",
+     "pos": "PIEVERSEUSDT:1794283200",
+     "sym": "PIEVERSEUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "optimal_h_ai:10000",
+     "kind": "open_late",
+     "pos": "PIEVERSEUSDT:1794283200",
+     "sym": "PIEVERSEUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "optimal_h_ai:10000:fixed",
+     "kind": "open_late",
+     "pos": "PIEVERSEUSDT:1794283200",
+     "sym": "PIEVERSEUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "optimal_h_ai:100000",
+     "kind": "open_late",
+     "pos": "PIEVERSEUSDT:1794283200",
+     "sym": "PIEVERSEUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284509.8721278,
+     "family": "h24",
+     "cell": "optimal_h_ai:100000:fixed",
+     "kind": "open_late",
+     "pos": "PIEVERSEUSDT:1794283200",
+     "sym": "PIEVERSEUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284559.1950748,
+     "family": "pair",
+     "cell": "pair_aggr:100",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284559.1950748,
+     "family": "pair",
+     "cell": "pair_aggr:100:fixed",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284559.1950748,
+     "family": "pair",
+     "cell": "pair_aggr:1000",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284559.1950748,
+     "family": "pair",
+     "cell": "pair_aggr:1000:fixed",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284559.1950748,
+     "family": "pair",
+     "cell": "pair_aggr:10000",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284559.1950748,
+     "family": "pair",
+     "cell": "pair_aggr:10000:fixed",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284559.1950748,
+     "family": "pair",
+     "cell": "pair_aggr:100000",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284559.1950748,
+     "family": "pair",
+     "cell": "pair_aggr:100000:fixed",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284559.1950748,
+     "family": "pair",
+     "cell": "pair_aggr_g0:100",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284559.1950748,
+     "family": "pair",
+     "cell": "pair_aggr_g0:100:fixed",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284559.1950748,
+     "family": "pair",
+     "cell": "pair_aggr_g0:1000",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284559.1950748,
+     "family": "pair",
+     "cell": "pair_aggr_g0:1000:fixed",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284559.1950748,
+     "family": "pair",
+     "cell": "pair_aggr_g0:10000",
+     "kind": "open_late",
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g0:10000:fixed",
      "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "pos": "INITUSDT:1794283200",
+     "sym": "INITUSDT",
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g0:100000",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g0:100000",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g0:100000:fixed",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g0:100000:fixed",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g2:100",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g2:100",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g2:100:fixed",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g2:100:fixed",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g2:1000",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g2:1000",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g2:1000:fixed",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g2:1000:fixed",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g2:10000",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g2:10000",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g2:10000:fixed",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g2:10000:fixed",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g2:100000",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g2:100000",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g2:100000:fixed",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g2:100000:fixed",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g6:100",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g6:100:fixed",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g6:100:fixed",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g6:1000",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g6:1000",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g6:1000:fixed",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g6:1000:fixed",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g6:10000",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g6:10000",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g6:10000:fixed",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g6:10000:fixed",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g6:100000",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g6:100000",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_aggr_g6:100000:fixed",
      "kind": "open_late",
-     "pos": "INITUSDT:1794279600",
+     "pos": "INITUSDT:1794283200",
      "sym": "INITUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_aggr_g6:100000:fixed",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_optimal_ai:1000",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794279600",
+     "pos": "PIEVERSEUSDT:1794283200",
      "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_optimal_ai:1000",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_optimal_ai:1000:fixed",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794279600",
+     "pos": "PIEVERSEUSDT:1794283200",
      "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_optimal_ai:1000:fixed",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_optimal_ai:10000",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794279600",
+     "pos": "PIEVERSEUSDT:1794283200",
      "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_optimal_ai:10000",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_optimal_ai:10000:fixed",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794279600",
+     "pos": "PIEVERSEUSDT:1794283200",
      "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_optimal_ai:10000:fixed",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_optimal_ai:100000",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794279600",
+     "pos": "PIEVERSEUSDT:1794283200",
      "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_optimal_ai:100000",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
+     "t": 1794284559.1950748,
      "family": "pair",
      "cell": "pair_optimal_ai:100000:fixed",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794279600",
+     "pos": "PIEVERSEUSDT:1794283200",
      "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794280938.7855716,
-     "family": "pair",
-     "cell": "pair_optimal_ai:100000:fixed",
-     "kind": "open_late",
-     "pos": "BRUSDT:1794279600",
-     "sym": "BRUSDT",
-     "at": 1794279600.0,
-     "text": "открытая появилась задним числом: BRUSDT (вход 11-10 03:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794281202.3124793,
-     "family": "pair",
-     "cell": "pair_optimal_ai:1000",
-     "kind": "open_vanished",
-     "pos": "PIEVERSEUSDT:1794279600",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "mark_usd": -2.0562,
-     "text": "открытая исчезла без закрытия: PIEVERSEUSDT (вход 11-10 03:00 UTC, отметка была -2.0562)"
-    },
-    {
-     "t": 1794281202.3124793,
-     "family": "pair",
-     "cell": "pair_optimal_ai:1000:fixed",
-     "kind": "open_vanished",
-     "pos": "PIEVERSEUSDT:1794279600",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "mark_usd": -2.0162,
-     "text": "открытая исчезла без закрытия: PIEVERSEUSDT (вход 11-10 03:00 UTC, отметка была -2.0162)"
-    },
-    {
-     "t": 1794281202.3124793,
-     "family": "pair",
-     "cell": "pair_optimal_ai:10000",
-     "kind": "open_vanished",
-     "pos": "PIEVERSEUSDT:1794279600",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "mark_usd": -4.5581,
-     "text": "открытая исчезла без закрытия: PIEVERSEUSDT (вход 11-10 03:00 UTC, отметка была -4.5581)"
-    },
-    {
-     "t": 1794281202.3124793,
-     "family": "pair",
-     "cell": "pair_optimal_ai:10000:fixed",
-     "kind": "open_vanished",
-     "pos": "PIEVERSEUSDT:1794279600",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "mark_usd": -4.476,
-     "text": "открытая исчезла без закрытия: PIEVERSEUSDT (вход 11-10 03:00 UTC, отметка была -4.476)"
-    },
-    {
-     "t": 1794281202.3124793,
-     "family": "pair",
-     "cell": "pair_optimal_ai:100000",
-     "kind": "open_vanished",
-     "pos": "PIEVERSEUSDT:1794279600",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "mark_usd": -45.7548,
-     "text": "открытая исчезла без закрытия: PIEVERSEUSDT (вход 11-10 03:00 UTC, отметка была -45.7548)"
-    },
-    {
-     "t": 1794281202.3124793,
-     "family": "pair",
-     "cell": "pair_optimal_ai:100000:fixed",
-     "kind": "open_vanished",
-     "pos": "PIEVERSEUSDT:1794279600",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "mark_usd": -44.8006,
-     "text": "открытая исчезла без закрытия: PIEVERSEUSDT (вход 11-10 03:00 UTC, отметка была -44.8006)"
-    },
-    {
-     "t": 1794282149.0164964,
-     "family": "h24",
-     "cell": "optimal_h_ai:1000",
-     "kind": "open_vanished",
-     "pos": "PIEVERSEUSDT:1794279600",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "mark_usd": -2.2288,
-     "text": "открытая исчезла без закрытия: PIEVERSEUSDT (вход 11-10 03:00 UTC, отметка была -2.2288)"
-    },
-    {
-     "t": 1794282149.0164964,
-     "family": "h24",
-     "cell": "optimal_h_ai:1000:fixed",
-     "kind": "open_vanished",
-     "pos": "PIEVERSEUSDT:1794279600",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "mark_usd": -2.0162,
-     "text": "открытая исчезла без закрытия: PIEVERSEUSDT (вход 11-10 03:00 UTC, отметка была -2.0162)"
-    },
-    {
-     "t": 1794282149.0164964,
-     "family": "h24",
-     "cell": "optimal_h_ai:10000",
-     "kind": "open_vanished",
-     "pos": "PIEVERSEUSDT:1794279600",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "mark_usd": -4.5894,
-     "text": "открытая исчезла без закрытия: PIEVERSEUSDT (вход 11-10 03:00 UTC, отметка была -4.5894)"
-    },
-    {
-     "t": 1794282149.0164964,
-     "family": "h24",
-     "cell": "optimal_h_ai:10000:fixed",
-     "kind": "open_vanished",
-     "pos": "PIEVERSEUSDT:1794279600",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "mark_usd": -4.476,
-     "text": "открытая исчезла без закрытия: PIEVERSEUSDT (вход 11-10 03:00 UTC, отметка была -4.476)"
-    },
-    {
-     "t": 1794282149.0164964,
-     "family": "h24",
-     "cell": "optimal_h_ai:100000",
-     "kind": "open_vanished",
-     "pos": "PIEVERSEUSDT:1794279600",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "mark_usd": -45.9365,
-     "text": "открытая исчезла без закрытия: PIEVERSEUSDT (вход 11-10 03:00 UTC, отметка была -45.9365)"
-    },
-    {
-     "t": 1794282149.0164964,
-     "family": "h24",
-     "cell": "optimal_h_ai:100000:fixed",
-     "kind": "open_vanished",
-     "pos": "PIEVERSEUSDT:1794279600",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794279600.0,
-     "mark_usd": -44.8006,
-     "text": "открытая исчезла без закрытия: PIEVERSEUSDT (вход 11-10 03:00 UTC, отметка была -44.8006)"
+     "at": 1794283200.0,
+     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-10 04:00 UTC, прошлый прогон её не показывал)"
     }
    ]
   }
  },
- "secs": 12.1,
+ "secs": 7.2,
  "timing": {
-  "кэш": 1.23,
+  "кэш": 0.88,
   "решения": 0.03,
-  "реплей": 1.74,
-  "хвост и fav": 0.03,
-  "запись кэша": 1.44,
-  "касса": 3.37,
-  "журнал": 0.75,
-  "свод": 3.54
+  "реплей": 1.53,
+  "хвост и fav": 0.02,
+  "запись кэша": 0.83,
+  "касса": 1.85,
+  "журнал": 0.36,
+  "свод": 1.67
  },
  "peak_rss_mb": 418,
  "rules": {
