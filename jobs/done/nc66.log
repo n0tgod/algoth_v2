@@ -29,3 +29,21 @@
    охрана: {"offered": 32, "closed_by_market": 0, "open_closed": 0, "no_marks": 0, "hours_no_wave": 0, "checked": 23, "guard": true, "pct": 4.0}
    одно имя: {"positions": 32, "kept": 31, "skipped_repeats": 1, "parts": null, "min_lev": null, "gate_dropped": 0, "peak_names": 7, "peak_declared": 30, "floor": 25.0, "ticket": {"100": 25.0, "1000": 25.0, "10000": 222.0, "100000": 2222.0}, "peak_over": false, "lev_median": 8.17}
 конец: 2026-11-10T09:17:35Z, код 0
+ВНИМАНИЕ: 2026-11-10T09:17:36Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (8 МБ) research/dca_paper/out/DCA-short.json (8 МБ)
+публикуется в ветку main:
+ jobs/done/nc66.done                      |   1 +
+ jobs/done/nc66.log                       |  31 ++
+ jobs/poke.log                            |   3 +
+ jobs/queue-state.md                      |   2 +-
+ research/dca_paper/out/DCA-pair.md       |  52 ++--
+ research/dca_paper/out/DCA-short.md      | 100 +++---
+ research/dca_paper/out/watch/h24.json    |   2 +-
+ research/dca_paper/out/watch/latest.json |   2 +-
+ research/dca_paper/out/watch/log.jsonl   | 512 +++++++++++++++----------------
+ research/dca_paper/out/watch/pair.json   |   2 +-
+ research/s8_loop/out/day_brake.json      |   2 +-
+ 11 files changed, 372 insertions(+), 337 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   f25b73b64..4b622e6ab  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

@@ -780,6 +780,15 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L278 `report(r)`
 - L310 `main(argv=None)`
 
+## research/ai_gate/eq_cell_check.py · 57 строк
+
+Сдвинутые входы книг ТВХ без записи реплея (10.11), только чтение: для каждого — реплей в ЕГО ячейке выхода и…
+
+- L12 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L13 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L19 `ts(t)`
+- L23 `main()`
+
 ## research/ai_gate/gate_books.py · 354 строк
 
 Ветки судьи спеки 19 кассой (этап N3): из журнала решений и позиций книг.
