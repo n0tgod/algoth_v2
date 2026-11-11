@@ -1,6 +1,6 @@
 # Состояние рынка (спека 19 §3b)
 
-Срез 2026-11-11T20:13:41Z, прогон 819.3 с, строк записано 2200 (из них докачка 0).
+Срез 2026-11-11T21:13:35Z, прогон 813.4 с, строк записано 2185 (из них докачка 0).
 
 | источник | имён получено | из | % |
 |---|---|---|---|
@@ -8,9 +8,9 @@
 | binance | 457 | 457 | 100.0 |
 | okx | 464 | 469 | 98.9 |
 
-Рынок: fng 29, fng_label Fear, btc_dom 59.87, mcap_usd 2495934451956, mcap_24h_pct -1.48, insurance_usdt 537563441, stables_usd 290105630336, trending ['ZIG', 'PENGU', 'BTC', 'ZEC', 'VVV', 'SOL', 'NEAR', 'ETH', 'HYPE', 'GRAM', 'KNTQ', 'AVAX', 'PUMP', 'XMR', 'LIT']
+Рынок: fng 29, fng_label Fear, btc_dom 59.92, mcap_usd 2497407734257, mcap_24h_pct -1.69, insurance_usdt 537563569, stables_usd 290774237629, trending ['ZIG', 'BTC', 'AVAX', 'PEARL', 'HYPE', 'SOL', 'TAO', 'LIT', 'GRAM', 'VVV', 'AERO', 'PYTH', 'ETH', 'MON', 'ETHFI']
 
-Толпа в лонге сильнее всего: INTCUSDT 0.87, GOOGLUSDT 0.86, MELANIAUSDT 0.84, NVDAUSDT 0.84, MNTUSDT 0.82, XAGUSDT 0.82, LABUSDT 0.82, XRPUSDT 0.81, RAVEUSDT 0.81, DOGEUSDT 0.80
-Толпа в шорте сильнее всего: MDTSTOCKUSDT 0.24, TTMIUSDT 0.29, HMSTRUSDT 0.30, CSTOCKUSDT 0.31, WENSTOCKUSDT 0.32, PIEVERSEUSDT 0.33, POPMARTUSDT 0.34, EQTUSDT 0.34, SOSOUSDT 0.34, ICNTUSDT 0.35
+Толпа в лонге сильнее всего: INTCUSDT 0.87, GOOGLUSDT 0.86, NVDAUSDT 0.84, MELANIAUSDT 0.84, XAGUSDT 0.83, MNTUSDT 0.82, LABUSDT 0.82, XRPUSDT 0.81, DOGEUSDT 0.80, ONDOUSDT 0.80
+Толпа в шорте сильнее всего: MDTSTOCKUSDT 0.24, TTMIUSDT 0.26, HMSTRUSDT 0.30, PIEVERSEUSDT 0.33, DUOLUSDT 0.33, POPMARTUSDT 0.34, BKNGUSDT 0.34, SOSOUSDT 0.34, CSTOCKUSDT 0.35, WENSTOCKUSDT 0.35
 
 Событий за сутки: 11.
