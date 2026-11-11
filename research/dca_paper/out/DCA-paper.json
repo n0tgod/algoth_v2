@@ -1678,35 +1678,35 @@
    "open": {
     "positions": [
      {
-      "sym": "MTLUSDT",
-      "at": 1789453426.8,
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
       "side": "long",
       "book": null,
       "lev": 1.0,
-      "margin": 32.6379,
-      "mark_frac": -0.013493,
-      "mark_usd": -0.4404,
-      "entry_px": 0.3009,
-      "avg": 0.3009,
+      "margin": 35.3891,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0577,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
       "depth": 1,
       "fills": [
        [
-        1789453440.0,
-        0.3009,
+        1794381420.0,
+        0.06015,
         0.2
        ]
       ],
-      "fav_bp": 749.8,
-      "last_ts": 1789712460.0,
-      "sched_end": 1789712626.8,
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
       "cut_why": null,
       "book_end": null,
       "levels": {
-       "avg": 0.3009,
-       "take_px": 0.34602296400000004,
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
        "liq_px": 0.0,
-       "floor_px": 0.030090000000000002,
-       "term_ts": 1789712626.8,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
        "depth": 1,
        "side": "long",
        "floor_frac": 0.1
@@ -1750,11 +1750,47 @@
        "floor_frac": 0.1
       },
       "state": "cut"
+     },
+     {
+      "sym": "MTLUSDT",
+      "at": 1789453426.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 32.6379,
+      "mark_frac": -0.013493,
+      "mark_usd": -0.4404,
+      "entry_px": 0.3009,
+      "avg": 0.3009,
+      "depth": 1,
+      "fills": [
+       [
+        1789453440.0,
+        0.3009,
+        0.2
+       ]
+      ],
+      "fav_bp": 749.8,
+      "last_ts": 1789712460.0,
+      "sched_end": 1789712626.8,
+      "cut_why": "книга кончилась раньше планового конца",
+      "book_end": 1789712460.0,
+      "levels": {
+       "avg": 0.3009,
+       "take_px": 0.34602296400000004,
+       "liq_px": 0.0,
+       "floor_px": 0.030090000000000002,
+       "term_ts": 1789712626.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "cut"
      }
     ],
-    "mark_usd": -0.44,
+    "mark_usd": 0.06,
     "priced": 1,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "compound"
    }
   },
@@ -3369,35 +3405,35 @@
    "open": {
     "positions": [
      {
-      "sym": "MTLUSDT",
-      "at": 1789453426.8,
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
       "side": "long",
       "book": null,
       "lev": 1.0,
       "margin": 31.25,
-      "mark_frac": -0.013493,
-      "mark_usd": -0.4217,
-      "entry_px": 0.3009,
-      "avg": 0.3009,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0509,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
       "depth": 1,
       "fills": [
        [
-        1789453440.0,
-        0.3009,
+        1794381420.0,
+        0.06015,
         0.2
        ]
       ],
-      "fav_bp": 749.8,
-      "last_ts": 1789712460.0,
-      "sched_end": 1789712626.8,
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
       "cut_why": null,
       "book_end": null,
       "levels": {
-       "avg": 0.3009,
-       "take_px": 0.34602296400000004,
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
        "liq_px": 0.0,
-       "floor_px": 0.030090000000000002,
-       "term_ts": 1789712626.8,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
        "depth": 1,
        "side": "long",
        "floor_frac": 0.1
@@ -3441,11 +3477,47 @@
        "floor_frac": 0.1
       },
       "state": "cut"
+     },
+     {
+      "sym": "MTLUSDT",
+      "at": 1789453426.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 31.25,
+      "mark_frac": -0.013493,
+      "mark_usd": -0.4217,
+      "entry_px": 0.3009,
+      "avg": 0.3009,
+      "depth": 1,
+      "fills": [
+       [
+        1789453440.0,
+        0.3009,
+        0.2
+       ]
+      ],
+      "fav_bp": 749.8,
+      "last_ts": 1789712460.0,
+      "sched_end": 1789712626.8,
+      "cut_why": "книга кончилась раньше планового конца",
+      "book_end": 1789712460.0,
+      "levels": {
+       "avg": 0.3009,
+       "take_px": 0.34602296400000004,
+       "liq_px": 0.0,
+       "floor_px": 0.030090000000000002,
+       "term_ts": 1789712626.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "cut"
      }
     ],
-    "mark_usd": -0.42,
+    "mark_usd": 0.05,
     "priced": 1,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "fixed"
    }
   },
@@ -5480,35 +5552,35 @@
    "open": {
     "positions": [
      {
-      "sym": "MTLUSDT",
-      "at": 1789453426.8,
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
       "side": "long",
       "book": null,
       "lev": 1.0,
-      "margin": 35.2291,
-      "mark_frac": -0.013493,
-      "mark_usd": -0.4753,
-      "entry_px": 0.3009,
-      "avg": 0.3009,
+      "margin": 36.8722,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0601,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
       "depth": 1,
       "fills": [
        [
-        1789453440.0,
-        0.3009,
+        1794381420.0,
+        0.06015,
         0.2
        ]
       ],
-      "fav_bp": 749.8,
-      "last_ts": 1789712460.0,
-      "sched_end": 1789712626.8,
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
       "cut_why": null,
       "book_end": null,
       "levels": {
-       "avg": 0.3009,
-       "take_px": 0.34602296400000004,
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
        "liq_px": 0.0,
-       "floor_px": 0.030090000000000002,
-       "term_ts": 1789712626.8,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
        "depth": 1,
        "side": "long",
        "floor_frac": 0.1
@@ -5552,11 +5624,47 @@
        "floor_frac": 0.1
       },
       "state": "cut"
+     },
+     {
+      "sym": "MTLUSDT",
+      "at": 1789453426.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 35.2291,
+      "mark_frac": -0.013493,
+      "mark_usd": -0.4753,
+      "entry_px": 0.3009,
+      "avg": 0.3009,
+      "depth": 1,
+      "fills": [
+       [
+        1789453440.0,
+        0.3009,
+        0.2
+       ]
+      ],
+      "fav_bp": 749.8,
+      "last_ts": 1789712460.0,
+      "sched_end": 1789712626.8,
+      "cut_why": "книга кончилась раньше планового конца",
+      "book_end": 1789712460.0,
+      "levels": {
+       "avg": 0.3009,
+       "take_px": 0.34602296400000004,
+       "liq_px": 0.0,
+       "floor_px": 0.030090000000000002,
+       "term_ts": 1789712626.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "cut"
      }
     ],
-    "mark_usd": -0.48,
+    "mark_usd": 0.06,
     "priced": 1,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "compound"
    }
   },
@@ -7591,35 +7699,35 @@
    "open": {
     "positions": [
      {
-      "sym": "MTLUSDT",
-      "at": 1789453426.8,
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
       "side": "long",
       "book": null,
       "lev": 1.0,
       "margin": 31.25,
-      "mark_frac": -0.013493,
-      "mark_usd": -0.4217,
-      "entry_px": 0.3009,
-      "avg": 0.3009,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0509,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
       "depth": 1,
       "fills": [
        [
-        1789453440.0,
-        0.3009,
+        1794381420.0,
+        0.06015,
         0.2
        ]
       ],
-      "fav_bp": 749.8,
-      "last_ts": 1789712460.0,
-      "sched_end": 1789712626.8,
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
       "cut_why": null,
       "book_end": null,
       "levels": {
-       "avg": 0.3009,
-       "take_px": 0.34602296400000004,
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
        "liq_px": 0.0,
-       "floor_px": 0.030090000000000002,
-       "term_ts": 1789712626.8,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
        "depth": 1,
        "side": "long",
        "floor_frac": 0.1
@@ -7663,11 +7771,47 @@
        "floor_frac": 0.1
       },
       "state": "cut"
+     },
+     {
+      "sym": "MTLUSDT",
+      "at": 1789453426.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 31.25,
+      "mark_frac": -0.013493,
+      "mark_usd": -0.4217,
+      "entry_px": 0.3009,
+      "avg": 0.3009,
+      "depth": 1,
+      "fills": [
+       [
+        1789453440.0,
+        0.3009,
+        0.2
+       ]
+      ],
+      "fav_bp": 749.8,
+      "last_ts": 1789712460.0,
+      "sched_end": 1789712626.8,
+      "cut_why": "книга кончилась раньше планового конца",
+      "book_end": 1789712460.0,
+      "levels": {
+       "avg": 0.3009,
+       "take_px": 0.34602296400000004,
+       "liq_px": 0.0,
+       "floor_px": 0.030090000000000002,
+       "term_ts": 1789712626.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "cut"
      }
     ],
-    "mark_usd": -0.42,
+    "mark_usd": 0.05,
     "priced": 1,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "fixed"
    }
   },
@@ -9707,35 +9851,35 @@
    "open": {
     "positions": [
      {
-      "sym": "MTLUSDT",
-      "at": 1789453426.8,
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
       "side": "long",
       "book": null,
       "lev": 1.0,
-      "margin": 34.4948,
-      "mark_frac": -0.013493,
-      "mark_usd": -0.4654,
-      "entry_px": 0.3009,
-      "avg": 0.3009,
+      "margin": 34.6607,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0565,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
       "depth": 1,
       "fills": [
        [
-        1789453440.0,
-        0.3009,
+        1794381420.0,
+        0.06015,
         0.2
        ]
       ],
-      "fav_bp": 749.8,
-      "last_ts": 1789712460.0,
-      "sched_end": 1789712626.8,
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
       "cut_why": null,
       "book_end": null,
       "levels": {
-       "avg": 0.3009,
-       "take_px": 0.34602296400000004,
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
        "liq_px": 0.0,
-       "floor_px": 0.030090000000000002,
-       "term_ts": 1789712626.8,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
        "depth": 1,
        "side": "long",
        "floor_frac": 0.1
@@ -9779,11 +9923,47 @@
        "floor_frac": 0.1
       },
       "state": "cut"
+     },
+     {
+      "sym": "MTLUSDT",
+      "at": 1789453426.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 34.4948,
+      "mark_frac": -0.013493,
+      "mark_usd": -0.4654,
+      "entry_px": 0.3009,
+      "avg": 0.3009,
+      "depth": 1,
+      "fills": [
+       [
+        1789453440.0,
+        0.3009,
+        0.2
+       ]
+      ],
+      "fav_bp": 749.8,
+      "last_ts": 1789712460.0,
+      "sched_end": 1789712626.8,
+      "cut_why": "книга кончилась раньше планового конца",
+      "book_end": 1789712460.0,
+      "levels": {
+       "avg": 0.3009,
+       "take_px": 0.34602296400000004,
+       "liq_px": 0.0,
+       "floor_px": 0.030090000000000002,
+       "term_ts": 1789712626.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "cut"
      }
     ],
-    "mark_usd": -0.47,
+    "mark_usd": 0.06,
     "priced": 1,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "compound"
    }
   },
@@ -11823,35 +12003,35 @@
    "open": {
     "positions": [
      {
-      "sym": "MTLUSDT",
-      "at": 1789453426.8,
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
       "side": "long",
       "book": null,
       "lev": 1.0,
       "margin": 31.25,
-      "mark_frac": -0.013493,
-      "mark_usd": -0.4217,
-      "entry_px": 0.3009,
-      "avg": 0.3009,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0509,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
       "depth": 1,
       "fills": [
        [
-        1789453440.0,
-        0.3009,
+        1794381420.0,
+        0.06015,
         0.2
        ]
       ],
-      "fav_bp": 749.8,
-      "last_ts": 1789712460.0,
-      "sched_end": 1789712626.8,
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
       "cut_why": null,
       "book_end": null,
       "levels": {
-       "avg": 0.3009,
-       "take_px": 0.34602296400000004,
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
        "liq_px": 0.0,
-       "floor_px": 0.030090000000000002,
-       "term_ts": 1789712626.8,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
        "depth": 1,
        "side": "long",
        "floor_frac": 0.1
@@ -11895,11 +12075,47 @@
        "floor_frac": 0.1
       },
       "state": "cut"
+     },
+     {
+      "sym": "MTLUSDT",
+      "at": 1789453426.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 31.25,
+      "mark_frac": -0.013493,
+      "mark_usd": -0.4217,
+      "entry_px": 0.3009,
+      "avg": 0.3009,
+      "depth": 1,
+      "fills": [
+       [
+        1789453440.0,
+        0.3009,
+        0.2
+       ]
+      ],
+      "fav_bp": 749.8,
+      "last_ts": 1789712460.0,
+      "sched_end": 1789712626.8,
+      "cut_why": "книга кончилась раньше планового конца",
+      "book_end": 1789712460.0,
+      "levels": {
+       "avg": 0.3009,
+       "take_px": 0.34602296400000004,
+       "liq_px": 0.0,
+       "floor_px": 0.030090000000000002,
+       "term_ts": 1789712626.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "cut"
      }
     ],
-    "mark_usd": -0.42,
+    "mark_usd": 0.05,
     "priced": 1,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "fixed"
    }
   },
@@ -13964,35 +14180,35 @@
    "open": {
     "positions": [
      {
-      "sym": "MTLUSDT",
-      "at": 1789453426.8,
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
       "side": "long",
       "book": null,
       "lev": 1.0,
-      "margin": 193.7583,
-      "mark_frac": -0.013493,
-      "mark_usd": -2.6144,
-      "entry_px": 0.3009,
-      "avg": 0.3009,
+      "margin": 194.3004,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.3166,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
       "depth": 1,
       "fills": [
        [
-        1789453440.0,
-        0.3009,
+        1794381420.0,
+        0.06015,
         0.2
        ]
       ],
-      "fav_bp": 749.8,
-      "last_ts": 1789712460.0,
-      "sched_end": 1789712626.8,
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
       "cut_why": null,
       "book_end": null,
       "levels": {
-       "avg": 0.3009,
-       "take_px": 0.34602296400000004,
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
        "liq_px": 0.0,
-       "floor_px": 0.030090000000000002,
-       "term_ts": 1789712626.8,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
        "depth": 1,
        "side": "long",
        "floor_frac": 0.1
@@ -14036,11 +14252,47 @@
        "floor_frac": 0.1
       },
       "state": "cut"
+     },
+     {
+      "sym": "MTLUSDT",
+      "at": 1789453426.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 193.7583,
+      "mark_frac": -0.013493,
+      "mark_usd": -2.6144,
+      "entry_px": 0.3009,
+      "avg": 0.3009,
+      "depth": 1,
+      "fills": [
+       [
+        1789453440.0,
+        0.3009,
+        0.2
+       ]
+      ],
+      "fav_bp": 749.8,
+      "last_ts": 1789712460.0,
+      "sched_end": 1789712626.8,
+      "cut_why": "книга кончилась раньше планового конца",
+      "book_end": 1789712460.0,
+      "levels": {
+       "avg": 0.3009,
+       "take_px": 0.34602296400000004,
+       "liq_px": 0.0,
+       "floor_px": 0.030090000000000002,
+       "term_ts": 1789712626.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "cut"
      }
     ],
-    "mark_usd": -2.61,
+    "mark_usd": 0.32,
     "priced": 1,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "compound"
    }
   },
@@ -16100,35 +16352,35 @@
    "open": {
     "positions": [
      {
-      "sym": "MTLUSDT",
-      "at": 1789453426.8,
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
       "side": "long",
       "book": null,
       "lev": 1.0,
       "margin": 181.25,
-      "mark_frac": -0.013493,
-      "mark_usd": -2.4456,
-      "entry_px": 0.3009,
-      "avg": 0.3009,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.2953,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
       "depth": 1,
       "fills": [
        [
-        1789453440.0,
-        0.3009,
+        1794381420.0,
+        0.06015,
         0.2
        ]
       ],
-      "fav_bp": 749.8,
-      "last_ts": 1789712460.0,
-      "sched_end": 1789712626.8,
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
       "cut_why": null,
       "book_end": null,
       "levels": {
-       "avg": 0.3009,
-       "take_px": 0.34602296400000004,
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
        "liq_px": 0.0,
-       "floor_px": 0.030090000000000002,
-       "term_ts": 1789712626.8,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
        "depth": 1,
        "side": "long",
        "floor_frac": 0.1
@@ -16172,11 +16424,47 @@
        "floor_frac": 0.1
       },
       "state": "cut"
+     },
+     {
+      "sym": "MTLUSDT",
+      "at": 1789453426.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 181.25,
+      "mark_frac": -0.013493,
+      "mark_usd": -2.4456,
+      "entry_px": 0.3009,
+      "avg": 0.3009,
+      "depth": 1,
+      "fills": [
+       [
+        1789453440.0,
+        0.3009,
+        0.2
+       ]
+      ],
+      "fav_bp": 749.8,
+      "last_ts": 1789712460.0,
+      "sched_end": 1789712626.8,
+      "cut_why": "книга кончилась раньше планового конца",
+      "book_end": 1789712460.0,
+      "levels": {
+       "avg": 0.3009,
+       "take_px": 0.34602296400000004,
+       "liq_px": 0.0,
+       "floor_px": 0.030090000000000002,
+       "term_ts": 1789712626.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "cut"
      }
     ],
-    "mark_usd": -2.45,
+    "mark_usd": 0.3,
     "priced": 1,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "fixed"
    }
   },
@@ -17849,7 +18137,44 @@
    },
    "live_known": true,
    "open": {
-    "positions": [],
+    "positions": [
+     {
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 60.2332,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0981,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
+      "depth": 1,
+      "fills": [
+       [
+        1794381420.0,
+        0.06015,
+        0.2
+       ]
+      ],
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
+      "cut_why": null,
+      "book_end": null,
+      "levels": {
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
+       "liq_px": 0.0,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "open"
+     }
+    ],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -17888,9 +18213,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": 0,
-    "priced": 0,
-    "at": 1794381307.2814076,
+    "mark_usd": 0.1,
+    "priced": 1,
+    "at": 1794381940.311771,
     "sizing": "compound"
    }
   },
@@ -19593,7 +19918,44 @@
    },
    "live_known": true,
    "open": {
-    "positions": [],
+    "positions": [
+     {
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 31.25,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0509,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
+      "depth": 1,
+      "fills": [
+       [
+        1794381420.0,
+        0.06015,
+        0.2
+       ]
+      ],
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
+      "cut_why": null,
+      "book_end": null,
+      "levels": {
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
+       "liq_px": 0.0,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "open"
+     }
+    ],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -19632,9 +19994,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": 0,
-    "priced": 0,
-    "at": 1794381307.2814076,
+    "mark_usd": 0.05,
+    "priced": 1,
+    "at": 1794381940.311771,
     "sizing": "fixed"
    }
   },
@@ -21694,35 +22056,35 @@
    "open": {
     "positions": [
      {
-      "sym": "MTLUSDT",
-      "at": 1789453426.8,
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
       "side": "long",
       "book": null,
       "lev": 1.0,
-      "margin": 35.0695,
-      "mark_frac": -0.013493,
-      "mark_usd": -0.4732,
-      "entry_px": 0.3009,
-      "avg": 0.3009,
+      "margin": 38.3783,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0625,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
       "depth": 1,
       "fills": [
        [
-        1789453440.0,
-        0.3009,
+        1794381420.0,
+        0.06015,
         0.2
        ]
       ],
-      "fav_bp": 749.8,
-      "last_ts": 1789712460.0,
-      "sched_end": 1789712626.8,
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
       "cut_why": null,
       "book_end": null,
       "levels": {
-       "avg": 0.3009,
-       "take_px": 0.34602296400000004,
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
        "liq_px": 0.0,
-       "floor_px": 0.030090000000000002,
-       "term_ts": 1789712626.8,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
        "depth": 1,
        "side": "long",
        "floor_frac": 0.1
@@ -21766,11 +22128,47 @@
        "floor_frac": 0.1
       },
       "state": "cut"
+     },
+     {
+      "sym": "MTLUSDT",
+      "at": 1789453426.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 35.0695,
+      "mark_frac": -0.013493,
+      "mark_usd": -0.4732,
+      "entry_px": 0.3009,
+      "avg": 0.3009,
+      "depth": 1,
+      "fills": [
+       [
+        1789453440.0,
+        0.3009,
+        0.2
+       ]
+      ],
+      "fav_bp": 749.8,
+      "last_ts": 1789712460.0,
+      "sched_end": 1789712626.8,
+      "cut_why": "книга кончилась раньше планового конца",
+      "book_end": 1789712460.0,
+      "levels": {
+       "avg": 0.3009,
+       "take_px": 0.34602296400000004,
+       "liq_px": 0.0,
+       "floor_px": 0.030090000000000002,
+       "term_ts": 1789712626.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "cut"
      }
     ],
-    "mark_usd": -0.47,
+    "mark_usd": 0.06,
     "priced": 1,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "compound"
    }
   },
@@ -23825,35 +24223,35 @@
    "open": {
     "positions": [
      {
-      "sym": "MTLUSDT",
-      "at": 1789453426.8,
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
       "side": "long",
       "book": null,
       "lev": 1.0,
       "margin": 31.25,
-      "mark_frac": -0.013493,
-      "mark_usd": -0.4217,
-      "entry_px": 0.3009,
-      "avg": 0.3009,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0509,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
       "depth": 1,
       "fills": [
        [
-        1789453440.0,
-        0.3009,
+        1794381420.0,
+        0.06015,
         0.2
        ]
       ],
-      "fav_bp": 749.8,
-      "last_ts": 1789712460.0,
-      "sched_end": 1789712626.8,
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
       "cut_why": null,
       "book_end": null,
       "levels": {
-       "avg": 0.3009,
-       "take_px": 0.34602296400000004,
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
        "liq_px": 0.0,
-       "floor_px": 0.030090000000000002,
-       "term_ts": 1789712626.8,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
        "depth": 1,
        "side": "long",
        "floor_frac": 0.1
@@ -23897,11 +24295,47 @@
        "floor_frac": 0.1
       },
       "state": "cut"
+     },
+     {
+      "sym": "MTLUSDT",
+      "at": 1789453426.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 31.25,
+      "mark_frac": -0.013493,
+      "mark_usd": -0.4217,
+      "entry_px": 0.3009,
+      "avg": 0.3009,
+      "depth": 1,
+      "fills": [
+       [
+        1789453440.0,
+        0.3009,
+        0.2
+       ]
+      ],
+      "fav_bp": 749.8,
+      "last_ts": 1789712460.0,
+      "sched_end": 1789712626.8,
+      "cut_why": "книга кончилась раньше планового конца",
+      "book_end": 1789712460.0,
+      "levels": {
+       "avg": 0.3009,
+       "take_px": 0.34602296400000004,
+       "liq_px": 0.0,
+       "floor_px": 0.030090000000000002,
+       "term_ts": 1789712626.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "cut"
      }
     ],
-    "mark_usd": -0.42,
+    "mark_usd": 0.05,
     "priced": 1,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "fixed"
    }
   },
@@ -25966,35 +26400,35 @@
    "open": {
     "positions": [
      {
-      "sym": "MTLUSDT",
-      "at": 1789453426.8,
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
       "side": "long",
       "book": null,
       "lev": 1.0,
-      "margin": 37.8009,
-      "mark_frac": -0.013493,
-      "mark_usd": -0.51,
-      "entry_px": 0.3009,
-      "avg": 0.3009,
+      "margin": 38.2123,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0623,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
       "depth": 1,
       "fills": [
        [
-        1789453440.0,
-        0.3009,
+        1794381420.0,
+        0.06015,
         0.2
        ]
       ],
-      "fav_bp": 749.8,
-      "last_ts": 1789712460.0,
-      "sched_end": 1789712626.8,
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
       "cut_why": null,
       "book_end": null,
       "levels": {
-       "avg": 0.3009,
-       "take_px": 0.34602296400000004,
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
        "liq_px": 0.0,
-       "floor_px": 0.030090000000000002,
-       "term_ts": 1789712626.8,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
        "depth": 1,
        "side": "long",
        "floor_frac": 0.1
@@ -26038,11 +26472,47 @@
        "floor_frac": 0.1
       },
       "state": "cut"
+     },
+     {
+      "sym": "MTLUSDT",
+      "at": 1789453426.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 37.8009,
+      "mark_frac": -0.013493,
+      "mark_usd": -0.51,
+      "entry_px": 0.3009,
+      "avg": 0.3009,
+      "depth": 1,
+      "fills": [
+       [
+        1789453440.0,
+        0.3009,
+        0.2
+       ]
+      ],
+      "fav_bp": 749.8,
+      "last_ts": 1789712460.0,
+      "sched_end": 1789712626.8,
+      "cut_why": "книга кончилась раньше планового конца",
+      "book_end": 1789712460.0,
+      "levels": {
+       "avg": 0.3009,
+       "take_px": 0.34602296400000004,
+       "liq_px": 0.0,
+       "floor_px": 0.030090000000000002,
+       "term_ts": 1789712626.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "cut"
      }
     ],
-    "mark_usd": -0.51,
+    "mark_usd": 0.06,
     "priced": 1,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "compound"
    }
   },
@@ -28102,35 +28572,35 @@
    "open": {
     "positions": [
      {
-      "sym": "MTLUSDT",
-      "at": 1789453426.8,
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
       "side": "long",
       "book": null,
       "lev": 1.0,
       "margin": 31.25,
-      "mark_frac": -0.013493,
-      "mark_usd": -0.4217,
-      "entry_px": 0.3009,
-      "avg": 0.3009,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0509,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
       "depth": 1,
       "fills": [
        [
-        1789453440.0,
-        0.3009,
+        1794381420.0,
+        0.06015,
         0.2
        ]
       ],
-      "fav_bp": 749.8,
-      "last_ts": 1789712460.0,
-      "sched_end": 1789712626.8,
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
       "cut_why": null,
       "book_end": null,
       "levels": {
-       "avg": 0.3009,
-       "take_px": 0.34602296400000004,
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
        "liq_px": 0.0,
-       "floor_px": 0.030090000000000002,
-       "term_ts": 1789712626.8,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
        "depth": 1,
        "side": "long",
        "floor_frac": 0.1
@@ -28174,11 +28644,47 @@
        "floor_frac": 0.1
       },
       "state": "cut"
+     },
+     {
+      "sym": "MTLUSDT",
+      "at": 1789453426.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 31.25,
+      "mark_frac": -0.013493,
+      "mark_usd": -0.4217,
+      "entry_px": 0.3009,
+      "avg": 0.3009,
+      "depth": 1,
+      "fills": [
+       [
+        1789453440.0,
+        0.3009,
+        0.2
+       ]
+      ],
+      "fav_bp": 749.8,
+      "last_ts": 1789712460.0,
+      "sched_end": 1789712626.8,
+      "cut_why": "книга кончилась раньше планового конца",
+      "book_end": 1789712460.0,
+      "levels": {
+       "avg": 0.3009,
+       "take_px": 0.34602296400000004,
+       "liq_px": 0.0,
+       "floor_px": 0.030090000000000002,
+       "term_ts": 1789712626.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "cut"
      }
     ],
-    "mark_usd": -0.42,
+    "mark_usd": 0.05,
     "priced": 1,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "fixed"
    }
   },
@@ -30248,35 +30754,35 @@
    "open": {
     "positions": [
      {
-      "sym": "MTLUSDT",
-      "at": 1789453426.8,
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
       "side": "long",
       "book": null,
       "lev": 1.0,
-      "margin": 206.2522,
-      "mark_frac": -0.013493,
-      "mark_usd": -2.7829,
-      "entry_px": 0.3009,
-      "avg": 0.3009,
+      "margin": 207.5619,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.3382,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
       "depth": 1,
       "fills": [
        [
-        1789453440.0,
-        0.3009,
+        1794381420.0,
+        0.06015,
         0.2
        ]
       ],
-      "fav_bp": 749.8,
-      "last_ts": 1789712460.0,
-      "sched_end": 1789712626.8,
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
       "cut_why": null,
       "book_end": null,
       "levels": {
-       "avg": 0.3009,
-       "take_px": 0.34602296400000004,
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
        "liq_px": 0.0,
-       "floor_px": 0.030090000000000002,
-       "term_ts": 1789712626.8,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
        "depth": 1,
        "side": "long",
        "floor_frac": 0.1
@@ -30320,11 +30826,47 @@
        "floor_frac": 0.1
       },
       "state": "cut"
+     },
+     {
+      "sym": "MTLUSDT",
+      "at": 1789453426.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 206.2522,
+      "mark_frac": -0.013493,
+      "mark_usd": -2.7829,
+      "entry_px": 0.3009,
+      "avg": 0.3009,
+      "depth": 1,
+      "fills": [
+       [
+        1789453440.0,
+        0.3009,
+        0.2
+       ]
+      ],
+      "fav_bp": 749.8,
+      "last_ts": 1789712460.0,
+      "sched_end": 1789712626.8,
+      "cut_why": "книга кончилась раньше планового конца",
+      "book_end": 1789712460.0,
+      "levels": {
+       "avg": 0.3009,
+       "take_px": 0.34602296400000004,
+       "liq_px": 0.0,
+       "floor_px": 0.030090000000000002,
+       "term_ts": 1789712626.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "cut"
      }
     ],
-    "mark_usd": -2.78,
+    "mark_usd": 0.34,
     "priced": 1,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "compound"
    }
   },
@@ -32394,35 +32936,35 @@
    "open": {
     "positions": [
      {
-      "sym": "MTLUSDT",
-      "at": 1789453426.8,
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
       "side": "long",
       "book": null,
       "lev": 1.0,
       "margin": 181.25,
-      "mark_frac": -0.013493,
-      "mark_usd": -2.4456,
-      "entry_px": 0.3009,
-      "avg": 0.3009,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.2953,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
       "depth": 1,
       "fills": [
        [
-        1789453440.0,
-        0.3009,
+        1794381420.0,
+        0.06015,
         0.2
        ]
       ],
-      "fav_bp": 749.8,
-      "last_ts": 1789712460.0,
-      "sched_end": 1789712626.8,
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
       "cut_why": null,
       "book_end": null,
       "levels": {
-       "avg": 0.3009,
-       "take_px": 0.34602296400000004,
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
        "liq_px": 0.0,
-       "floor_px": 0.030090000000000002,
-       "term_ts": 1789712626.8,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
        "depth": 1,
        "side": "long",
        "floor_frac": 0.1
@@ -32466,11 +33008,47 @@
        "floor_frac": 0.1
       },
       "state": "cut"
+     },
+     {
+      "sym": "MTLUSDT",
+      "at": 1789453426.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 181.25,
+      "mark_frac": -0.013493,
+      "mark_usd": -2.4456,
+      "entry_px": 0.3009,
+      "avg": 0.3009,
+      "depth": 1,
+      "fills": [
+       [
+        1789453440.0,
+        0.3009,
+        0.2
+       ]
+      ],
+      "fav_bp": 749.8,
+      "last_ts": 1789712460.0,
+      "sched_end": 1789712626.8,
+      "cut_why": "книга кончилась раньше планового конца",
+      "book_end": 1789712460.0,
+      "levels": {
+       "avg": 0.3009,
+       "take_px": 0.34602296400000004,
+       "liq_px": 0.0,
+       "floor_px": 0.030090000000000002,
+       "term_ts": 1789712626.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "cut"
      }
     ],
-    "mark_usd": -2.45,
+    "mark_usd": 0.3,
     "priced": 1,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "fixed"
    }
   },
@@ -33492,7 +34070,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "compound"
    }
   },
@@ -34504,7 +35082,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "fixed"
    }
   },
@@ -35521,7 +36099,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "compound"
    }
   },
@@ -36538,7 +37116,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "fixed"
    }
   },
@@ -37560,7 +38138,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "compound"
    }
   },
@@ -38582,7 +39160,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "fixed"
    }
   },
@@ -39604,7 +40182,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "compound"
    }
   },
@@ -40626,7 +41204,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "fixed"
    }
   },
@@ -41118,7 +41696,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1794381307.2814076,
+    "at": 1794381940.311771,
     "sizing": "compound"
    }
   },
@@ -41586,11 +42164,48 @@
    },
    "live_known": true,
    "open": {
-    "positions": [],
+    "positions": [
+     {
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 31.25,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0509,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
+      "depth": 1,
+      "fills": [
+       [
+        1794381420.0,
+        0.06015,
+        0.2
+       ]
+      ],
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
+      "cut_why": null,
+      "book_end": null,
+      "levels": {
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
+       "liq_px": 0.0,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "open"
+     }
+    ],
     "cut": [],
-    "mark_usd": 0,
-    "priced": 0,
-    "at": 1794381307.2814076,
+    "mark_usd": 0.05,
+    "priced": 1,
+    "at": 1794381940.311771,
     "sizing": "fixed"
    }
   },
@@ -42148,11 +42763,48 @@
    },
    "live_known": true,
    "open": {
-    "positions": [],
+    "positions": [
+     {
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 28.9742,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0472,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
+      "depth": 1,
+      "fills": [
+       [
+        1794381420.0,
+        0.06015,
+        0.2
+       ]
+      ],
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
+      "cut_why": null,
+      "book_end": null,
+      "levels": {
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
+       "liq_px": 0.0,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "open"
+     }
+    ],
     "cut": [],
-    "mark_usd": 0,
-    "priced": 0,
-    "at": 1794381307.2814076,
+    "mark_usd": 0.05,
+    "priced": 1,
+    "at": 1794381940.311771,
     "sizing": "compound"
    }
   },
@@ -42710,11 +43362,48 @@
    },
    "live_known": true,
    "open": {
-    "positions": [],
+    "positions": [
+     {
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 31.25,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0509,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
+      "depth": 1,
+      "fills": [
+       [
+        1794381420.0,
+        0.06015,
+        0.2
+       ]
+      ],
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
+      "cut_why": null,
+      "book_end": null,
+      "levels": {
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
+       "liq_px": 0.0,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "open"
+     }
+    ],
     "cut": [],
-    "mark_usd": 0,
-    "priced": 0,
-    "at": 1794381307.2814076,
+    "mark_usd": 0.05,
+    "priced": 1,
+    "at": 1794381940.311771,
     "sizing": "fixed"
    }
   },
@@ -43272,11 +43961,48 @@
    },
    "live_known": true,
    "open": {
-    "positions": [],
+    "positions": [
+     {
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 31.0313,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0506,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
+      "depth": 1,
+      "fills": [
+       [
+        1794381420.0,
+        0.06015,
+        0.2
+       ]
+      ],
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
+      "cut_why": null,
+      "book_end": null,
+      "levels": {
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
+       "liq_px": 0.0,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "open"
+     }
+    ],
     "cut": [],
-    "mark_usd": 0,
-    "priced": 0,
-    "at": 1794381307.2814076,
+    "mark_usd": 0.05,
+    "priced": 1,
+    "at": 1794381940.311771,
     "sizing": "compound"
    }
   },
@@ -43834,11 +44560,48 @@
    },
    "live_known": true,
    "open": {
-    "positions": [],
+    "positions": [
+     {
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 31.25,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.0509,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
+      "depth": 1,
+      "fills": [
+       [
+        1794381420.0,
+        0.06015,
+        0.2
+       ]
+      ],
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
+      "cut_why": null,
+      "book_end": null,
+      "levels": {
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
+       "liq_px": 0.0,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "open"
+     }
+    ],
     "cut": [],
-    "mark_usd": 0,
-    "priced": 0,
-    "at": 1794381307.2814076,
+    "mark_usd": 0.05,
+    "priced": 1,
+    "at": 1794381940.311771,
     "sizing": "fixed"
    }
   },
@@ -44396,11 +45159,48 @@
    },
    "live_known": true,
    "open": {
-    "positions": [],
+    "positions": [
+     {
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 180.5144,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.2941,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
+      "depth": 1,
+      "fills": [
+       [
+        1794381420.0,
+        0.06015,
+        0.2
+       ]
+      ],
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
+      "cut_why": null,
+      "book_end": null,
+      "levels": {
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
+       "liq_px": 0.0,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "open"
+     }
+    ],
     "cut": [],
-    "mark_usd": 0,
-    "priced": 0,
-    "at": 1794381307.2814076,
+    "mark_usd": 0.29,
+    "priced": 1,
+    "at": 1794381940.311771,
     "sizing": "compound"
    }
   },
@@ -44958,11 +45758,48 @@
    },
    "live_known": true,
    "open": {
-    "positions": [],
+    "positions": [
+     {
+      "sym": "CASHCATUSDT",
+      "at": 1794381369.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 181.25,
+      "mark_frac": 0.001629,
+      "mark_usd": 0.2953,
+      "entry_px": 0.06015,
+      "avg": 0.060149999999999995,
+      "depth": 1,
+      "fills": [
+       [
+        1794381420.0,
+        0.06015,
+        0.2
+       ]
+      ],
+      "fav_bp": 1141.17,
+      "last_ts": 1794381900.0,
+      "sched_end": 1794640569.8,
+      "cut_why": null,
+      "book_end": null,
+      "levels": {
+       "avg": 0.06015,
+       "take_px": 0.0738782751,
+       "liq_px": 0.0,
+       "floor_px": 0.006015,
+       "term_ts": 1794640569.8,
+       "depth": 1,
+       "side": "long",
+       "floor_frac": 0.1
+      },
+      "state": "open"
+     }
+    ],
     "cut": [],
-    "mark_usd": 0,
-    "priced": 0,
-    "at": 1794381307.2814076,
+    "mark_usd": 0.3,
+    "priced": 1,
+    "at": 1794381940.311771,
     "sizing": "fixed"
    }
   }
@@ -57030,31 +57867,31 @@
    ]
   }
  },
- "positions": 7058,
- "replayed": 3,
+ "positions": 7059,
+ "replayed": 4,
  "skipped": 0,
  "window": {
   "from": "2026-08-08 18:07",
-  "to": "2026-11-06 15:07",
+  "to": "2026-11-11 07:16",
   "from_ts": 1786212452.7,
-  "to_ts": 1793977679.6,
-  "span_h": 2157.0,
-  "span_d": 89.9,
-  "dates": 70
+  "to_ts": 1794381369.8,
+  "span_h": 2269.1,
+  "span_d": 94.5,
+  "dates": 71
  },
  "cells": {
   "safe:100": {
    "sizing": "compound",
-   "taken": 88,
+   "taken": 89,
    "no_cash": 1580,
    "too_small": 23,
-   "take_share": 0.052,
-   "final": 0.1325,
+   "take_share": 0.0526,
+   "final": 0.133,
    "max_dd": -0.1578,
-   "day_median": -0.00151,
+   "day_median": -0.00148,
    "day_worst": -0.0628,
-   "day_green": 0.44,
-   "days": 91,
+   "day_green": 0.446,
+   "days": 92,
    "open_mean": 2.4,
    "open_median": 3.0,
    "open_max": 4,
@@ -64576,28 +65413,28 @@
    "slots": 4,
    "ticket": null,
    "share_by_source": true,
-   "fp": "8da698dde460",
-   "pnl_taken": 0.46,
-   "names": 76,
+   "fp": "ca0f0ae9c603",
+   "pnl_taken": 0.4616,
+   "names": 77,
    "top_sym": "IRYSUSDT",
    "top_pnl": 12.7,
-   "final_wo_top": 0.0054,
+   "final_wo_top": 0.006,
    "top_trade": 12.87,
    "open_n": 1,
-   "cut_n": 1
+   "cut_n": 2
   },
   "safe:100:fixed": {
    "sizing": "fixed",
-   "taken": 77,
+   "taken": 78,
    "no_cash": 1588,
    "too_small": 26,
-   "take_share": 0.0455,
-   "final": 0.0921,
+   "take_share": 0.0461,
+   "final": 0.0926,
    "max_dd": -0.1394,
-   "day_median": -0.00132,
+   "day_median": -0.0011,
    "day_worst": -0.0626,
-   "day_green": 0.451,
-   "days": 91,
+   "day_green": 0.457,
+   "days": 92,
    "open_mean": 2.2,
    "open_median": 2.0,
    "open_max": 4,
@@ -71889,28 +72726,28 @@
    "slots": 4,
    "ticket": null,
    "share_by_source": true,
-   "fp": "b5b8fc7ad8f9",
-   "pnl_taken": 0.2948,
-   "names": 66,
+   "fp": "eb1a1127490a",
+   "pnl_taken": 0.2964,
+   "names": 67,
    "top_sym": "IRYSUSDT",
    "top_pnl": 10.92,
-   "final_wo_top": -0.017,
+   "final_wo_top": -0.0165,
    "top_trade": 10.22,
    "open_n": 1,
-   "cut_n": 1
+   "cut_n": 2
   },
   "safe:1000": {
    "sizing": "compound",
-   "taken": 468,
+   "taken": 469,
    "no_cash": 1201,
    "too_small": 22,
-   "take_share": 0.2768,
-   "final": 0.1799,
+   "take_share": 0.2772,
+   "final": 0.18,
    "max_dd": -0.1113,
-   "day_median": 4e-05,
+   "day_median": 5e-05,
    "day_worst": -0.0266,
-   "day_green": 0.511,
-   "days": 92,
+   "day_green": 0.516,
+   "days": 93,
    "open_mean": 9.9,
    "open_median": 5.0,
    "open_max": 39,
@@ -79302,28 +80139,28 @@
    "slots": 40,
    "ticket": null,
    "share_by_source": true,
-   "fp": "87ea4cb34204",
-   "pnl_taken": 5.4299,
-   "names": 278,
+   "fp": "f0beda025f78",
+   "pnl_taken": 5.4315,
+   "names": 279,
    "top_sym": "IRYSUSDT",
    "top_pnl": 12.84,
    "final_wo_top": 0.1671,
    "top_trade": 12.12,
    "open_n": 1,
-   "cut_n": 1
+   "cut_n": 2
   },
   "safe:1000:fixed": {
    "sizing": "fixed",
-   "taken": 486,
+   "taken": 487,
    "no_cash": 1179,
    "too_small": 26,
-   "take_share": 0.2874,
+   "take_share": 0.2878,
    "final": 0.1839,
    "max_dd": -0.1115,
-   "day_median": -0.0,
+   "day_median": 2e-05,
    "day_worst": -0.0259,
-   "day_green": 0.5,
-   "days": 92,
+   "day_green": 0.505,
+   "days": 93,
    "open_mean": 10.4,
    "open_median": 5.0,
    "open_max": 39,
@@ -86700,19 +87537,19 @@
    "slots": 40,
    "ticket": null,
    "share_by_source": true,
-   "fp": "3fee72c3a768",
-   "pnl_taken": 5.884,
-   "names": 281,
+   "fp": "f34725ebf08e",
+   "pnl_taken": 5.8856,
+   "names": 282,
    "top_sym": "IRYSUSDT",
    "top_pnl": 10.92,
    "final_wo_top": 0.173,
    "top_trade": 10.22,
    "open_n": 1,
-   "cut_n": 1
+   "cut_n": 2
   },
   "safe:10000": {
    "sizing": "compound",
-   "taken": 1552,
+   "taken": 1553,
    "no_cash": 117,
    "too_small": 22,
    "take_share": 0.9178,
@@ -86720,8 +87557,8 @@
    "max_dd": -0.0475,
    "day_median": 1e-05,
    "day_worst": -0.0119,
-   "day_green": 0.522,
-   "days": 92,
+   "day_green": 0.527,
+   "days": 93,
    "open_mean": 27.1,
    "open_median": 5.0,
    "open_max": 331,
@@ -94028,29 +94865,29 @@
    "slots": 400,
    "ticket": null,
    "share_by_source": true,
-   "fp": "1b10db7dc6fa",
-   "pnl_taken": 33.8142,
-   "names": 453,
+   "fp": "f6f6cc4386bb",
+   "pnl_taken": 33.8159,
+   "names": 454,
    "top_sym": "SKLUSDT",
    "top_pnl": 13.52,
    "final_wo_top": 0.1078,
    "top_trade": 11.34,
    "open_n": 1,
-   "cut_n": 1
+   "cut_n": 2
   },
   "safe:10000:fixed": {
    "sizing": "fixed",
-   "taken": 1547,
+   "taken": 1548,
    "no_cash": 118,
    "too_small": 26,
-   "take_share": 0.9148,
+   "take_share": 0.9149,
    "final": 0.1055,
    "max_dd": -0.0443,
    "day_median": 0.0,
    "day_worst": -0.0109,
-   "day_green": 0.511,
-   "days": 92,
-   "open_mean": 27.1,
+   "day_green": 0.516,
+   "days": 93,
+   "open_mean": 27.0,
    "open_median": 5.0,
    "open_max": 331,
    "open_dd": -451.18,
@@ -101376,19 +102213,19 @@
    "slots": 400,
    "ticket": null,
    "share_by_source": true,
-   "fp": "e08e0b084cb7",
-   "pnl_taken": 33.7578,
-   "names": 453,
+   "fp": "f1a965d11cca",
+   "pnl_taken": 33.7595,
+   "names": 454,
    "top_sym": "SKLUSDT",
    "top_pnl": 12.83,
    "final_wo_top": 0.1042,
    "top_trade": 10.22,
    "open_n": 1,
-   "cut_n": 1
+   "cut_n": 2
   },
   "safe:100000": {
    "sizing": "compound",
-   "taken": 1687,
+   "taken": 1688,
    "no_cash": 0,
    "too_small": 4,
    "take_share": 0.9976,
@@ -101396,9 +102233,9 @@
    "max_dd": -0.0288,
    "day_median": 1e-05,
    "day_worst": -0.0067,
-   "day_green": 0.533,
-   "days": 92,
-   "open_mean": 28.8,
+   "day_green": 0.538,
+   "days": 93,
+   "open_mean": 28.7,
    "open_median": 5.0,
    "open_max": 444,
    "open_dd": -2861.54,
@@ -108774,19 +109611,19 @@
    "slots": 689,
    "ticket": null,
    "share_by_source": true,
-   "fp": "1670f90ceff9",
-   "pnl_taken": 38.9312,
-   "names": 482,
+   "fp": "4257089a8208",
+   "pnl_taken": 38.9328,
+   "names": 483,
    "top_sym": "IRYSUSDT",
    "top_pnl": 83.93,
    "final_wo_top": 0.0712,
    "top_trade": 63.56,
    "open_n": 1,
-   "cut_n": 1
+   "cut_n": 2
   },
   "safe:100000:fixed": {
    "sizing": "fixed",
-   "taken": 1686,
+   "taken": 1687,
    "no_cash": 0,
    "too_small": 5,
    "take_share": 0.997,
@@ -108794,8 +109631,8 @@
    "max_dd": -0.0275,
    "day_median": 1e-05,
    "day_worst": -0.0064,
-   "day_green": 0.533,
-   "days": 92,
+   "day_green": 0.538,
+   "days": 93,
    "open_mean": 28.7,
    "open_median": 5.0,
    "open_max": 444,
@@ -116167,28 +117004,28 @@
    "slots": 689,
    "ticket": null,
    "share_by_source": true,
-   "fp": "b32a6648a691",
-   "pnl_taken": 38.9355,
-   "names": 482,
+   "fp": "e162c85d8e83",
+   "pnl_taken": 38.9372,
+   "names": 483,
    "top_sym": "IRYSUSDT",
    "top_pnl": 79.38,
    "final_wo_top": 0.0698,
    "top_trade": 59.28,
    "open_n": 1,
-   "cut_n": 1
+   "cut_n": 2
   },
   "optimal:100": {
    "sizing": "compound",
-   "taken": 90,
+   "taken": 91,
    "no_cash": 1595,
    "too_small": 20,
-   "take_share": 0.0528,
-   "final": 0.9275,
+   "take_share": 0.0533,
+   "final": 0.9284,
    "max_dd": -0.6089,
-   "day_median": -0.00203,
+   "day_median": -0.00195,
    "day_worst": -1.1985,
-   "day_green": 0.457,
-   "days": 92,
+   "day_green": 0.462,
+   "days": 93,
    "open_mean": 2.3,
    "open_median": 3.0,
    "open_max": 4,
@@ -123265,28 +124102,28 @@
    "slots": 4,
    "ticket": null,
    "share_by_source": true,
-   "fp": "cd158fc1c890",
-   "pnl_taken": 3.9148,
-   "names": 78,
+   "fp": "ef7eae669b4a",
+   "pnl_taken": 3.9164,
+   "names": 79,
    "top_sym": "RLCUSDT",
    "top_pnl": 199.85,
-   "final_wo_top": -1.0711,
+   "final_wo_top": -1.0701,
    "top_trade": 188.38,
-   "open_n": 0,
+   "open_n": 1,
    "cut_n": 1
   },
   "optimal:100:fixed": {
    "sizing": "fixed",
-   "taken": 108,
+   "taken": 109,
    "no_cash": 1575,
    "too_small": 22,
-   "take_share": 0.0633,
-   "final": 1.0302,
+   "take_share": 0.0639,
+   "final": 1.0307,
    "max_dd": -0.3572,
-   "day_median": -0.00018,
+   "day_median": -9e-05,
    "day_worst": -0.4396,
-   "day_green": 0.495,
-   "days": 91,
+   "day_green": 0.5,
+   "days": 92,
    "open_mean": 2.9,
    "open_median": 3.0,
    "open_max": 8,
@@ -129958,28 +130795,28 @@
    "slots": 4,
    "ticket": null,
    "share_by_source": true,
-   "fp": "d912549df2a7",
-   "pnl_taken": 3.2966,
-   "names": 91,
+   "fp": "d69eecc7336e",
+   "pnl_taken": 3.2983,
+   "names": 92,
    "top_sym": "BRUSDT",
    "top_pnl": 124.25,
-   "final_wo_top": -0.2123,
+   "final_wo_top": -0.2118,
    "top_trade": 112.04,
-   "open_n": 0,
+   "open_n": 1,
    "cut_n": 1
   },
   "optimal:1000": {
    "sizing": "compound",
-   "taken": 477,
+   "taken": 478,
    "no_cash": 1208,
    "too_small": 20,
-   "take_share": 0.2798,
-   "final": 0.2281,
+   "take_share": 0.2802,
+   "final": 0.2282,
    "max_dd": -0.3297,
-   "day_median": -0.00018,
+   "day_median": -0.00017,
    "day_worst": -0.1447,
-   "day_green": 0.478,
-   "days": 92,
+   "day_green": 0.484,
+   "days": 93,
    "open_mean": 9.9,
    "open_median": 5.0,
    "open_max": 39,
@@ -137106,28 +137943,28 @@
    "slots": 40,
    "ticket": null,
    "share_by_source": true,
-   "fp": "ecb21996d047",
-   "pnl_taken": 7.633,
-   "names": 278,
+   "fp": "587bcabbc4d1",
+   "pnl_taken": 7.6346,
+   "names": 279,
    "top_sym": "BRUSDT",
    "top_pnl": 105.63,
    "final_wo_top": 0.1225,
    "top_trade": 128.01,
    "open_n": 1,
-   "cut_n": 1
+   "cut_n": 2
   },
   "optimal:1000:fixed": {
    "sizing": "fixed",
-   "taken": 507,
+   "taken": 508,
    "no_cash": 1176,
    "too_small": 22,
-   "take_share": 0.2974,
-   "final": 0.2891,
+   "take_share": 0.2978,
+   "final": 0.2892,
    "max_dd": -0.3031,
-   "day_median": -0.00013,
+   "day_median": -9e-05,
    "day_worst": -0.1164,
-   "day_green": 0.489,
-   "days": 92,
+   "day_green": 0.495,
+   "days": 93,
    "open_mean": 10.6,
    "open_median": 5.0,
    "open_max": 43,
@@ -144239,28 +145076,28 @@
    "slots": 40,
    "ticket": null,
    "share_by_source": true,
-   "fp": "ce0344d9d5e4",
-   "pnl_taken": 9.2514,
-   "names": 283,
+   "fp": "c20c8ead81d7",
+   "pnl_taken": 9.2531,
+   "names": 284,
    "top_sym": "BRUSDT",
    "top_pnl": 93.0,
-   "final_wo_top": 0.1961,
+   "final_wo_top": 0.1962,
    "top_trade": 112.04,
    "open_n": 1,
-   "cut_n": 1
+   "cut_n": 2
   },
   "optimal:10000": {
    "sizing": "compound",
-   "taken": 1570,
+   "taken": 1571,
    "no_cash": 117,
    "too_small": 18,
-   "take_share": 0.9208,
+   "take_share": 0.9209,
    "final": 0.2228,
    "max_dd": -0.1205,
-   "day_median": -2e-05,
+   "day_median": -1e-05,
    "day_worst": -0.0363,
-   "day_green": 0.489,
-   "days": 92,
+   "day_green": 0.495,
+   "days": 93,
    "open_mean": 27.2,
    "open_median": 5.0,
    "open_max": 332,
@@ -151347,28 +152184,28 @@
    "slots": 400,
    "ticket": null,
    "share_by_source": true,
-   "fp": "7d62317c9e78",
-   "pnl_taken": 67.0278,
-   "names": 454,
+   "fp": "3678b9bad7be",
+   "pnl_taken": 67.0294,
+   "names": 455,
    "top_sym": "BRUSDT",
    "top_pnl": 112.63,
    "final_wo_top": 0.2115,
    "top_trade": 135.77,
    "open_n": 1,
-   "cut_n": 1
+   "cut_n": 2
   },
   "optimal:10000:fixed": {
    "sizing": "fixed",
-   "taken": 1564,
+   "taken": 1565,
    "no_cash": 119,
    "too_small": 22,
-   "take_share": 0.9173,
+   "take_share": 0.9174,
    "final": 0.2089,
    "max_dd": -0.1054,
    "day_median": -1e-05,
    "day_worst": -0.0311,
-   "day_green": 0.489,
-   "days": 92,
+   "day_green": 0.495,
+   "days": 93,
    "open_mean": 27.2,
    "open_median": 5.0,
    "open_max": 331,
@@ -158450,28 +159287,28 @@
    "slots": 400,
    "ticket": null,
    "share_by_source": true,
-   "fp": "5d5a061dbbf5",
-   "pnl_taken": 66.8447,
-   "names": 454,
+   "fp": "b6804e33fa3b",
+   "pnl_taken": 66.8463,
+   "names": 455,
    "top_sym": "BRUSDT",
    "top_pnl": 93.0,
    "final_wo_top": 0.1996,
    "top_trade": 112.04,
    "open_n": 1,
-   "cut_n": 1
+   "cut_n": 2
   },
   "optimal:100000": {
    "sizing": "compound",
-   "taken": 1702,
+   "taken": 1703,
    "no_cash": 0,
    "too_small": 3,
    "take_share": 0.9982,
    "final": 0.1452,
    "max_dd": -0.0727,
-   "day_median": -1e-05,
+   "day_median": -0.0,
    "day_worst": -0.02,
-   "day_green": 0.489,
-   "days": 92,
+   "day_green": 0.495,
+   "days": 93,
    "open_mean": 28.8,
    "open_median": 5.0,
    "open_max": 444,
@@ -165628,28 +166465,28 @@
    "slots": 689,
    "ticket": null,
    "share_by_source": true,
-   "fp": "dbacb0909971",
-   "pnl_taken": 77.0607,
-   "names": 482,
+   "fp": "1e11d4b5b379",
+   "pnl_taken": 77.0623,
+   "names": 483,
    "top_sym": "BRUSDT",
    "top_pnl": 614.25,
    "final_wo_top": 0.139,
    "top_trade": 740.27,
    "open_n": 1,
-   "cut_n": 1
+   "cut_n": 2
   },
   "optimal:100000:fixed": {
    "sizing": "fixed",
-   "taken": 1702,
+   "taken": 1703,
    "no_cash": 0,
    "too_small": 3,
    "take_share": 0.9982,
    "final": 0.1397,
    "max_dd": -0.0662,
-   "day_median": -1e-05,
+   "day_median": -0.0,
    "day_worst": -0.018,
-   "day_green": 0.489,
-   "days": 92,
+   "day_green": 0.495,
+   "days": 93,
    "open_mean": 28.8,
    "open_median": 5.0,
    "open_max": 444,
@@ -172806,15 +173643,15 @@
    "slots": 689,
    "ticket": null,
    "share_by_source": true,
-   "fp": "dbacb0909971",
-   "pnl_taken": 77.0607,
-   "names": 482,
+   "fp": "1e11d4b5b379",
+   "pnl_taken": 77.0623,
+   "names": 483,
    "top_sym": "BRUSDT",
    "top_pnl": 539.4,
    "final_wo_top": 0.1343,
    "top_trade": 649.85,
    "open_n": 1,
-   "cut_n": 1
+   "cut_n": 2
   },
   "aggr:100": {
    "sizing": "compound",
@@ -191704,8 +192541,8 @@
    "sizing": "compound",
    "taken": 17,
    "no_cash": 60,
-   "too_small": 0,
-   "take_share": 0.2208,
+   "too_small": 1,
+   "take_share": 0.2179,
    "final": -0.3113,
    "max_dd": -0.5633,
    "day_median": -0.00955,
@@ -193575,17 +194412,17 @@
   },
   "optimal_ai:100:fixed": {
    "sizing": "fixed",
-   "taken": 17,
+   "taken": 18,
    "no_cash": 60,
    "too_small": 0,
-   "take_share": 0.2208,
-   "final": -0.4494,
+   "take_share": 0.2308,
+   "final": -0.4489,
    "max_dd": -0.6167,
-   "day_median": -0.01008,
+   "day_median": -0.00798,
    "day_worst": -0.4043,
-   "day_green": 0.316,
-   "days": 19,
-   "open_mean": 2.1,
+   "day_green": 0.35,
+   "days": 20,
+   "open_mean": 2.0,
    "open_median": 2.0,
    "open_max": 4,
    "open_dd": -27.4,
@@ -195051,28 +195888,28 @@
    "slots": 4,
    "ticket": null,
    "share_by_source": true,
-   "fp": "9a5e53768265",
-   "pnl_taken": -1.4382,
-   "names": 13,
+   "fp": "e1111f03c68f",
+   "pnl_taken": -1.4366,
+   "names": 14,
    "top_sym": "IRYSUSDT",
    "top_pnl": 43.56,
-   "final_wo_top": -0.8851,
+   "final_wo_top": -0.8846,
    "top_trade": 36.18,
-   "open_n": 0,
+   "open_n": 1,
    "cut_n": 0
   },
   "optimal_ai:1000": {
    "sizing": "compound",
-   "taken": 67,
+   "taken": 68,
    "no_cash": 10,
    "too_small": 0,
-   "take_share": 0.8701,
+   "take_share": 0.8718,
    "final": -0.0728,
    "max_dd": -0.1251,
-   "day_median": -0.00222,
+   "day_median": -0.00128,
    "day_worst": -0.0401,
-   "day_green": 0.25,
-   "days": 20,
+   "day_green": 0.286,
+   "days": 21,
    "open_mean": 8.9,
    "open_median": 4.0,
    "open_max": 31,
@@ -197009,28 +197846,28 @@
    "slots": 40,
    "ticket": null,
    "share_by_source": true,
-   "fp": "c86d28a20f49",
-   "pnl_taken": -2.3342,
-   "names": 60,
+   "fp": "901200945bad",
+   "pnl_taken": -2.3326,
+   "names": 61,
    "top_sym": "IRYSUSDT",
    "top_pnl": 44.39,
    "final_wo_top": -0.1172,
    "top_trade": 36.38,
-   "open_n": 0,
+   "open_n": 1,
    "cut_n": 0
   },
   "optimal_ai:1000:fixed": {
    "sizing": "fixed",
-   "taken": 67,
+   "taken": 68,
    "no_cash": 10,
    "too_small": 0,
-   "take_share": 0.8701,
+   "take_share": 0.8718,
    "final": -0.0729,
    "max_dd": -0.1264,
-   "day_median": -0.00233,
+   "day_median": -0.00127,
    "day_worst": -0.0404,
-   "day_green": 0.25,
-   "days": 20,
+   "day_green": 0.286,
+   "days": 21,
    "open_mean": 8.9,
    "open_median": 4.0,
    "open_max": 31,
@@ -198967,29 +199804,29 @@
    "slots": 40,
    "ticket": null,
    "share_by_source": true,
-   "fp": "c86d28a20f49",
-   "pnl_taken": -2.3342,
-   "names": 60,
+   "fp": "901200945bad",
+   "pnl_taken": -2.3326,
+   "names": 61,
    "top_sym": "IRYSUSDT",
    "top_pnl": 43.56,
    "final_wo_top": -0.1165,
    "top_trade": 36.18,
-   "open_n": 0,
+   "open_n": 1,
    "cut_n": 0
   },
   "optimal_ai:10000": {
    "sizing": "compound",
-   "taken": 77,
+   "taken": 78,
    "no_cash": 0,
    "too_small": 0,
    "take_share": 1.0,
    "final": -0.007,
    "max_dd": -0.013,
-   "day_median": -0.00023,
+   "day_median": -0.00013,
    "day_worst": -0.004,
-   "day_green": 0.3,
-   "days": 20,
-   "open_mean": 10.4,
+   "day_green": 0.333,
+   "days": 21,
+   "open_mean": 10.3,
    "open_median": 4.0,
    "open_max": 41,
    "open_dd": -35.59,
@@ -200915,29 +201752,29 @@
    "slots": 400,
    "ticket": null,
    "share_by_source": true,
-   "fp": "ccf4c434fffb",
-   "pnl_taken": -2.239,
-   "names": 70,
+   "fp": "9303d60ba1ef",
+   "pnl_taken": -2.2374,
+   "names": 71,
    "top_sym": "IRYSUSDT",
    "top_pnl": 43.65,
    "final_wo_top": -0.0114,
    "top_trade": 36.2,
-   "open_n": 0,
+   "open_n": 1,
    "cut_n": 0
   },
   "optimal_ai:10000:fixed": {
    "sizing": "fixed",
-   "taken": 77,
+   "taken": 78,
    "no_cash": 0,
    "too_small": 0,
    "take_share": 1.0,
    "final": -0.007,
    "max_dd": -0.013,
-   "day_median": -0.00023,
+   "day_median": -0.00013,
    "day_worst": -0.004,
-   "day_green": 0.3,
-   "days": 20,
-   "open_mean": 10.4,
+   "day_green": 0.333,
+   "days": 21,
+   "open_mean": 10.3,
    "open_median": 4.0,
    "open_max": 41,
    "open_dd": -35.53,
@@ -202863,29 +203700,29 @@
    "slots": 400,
    "ticket": null,
    "share_by_source": true,
-   "fp": "ccf4c434fffb",
-   "pnl_taken": -2.239,
-   "names": 70,
+   "fp": "9303d60ba1ef",
+   "pnl_taken": -2.2374,
+   "names": 71,
    "top_sym": "IRYSUSDT",
    "top_pnl": 43.56,
-   "final_wo_top": -0.0114,
+   "final_wo_top": -0.0113,
    "top_trade": 36.18,
-   "open_n": 0,
+   "open_n": 1,
    "cut_n": 0
   },
   "optimal_ai:100000": {
    "sizing": "compound",
-   "taken": 77,
+   "taken": 78,
    "no_cash": 0,
    "too_small": 0,
    "take_share": 1.0,
    "final": -0.0041,
    "max_dd": -0.0076,
-   "day_median": -0.00013,
+   "day_median": -7e-05,
    "day_worst": -0.0023,
-   "day_green": 0.3,
-   "days": 20,
-   "open_mean": 10.4,
+   "day_green": 0.333,
+   "days": 21,
+   "open_mean": 10.3,
    "open_median": 4.0,
    "open_max": 41,
    "open_dd": -206.28,
@@ -204811,29 +205648,29 @@
    "slots": 689,
    "ticket": null,
    "share_by_source": true,
-   "fp": "ccf4c434fffb",
-   "pnl_taken": -2.239,
-   "names": 70,
+   "fp": "9303d60ba1ef",
+   "pnl_taken": -2.2374,
+   "names": 71,
    "top_sym": "IRYSUSDT",
    "top_pnl": 252.95,
    "final_wo_top": -0.0066,
    "top_trade": 209.9,
-   "open_n": 0,
+   "open_n": 1,
    "cut_n": 0
   },
   "optimal_ai:100000:fixed": {
    "sizing": "fixed",
-   "taken": 77,
+   "taken": 78,
    "no_cash": 0,
    "too_small": 0,
    "take_share": 1.0,
    "final": -0.0041,
    "max_dd": -0.0076,
-   "day_median": -0.00013,
+   "day_median": -7e-05,
    "day_worst": -0.0023,
-   "day_green": 0.3,
-   "days": 20,
-   "open_mean": 10.4,
+   "day_green": 0.333,
+   "days": 21,
+   "open_mean": 10.3,
    "open_median": 4.0,
    "open_max": 41,
    "open_dd": -206.08,
@@ -206759,21 +207596,21 @@
    "slots": 689,
    "ticket": null,
    "share_by_source": true,
-   "fp": "ccf4c434fffb",
-   "pnl_taken": -2.239,
-   "names": 70,
+   "fp": "9303d60ba1ef",
+   "pnl_taken": -2.2374,
+   "names": 71,
    "top_sym": "IRYSUSDT",
    "top_pnl": 252.67,
    "final_wo_top": -0.0066,
    "top_trade": 209.83,
-   "open_n": 0,
+   "open_n": 1,
    "cut_n": 0
   }
  },
  "one_name": {
   "safe": {
-   "positions": 7058,
-   "kept": 1691,
+   "positions": 7059,
+   "kept": 1692,
    "skipped_repeats": 5367,
    "parts": null,
    "min_lev": null,
@@ -206791,8 +207628,8 @@
    "lev_median": 1.62
   },
   "optimal": {
-   "positions": 7058,
-   "kept": 1705,
+   "positions": 7059,
+   "kept": 1706,
    "skipped_repeats": 5353,
    "parts": null,
    "min_lev": null,
@@ -206810,12 +207647,12 @@
    "lev_median": 2.9
   },
   "aggr": {
-   "positions": 7058,
+   "positions": 7059,
    "kept": 662,
    "skipped_repeats": 1351,
    "parts": null,
    "min_lev": 4.0,
-   "gate_dropped": 5045,
+   "gate_dropped": 5046,
    "peak_names": 244,
    "peak_declared": 237,
    "floor": 6.25,
@@ -206829,8 +207666,8 @@
    "lev_median": 8.52
   },
   "optimal_ai": {
-   "positions": 177,
-   "kept": 77,
+   "positions": 178,
+   "kept": 78,
    "skipped_repeats": 100,
    "parts": null,
    "min_lev": null,
@@ -206851,42 +207688,42 @@
  "states": {
   "closed": 0,
   "open": 2,
-  "cut": 4
+  "cut": 6
  },
- "data_end": 1789712460.0,
+ "data_end": 1794381900.0,
  "live": {
   "safe:100": {
    "positions": [
     {
-     "sym": "MTLUSDT",
-     "at": 1789453426.8,
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
      "side": "long",
      "book": null,
      "lev": 1.0,
-     "margin": 32.6379,
-     "mark_frac": -0.013493,
-     "mark_usd": -0.4404,
-     "entry_px": 0.3009,
-     "avg": 0.3009,
+     "margin": 35.3891,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0577,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
      "depth": 1,
      "fills": [
       [
-       1789453440.0,
-       0.3009,
+       1794381420.0,
+       0.06015,
        0.2
       ]
      ],
-     "fav_bp": 749.8,
-     "last_ts": 1789712460.0,
-     "sched_end": 1789712626.8,
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
      "cut_why": null,
      "book_end": null,
      "levels": {
-      "avg": 0.3009,
-      "take_px": 0.34602296400000004,
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
       "liq_px": 0.0,
-      "floor_px": 0.030090000000000002,
-      "term_ts": 1789712626.8,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
       "depth": 1,
       "side": "long",
       "floor_frac": 0.1
@@ -206930,24 +207767,16 @@
       "floor_frac": 0.1
      },
      "state": "cut"
-    }
-   ],
-   "mark_usd": -0.44,
-   "priced": 1,
-   "at": 1794381307.2814076,
-   "sizing": "compound"
-  },
-  "safe:100:fixed": {
-   "positions": [
+    },
     {
      "sym": "MTLUSDT",
      "at": 1789453426.8,
      "side": "long",
      "book": null,
      "lev": 1.0,
-     "margin": 31.25,
+     "margin": 32.6379,
      "mark_frac": -0.013493,
-     "mark_usd": -0.4217,
+     "mark_usd": -0.4404,
      "entry_px": 0.3009,
      "avg": 0.3009,
      "depth": 1,
@@ -206961,14 +207790,58 @@
      "fav_bp": 749.8,
      "last_ts": 1789712460.0,
      "sched_end": 1789712626.8,
-     "cut_why": null,
-     "book_end": null,
+     "cut_why": "книга кончилась раньше планового конца",
+     "book_end": 1789712460.0,
      "levels": {
       "avg": 0.3009,
       "take_px": 0.34602296400000004,
       "liq_px": 0.0,
       "floor_px": 0.030090000000000002,
       "term_ts": 1789712626.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "cut"
+    }
+   ],
+   "mark_usd": 0.06,
+   "priced": 1,
+   "at": 1794381940.311771,
+   "sizing": "compound"
+  },
+  "safe:100:fixed": {
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 31.25,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0509,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
       "depth": 1,
       "side": "long",
       "floor_frac": 0.1
@@ -207012,24 +207885,16 @@
       "floor_frac": 0.1
      },
      "state": "cut"
-    }
-   ],
-   "mark_usd": -0.42,
-   "priced": 1,
-   "at": 1794381307.2814076,
-   "sizing": "fixed"
-  },
-  "safe:1000": {
-   "positions": [
+    },
     {
      "sym": "MTLUSDT",
      "at": 1789453426.8,
      "side": "long",
      "book": null,
      "lev": 1.0,
-     "margin": 35.2291,
+     "margin": 31.25,
      "mark_frac": -0.013493,
-     "mark_usd": -0.4753,
+     "mark_usd": -0.4217,
      "entry_px": 0.3009,
      "avg": 0.3009,
      "depth": 1,
@@ -207043,14 +207908,58 @@
      "fav_bp": 749.8,
      "last_ts": 1789712460.0,
      "sched_end": 1789712626.8,
-     "cut_why": null,
-     "book_end": null,
+     "cut_why": "книга кончилась раньше планового конца",
+     "book_end": 1789712460.0,
      "levels": {
       "avg": 0.3009,
       "take_px": 0.34602296400000004,
       "liq_px": 0.0,
       "floor_px": 0.030090000000000002,
       "term_ts": 1789712626.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "cut"
+    }
+   ],
+   "mark_usd": 0.05,
+   "priced": 1,
+   "at": 1794381940.311771,
+   "sizing": "fixed"
+  },
+  "safe:1000": {
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 36.8722,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0601,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
       "depth": 1,
       "side": "long",
       "floor_frac": 0.1
@@ -207094,24 +208003,16 @@
       "floor_frac": 0.1
      },
      "state": "cut"
-    }
-   ],
-   "mark_usd": -0.48,
-   "priced": 1,
-   "at": 1794381307.2814076,
-   "sizing": "compound"
-  },
-  "safe:1000:fixed": {
-   "positions": [
+    },
     {
      "sym": "MTLUSDT",
      "at": 1789453426.8,
      "side": "long",
      "book": null,
      "lev": 1.0,
-     "margin": 31.25,
+     "margin": 35.2291,
      "mark_frac": -0.013493,
-     "mark_usd": -0.4217,
+     "mark_usd": -0.4753,
      "entry_px": 0.3009,
      "avg": 0.3009,
      "depth": 1,
@@ -207125,14 +208026,58 @@
      "fav_bp": 749.8,
      "last_ts": 1789712460.0,
      "sched_end": 1789712626.8,
-     "cut_why": null,
-     "book_end": null,
+     "cut_why": "книга кончилась раньше планового конца",
+     "book_end": 1789712460.0,
      "levels": {
       "avg": 0.3009,
       "take_px": 0.34602296400000004,
       "liq_px": 0.0,
       "floor_px": 0.030090000000000002,
       "term_ts": 1789712626.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "cut"
+    }
+   ],
+   "mark_usd": 0.06,
+   "priced": 1,
+   "at": 1794381940.311771,
+   "sizing": "compound"
+  },
+  "safe:1000:fixed": {
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 31.25,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0509,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
       "depth": 1,
       "side": "long",
       "floor_frac": 0.1
@@ -207176,24 +208121,16 @@
       "floor_frac": 0.1
      },
      "state": "cut"
-    }
-   ],
-   "mark_usd": -0.42,
-   "priced": 1,
-   "at": 1794381307.2814076,
-   "sizing": "fixed"
-  },
-  "safe:10000": {
-   "positions": [
+    },
     {
      "sym": "MTLUSDT",
      "at": 1789453426.8,
      "side": "long",
      "book": null,
      "lev": 1.0,
-     "margin": 34.4948,
+     "margin": 31.25,
      "mark_frac": -0.013493,
-     "mark_usd": -0.4654,
+     "mark_usd": -0.4217,
      "entry_px": 0.3009,
      "avg": 0.3009,
      "depth": 1,
@@ -207207,14 +208144,58 @@
      "fav_bp": 749.8,
      "last_ts": 1789712460.0,
      "sched_end": 1789712626.8,
-     "cut_why": null,
-     "book_end": null,
+     "cut_why": "книга кончилась раньше планового конца",
+     "book_end": 1789712460.0,
      "levels": {
       "avg": 0.3009,
       "take_px": 0.34602296400000004,
       "liq_px": 0.0,
       "floor_px": 0.030090000000000002,
       "term_ts": 1789712626.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "cut"
+    }
+   ],
+   "mark_usd": 0.05,
+   "priced": 1,
+   "at": 1794381940.311771,
+   "sizing": "fixed"
+  },
+  "safe:10000": {
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 34.6607,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0565,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
       "depth": 1,
       "side": "long",
       "floor_frac": 0.1
@@ -207258,24 +208239,16 @@
       "floor_frac": 0.1
      },
      "state": "cut"
-    }
-   ],
-   "mark_usd": -0.47,
-   "priced": 1,
-   "at": 1794381307.2814076,
-   "sizing": "compound"
-  },
-  "safe:10000:fixed": {
-   "positions": [
+    },
     {
      "sym": "MTLUSDT",
      "at": 1789453426.8,
      "side": "long",
      "book": null,
      "lev": 1.0,
-     "margin": 31.25,
+     "margin": 34.4948,
      "mark_frac": -0.013493,
-     "mark_usd": -0.4217,
+     "mark_usd": -0.4654,
      "entry_px": 0.3009,
      "avg": 0.3009,
      "depth": 1,
@@ -207289,14 +208262,58 @@
      "fav_bp": 749.8,
      "last_ts": 1789712460.0,
      "sched_end": 1789712626.8,
-     "cut_why": null,
-     "book_end": null,
+     "cut_why": "книга кончилась раньше планового конца",
+     "book_end": 1789712460.0,
      "levels": {
       "avg": 0.3009,
       "take_px": 0.34602296400000004,
       "liq_px": 0.0,
       "floor_px": 0.030090000000000002,
       "term_ts": 1789712626.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "cut"
+    }
+   ],
+   "mark_usd": 0.06,
+   "priced": 1,
+   "at": 1794381940.311771,
+   "sizing": "compound"
+  },
+  "safe:10000:fixed": {
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 31.25,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0509,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
       "depth": 1,
       "side": "long",
       "floor_frac": 0.1
@@ -207340,24 +208357,16 @@
       "floor_frac": 0.1
      },
      "state": "cut"
-    }
-   ],
-   "mark_usd": -0.42,
-   "priced": 1,
-   "at": 1794381307.2814076,
-   "sizing": "fixed"
-  },
-  "safe:100000": {
-   "positions": [
+    },
     {
      "sym": "MTLUSDT",
      "at": 1789453426.8,
      "side": "long",
      "book": null,
      "lev": 1.0,
-     "margin": 193.7583,
+     "margin": 31.25,
      "mark_frac": -0.013493,
-     "mark_usd": -2.6144,
+     "mark_usd": -0.4217,
      "entry_px": 0.3009,
      "avg": 0.3009,
      "depth": 1,
@@ -207371,14 +208380,58 @@
      "fav_bp": 749.8,
      "last_ts": 1789712460.0,
      "sched_end": 1789712626.8,
-     "cut_why": null,
-     "book_end": null,
+     "cut_why": "книга кончилась раньше планового конца",
+     "book_end": 1789712460.0,
      "levels": {
       "avg": 0.3009,
       "take_px": 0.34602296400000004,
       "liq_px": 0.0,
       "floor_px": 0.030090000000000002,
       "term_ts": 1789712626.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "cut"
+    }
+   ],
+   "mark_usd": 0.05,
+   "priced": 1,
+   "at": 1794381940.311771,
+   "sizing": "fixed"
+  },
+  "safe:100000": {
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 194.3004,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.3166,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
       "depth": 1,
       "side": "long",
       "floor_frac": 0.1
@@ -207422,24 +208475,16 @@
       "floor_frac": 0.1
      },
      "state": "cut"
-    }
-   ],
-   "mark_usd": -2.61,
-   "priced": 1,
-   "at": 1794381307.2814076,
-   "sizing": "compound"
-  },
-  "safe:100000:fixed": {
-   "positions": [
+    },
     {
      "sym": "MTLUSDT",
      "at": 1789453426.8,
      "side": "long",
      "book": null,
      "lev": 1.0,
-     "margin": 181.25,
+     "margin": 193.7583,
      "mark_frac": -0.013493,
-     "mark_usd": -2.4456,
+     "mark_usd": -2.6144,
      "entry_px": 0.3009,
      "avg": 0.3009,
      "depth": 1,
@@ -207453,14 +208498,58 @@
      "fav_bp": 749.8,
      "last_ts": 1789712460.0,
      "sched_end": 1789712626.8,
-     "cut_why": null,
-     "book_end": null,
+     "cut_why": "книга кончилась раньше планового конца",
+     "book_end": 1789712460.0,
      "levels": {
       "avg": 0.3009,
       "take_px": 0.34602296400000004,
       "liq_px": 0.0,
       "floor_px": 0.030090000000000002,
       "term_ts": 1789712626.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "cut"
+    }
+   ],
+   "mark_usd": 0.32,
+   "priced": 1,
+   "at": 1794381940.311771,
+   "sizing": "compound"
+  },
+  "safe:100000:fixed": {
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 181.25,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.2953,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
       "depth": 1,
       "side": "long",
       "floor_frac": 0.1
@@ -207504,15 +208593,88 @@
       "floor_frac": 0.1
      },
      "state": "cut"
+    },
+    {
+     "sym": "MTLUSDT",
+     "at": 1789453426.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 181.25,
+     "mark_frac": -0.013493,
+     "mark_usd": -2.4456,
+     "entry_px": 0.3009,
+     "avg": 0.3009,
+     "depth": 1,
+     "fills": [
+      [
+       1789453440.0,
+       0.3009,
+       0.2
+      ]
+     ],
+     "fav_bp": 749.8,
+     "last_ts": 1789712460.0,
+     "sched_end": 1789712626.8,
+     "cut_why": "книга кончилась раньше планового конца",
+     "book_end": 1789712460.0,
+     "levels": {
+      "avg": 0.3009,
+      "take_px": 0.34602296400000004,
+      "liq_px": 0.0,
+      "floor_px": 0.030090000000000002,
+      "term_ts": 1789712626.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "cut"
     }
    ],
-   "mark_usd": -2.45,
+   "mark_usd": 0.3,
    "priced": 1,
-   "at": 1794381307.2814076,
+   "at": 1794381940.311771,
    "sizing": "fixed"
   },
   "optimal:100": {
-   "positions": [],
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 60.2332,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0981,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "open"
+    }
+   ],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -207551,13 +208713,50 @@
      "state": "cut"
     }
    ],
-   "mark_usd": 0,
-   "priced": 0,
-   "at": 1794381307.2814076,
+   "mark_usd": 0.1,
+   "priced": 1,
+   "at": 1794381940.311771,
    "sizing": "compound"
   },
   "optimal:100:fixed": {
-   "positions": [],
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 31.25,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0509,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "open"
+    }
+   ],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -207596,43 +208795,43 @@
      "state": "cut"
     }
    ],
-   "mark_usd": 0,
-   "priced": 0,
-   "at": 1794381307.2814076,
+   "mark_usd": 0.05,
+   "priced": 1,
+   "at": 1794381940.311771,
    "sizing": "fixed"
   },
   "optimal:1000": {
    "positions": [
     {
-     "sym": "MTLUSDT",
-     "at": 1789453426.8,
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
      "side": "long",
      "book": null,
      "lev": 1.0,
-     "margin": 35.0695,
-     "mark_frac": -0.013493,
-     "mark_usd": -0.4732,
-     "entry_px": 0.3009,
-     "avg": 0.3009,
+     "margin": 38.3783,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0625,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
      "depth": 1,
      "fills": [
       [
-       1789453440.0,
-       0.3009,
+       1794381420.0,
+       0.06015,
        0.2
       ]
      ],
-     "fav_bp": 749.8,
-     "last_ts": 1789712460.0,
-     "sched_end": 1789712626.8,
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
      "cut_why": null,
      "book_end": null,
      "levels": {
-      "avg": 0.3009,
-      "take_px": 0.34602296400000004,
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
       "liq_px": 0.0,
-      "floor_px": 0.030090000000000002,
-      "term_ts": 1789712626.8,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
       "depth": 1,
       "side": "long",
       "floor_frac": 0.1
@@ -207676,24 +208875,16 @@
       "floor_frac": 0.1
      },
      "state": "cut"
-    }
-   ],
-   "mark_usd": -0.47,
-   "priced": 1,
-   "at": 1794381307.2814076,
-   "sizing": "compound"
-  },
-  "optimal:1000:fixed": {
-   "positions": [
+    },
     {
      "sym": "MTLUSDT",
      "at": 1789453426.8,
      "side": "long",
      "book": null,
      "lev": 1.0,
-     "margin": 31.25,
+     "margin": 35.0695,
      "mark_frac": -0.013493,
-     "mark_usd": -0.4217,
+     "mark_usd": -0.4732,
      "entry_px": 0.3009,
      "avg": 0.3009,
      "depth": 1,
@@ -207707,14 +208898,58 @@
      "fav_bp": 749.8,
      "last_ts": 1789712460.0,
      "sched_end": 1789712626.8,
-     "cut_why": null,
-     "book_end": null,
+     "cut_why": "книга кончилась раньше планового конца",
+     "book_end": 1789712460.0,
      "levels": {
       "avg": 0.3009,
       "take_px": 0.34602296400000004,
       "liq_px": 0.0,
       "floor_px": 0.030090000000000002,
       "term_ts": 1789712626.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "cut"
+    }
+   ],
+   "mark_usd": 0.06,
+   "priced": 1,
+   "at": 1794381940.311771,
+   "sizing": "compound"
+  },
+  "optimal:1000:fixed": {
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 31.25,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0509,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
       "depth": 1,
       "side": "long",
       "floor_frac": 0.1
@@ -207758,24 +208993,16 @@
       "floor_frac": 0.1
      },
      "state": "cut"
-    }
-   ],
-   "mark_usd": -0.42,
-   "priced": 1,
-   "at": 1794381307.2814076,
-   "sizing": "fixed"
-  },
-  "optimal:10000": {
-   "positions": [
+    },
     {
      "sym": "MTLUSDT",
      "at": 1789453426.8,
      "side": "long",
      "book": null,
      "lev": 1.0,
-     "margin": 37.8009,
+     "margin": 31.25,
      "mark_frac": -0.013493,
-     "mark_usd": -0.51,
+     "mark_usd": -0.4217,
      "entry_px": 0.3009,
      "avg": 0.3009,
      "depth": 1,
@@ -207789,14 +209016,58 @@
      "fav_bp": 749.8,
      "last_ts": 1789712460.0,
      "sched_end": 1789712626.8,
-     "cut_why": null,
-     "book_end": null,
+     "cut_why": "книга кончилась раньше планового конца",
+     "book_end": 1789712460.0,
      "levels": {
       "avg": 0.3009,
       "take_px": 0.34602296400000004,
       "liq_px": 0.0,
       "floor_px": 0.030090000000000002,
       "term_ts": 1789712626.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "cut"
+    }
+   ],
+   "mark_usd": 0.05,
+   "priced": 1,
+   "at": 1794381940.311771,
+   "sizing": "fixed"
+  },
+  "optimal:10000": {
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 38.2123,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0623,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
       "depth": 1,
       "side": "long",
       "floor_frac": 0.1
@@ -207840,24 +209111,16 @@
       "floor_frac": 0.1
      },
      "state": "cut"
-    }
-   ],
-   "mark_usd": -0.51,
-   "priced": 1,
-   "at": 1794381307.2814076,
-   "sizing": "compound"
-  },
-  "optimal:10000:fixed": {
-   "positions": [
+    },
     {
      "sym": "MTLUSDT",
      "at": 1789453426.8,
      "side": "long",
      "book": null,
      "lev": 1.0,
-     "margin": 31.25,
+     "margin": 37.8009,
      "mark_frac": -0.013493,
-     "mark_usd": -0.4217,
+     "mark_usd": -0.51,
      "entry_px": 0.3009,
      "avg": 0.3009,
      "depth": 1,
@@ -207871,14 +209134,58 @@
      "fav_bp": 749.8,
      "last_ts": 1789712460.0,
      "sched_end": 1789712626.8,
-     "cut_why": null,
-     "book_end": null,
+     "cut_why": "книга кончилась раньше планового конца",
+     "book_end": 1789712460.0,
      "levels": {
       "avg": 0.3009,
       "take_px": 0.34602296400000004,
       "liq_px": 0.0,
       "floor_px": 0.030090000000000002,
       "term_ts": 1789712626.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "cut"
+    }
+   ],
+   "mark_usd": 0.06,
+   "priced": 1,
+   "at": 1794381940.311771,
+   "sizing": "compound"
+  },
+  "optimal:10000:fixed": {
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 31.25,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0509,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
       "depth": 1,
       "side": "long",
       "floor_frac": 0.1
@@ -207922,24 +209229,16 @@
       "floor_frac": 0.1
      },
      "state": "cut"
-    }
-   ],
-   "mark_usd": -0.42,
-   "priced": 1,
-   "at": 1794381307.2814076,
-   "sizing": "fixed"
-  },
-  "optimal:100000": {
-   "positions": [
+    },
     {
      "sym": "MTLUSDT",
      "at": 1789453426.8,
      "side": "long",
      "book": null,
      "lev": 1.0,
-     "margin": 206.2522,
+     "margin": 31.25,
      "mark_frac": -0.013493,
-     "mark_usd": -2.7829,
+     "mark_usd": -0.4217,
      "entry_px": 0.3009,
      "avg": 0.3009,
      "depth": 1,
@@ -207953,14 +209252,58 @@
      "fav_bp": 749.8,
      "last_ts": 1789712460.0,
      "sched_end": 1789712626.8,
-     "cut_why": null,
-     "book_end": null,
+     "cut_why": "книга кончилась раньше планового конца",
+     "book_end": 1789712460.0,
      "levels": {
       "avg": 0.3009,
       "take_px": 0.34602296400000004,
       "liq_px": 0.0,
       "floor_px": 0.030090000000000002,
       "term_ts": 1789712626.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "cut"
+    }
+   ],
+   "mark_usd": 0.05,
+   "priced": 1,
+   "at": 1794381940.311771,
+   "sizing": "fixed"
+  },
+  "optimal:100000": {
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 207.5619,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.3382,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
       "depth": 1,
       "side": "long",
       "floor_frac": 0.1
@@ -208004,24 +209347,16 @@
       "floor_frac": 0.1
      },
      "state": "cut"
-    }
-   ],
-   "mark_usd": -2.78,
-   "priced": 1,
-   "at": 1794381307.2814076,
-   "sizing": "compound"
-  },
-  "optimal:100000:fixed": {
-   "positions": [
+    },
     {
      "sym": "MTLUSDT",
      "at": 1789453426.8,
      "side": "long",
      "book": null,
      "lev": 1.0,
-     "margin": 181.25,
+     "margin": 206.2522,
      "mark_frac": -0.013493,
-     "mark_usd": -2.4456,
+     "mark_usd": -2.7829,
      "entry_px": 0.3009,
      "avg": 0.3009,
      "depth": 1,
@@ -208035,14 +209370,58 @@
      "fav_bp": 749.8,
      "last_ts": 1789712460.0,
      "sched_end": 1789712626.8,
-     "cut_why": null,
-     "book_end": null,
+     "cut_why": "книга кончилась раньше планового конца",
+     "book_end": 1789712460.0,
      "levels": {
       "avg": 0.3009,
       "take_px": 0.34602296400000004,
       "liq_px": 0.0,
       "floor_px": 0.030090000000000002,
       "term_ts": 1789712626.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "cut"
+    }
+   ],
+   "mark_usd": 0.34,
+   "priced": 1,
+   "at": 1794381940.311771,
+   "sizing": "compound"
+  },
+  "optimal:100000:fixed": {
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 181.25,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.2953,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
       "depth": 1,
       "side": "long",
       "floor_frac": 0.1
@@ -208086,11 +209465,47 @@
       "floor_frac": 0.1
      },
      "state": "cut"
+    },
+    {
+     "sym": "MTLUSDT",
+     "at": 1789453426.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 181.25,
+     "mark_frac": -0.013493,
+     "mark_usd": -2.4456,
+     "entry_px": 0.3009,
+     "avg": 0.3009,
+     "depth": 1,
+     "fills": [
+      [
+       1789453440.0,
+       0.3009,
+       0.2
+      ]
+     ],
+     "fav_bp": 749.8,
+     "last_ts": 1789712460.0,
+     "sched_end": 1789712626.8,
+     "cut_why": "книга кончилась раньше планового конца",
+     "book_end": 1789712460.0,
+     "levels": {
+      "avg": 0.3009,
+      "take_px": 0.34602296400000004,
+      "liq_px": 0.0,
+      "floor_px": 0.030090000000000002,
+      "term_ts": 1789712626.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "cut"
     }
    ],
-   "mark_usd": -2.45,
+   "mark_usd": 0.3,
    "priced": 1,
-   "at": 1794381307.2814076,
+   "at": 1794381940.311771,
    "sizing": "fixed"
   },
   "aggr:100": {
@@ -208098,7 +209513,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794381307.2814076,
+   "at": 1794381940.311771,
    "sizing": "compound"
   },
   "aggr:100:fixed": {
@@ -208106,7 +209521,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794381307.2814076,
+   "at": 1794381940.311771,
    "sizing": "fixed"
   },
   "aggr:1000": {
@@ -208114,7 +209529,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794381307.2814076,
+   "at": 1794381940.311771,
    "sizing": "compound"
   },
   "aggr:1000:fixed": {
@@ -208122,7 +209537,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794381307.2814076,
+   "at": 1794381940.311771,
    "sizing": "fixed"
   },
   "aggr:10000": {
@@ -208130,7 +209545,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794381307.2814076,
+   "at": 1794381940.311771,
    "sizing": "compound"
   },
   "aggr:10000:fixed": {
@@ -208138,7 +209553,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794381307.2814076,
+   "at": 1794381940.311771,
    "sizing": "fixed"
   },
   "aggr:100000": {
@@ -208146,7 +209561,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794381307.2814076,
+   "at": 1794381940.311771,
    "sizing": "compound"
   },
   "aggr:100000:fixed": {
@@ -208154,7 +209569,7 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794381307.2814076,
+   "at": 1794381940.311771,
    "sizing": "fixed"
   },
   "optimal_ai:100": {
@@ -208162,63 +209577,322 @@
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1794381307.2814076,
+   "at": 1794381940.311771,
    "sizing": "compound"
   },
   "optimal_ai:100:fixed": {
-   "positions": [],
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 31.25,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0509,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "open"
+    }
+   ],
    "cut": [],
-   "mark_usd": 0,
-   "priced": 0,
-   "at": 1794381307.2814076,
+   "mark_usd": 0.05,
+   "priced": 1,
+   "at": 1794381940.311771,
    "sizing": "fixed"
   },
   "optimal_ai:1000": {
-   "positions": [],
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 28.9742,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0472,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "open"
+    }
+   ],
    "cut": [],
-   "mark_usd": 0,
-   "priced": 0,
-   "at": 1794381307.2814076,
+   "mark_usd": 0.05,
+   "priced": 1,
+   "at": 1794381940.311771,
    "sizing": "compound"
   },
   "optimal_ai:1000:fixed": {
-   "positions": [],
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 31.25,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0509,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "open"
+    }
+   ],
    "cut": [],
-   "mark_usd": 0,
-   "priced": 0,
-   "at": 1794381307.2814076,
+   "mark_usd": 0.05,
+   "priced": 1,
+   "at": 1794381940.311771,
    "sizing": "fixed"
   },
   "optimal_ai:10000": {
-   "positions": [],
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 31.0313,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0506,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "open"
+    }
+   ],
    "cut": [],
-   "mark_usd": 0,
-   "priced": 0,
-   "at": 1794381307.2814076,
+   "mark_usd": 0.05,
+   "priced": 1,
+   "at": 1794381940.311771,
    "sizing": "compound"
   },
   "optimal_ai:10000:fixed": {
-   "positions": [],
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 31.25,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.0509,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "open"
+    }
+   ],
    "cut": [],
-   "mark_usd": 0,
-   "priced": 0,
-   "at": 1794381307.2814076,
+   "mark_usd": 0.05,
+   "priced": 1,
+   "at": 1794381940.311771,
    "sizing": "fixed"
   },
   "optimal_ai:100000": {
-   "positions": [],
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 180.5144,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.2941,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "open"
+    }
+   ],
    "cut": [],
-   "mark_usd": 0,
-   "priced": 0,
-   "at": 1794381307.2814076,
+   "mark_usd": 0.29,
+   "priced": 1,
+   "at": 1794381940.311771,
    "sizing": "compound"
   },
   "optimal_ai:100000:fixed": {
-   "positions": [],
+   "positions": [
+    {
+     "sym": "CASHCATUSDT",
+     "at": 1794381369.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 181.25,
+     "mark_frac": 0.001629,
+     "mark_usd": 0.2953,
+     "entry_px": 0.06015,
+     "avg": 0.060149999999999995,
+     "depth": 1,
+     "fills": [
+      [
+       1794381420.0,
+       0.06015,
+       0.2
+      ]
+     ],
+     "fav_bp": 1141.17,
+     "last_ts": 1794381900.0,
+     "sched_end": 1794640569.8,
+     "cut_why": null,
+     "book_end": null,
+     "levels": {
+      "avg": 0.06015,
+      "take_px": 0.0738782751,
+      "liq_px": 0.0,
+      "floor_px": 0.006015,
+      "term_ts": 1794640569.8,
+      "depth": 1,
+      "side": "long",
+      "floor_frac": 0.1
+     },
+     "state": "open"
+    }
+   ],
    "cut": [],
-   "mark_usd": 0,
-   "priced": 0,
-   "at": 1794381307.2814076,
+   "mark_usd": 0.3,
+   "priced": 1,
+   "at": 1794381940.311771,
    "sizing": "fixed"
   }
  },
@@ -208226,14 +209900,14 @@
   "optimal_ai": {
    "why": null,
    "cut": 1,
-   "unjudged": 0,
+   "unjudged": 1,
    "closes": 0,
    "start": 1792368000.0
   }
  },
  "tail": {
-  "syms": 2,
-  "minutes": 6,
+  "syms": 3,
+  "minutes": 7,
   "dry": 0,
   "span_med_h": 25.32,
   "zero_vol_tape": 0,
@@ -208241,692 +209915,820 @@
    "fetched": 0,
    "prefetched": 0,
    "hits": 2,
-   "misses": 35,
+   "misses": 43,
    "bad_md5": 0,
    "errors": 0,
    "retries": 0,
    "cache_gb": 1.952
   },
   "entry_dropped": 0,
-  "marked": 4,
+  "marked": 6,
   "cut_why": {
    "книга есть, но не в окне этой позиции": 2,
-   "книга кончилась раньше планового конца": 2
+   "книга кончилась раньше планового конца": 4
   },
   "closed_tail": 1138,
   "closed_all": 19577
  },
- "computed_at": "2026-11-11 07:15",
+ "computed_at": "2026-11-11 07:25",
  "watch": {
-  "at": 1794381311.9918525,
-  "prev_at": 1794381007.9721122,
+  "at": 1794381943.2384248,
+  "prev_at": 1794381311.9918525,
   "cells": 32,
-  "findings": [],
-  "n": 0,
+  "findings": [
+   {
+    "t": 1794381943.2384248,
+    "family": "sit",
+    "cell": "safe:100",
+    "kind": "open_vanished",
+    "pos": "MTLUSDT:1789453426",
+    "sym": "MTLUSDT",
+    "at": 1789453426.8,
+    "mark_usd": -0.4404,
+    "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4404)"
+   },
+   {
+    "t": 1794381943.2384248,
+    "family": "sit",
+    "cell": "safe:100:fixed",
+    "kind": "open_vanished",
+    "pos": "MTLUSDT:1789453426",
+    "sym": "MTLUSDT",
+    "at": 1789453426.8,
+    "mark_usd": -0.4217,
+    "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4217)"
+   },
+   {
+    "t": 1794381943.2384248,
+    "family": "sit",
+    "cell": "safe:1000",
+    "kind": "open_vanished",
+    "pos": "MTLUSDT:1789453426",
+    "sym": "MTLUSDT",
+    "at": 1789453426.8,
+    "mark_usd": -0.4753,
+    "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4753)"
+   },
+   {
+    "t": 1794381943.2384248,
+    "family": "sit",
+    "cell": "safe:1000:fixed",
+    "kind": "open_vanished",
+    "pos": "MTLUSDT:1789453426",
+    "sym": "MTLUSDT",
+    "at": 1789453426.8,
+    "mark_usd": -0.4217,
+    "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4217)"
+   },
+   {
+    "t": 1794381943.2384248,
+    "family": "sit",
+    "cell": "safe:10000",
+    "kind": "open_vanished",
+    "pos": "MTLUSDT:1789453426",
+    "sym": "MTLUSDT",
+    "at": 1789453426.8,
+    "mark_usd": -0.4654,
+    "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4654)"
+   },
+   {
+    "t": 1794381943.2384248,
+    "family": "sit",
+    "cell": "safe:10000:fixed",
+    "kind": "open_vanished",
+    "pos": "MTLUSDT:1789453426",
+    "sym": "MTLUSDT",
+    "at": 1789453426.8,
+    "mark_usd": -0.4217,
+    "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4217)"
+   },
+   {
+    "t": 1794381943.2384248,
+    "family": "sit",
+    "cell": "safe:100000",
+    "kind": "open_vanished",
+    "pos": "MTLUSDT:1789453426",
+    "sym": "MTLUSDT",
+    "at": 1789453426.8,
+    "mark_usd": -2.6144,
+    "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -2.6144)"
+   },
+   {
+    "t": 1794381943.2384248,
+    "family": "sit",
+    "cell": "safe:100000:fixed",
+    "kind": "open_vanished",
+    "pos": "MTLUSDT:1789453426",
+    "sym": "MTLUSDT",
+    "at": 1789453426.8,
+    "mark_usd": -2.4456,
+    "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -2.4456)"
+   },
+   {
+    "t": 1794381943.2384248,
+    "family": "sit",
+    "cell": "optimal:1000",
+    "kind": "open_vanished",
+    "pos": "MTLUSDT:1789453426",
+    "sym": "MTLUSDT",
+    "at": 1789453426.8,
+    "mark_usd": -0.4732,
+    "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4732)"
+   },
+   {
+    "t": 1794381943.2384248,
+    "family": "sit",
+    "cell": "optimal:1000:fixed",
+    "kind": "open_vanished",
+    "pos": "MTLUSDT:1789453426",
+    "sym": "MTLUSDT",
+    "at": 1789453426.8,
+    "mark_usd": -0.4217,
+    "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4217)"
+   },
+   {
+    "t": 1794381943.2384248,
+    "family": "sit",
+    "cell": "optimal:10000",
+    "kind": "open_vanished",
+    "pos": "MTLUSDT:1789453426",
+    "sym": "MTLUSDT",
+    "at": 1789453426.8,
+    "mark_usd": -0.51,
+    "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.51)"
+   },
+   {
+    "t": 1794381943.2384248,
+    "family": "sit",
+    "cell": "optimal:10000:fixed",
+    "kind": "open_vanished",
+    "pos": "MTLUSDT:1789453426",
+    "sym": "MTLUSDT",
+    "at": 1789453426.8,
+    "mark_usd": -0.4217,
+    "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4217)"
+   },
+   {
+    "t": 1794381943.2384248,
+    "family": "sit",
+    "cell": "optimal:100000",
+    "kind": "open_vanished",
+    "pos": "MTLUSDT:1789453426",
+    "sym": "MTLUSDT",
+    "at": 1789453426.8,
+    "mark_usd": -2.7829,
+    "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -2.7829)"
+   },
+   {
+    "t": 1794381943.2384248,
+    "family": "sit",
+    "cell": "optimal:100000:fixed",
+    "kind": "open_vanished",
+    "pos": "MTLUSDT:1789453426",
+    "sym": "MTLUSDT",
+    "at": 1789453426.8,
+    "mark_usd": -2.4456,
+    "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -2.4456)"
+   }
+  ],
+  "n": 14,
   "day": {
    "n": 400,
    "by_kind": {
-    "closed_unseen": 68,
-    "open_late": 332
+    "open_late": 354,
+    "closed_unseen": 24,
+    "open_vanished": 22
    },
    "items": [
     {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_optimal_g2:100",
+     "kind": "open_late",
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_optimal_g2:100:fixed",
+     "kind": "open_late",
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_optimal_g2:1000",
+     "kind": "open_late",
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_optimal_g2:1000:fixed",
+     "kind": "open_late",
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_optimal_g2:10000",
+     "kind": "open_late",
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_optimal_g2:10000:fixed",
+     "kind": "open_late",
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_optimal_g2:100000",
+     "kind": "open_late",
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_optimal_g2:100000:fixed",
+     "kind": "open_late",
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_optimal_g6:100",
+     "kind": "open_late",
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_optimal_g6:100:fixed",
+     "kind": "open_late",
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_optimal_g6:1000",
+     "kind": "open_late",
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_optimal_g6:1000:fixed",
+     "kind": "open_late",
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_optimal_g6:10000",
+     "kind": "open_late",
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_optimal_g6:10000:fixed",
+     "kind": "open_late",
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_optimal_g6:100000",
+     "kind": "open_late",
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_optimal_g6:100000:fixed",
+     "kind": "open_late",
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_aggr_g0:100",
+     "kind": "open_late",
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_aggr_g0:100:fixed",
+     "kind": "open_late",
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_aggr_g0:1000",
+     "kind": "open_late",
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_aggr_g0:1000:fixed",
+     "kind": "open_late",
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_aggr_g0:10000",
+     "kind": "open_late",
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_aggr_g0:10000:fixed",
+     "kind": "open_late",
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_aggr_g0:100000",
+     "kind": "open_late",
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_aggr_g0:100000:fixed",
+     "kind": "open_late",
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
+     "family": "pair",
+     "cell": "pair_aggr_g2:100",
+     "kind": "open_late",
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
+    },
+    {
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_aggr_g2:100:fixed",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794373200",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_aggr_g2:1000",
-     "kind": "closed_unseen",
-     "pos": "HAJIMIUSDT:1794373200",
-     "sym": "HAJIMIUSDT",
-     "at": 1794373200.0,
-     "usd": -4.6872,
-     "why": "вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик",
-     "why_code": "unseen",
-     "text": "закрылась, не побывав открытой: HAJIMIUSDT (-4.69 $) — вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_aggr_g2:1000",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794373200",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_aggr_g2:1000:fixed",
-     "kind": "closed_unseen",
-     "pos": "HAJIMIUSDT:1794373200",
-     "sym": "HAJIMIUSDT",
-     "at": 1794373200.0,
-     "usd": -2.43,
-     "why": "вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик",
-     "why_code": "unseen",
-     "text": "закрылась, не побывав открытой: HAJIMIUSDT (-2.43 $) — вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_aggr_g2:1000:fixed",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794373200",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_aggr_g2:10000",
-     "kind": "closed_unseen",
-     "pos": "HAJIMIUSDT:1794373200",
-     "sym": "HAJIMIUSDT",
-     "at": 1794373200.0,
-     "usd": -44.847,
-     "why": "вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик",
-     "why_code": "unseen",
-     "text": "закрылась, не побывав открытой: HAJIMIUSDT (-44.85 $) — вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_aggr_g2:10000",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794373200",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_aggr_g2:10000:fixed",
-     "kind": "closed_unseen",
-     "pos": "HAJIMIUSDT:1794373200",
-     "sym": "HAJIMIUSDT",
-     "at": 1794373200.0,
-     "usd": -24.8606,
-     "why": "вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик",
-     "why_code": "unseen",
-     "text": "закрылась, не побывав открытой: HAJIMIUSDT (-24.86 $) — вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_aggr_g2:10000:fixed",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794373200",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_aggr_g2:100000",
-     "kind": "closed_unseen",
-     "pos": "HAJIMIUSDT:1794373200",
-     "sym": "HAJIMIUSDT",
-     "at": 1794373200.0,
-     "usd": -450.1897,
-     "why": "вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик",
-     "why_code": "unseen",
-     "text": "закрылась, не побывав открытой: HAJIMIUSDT (-450.19 $) — вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_aggr_g2:100000",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794373200",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_aggr_g2:100000:fixed",
-     "kind": "closed_unseen",
-     "pos": "HAJIMIUSDT:1794373200",
-     "sym": "HAJIMIUSDT",
-     "at": 1794373200.0,
-     "usd": -249.1668,
-     "why": "вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик",
-     "why_code": "unseen",
-     "text": "закрылась, не побывав открытой: HAJIMIUSDT (-249.17 $) — вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_aggr_g2:100000:fixed",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794373200",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_aggr_g6:100",
-     "kind": "closed_unseen",
-     "pos": "HAJIMIUSDT:1794373200",
-     "sym": "HAJIMIUSDT",
-     "at": 1794373200.0,
-     "usd": -19.6948,
-     "why": "вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик",
-     "why_code": "unseen",
-     "text": "закрылась, не побывав открытой: HAJIMIUSDT (-19.69 $) — вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_aggr_g6:100",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794373200",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_aggr_g6:100:fixed",
-     "kind": "closed_unseen",
-     "pos": "HAJIMIUSDT:1794373200",
-     "sym": "HAJIMIUSDT",
-     "at": 1794373200.0,
-     "usd": -2.3365,
-     "why": "вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик",
-     "why_code": "unseen",
-     "text": "закрылась, не побывав открытой: HAJIMIUSDT (-2.34 $) — вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_aggr_g6:100:fixed",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794373200",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_aggr_g6:1000",
-     "kind": "closed_unseen",
-     "pos": "HAJIMIUSDT:1794373200",
-     "sym": "HAJIMIUSDT",
-     "at": 1794373200.0,
-     "usd": -4.6806,
-     "why": "вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик",
-     "why_code": "unseen",
-     "text": "закрылась, не побывав открытой: HAJIMIUSDT (-4.68 $) — вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_aggr_g6:1000",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794373200",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_aggr_g6:1000:fixed",
-     "kind": "closed_unseen",
-     "pos": "HAJIMIUSDT:1794373200",
-     "sym": "HAJIMIUSDT",
-     "at": 1794373200.0,
-     "usd": -2.43,
-     "why": "вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик",
-     "why_code": "unseen",
-     "text": "закрылась, не побывав открытой: HAJIMIUSDT (-2.43 $) — вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_aggr_g6:1000:fixed",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794373200",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_aggr_g6:10000",
-     "kind": "closed_unseen",
-     "pos": "HAJIMIUSDT:1794373200",
-     "sym": "HAJIMIUSDT",
-     "at": 1794373200.0,
-     "usd": -44.9293,
-     "why": "вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик",
-     "why_code": "unseen",
-     "text": "закрылась, не побывав открытой: HAJIMIUSDT (-44.93 $) — вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_aggr_g6:10000",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794373200",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_aggr_g6:10000:fixed",
-     "kind": "closed_unseen",
-     "pos": "HAJIMIUSDT:1794373200",
-     "sym": "HAJIMIUSDT",
-     "at": 1794373200.0,
-     "usd": -24.8606,
-     "why": "вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик",
-     "why_code": "unseen",
-     "text": "закрылась, не побывав открытой: HAJIMIUSDT (-24.86 $) — вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_aggr_g6:10000:fixed",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794373200",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_aggr_g6:100000",
-     "kind": "closed_unseen",
-     "pos": "HAJIMIUSDT:1794373200",
-     "sym": "HAJIMIUSDT",
-     "at": 1794373200.0,
-     "usd": -451.0168,
-     "why": "вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик",
-     "why_code": "unseen",
-     "text": "закрылась, не побывав открытой: HAJIMIUSDT (-451.02 $) — вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_aggr_g6:100000",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794373200",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "WAVESUSDT:1794380400",
+     "sym": "WAVESUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_aggr_g6:100000:fixed",
-     "kind": "closed_unseen",
-     "pos": "HAJIMIUSDT:1794373200",
-     "sym": "HAJIMIUSDT",
-     "at": 1794373200.0,
-     "usd": -249.1668,
-     "why": "вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик",
-     "why_code": "unseen",
-     "text": "закрылась, не побывав открытой: HAJIMIUSDT (-249.17 $) — вход был до прошлого прогона, а в открытых её не было: в тот прогон её не взяла касса или не видел сборщик"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_aggr_g6:100000:fixed",
      "kind": "open_late",
-     "pos": "PIEVERSEUSDT:1794373200",
-     "sym": "PIEVERSEUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: PIEVERSEUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_optimal_ai:100",
-     "kind": "open_late",
-     "pos": "INITUSDT:1794373200",
-     "sym": "INITUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_optimal_ai:100",
-     "kind": "open_late",
-     "pos": "WAVESUSDT:1794373200",
+     "pos": "WAVESUSDT:1794380400",
      "sym": "WAVESUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_optimal_ai:100:fixed",
-     "kind": "open_late",
-     "pos": "INITUSDT:1794373200",
-     "sym": "INITUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_optimal_ai:1000",
      "kind": "open_late",
-     "pos": "INITUSDT:1794373200",
-     "sym": "INITUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_optimal_ai:1000",
-     "kind": "open_late",
-     "pos": "WAVESUSDT:1794373200",
-     "sym": "WAVESUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_optimal_ai:1000:fixed",
      "kind": "open_late",
-     "pos": "INITUSDT:1794373200",
-     "sym": "INITUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_optimal_ai:1000:fixed",
-     "kind": "open_late",
-     "pos": "WAVESUSDT:1794373200",
-     "sym": "WAVESUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_optimal_ai:10000",
      "kind": "open_late",
-     "pos": "INITUSDT:1794373200",
-     "sym": "INITUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_optimal_ai:10000",
-     "kind": "open_late",
-     "pos": "WAVESUSDT:1794373200",
-     "sym": "WAVESUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_optimal_ai:10000:fixed",
      "kind": "open_late",
-     "pos": "INITUSDT:1794373200",
-     "sym": "INITUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_optimal_ai:10000:fixed",
-     "kind": "open_late",
-     "pos": "WAVESUSDT:1794373200",
-     "sym": "WAVESUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_optimal_ai:100000",
      "kind": "open_late",
-     "pos": "INITUSDT:1794373200",
-     "sym": "INITUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_optimal_ai:100000",
-     "kind": "open_late",
-     "pos": "WAVESUSDT:1794373200",
-     "sym": "WAVESUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794376605.2007322,
+     "t": 1794381694.241299,
      "family": "pair",
      "cell": "pair_optimal_ai:100000:fixed",
      "kind": "open_late",
-     "pos": "INITUSDT:1794373200",
-     "sym": "INITUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "pos": "ERAUSDT:1794380400",
+     "sym": "ERAUSDT",
+     "at": 1794380400.0,
+     "text": "открытая появилась задним числом: ERAUSDT (вход 11-11 07:00 UTC, прошлый прогон её не показывал)"
     },
     {
-     "t": 1794376605.2007322,
-     "family": "pair",
-     "cell": "pair_optimal_ai:100000:fixed",
-     "kind": "open_late",
-     "pos": "WAVESUSDT:1794373200",
-     "sym": "WAVESUSDT",
-     "at": 1794373200.0,
-     "text": "открытая появилась задним числом: WAVESUSDT (вход 11-11 05:00 UTC, прошлый прогон её не показывал)"
+     "t": 1794381943.2384248,
+     "family": "sit",
+     "cell": "safe:100",
+     "kind": "open_vanished",
+     "pos": "MTLUSDT:1789453426",
+     "sym": "MTLUSDT",
+     "at": 1789453426.8,
+     "mark_usd": -0.4404,
+     "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4404)"
     },
     {
-     "t": 1794380461.8289428,
-     "family": "h24",
-     "cell": "optimal_h_m05:100",
-     "kind": "open_late",
-     "pos": "VVVUSDT:1794348000",
-     "sym": "VVVUSDT",
-     "at": 1794348000.0,
-     "text": "открытая появилась задним числом: VVVUSDT (вход 11-10 22:00 UTC, прошлый прогон её не показывал)"
+     "t": 1794381943.2384248,
+     "family": "sit",
+     "cell": "safe:100:fixed",
+     "kind": "open_vanished",
+     "pos": "MTLUSDT:1789453426",
+     "sym": "MTLUSDT",
+     "at": 1789453426.8,
+     "mark_usd": -0.4217,
+     "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4217)"
     },
     {
-     "t": 1794380461.8289428,
-     "family": "h24",
-     "cell": "optimal_h_m05:100:fixed",
-     "kind": "open_late",
-     "pos": "VVVUSDT:1794348000",
-     "sym": "VVVUSDT",
-     "at": 1794348000.0,
-     "text": "открытая появилась задним числом: VVVUSDT (вход 11-10 22:00 UTC, прошлый прогон её не показывал)"
+     "t": 1794381943.2384248,
+     "family": "sit",
+     "cell": "safe:1000",
+     "kind": "open_vanished",
+     "pos": "MTLUSDT:1789453426",
+     "sym": "MTLUSDT",
+     "at": 1789453426.8,
+     "mark_usd": -0.4753,
+     "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4753)"
     },
     {
-     "t": 1794380461.8289428,
-     "family": "h24",
-     "cell": "optimal_h_m05:1000",
-     "kind": "open_late",
-     "pos": "VVVUSDT:1794348000",
-     "sym": "VVVUSDT",
-     "at": 1794348000.0,
-     "text": "открытая появилась задним числом: VVVUSDT (вход 11-10 22:00 UTC, прошлый прогон её не показывал)"
+     "t": 1794381943.2384248,
+     "family": "sit",
+     "cell": "safe:1000:fixed",
+     "kind": "open_vanished",
+     "pos": "MTLUSDT:1789453426",
+     "sym": "MTLUSDT",
+     "at": 1789453426.8,
+     "mark_usd": -0.4217,
+     "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4217)"
     },
     {
-     "t": 1794380461.8289428,
-     "family": "h24",
-     "cell": "optimal_h_m05:1000:fixed",
-     "kind": "open_late",
-     "pos": "VVVUSDT:1794348000",
-     "sym": "VVVUSDT",
-     "at": 1794348000.0,
-     "text": "открытая появилась задним числом: VVVUSDT (вход 11-10 22:00 UTC, прошлый прогон её не показывал)"
+     "t": 1794381943.2384248,
+     "family": "sit",
+     "cell": "safe:10000",
+     "kind": "open_vanished",
+     "pos": "MTLUSDT:1789453426",
+     "sym": "MTLUSDT",
+     "at": 1789453426.8,
+     "mark_usd": -0.4654,
+     "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4654)"
     },
     {
-     "t": 1794380461.8289428,
-     "family": "h24",
-     "cell": "optimal_h_m05:10000",
-     "kind": "open_late",
-     "pos": "VVVUSDT:1794348000",
-     "sym": "VVVUSDT",
-     "at": 1794348000.0,
-     "text": "открытая появилась задним числом: VVVUSDT (вход 11-10 22:00 UTC, прошлый прогон её не показывал)"
+     "t": 1794381943.2384248,
+     "family": "sit",
+     "cell": "safe:10000:fixed",
+     "kind": "open_vanished",
+     "pos": "MTLUSDT:1789453426",
+     "sym": "MTLUSDT",
+     "at": 1789453426.8,
+     "mark_usd": -0.4217,
+     "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4217)"
     },
     {
-     "t": 1794380461.8289428,
-     "family": "h24",
-     "cell": "optimal_h_m05:10000:fixed",
-     "kind": "open_late",
-     "pos": "VVVUSDT:1794348000",
-     "sym": "VVVUSDT",
-     "at": 1794348000.0,
-     "text": "открытая появилась задним числом: VVVUSDT (вход 11-10 22:00 UTC, прошлый прогон её не показывал)"
+     "t": 1794381943.2384248,
+     "family": "sit",
+     "cell": "safe:100000",
+     "kind": "open_vanished",
+     "pos": "MTLUSDT:1789453426",
+     "sym": "MTLUSDT",
+     "at": 1789453426.8,
+     "mark_usd": -2.6144,
+     "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -2.6144)"
     },
     {
-     "t": 1794380461.8289428,
-     "family": "h24",
-     "cell": "optimal_h_m05:100000",
-     "kind": "open_late",
-     "pos": "VVVUSDT:1794348000",
-     "sym": "VVVUSDT",
-     "at": 1794348000.0,
-     "text": "открытая появилась задним числом: VVVUSDT (вход 11-10 22:00 UTC, прошлый прогон её не показывал)"
+     "t": 1794381943.2384248,
+     "family": "sit",
+     "cell": "safe:100000:fixed",
+     "kind": "open_vanished",
+     "pos": "MTLUSDT:1789453426",
+     "sym": "MTLUSDT",
+     "at": 1789453426.8,
+     "mark_usd": -2.4456,
+     "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -2.4456)"
     },
     {
-     "t": 1794380461.8289428,
-     "family": "h24",
-     "cell": "optimal_h_m05:100000:fixed",
-     "kind": "open_late",
-     "pos": "VVVUSDT:1794348000",
-     "sym": "VVVUSDT",
-     "at": 1794348000.0,
-     "text": "открытая появилась задним числом: VVVUSDT (вход 11-10 22:00 UTC, прошлый прогон её не показывал)"
+     "t": 1794381943.2384248,
+     "family": "sit",
+     "cell": "optimal:1000",
+     "kind": "open_vanished",
+     "pos": "MTLUSDT:1789453426",
+     "sym": "MTLUSDT",
+     "at": 1789453426.8,
+     "mark_usd": -0.4732,
+     "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4732)"
     },
     {
-     "t": 1794380461.8289428,
-     "family": "h24",
-     "cell": "optimal_h_m06:100",
-     "kind": "open_late",
-     "pos": "INITUSDT:1794340800",
-     "sym": "INITUSDT",
-     "at": 1794340800.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 20:00 UTC, прошлый прогон её не показывал)"
+     "t": 1794381943.2384248,
+     "family": "sit",
+     "cell": "optimal:1000:fixed",
+     "kind": "open_vanished",
+     "pos": "MTLUSDT:1789453426",
+     "sym": "MTLUSDT",
+     "at": 1789453426.8,
+     "mark_usd": -0.4217,
+     "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4217)"
     },
     {
-     "t": 1794380461.8289428,
-     "family": "h24",
-     "cell": "optimal_h_m06:100:fixed",
-     "kind": "open_late",
-     "pos": "INITUSDT:1794340800",
-     "sym": "INITUSDT",
-     "at": 1794340800.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 20:00 UTC, прошлый прогон её не показывал)"
+     "t": 1794381943.2384248,
+     "family": "sit",
+     "cell": "optimal:10000",
+     "kind": "open_vanished",
+     "pos": "MTLUSDT:1789453426",
+     "sym": "MTLUSDT",
+     "at": 1789453426.8,
+     "mark_usd": -0.51,
+     "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.51)"
     },
     {
-     "t": 1794380461.8289428,
-     "family": "h24",
-     "cell": "optimal_h_m06:1000",
-     "kind": "open_late",
-     "pos": "INITUSDT:1794340800",
-     "sym": "INITUSDT",
-     "at": 1794340800.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 20:00 UTC, прошлый прогон её не показывал)"
+     "t": 1794381943.2384248,
+     "family": "sit",
+     "cell": "optimal:10000:fixed",
+     "kind": "open_vanished",
+     "pos": "MTLUSDT:1789453426",
+     "sym": "MTLUSDT",
+     "at": 1789453426.8,
+     "mark_usd": -0.4217,
+     "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -0.4217)"
     },
     {
-     "t": 1794380461.8289428,
-     "family": "h24",
-     "cell": "optimal_h_m06:1000:fixed",
-     "kind": "open_late",
-     "pos": "INITUSDT:1794340800",
-     "sym": "INITUSDT",
-     "at": 1794340800.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 20:00 UTC, прошлый прогон её не показывал)"
+     "t": 1794381943.2384248,
+     "family": "sit",
+     "cell": "optimal:100000",
+     "kind": "open_vanished",
+     "pos": "MTLUSDT:1789453426",
+     "sym": "MTLUSDT",
+     "at": 1789453426.8,
+     "mark_usd": -2.7829,
+     "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -2.7829)"
     },
     {
-     "t": 1794380461.8289428,
-     "family": "h24",
-     "cell": "optimal_h_m06:10000",
-     "kind": "open_late",
-     "pos": "INITUSDT:1794340800",
-     "sym": "INITUSDT",
-     "at": 1794340800.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 20:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794380461.8289428,
-     "family": "h24",
-     "cell": "optimal_h_m06:10000:fixed",
-     "kind": "open_late",
-     "pos": "INITUSDT:1794340800",
-     "sym": "INITUSDT",
-     "at": 1794340800.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 20:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794380461.8289428,
-     "family": "h24",
-     "cell": "optimal_h_m06:100000",
-     "kind": "open_late",
-     "pos": "INITUSDT:1794340800",
-     "sym": "INITUSDT",
-     "at": 1794340800.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 20:00 UTC, прошлый прогон её не показывал)"
-    },
-    {
-     "t": 1794380461.8289428,
-     "family": "h24",
-     "cell": "optimal_h_m06:100000:fixed",
-     "kind": "open_late",
-     "pos": "INITUSDT:1794340800",
-     "sym": "INITUSDT",
-     "at": 1794340800.0,
-     "text": "открытая появилась задним числом: INITUSDT (вход 11-10 20:00 UTC, прошлый прогон её не показывал)"
+     "t": 1794381943.2384248,
+     "family": "sit",
+     "cell": "optimal:100000:fixed",
+     "kind": "open_vanished",
+     "pos": "MTLUSDT:1789453426",
+     "sym": "MTLUSDT",
+     "at": 1789453426.8,
+     "mark_usd": -2.4456,
+     "text": "открытая исчезла без закрытия: MTLUSDT (вход 09-15 06:23 UTC, отметка была -2.4456)"
     }
    ]
   }
  },
- "secs": 9.2,
+ "secs": 41.2,
  "timing": {
-  "кэш": 1.25,
-  "решения": 0.06,
-  "реплей": 1.81,
-  "хвост и fav": 0.03,
-  "запись кэша": 1.14,
-  "касса": 2.34,
-  "журнал": 0.6,
-  "свод": 2.01
+  "кэш": 0.67,
+  "решения": 35.29,
+  "реплей": 1.76,
+  "хвост и fav": 0.01,
+  "запись кэша": 0.46,
+  "касса": 1.3,
+  "журнал": 0.26,
+  "свод": 1.47
  },
- "peak_rss_mb": 419,
+ "peak_rss_mb": 2685,
  "rules": {
   "RULES": 7,
   "TICKET": 25.0,
