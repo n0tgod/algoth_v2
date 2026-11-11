@@ -24,3 +24,23 @@
   2026-10-23T22:00:01Z sub_13a2aa113c4cad59: исполнитель запущен, pid 3587476
   2026-11-08T19:20:01Z sub_13a2aa113c4cad59: подписка не в живом режиме — мягкая остановка
 конец: 2026-11-11T23:07:20Z, код 0
+ВНИМАНИЕ: 2026-11-11T23:07:20Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (8 МБ) research/dca_paper/out/DCA-short.json (8 МБ)
+публикуется в ветку main:
+ jobs/done/nc73.log                                 | 13 ++++
+ jobs/done/nc74.done                                |  1 +
+ jobs/done/nc74.log                                 | 26 +++++++
+ jobs/poke.log                                      |  3 +
+ jobs/queue-state.md                                |  2 +-
+ research/dca_paper/out/DCA-pair.md                 | 28 ++++----
+ research/dca_paper/out/DCA-short.md                | 82 +++++++++++-----------
+ .../dca_paper/out/fixed_short-2026-11-11.jsonl     | 52 ++++++++++++++
+ research/dca_paper/out/short-2026-11-11.jsonl      | 51 ++++++++++++++
+ research/dca_paper/out/watch/h24.json              |  2 +-
+ research/dca_paper/out/watch/latest.json           |  2 +-
+ research/dca_paper/out/watch/pair.json             |  2 +-
+ research/s8_loop/out/day_brake.json                |  2 +-
+ 13 files changed, 206 insertions(+), 60 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   630ab9298..77a39a44f  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
