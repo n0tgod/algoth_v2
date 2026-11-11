@@ -901,6 +901,17 @@ A4 — прогон теста на коинтеграцию по сетке о�
 - L293 `market_news(items, at_ms, hours=24, cap=10)`
 - L300 `dossier(kind, rec, book, side, at_s, *, px=None, crowd=None, ma…` — Досье для судьи. news=None — ветка без новостей (`ai_plain`): блоков новостей нет вовсе.
 
+## research/ai_gate/lab_check.py · 101 строк
+
+Сквозная проверка книг ТВХ модели после починок 10.11 — только чтение.
+
+- L18 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L19 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L24 `FIX_AT = 1794300600.0`
+- L25 `H = 3600.0`
+- L28 `ts(t)`
+- L32 `main()`
+
 ## research/ai_gate/lessons.py · 580 строк
 
 Уроки судьи: предложение моделью, приём ЧИСЛОМ (спека 19 §11.4, U2).
