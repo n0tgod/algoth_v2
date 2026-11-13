@@ -716,7 +716,141 @@
    "exit_since": 1793869200.0,
    "close_rules": [],
    "close_since": 1793869200.0
+  },
+  {
+   "id": "m07",
+   "key": "optimal_h_m07",
+   "kind": "entry",
+   "rule": {
+    "when": [
+     {
+      "field": "since_signal",
+      "op": ">=",
+      "value": 0.02
+     },
+     {
+      "field": "buy_share",
+      "op": "<=",
+      "value": 0.48
+     }
+    ],
+    "W": 6
+   },
+   "sig": "{\"W\": 6, \"kind\": \"entry\", \"when\": [[\"buy_share\", \"<=\", 0.48], [\"since_signal\", \">=\", 0.02]]}",
+   "why": "Price has already squeezed up since the signal, but buying has faded (sellers dominate the tape). Shorting after the exhausted pop gives a better price and less room for a further run against us.",
+   "text": null,
+   "source": "patterns:2026-10-29T11:35:51Z",
+   "gate": {
+    "trig": 702,
+    "rule_mean": 0.03409,
+    "book_mean": -0.11898,
+    "p_random_hour": 0.0,
+    "search_at": "2026-11-13T07:01:05Z"
+   },
+   "decided_at": 1794560373.5030048,
+   "born_at": 1794560400.0,
+   "status": "live",
+   "exit_rules": [
+    {
+     "when": [
+      {
+       "field": "btc_24h",
+       "op": "<=",
+       "value": -0.0038
+      }
+     ],
+     "exit": "s8:t2:book",
+     "why": "When BTC is already falling over 24h, the market tailwind supports the short. A wide stop is enough to cap a rare reversal without cutting the trend move; this gain held in both halves.",
+     "gate": {
+      "matched": 1057,
+      "mean_cell": 0.03506,
+      "mean_book": 0.03187,
+      "gain": 0.00117,
+      "p_random": 0.0,
+      "search_at": "2026-11-13T07:01:05Z"
+     }
+    },
+    {
+     "when": [
+      {
+       "field": "crowd_bn_top",
+       "op": ">=",
+       "value": 0.58
+      },
+      {
+       "field": "funding",
+       "op": ">=",
+       "value": 5e-05
+      }
+     ],
+     "exit": "s1:t3:eq",
+     "why": "Crowded top-trader longs plus positive funding: the long squeeze should start immediately, so adverse excursion is minimal and a 1% stop suits.",
+     "gate": {
+      "matched": 223,
+      "mean_cell": 0.05016,
+      "mean_book": 0.02803,
+      "gain": 0.00172,
+      "p_random": 0.0025,
+      "search_at": "2026-11-13T07:01:05Z"
+     }
+    },
+    {
+     "when": [
+      {
+       "field": "spread_bp",
+       "op": ">=",
+       "value": 9.0
+      }
+     ],
+     "exit": "s8:t3:book",
+     "why": "Wide-spread, illiquid names make noisy swings that tighter stops would cut. A wide 8% stop with a 3x take lets the larger moves play out; this gain held in both halves.",
+     "gate": {
+      "matched": 844,
+      "mean_cell": 0.02099,
+      "mean_book": 0.01597,
+      "gain": 0.00148,
+      "p_random": 0.0025,
+      "search_at": "2026-11-13T07:01:05Z"
+     }
+    }
+   ],
+   "exit_since": 1794560400.0,
+   "close_rules": [],
+   "close_since": 1794560400.0
+  },
+  {
+   "id": "m08",
+   "key": "optimal_h_m08",
+   "kind": "skip",
+   "rule": {
+    "when": [
+     {
+      "field": "price_moves_to_decision.4h_pct",
+      "op": ">=",
+      "value": 10.0
+     },
+     {
+      "field": "price_moves_to_decision.1h_pct",
+      "op": ">=",
+      "value": 1.0
+     }
+    ]
+   },
+   "sig": "{\"W\": null, \"kind\": \"skip\", \"when\": [[\"price_moves_to_decision.1h_pct\", \">=\", 1.0], [\"price_moves_to_decision.4h_pct\", \">=\", 10.0]]}",
+   "why": "If momentum has not rolled over by the entry hour, continuation squeezes tend to come before any fade. Shorts here often went straight to the floor or deep under water (JCT, BIRB, CT, CTR, BMT, XNY, BR).",
+   "text": "Skip shorts into a pump that is still accelerating: 4h move at least +10% and the last hour still up at least 1%.",
+   "source": "lessons:fbc0224a71",
+   "gate": {
+    "n": 726,
+    "matched": 76,
+    "mean_matched": -0.1559,
+    "mean_rest": 0.0453,
+    "p_random": 0.0
+   },
+   "decided_at": 1794560373.5030048,
+   "born_at": 1794560400.0,
+   "status": "live"
   }
  ],
- "updated": "2026-11-12T08:00:11Z"
+ "updated": "2026-11-13T08:59:38Z"
 }
