@@ -553,9 +553,123 @@
    "why": "A 4-hour run-up on falling trade activity and no BTC tailwind: the rally has lost participation. Shorting into the stale high should give a straight_for path with small MAE.",
    "exit": "s3:t2:book",
    "proposed_at": "2026-11-06T07:01:02Z"
+  },
+  {
+   "when": [
+    {
+     "field": "burst_ratio",
+     "op": ">=",
+     "value": 2.0
+    },
+    {
+     "field": "px_1h",
+     "op": ">=",
+     "value": 0.01
+    },
+    {
+     "field": "oi_1h",
+     "op": "<=",
+     "value": -0.005
+    }
+   ],
+   "W": 4,
+   "why": "A sharp up-hour on a trade burst while open interest falls is shorts covering, not new longs. Once that squeeze has printed, the forced buyers are gone, so a short entered right after has less fuel against it.",
+   "proposed_at": "2026-11-13T07:00:59Z"
+  },
+  {
+   "when": [
+    {
+     "field": "since_signal",
+     "op": ">=",
+     "value": 0.02
+    },
+    {
+     "field": "oi_1h",
+     "op": "<=",
+     "value": -0.01
+    },
+    {
+     "field": "btc_1h",
+     "op": "<=",
+     "value": 0.0
+    }
+   ],
+   "W": 6,
+   "why": "Price has already run against the signal on unwinding OI (the squeeze is done) and BTC is not supporting it. This gives a better short price after the adverse excursion has been absorbed, so a moderate 5% stop survives.",
+   "exit": "s5:t2:book",
+   "proposed_at": "2026-11-13T07:00:59Z"
+  },
+  {
+   "when": [
+    {
+     "field": "funding",
+     "op": ">=",
+     "value": 0.0001
+    },
+    {
+     "field": "buy_share",
+     "op": ">=",
+     "value": 0.55
+    },
+    {
+     "field": "btc_1h",
+     "op": "<=",
+     "value": 0.0
+    }
+   ],
+   "W": 5,
+   "why": "Late longs are paying positive funding and chasing with aggressive buys while BTC stalls. This is buying exhaustion: the top of the local push, after which adverse excursion should be small enough for a 3% stop with equal risk.",
+   "exit": "s3:t3:eq",
+   "proposed_at": "2026-11-13T07:00:59Z"
+  },
+  {
+   "when": [
+    {
+     "field": "px_1h",
+     "op": ">=",
+     "value": 0.02
+    },
+    {
+     "field": "trades_ratio",
+     "op": "<=",
+     "value": 0.9
+    },
+    {
+     "field": "crowd_bybit",
+     "op": ">=",
+     "value": 0.55
+    }
+   ],
+   "W": 6,
+   "why": "A rally on thinning activity with a long-heavy crowd is a weak, crowded bounce. The short is entered at the bounce high instead of at the signal.",
+   "exit": "s0:t3:book",
+   "proposed_at": "2026-11-13T07:00:59Z"
+  },
+  {
+   "when": [
+    {
+     "field": "crowd_bybit",
+     "op": ">=",
+     "value": 0.55
+    },
+    {
+     "field": "btc_4h",
+     "op": "<=",
+     "value": -0.002
+    },
+    {
+     "field": "buy_share",
+     "op": ">=",
+     "value": 0.52
+    }
+   ],
+   "W": 6,
+   "why": "Longs are crowded and still buying while BTC trends down over 4h. The coin is being held up against market weakness, and the trapped longs make a straight-for path more likely, which fits a short 2% stop.",
+   "exit": "s2:t3:eq",
+   "proposed_at": "2026-11-13T07:00:59Z"
   }
  ],
- "updated": "2026-11-06T07:01:02Z",
+ "updated": "2026-11-13T07:00:59Z",
  "exit_rules": [
   {
    "when": [
@@ -730,6 +844,76 @@
    "exit": "s3:t3:eq",
    "why": "A floor-prone name whose crowd is already long-heavy, so there is less short-squeeze fuel. A 3% stop should survive the winners while cutting the floor losers early.",
    "proposed_at": "2026-11-06T07:01:02Z"
+  },
+  {
+   "when": [
+    {
+     "field": "crowd_bn_top",
+     "op": ">=",
+     "value": 0.58
+    }
+   ],
+   "exit": "s2:t3:eq",
+   "why": "When top traders are heavily long the coin tends to unwind fast or not at all, so a short stop with a wide take captures the move. The gain held in both halves of the period.",
+   "proposed_at": "2026-11-13T07:00:59Z"
+  },
+  {
+   "when": [
+    {
+     "field": "funding",
+     "op": ">=",
+     "value": 5e-05
+    }
+   ],
+   "exit": "s1:t2:eq",
+   "why": "Positive funding means longs are paying to hold, so pressure on longs works for the short from the start and winners show little adverse excursion. A 1% stop held in both halves.",
+   "proposed_at": "2026-11-13T07:00:59Z"
+  },
+  {
+   "when": [
+    {
+     "field": "px_168h",
+     "op": ">=",
+     "value": 0.38
+    }
+   ],
+   "exit": "s3:t3:eq",
+   "why": "After a big weekly pump, mean reversion is sharp and one-sided, so a 3% stop with a 3x take works. The gain held in both halves.",
+   "proposed_at": "2026-11-13T07:00:59Z"
+  },
+  {
+   "when": [
+    {
+     "field": "oi_24h",
+     "op": ">=",
+     "value": 0.25
+    },
+    {
+     "field": "oi_24h",
+     "op": "<=",
+     "value": 1.0
+    }
+   ],
+   "exit": "s5:t1:eq",
+   "why": "With a moderate OI build-up, newly opened longs unwind quickly, so a near take with a 5% stop works. This held in both halves.",
+   "proposed_at": "2026-11-13T07:00:59Z"
+  },
+  {
+   "when": [
+    {
+     "field": "crowd_bn_top",
+     "op": ">=",
+     "value": 0.58
+    },
+    {
+     "field": "funding",
+     "op": ">=",
+     "value": 5e-05
+    }
+   ],
+   "exit": "s1:t3:eq",
+   "why": "Crowded top-trader longs plus positive funding: the long squeeze should start immediately, so adverse excursion is minimal and a 1% stop suits.",
+   "proposed_at": "2026-11-13T07:00:59Z"
   }
  ],
  "close_rules": [
@@ -837,6 +1021,45 @@
    "H": 8,
    "why": "The crowd is flipping short while BTC turns up and the coin is rising. That is fresh short fuel plus a market tailwind, the setup for a squeeze, so exit.",
    "proposed_at": "2026-11-06T07:01:02Z"
+  },
+  {
+   "when": [
+    {
+     "field": "name_floor_share",
+     "op": ">=",
+     "value": 0.25
+    },
+    {
+     "field": "px_1h",
+     "op": ">=",
+     "value": 0.02
+    }
+   ],
+   "H": 6,
+   "why": "For a coin that often hits the floor, a fresh 2% hourly push against the position early on signals the floor is coming, so close before the stop.",
+   "proposed_at": "2026-11-13T07:00:59Z"
+  },
+  {
+   "when": [
+    {
+     "field": "oi_1h",
+     "op": ">=",
+     "value": 0.04
+    },
+    {
+     "field": "buy_share",
+     "op": ">=",
+     "value": 0.6
+    },
+    {
+     "field": "name_floor_share",
+     "op": ">=",
+     "value": 0.25
+    }
+   ],
+   "H": 4,
+   "why": "OI rebuilding together with aggressive buying on a historically floor-prone name means new longs are winning and the short thesis is broken.",
+   "proposed_at": "2026-11-13T07:00:59Z"
   }
  ]
 }
