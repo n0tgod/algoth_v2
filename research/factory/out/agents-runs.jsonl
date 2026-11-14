@@ -1823,3 +1823,5 @@
 {"at": 1794624002.046, "role": "propose", "status": "start", "started": 1794624002.0, "ended": 1794624002.046, "dry": false, "pid": 901804}
 {"at": 1794624002.364, "role": "propose", "status": "no-auth", "started": 1794624002.0, "ended": 1794624002.364, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
 {"at": 1794624301.824, "role": "judge", "status": "start", "started": 1794624301.82, "ended": 1794624301.824, "dry": false, "pid": 903256}
+{"at": 1794628596.995, "role": "judge", "status": "ok", "started": 1794624301.82, "ended": 1794628596.995, "dry": false, "note": "код возврата 0"}
+{"at": 1794628801.678, "role": "ceiling", "status": "start", "started": 1794628801.678, "ended": 1794628801.678, "dry": false, "pid": 928984}
