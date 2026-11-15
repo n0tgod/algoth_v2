@@ -1,11 +1,11 @@
 # Новостной фон (спека 19 §4)
 
-Срез 2026-11-15T20:30:02Z, новых 0, за сутки 5 (с привязкой к нашим именам 2).
+Срез 2026-11-15T20:45:02Z, новых 1, за сутки 6 (с привязкой к нашим именам 3).
 
 | лента | статей в ответе | новых | отказ |
 |---|---|---|---|
 | coindesk | — | — | HTTP 403 |
 | cointelegraph | 30 | 0 |  |
-| theblock | 20 | 0 |  |
+| theblock | 20 | 1 |  |
 
-Чаще всего за сутки: BTCUSDT 1, SOLUSDT 1, FORMUSDT 1, KAVAUSDT 1, BNBUSDT 1, ZROUSDT 1
+Чаще всего за сутки: CASHCATUSDT 1, BTCUSDT 1, SOLUSDT 1, FORMUSDT 1, KAVAUSDT 1, BNBUSDT 1, ZROUSDT 1
