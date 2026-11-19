@@ -1955,3 +1955,5 @@
 {"at": 1795056301.643, "role": "judge", "status": "start", "started": 1795056301.642, "ended": 1795056301.643, "dry": false, "pid": 3307970}
 {"at": 1795059636.022, "role": "judge", "status": "ok", "started": 1795056301.642, "ended": 1795059636.022, "dry": false, "note": "код возврата 0"}
 {"at": 1795059901.822, "role": "ceiling", "status": "start", "started": 1795059901.822, "ended": 1795059901.822, "dry": false, "pid": 3327170}
+{"at": 1795059909.167, "role": "ceiling", "status": "ok", "started": 1795059901.822, "ended": 1795059909.167, "dry": false, "note": "код возврата 0"}
+{"at": 1795060201.951, "role": "declare", "status": "start", "started": 1795060201.95, "ended": 1795060201.951, "dry": false, "pid": 3328854}
