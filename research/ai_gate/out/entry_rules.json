@@ -667,9 +667,100 @@
    "why": "Longs are crowded and still buying while BTC trends down over 4h. The coin is being held up against market weakness, and the trapped longs make a straight-for path more likely, which fits a short 2% stop.",
    "exit": "s2:t3:eq",
    "proposed_at": "2026-11-13T07:00:59Z"
+  },
+  {
+   "when": [
+    {
+     "field": "px_1h",
+     "op": ">=",
+     "value": 0.004
+    },
+    {
+     "field": "crowd_bybit_shift",
+     "op": "<=",
+     "value": -0.03
+    },
+    {
+     "field": "buy_share",
+     "op": "<=",
+     "value": 0.5
+    }
+   ],
+   "W": 6,
+   "why": "Short into a small up-hour where the crowd has shifted short-to-long already (shorts squeezed out) but aggressive buying is not dominant: the bounce is exhausting, entering higher improves the price.",
+   "exit": "s0:t3:book",
+   "proposed_at": "2026-11-20T07:00:53Z"
+  },
+  {
+   "when": [
+    {
+     "field": "px_1h",
+     "op": ">=",
+     "value": 0.004
+    },
+    {
+     "field": "oi_1h",
+     "op": "<=",
+     "value": -0.005
+    },
+    {
+     "field": "btc_24h",
+     "op": ">=",
+     "value": -0.0196
+    }
+   ],
+   "W": 6,
+   "why": "Price ticks up while open interest drops: a short-covering pop, not new longs. Once covering ends there is no fuel left, so entering on the pop gives a better short price with lower further adverse excursion.",
+   "proposed_at": "2026-11-20T07:00:53Z"
+  },
+  {
+   "when": [
+    {
+     "field": "since_signal",
+     "op": ">=",
+     "value": 0.015
+    },
+    {
+     "field": "burst_ratio",
+     "op": "<=",
+     "value": 0.8
+    },
+    {
+     "field": "trades_ratio",
+     "op": "<=",
+     "value": 1.0
+    }
+   ],
+   "W": 6,
+   "why": "The coin has already moved against the signal but activity and bursts are fading: buying exhaustion after the run-up. Entering after it means part of the adverse excursion is already behind, so a 5% stop survives more often.",
+   "exit": "s5:t2:book",
+   "proposed_at": "2026-11-20T07:00:53Z"
+  },
+  {
+   "when": [
+    {
+     "field": "funding",
+     "op": ">=",
+     "value": 5e-05
+    },
+    {
+     "field": "px_1h",
+     "op": ">=",
+     "value": 0.005
+    },
+    {
+     "field": "oi_1h",
+     "op": ">=",
+     "value": 0.01
+    }
+   ],
+   "W": 4,
+   "why": "Funding turned positive with fresh longs piling in on an up-hour: longs are crowded and paying. This is the late-long state that tends to unwind, so the short entered here should see small adverse excursion and allow a 3% stop.",
+   "exit": "s3:t2:book",
+   "proposed_at": "2026-11-20T07:00:53Z"
   }
  ],
- "updated": "2026-11-13T07:00:59Z",
+ "updated": "2026-11-20T07:00:53Z",
  "exit_rules": [
   {
    "when": [
@@ -914,6 +1005,79 @@
    "exit": "s1:t3:eq",
    "why": "Crowded top-trader longs plus positive funding: the long squeeze should start immediately, so adverse excursion is minimal and a 1% stop suits.",
    "proposed_at": "2026-11-13T07:00:59Z"
+  },
+  {
+   "when": [
+    {
+     "field": "btc_24h",
+     "op": "<=",
+     "value": -0.0059
+    },
+    {
+     "field": "spread_bp",
+     "op": ">=",
+     "value": 8.7
+    }
+   ],
+   "exit": "s8:t3:book",
+   "why": "BTC is weak and the book is thin: downside follow-through is larger, so a wider take (x3) captures the extended move. The 8% stop keeps wide-spread noise from stopping the trade.",
+   "proposed_at": "2026-11-20T07:00:53Z"
+  },
+  {
+   "when": [
+    {
+     "field": "name_floor_share",
+     "op": ">=",
+     "value": 0.105
+    },
+    {
+     "field": "name_floor_share",
+     "op": "<=",
+     "value": 0.256
+    },
+    {
+     "field": "crowd_bn_top",
+     "op": "<=",
+     "value": 0.533
+    }
+   ],
+   "exit": "s0:t3:book",
+   "why": "Both terciles held for t3. When top traders are not long-heavy there is less squeeze fuel and trends persist, so let winners run to x3.",
+   "proposed_at": "2026-11-20T07:00:53Z"
+  },
+  {
+   "when": [
+    {
+     "field": "btc_dom",
+     "op": "<=",
+     "value": 59.42
+    },
+    {
+     "field": "signal_rr",
+     "op": ">=",
+     "value": 1.05
+    }
+   ],
+   "exit": "s0:t3:book",
+   "why": "Low BTC dominance means alt beta is high, and a high reward/risk signal means the promised move is reliable. Extending the take to x3 captures more of the move.",
+   "proposed_at": "2026-11-20T07:00:53Z"
+  },
+  {
+   "when": [
+    {
+     "field": "mcap_24h",
+     "op": "<=",
+     "value": -3.2
+    },
+    {
+     "field": "btc_24h",
+     "op": "<=",
+     "value": -0.0059
+    }
+   ],
+   "exit": "s8:t3:book",
+   "why": "A broad market selloff carries shorts further; the 8% stop barely cuts winners in a down tape, and the x3 take adds upside.",
+   "proposed_at": "2026-11-20T07:00:53Z"
   }
  ],
  "close_rules": [
@@ -1060,6 +1224,50 @@
    "H": 4,
    "why": "OI rebuilding together with aggressive buying on a historically floor-prone name means new longs are winning and the short thesis is broken.",
    "proposed_at": "2026-11-13T07:00:59Z"
+  },
+  {
+   "when": [
+    {
+     "field": "oi_1h",
+     "op": ">=",
+     "value": 0.04
+    },
+    {
+     "field": "buy_share",
+     "op": ">=",
+     "value": 0.6
+    },
+    {
+     "field": "px_1h",
+     "op": ">=",
+     "value": 0.02
+    }
+   ],
+   "H": 4,
+   "why": "Early in the trade, aggressive buying plus fresh OI and a 2% up-hour means new longs are driving a breakout against the short. This breaks the short thesis, so cut before the floor.",
+   "proposed_at": "2026-11-20T07:00:53Z"
+  },
+  {
+   "when": [
+    {
+     "field": "btc_1h",
+     "op": ">=",
+     "value": 0.006
+    },
+    {
+     "field": "px_1h",
+     "op": ">=",
+     "value": 0.02
+    },
+    {
+     "field": "oi_1h",
+     "op": ">=",
+     "value": 0.03
+    }
+   ],
+   "H": 3,
+   "why": "BTC turns up sharply and the coin follows with new leverage: a market-wide squeeze. Exit early rather than ride it to the stop.",
+   "proposed_at": "2026-11-20T07:00:53Z"
   }
  ]
 }
