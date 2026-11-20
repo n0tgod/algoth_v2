@@ -854,7 +854,231 @@
    "decided_at": 1794560373.5030048,
    "born_at": 1794560400.0,
    "status": "live"
+  },
+  {
+   "id": "m09",
+   "key": "optimal_h_m09",
+   "kind": "entry",
+   "rule": {
+    "when": [
+     {
+      "field": "px_1h",
+      "op": ">=",
+      "value": 0.004
+     },
+     {
+      "field": "crowd_bybit_shift",
+      "op": "<=",
+      "value": -0.03
+     },
+     {
+      "field": "buy_share",
+      "op": "<=",
+      "value": 0.5
+     }
+    ],
+    "W": 6,
+    "exit": "s0:t3:book"
+   },
+   "sig": "{\"W\": 6, \"exit\": \"s0:t3:book\", \"kind\": \"entry\", \"when\": [[\"buy_share\", \"<=\", 0.5], [\"crowd_bybit_shift\", \"<=\", -0.03], [\"px_1h\", \">=\", 0.004]]}",
+   "why": "Short into a small up-hour where the crowd has shifted short-to-long already (shorts squeezed out) but aggressive buying is not dominant: the bounce is exhausting, entering higher improves the price.",
+   "text": null,
+   "source": "patterns:2026-11-20T07:00:53Z",
+   "gate": {
+    "trig": 778,
+    "rule_mean": 0.08107,
+    "book_mean": 0.00533,
+    "p_random_hour": 0.0,
+    "search_at": "2026-11-20T07:00:58Z"
+   },
+   "decided_at": 1795167485.4550683,
+   "born_at": 1795168800.0,
+   "status": "live",
+   "exit_rules": [
+    {
+     "when": [
+      {
+       "field": "name_floor_share",
+       "op": ">=",
+       "value": 0.282
+      }
+     ],
+     "exit": "s3:t3:eq",
+     "why": "Coins that often hit the book's floor have large, fast losses. A 3% stop at equal risk cuts those losers early and still lets a 3x take capture the winners; this gain held in both halves.",
+     "gate": {
+      "matched": 510,
+      "mean_cell": -0.01882,
+      "mean_book": -0.03288,
+      "gain": 0.00267,
+      "p_random": 0.0,
+      "search_at": "2026-11-20T07:00:58Z"
+     }
+    },
+    {
+     "when": [
+      {
+       "field": "name_floor_share",
+       "op": ">=",
+       "value": 0.105
+      },
+      {
+       "field": "name_floor_share",
+       "op": "<=",
+       "value": 0.256
+      },
+      {
+       "field": "crowd_bn_top",
+       "op": "<=",
+       "value": 0.533
+      }
+     ],
+     "exit": "s0:t3:book",
+     "why": "Both terciles held for t3. When top traders are not long-heavy there is less squeeze fuel and trends persist, so let winners run to x3.",
+     "gate": {
+      "matched": 300,
+      "mean_cell": 0.10551,
+      "mean_book": 0.08511,
+      "gain": 0.00227,
+      "p_random": 0.0,
+      "search_at": "2026-11-20T07:00:58Z"
+     }
+    },
+    {
+     "when": [
+      {
+       "field": "funding",
+       "op": ">=",
+       "value": 5e-05
+      }
+     ],
+     "exit": "s1:t2:eq",
+     "why": "Positive funding means longs are paying to hold, so pressure on longs works for the short from the start and winners show little adverse excursion. A 1% stop held in both halves.",
+     "gate": {
+      "matched": 384,
+      "mean_cell": -0.0316,
+      "mean_book": -0.03957,
+      "gain": 0.00114,
+      "p_random": 0.0,
+      "search_at": "2026-11-20T07:00:58Z"
+     }
+    }
+   ],
+   "exit_since": 1795168800.0,
+   "close_rules": [],
+   "close_since": 1795168800.0
+  },
+  {
+   "id": "m10",
+   "key": "optimal_h_m10",
+   "kind": "entry",
+   "rule": {
+    "when": [
+     {
+      "field": "funding",
+      "op": ">=",
+      "value": 5e-05
+     },
+     {
+      "field": "px_1h",
+      "op": ">=",
+      "value": 0.005
+     },
+     {
+      "field": "oi_1h",
+      "op": ">=",
+      "value": 0.01
+     }
+    ],
+    "W": 4,
+    "exit": "s3:t2:book"
+   },
+   "sig": "{\"W\": 4, \"exit\": \"s3:t2:book\", \"kind\": \"entry\", \"when\": [[\"funding\", \">=\", 5e-05], [\"oi_1h\", \">=\", 0.01], [\"px_1h\", \">=\", 0.005]]}",
+   "why": "Funding turned positive with fresh longs piling in on an up-hour: longs are crowded and paying. This is the late-long state that tends to unwind, so the short entered here should see small adverse excursion and allow a 3% stop.",
+   "text": null,
+   "source": "patterns:2026-11-20T07:00:53Z",
+   "gate": {
+    "trig": 740,
+    "rule_mean": -0.01722,
+    "book_mean": -0.04627,
+    "p_random_hour": 0.0,
+    "search_at": "2026-11-20T07:00:58Z"
+   },
+   "decided_at": 1795167485.4550683,
+   "born_at": 1795168800.0,
+   "status": "live",
+   "exit_rules": [
+    {
+     "when": [
+      {
+       "field": "name_floor_share",
+       "op": ">=",
+       "value": 0.282
+      }
+     ],
+     "exit": "s3:t3:eq",
+     "why": "Coins that often hit the book's floor have large, fast losses. A 3% stop at equal risk cuts those losers early and still lets a 3x take capture the winners; this gain held in both halves.",
+     "gate": {
+      "matched": 510,
+      "mean_cell": -0.01882,
+      "mean_book": -0.03288,
+      "gain": 0.00267,
+      "p_random": 0.0,
+      "search_at": "2026-11-20T07:00:58Z"
+     }
+    },
+    {
+     "when": [
+      {
+       "field": "name_floor_share",
+       "op": ">=",
+       "value": 0.105
+      },
+      {
+       "field": "name_floor_share",
+       "op": "<=",
+       "value": 0.256
+      },
+      {
+       "field": "crowd_bn_top",
+       "op": "<=",
+       "value": 0.533
+      }
+     ],
+     "exit": "s0:t3:book",
+     "why": "Both terciles held for t3. When top traders are not long-heavy there is less squeeze fuel and trends persist, so let winners run to x3.",
+     "gate": {
+      "matched": 300,
+      "mean_cell": 0.10551,
+      "mean_book": 0.08511,
+      "gain": 0.00227,
+      "p_random": 0.0,
+      "search_at": "2026-11-20T07:00:58Z"
+     }
+    },
+    {
+     "when": [
+      {
+       "field": "funding",
+       "op": ">=",
+       "value": 5e-05
+      }
+     ],
+     "exit": "s1:t2:eq",
+     "why": "Positive funding means longs are paying to hold, so pressure on longs works for the short from the start and winners show little adverse excursion. A 1% stop held in both halves.",
+     "gate": {
+      "matched": 384,
+      "mean_cell": -0.0316,
+      "mean_book": -0.03957,
+      "gain": 0.00114,
+      "p_random": 0.0,
+      "search_at": "2026-11-20T07:00:58Z"
+     }
+    }
+   ],
+   "exit_since": 1795168800.0,
+   "close_rules": [],
+   "close_since": 1795168800.0
   }
  ],
- "updated": "2026-11-19T08:00:09Z"
+ "updated": "2026-11-20T09:38:10Z"
 }
