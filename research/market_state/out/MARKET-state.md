@@ -1,6 +1,6 @@
 # Состояние рынка (спека 19 §3b)
 
-Срез 2026-11-23T08:13:38Z, прогон 816.0 с, строк записано 2197 (из них докачка 0).
+Срез 2026-11-23T09:16:11Z, прогон 968.9 с, строк записано 2223 (из них докачка 0).
 
 | источник | имён получено | из | % |
 |---|---|---|---|
@@ -8,9 +8,9 @@
 | binance | 458 | 458 | 100.0 |
 | okx | 467 | 472 | 98.9 |
 
-Рынок: fng 11, fng_label Extreme Fear, btc_dom 58.89, mcap_usd 2092337224073, mcap_24h_pct -1.03, insurance_usdt 540811654, stables_usd 284515638400, trending ['PEARL', 'PENGU', 'BTC', 'HYPE', 'EVAA', 'LIT', 'DRV', 'SUI', 'BP', 'PI', 'PUMP', 'XRP', 'VVV', 'TRUMP', 'PENDLE']
+Рынок: fng 11, fng_label Extreme Fear, btc_dom 58.89, mcap_usd 2096961673768, mcap_24h_pct -1.74, insurance_usdt 540812053, stables_usd 284547274485, trending ['MINELIUS', 'PENGU', 'HYPE', 'VVV', 'BTC', 'PEARL', 'DRV', 'TRUMP', 'MON', 'ETH', 'RAY', 'SKY', 'FIL', 'NEAR', 'AERO']
 
-Толпа в лонге сильнее всего: NVDAUSDT 0.87, INTCUSDT 0.84, GOOGLUSDT 0.83, MELANIAUSDT 0.83, XAGUSDT 0.82, LABUSDT 0.82, MNTUSDT 0.81, PFEUSDT 0.80, XRPUSDT 0.79, ONDOUSDT 0.79
-Толпа в шорте сильнее всего: IGVUSDT 0.26, SOXSUSDT 0.29, HMSTRUSDT 0.31, DGAIUSDT 0.32, BAUSDT 0.34, TTMIUSDT 0.36, BKNGUSDT 0.36, PIEVERSEUSDT 0.38, SOSOUSDT 0.38, ETNUSDT 0.39
+Толпа в лонге сильнее всего: NVDAUSDT 0.88, INTCUSDT 0.84, MELANIAUSDT 0.83, GOOGLUSDT 0.82, XAGUSDT 0.82, LABUSDT 0.82, MNTUSDT 0.82, PFEUSDT 0.80, XRPUSDT 0.79, ONDOUSDT 0.79
+Толпа в шорте сильнее всего: IGVUSDT 0.26, SOXSUSDT 0.29, DGAIUSDT 0.31, HMSTRUSDT 0.32, BAUSDT 0.34, TTMIUSDT 0.37, PIEVERSEUSDT 0.37, AXPUSDT 0.37, BKNGUSDT 0.37, SOSOUSDT 0.38
 
-Событий за сутки: 0.
+Событий за сутки: 1.
