@@ -1,10 +1,10 @@
 {
  "meta": {
-  "at": "2026-11-22 02:45 UTC",
-  "legs": 259273,
-  "record_days": 107,
+  "at": "2026-11-23 02:45 UTC",
+  "legs": 260612,
+  "record_days": 108,
   "legs_by_target": {
-   "fwd_4h": 3193045
+   "fwd_4h": 3215129
   },
   "declared": [],
   "retired": []
@@ -19,18 +19,18 @@
    "control": 16,
    "control_active": 2
   },
-  "eff_n": 1.29,
-  "mean_r": 0.5492,
+  "eff_n": 1.21,
+  "mean_r": 0.6486,
   "days": 22,
-  "record_days": 107,
+  "record_days": 108,
   "verdict": "вердикта нет: отобранных книг в пуле ещё нет — фабрика судится ПАРНЫМ сравнением полос, и одной полосой оно не считается",
   "available": 1296,
   "available_declared": 1296,
   "sheet": "fwd_4h — строк 1648, листов из 24: 24, порядок в σ есть, квантильные концы есть",
   "blocked": {},
-  "null_median": -126.71184148338965
+  "null_median": -111.7006029737579
  },
- "null_median": -126.71184148338965,
+ "null_median": -111.7006029737579,
  "pending": null,
  "pending_why": "в заявке нет правила",
  "sheet_caps": {
@@ -46,22 +46,21 @@
   "recent": {
    "fwd_4h": 24
   },
-  "at": 1795313690.3,
-  "hour": "2026-11-22-01",
+  "at": 1795401491.1,
+  "hour": "2026-11-23-01",
   "why": null
  },
  "blocked": {},
  "candidates": {
   "h4_r_f30_w3_gl_rrlo_sv_b0_a1": {
    "lane": "control",
-   "trades": 723,
-   "net": 1852.5088121612241,
+   "trades": 740,
+   "net": 1843.9840129279305,
    "daily": {
-    "20758": 14.113194154488506,
-    "20759": -235.29992611259914,
-    "20761": 238.73843733961874,
-    "20760": 163.75790650478868,
-    "20762": -24.374836569824247,
+    "20759": -123.3724329808653,
+    "20760": 176.6182552942038,
+    "20762": -2.421750420646813,
+    "20761": 95.90164348431183,
     "20763": -46.61620358807859,
     "20765": 21.560507261899676,
     "20766": -15.556654862566559,
@@ -77,280 +76,11 @@
     "20774": 63.35132200676494,
     "20776": -6.762189484760772,
     "20777": 3.4223132092459783,
-    "20779": 244.9434502576298,
+    "20780": -115.553007742704,
+    "20779": 362.1807187065092,
     "20778": 164.93149882903984
    },
    "last": [
-    {
-     "at": 1795208953.6,
-     "exit": 1795215780,
-     "sym": "UVXYUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": 518.9,
-     "why": "цель"
-    },
-    {
-     "at": 1795208953.6,
-     "exit": 1795214280,
-     "sym": "SNXXUSDT",
-     "side": "long",
-     "arm": "gbm",
-     "net_bp": 296.5,
-     "why": "цель"
-    },
-    {
-     "at": 1795208953.6,
-     "exit": 1795220700,
-     "sym": "KERNELUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": 314.0,
-     "why": "цель"
-    },
-    {
-     "at": 1795208953.6,
-     "exit": 1795216320,
-     "sym": "UVXYUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": 554.9,
-     "why": "цель"
-    },
-    {
-     "at": 1795208953.6,
-     "exit": 1795223700,
-     "sym": "KERNELUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": -611.4,
-     "why": "стоп"
-    },
-    {
-     "at": 1795208953.6,
-     "exit": 1795317120,
-     "sym": "KORUUSDT",
-     "side": "long",
-     "arm": "nn",
-     "net_bp": 338.1,
-     "why": "срок"
-    },
-    {
-     "at": 1795223434.1,
-     "exit": 1795223820,
-     "sym": "KERNELUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": -493.3,
-     "why": "стоп"
-    },
-    {
-     "at": 1795223434.1,
-     "exit": 1795224180,
-     "sym": "SNTUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": 284.0,
-     "why": "цель"
-    },
-    {
-     "at": 1795223434.1,
-     "exit": 1795227900,
-     "sym": "SNTUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": 601.2,
-     "why": "цель"
-    },
-    {
-     "at": 1795224492.8,
-     "exit": 1795226520,
-     "sym": "KERNELUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": 435.9,
-     "why": "цель"
-    },
-    {
-     "at": 1795224492.8,
-     "exit": 1795227900,
-     "sym": "SNTUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": 284.0,
-     "why": "цель"
-    },
-    {
-     "at": 1795224492.8,
-     "exit": 1795234020,
-     "sym": "KERNELUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": 891.3,
-     "why": "цель"
-    },
-    {
-     "at": 1795232922.8,
-     "exit": 1795243800,
-     "sym": "SNXXUSDT",
-     "side": "long",
-     "arm": "gbm",
-     "net_bp": 197.9,
-     "why": "цель"
-    },
-    {
-     "at": 1795232922.8,
-     "exit": 1795234680,
-     "sym": "MUUUSDT",
-     "side": "long",
-     "arm": "gbm",
-     "net_bp": -258.8,
-     "why": "стоп"
-    },
-    {
-     "at": 1795232922.8,
-     "exit": 1795268220,
-     "sym": "SKUUUSDT",
-     "side": "long",
-     "arm": "gbm",
-     "net_bp": 384.0,
-     "why": "цель"
-    },
-    {
-     "at": 1795274993.3,
-     "exit": 1795317600,
-     "sym": "PARTIUSDT",
-     "side": "long",
-     "arm": "gbm",
-     "net_bp": -84.6,
-     "why": "срок"
-    },
-    {
-     "at": 1795274993.3,
-     "exit": 1795278360,
-     "sym": "IDOLUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": -681.5,
-     "why": "стоп"
-    },
-    {
-     "at": 1795274993.3,
-     "exit": 1795287900,
-     "sym": "BLESSUSDT",
-     "side": "long",
-     "arm": "gbm",
-     "net_bp": 624.0,
-     "why": "цель"
-    },
-    {
-     "at": 1795274993.3,
-     "exit": 1795289040,
-     "sym": "ORCAUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": 530.7,
-     "why": "цель"
-    },
-    {
-     "at": 1795274993.3,
-     "exit": 1795317660,
-     "sym": "ORCAUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": 322.3,
-     "why": "срок"
-    },
-    {
-     "at": 1795274993.3,
-     "exit": 1795276440,
-     "sym": "IDOLUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": -395.8,
-     "why": "стоп"
-    },
-    {
-     "at": 1795277393.7,
-     "exit": 1795280580,
-     "sym": "SAPIENUSDT",
-     "side": "long",
-     "arm": "gbm",
-     "net_bp": 178.5,
-     "why": "цель"
-    },
-    {
-     "at": 1795280984.2,
-     "exit": 1795298100,
-     "sym": "ENSOUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": 346.9,
-     "why": "цель"
-    },
-    {
-     "at": 1795284611.0,
-     "exit": 1795316580,
-     "sym": "MVLLUSDT",
-     "side": "long",
-     "arm": "gbm",
-     "net_bp": 19.8,
-     "why": "срок"
-    },
-    {
-     "at": 1795288204.6,
-     "exit": 1795316340,
-     "sym": "SKUUUSDT",
-     "side": "long",
-     "arm": "gbm",
-     "net_bp": -11.0,
-     "why": "срок"
-    },
-    {
-     "at": 1795288204.6,
-     "exit": 1795293120,
-     "sym": "OROCHIUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": -403.0,
-     "why": "стоп"
-    },
-    {
-     "at": 1795288204.6,
-     "exit": 1795291560,
-     "sym": "OROCHIUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": -234.6,
-     "why": "стоп"
-    },
-    {
-     "at": 1795291819.1,
-     "exit": 1795297260,
-     "sym": "YBUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": 255.5,
-     "why": "цель"
-    },
-    {
-     "at": 1795291819.1,
-     "exit": 1795302420,
-     "sym": "YBUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": 393.5,
-     "why": "цель"
-    },
-    {
-     "at": 1795291819.1,
-     "exit": 1795293120,
-     "sym": "OROCHIUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": -182.8,
-     "why": "стоп"
-    },
     {
      "at": 1795295440.6,
      "exit": 1795317120,
@@ -389,12 +119,12 @@
     },
     {
      "at": 1795302800.4,
-     "exit": 1795317000,
+     "exit": 1795339620,
      "sym": "INITUSDT",
      "side": "short",
      "arm": "nn",
-     "net_bp": 242.7,
-     "why": "срок"
+     "net_bp": 588.9,
+     "why": "цель"
     },
     {
      "at": 1795306369.2,
@@ -416,29 +146,299 @@
     },
     {
      "at": 1795313690.3,
-     "exit": 1795316520,
+     "exit": 1795320120,
      "sym": "ENSOUSDT",
      "side": "short",
      "arm": "gbm",
-     "net_bp": 233.1,
-     "why": "срок"
+     "net_bp": 675.2,
+     "why": "цель"
     },
     {
      "at": 1795313690.3,
-     "exit": 1795318560,
+     "exit": 1795348380,
      "sym": "YBUSDT",
      "side": "short",
      "arm": "gbm",
-     "net_bp": 95.0,
-     "why": "срок"
+     "net_bp": 246.5,
+     "why": "цель"
     },
     {
      "at": 1795313690.3,
-     "exit": 1795316520,
+     "exit": 1795355280,
      "sym": "ENSOUSDT",
      "side": "short",
      "arm": "nn",
-     "net_bp": 233.1,
+     "net_bp": 1224.4,
+     "why": "цель"
+    },
+    {
+     "at": 1795317393.1,
+     "exit": 1795317720,
+     "sym": "IDOLUSDT",
+     "side": "short",
+     "arm": "gbm",
+     "net_bp": 892.5,
+     "why": "цель"
+    },
+    {
+     "at": 1795320655.0,
+     "exit": 1795323720,
+     "sym": "IDOLUSDT",
+     "side": "short",
+     "arm": "gbm",
+     "net_bp": 780.7,
+     "why": "цель"
+    },
+    {
+     "at": 1795324234.9,
+     "exit": 1795324980,
+     "sym": "IDOLUSDT",
+     "side": "short",
+     "arm": "gbm",
+     "net_bp": -572.5,
+     "why": "стоп"
+    },
+    {
+     "at": 1795327862.3,
+     "exit": 1795328700,
+     "sym": "IDOLUSDT",
+     "side": "short",
+     "arm": "gbm",
+     "net_bp": 664.6,
+     "why": "цель"
+    },
+    {
+     "at": 1795327862.3,
+     "exit": 1795336260,
+     "sym": "MUUUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": 144.7,
+     "why": "цель"
+    },
+    {
+     "at": 1795331442.1,
+     "exit": 1795333800,
+     "sym": "IDOLUSDT",
+     "side": "short",
+     "arm": "gbm",
+     "net_bp": 693.4,
+     "why": "цель"
+    },
+    {
+     "at": 1795331442.1,
+     "exit": 1795345620,
+     "sym": "ORCAUSDT",
+     "side": "short",
+     "arm": "gbm",
+     "net_bp": 249.7,
+     "why": "цель"
+    },
+    {
+     "at": 1795335034.0,
+     "exit": 1795355100,
+     "sym": "IDOLUSDT",
+     "side": "short",
+     "arm": "gbm",
+     "net_bp": 632.5,
+     "why": "цель"
+    },
+    {
+     "at": 1795338582.3,
+     "exit": 1795341540,
+     "sym": "ELSAUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": 505.5,
+     "why": "цель"
+    },
+    {
+     "at": 1795338582.3,
+     "exit": 1795352400,
+     "sym": "ELSAUSDT",
+     "side": "long",
+     "arm": "nn",
+     "net_bp": 800.6,
+     "why": "цель"
+    },
+    {
+     "at": 1795342182.4,
+     "exit": 1795343100,
+     "sym": "ELSAUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": -472.6,
+     "why": "стоп"
+    },
+    {
+     "at": 1795342182.4,
+     "exit": 1795376340,
+     "sym": "ZBCNUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": -392.4,
+     "why": "стоп"
+    },
+    {
+     "at": 1795342182.4,
+     "exit": 1795343160,
+     "sym": "IDOLUSDT",
+     "side": "short",
+     "arm": "nn",
+     "net_bp": 201.0,
+     "why": "цель"
+    },
+    {
+     "at": 1795345785.4,
+     "exit": 1795346160,
+     "sym": "EVAAUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": -508.1,
+     "why": "стоп"
+    },
+    {
+     "at": 1795345785.4,
+     "exit": 1795351860,
+     "sym": "ELSAUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": 492.2,
+     "why": "цель"
+    },
+    {
+     "at": 1795345785.4,
+     "exit": 1795355400,
+     "sym": "CASHCATUSDT",
+     "side": "short",
+     "arm": "gbm",
+     "net_bp": -670.9,
+     "why": "стоп"
+    },
+    {
+     "at": 1795345785.4,
+     "exit": 1795349100,
+     "sym": "IDOLUSDT",
+     "side": "short",
+     "arm": "nn",
+     "net_bp": 248.6,
+     "why": "цель"
+    },
+    {
+     "at": 1795349383.0,
+     "exit": 1795351620,
+     "sym": "SKYAI1USDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": 268.4,
+     "why": "цель"
+    },
+    {
+     "at": 1795349383.0,
+     "exit": 1795350180,
+     "sym": "DRVUSDT",
+     "side": "short",
+     "arm": "gbm",
+     "net_bp": 356.8,
+     "why": "цель"
+    },
+    {
+     "at": 1795349383.0,
+     "exit": 1795352700,
+     "sym": "IDOLUSDT",
+     "side": "short",
+     "arm": "nn",
+     "net_bp": 222.8,
+     "why": "цель"
+    },
+    {
+     "at": 1795352978.1,
+     "exit": 1795371720,
+     "sym": "ELSAUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": 509.8,
+     "why": "цель"
+    },
+    {
+     "at": 1795352978.1,
+     "exit": 1795368960,
+     "sym": "JNJUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": 35.8,
+     "why": "цель"
+    },
+    {
+     "at": 1795352978.1,
+     "exit": 1795355220,
+     "sym": "IDOLUSDT",
+     "side": "short",
+     "arm": "nn",
+     "net_bp": 231.8,
+     "why": "цель"
+    },
+    {
+     "at": 1795352978.1,
+     "exit": 1795389780,
+     "sym": "MVLLUSDT",
+     "side": "long",
+     "arm": "nn",
+     "net_bp": 167.6,
+     "why": "цель"
+    },
+    {
+     "at": 1795356572.5,
+     "exit": 1795359660,
+     "sym": "IDOLUSDT",
+     "side": "short",
+     "arm": "gbm",
+     "net_bp": 275.7,
+     "why": "цель"
+    },
+    {
+     "at": 1795356572.5,
+     "exit": 1795359660,
+     "sym": "IDOLUSDT",
+     "side": "short",
+     "arm": "nn",
+     "net_bp": 261.8,
+     "why": "цель"
+    },
+    {
+     "at": 1795401491.1,
+     "exit": 1795401900,
+     "sym": "ACEUSDT",
+     "side": "short",
+     "arm": "gbm",
+     "net_bp": 31.2,
+     "why": "срок"
+    },
+    {
+     "at": 1795401491.1,
+     "exit": 1795403220,
+     "sym": "IDOLUSDT",
+     "side": "short",
+     "arm": "gbm",
+     "net_bp": -292.7,
+     "why": "срок"
+    },
+    {
+     "at": 1795401491.1,
+     "exit": 1795401900,
+     "sym": "ACEUSDT",
+     "side": "short",
+     "arm": "nn",
+     "net_bp": 31.2,
+     "why": "срок"
+    },
+    {
+     "at": 1795401491.1,
+     "exit": 1795403220,
+     "sym": "IDOLUSDT",
+     "side": "short",
+     "arm": "nn",
+     "net_bp": -292.7,
      "why": "срок"
     }
    ],
@@ -458,15 +458,14 @@
   },
   "h4_r_f44_w10_gl_rr0_se_b0_a1": {
    "lane": "control",
-   "trades": 1164,
-   "net": 1389.4974236420153,
+   "trades": 1192,
+   "net": 1401.7735193616325,
    "daily": {
-    "20758": 59.91372549019608,
-    "20759": -38.6744680851064,
-    "20760": 95.41944444444444,
-    "20762": -52.29318181818178,
-    "20761": 6.0322916666666755,
-    "20763": -4.639655172413799,
+    "20759": -52.15185185185184,
+    "20760": 101.075,
+    "20762": -46.22391304347828,
+    "20761": 8.378947368421066,
+    "20763": -16.670175438596512,
     "20765": 106.0931818181818,
     "20766": -84.74705882352941,
     "20764": 125.12307692307692,
@@ -481,368 +480,369 @@
     "20774": 17.53799999999999,
     "20776": 131.3068181818182,
     "20777": 3.8526315789473964,
-    "20779": 152.45,
+    "20779": 227.3540229885057,
+    "20780": 8.722222222222229,
     "20778": 119.26875
    },
    "last": [
     {
-     "at": 1795205358.3,
-     "exit": 1795211040,
-     "sym": "MUUUSDT",
-     "side": "long",
-     "arm": "nn",
-     "net_bp": 368.5,
-     "why": "цель"
-    },
-    {
-     "at": 1795208953.6,
-     "exit": 1795216320,
-     "sym": "UVXYUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": 554.9,
-     "why": "цель"
-    },
-    {
-     "at": 1795208953.6,
-     "exit": 1795223700,
-     "sym": "KERNELUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": -611.4,
-     "why": "стоп"
-    },
-    {
-     "at": 1795212568.9,
-     "exit": 1795225320,
-     "sym": "UVXYUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": 324.2,
-     "why": "цель"
-    },
-    {
-     "at": 1795223434.1,
-     "exit": 1795227900,
-     "sym": "SNTUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": 601.2,
-     "why": "цель"
-    },
-    {
-     "at": 1795224492.8,
-     "exit": 1795234020,
-     "sym": "KERNELUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": 891.3,
-     "why": "цель"
-    },
-    {
-     "at": 1795232922.8,
-     "exit": 1795243680,
-     "sym": "SKUUUSDT",
-     "side": "long",
-     "arm": "nn",
-     "net_bp": 192.1,
-     "why": "цель"
-    },
-    {
-     "at": 1795232922.8,
-     "exit": 1795234680,
-     "sym": "MUUUSDT",
-     "side": "long",
-     "arm": "nn",
-     "net_bp": -240.5,
-     "why": "стоп"
-    },
-    {
-     "at": 1795274993.3,
-     "exit": 1795317600,
-     "sym": "PARTIUSDT",
-     "side": "long",
-     "arm": "gbm",
-     "net_bp": -84.6,
-     "why": "срок"
-    },
-    {
-     "at": 1795274993.3,
-     "exit": 1795278360,
+     "at": 1795335034.0,
+     "exit": 1795355100,
      "sym": "IDOLUSDT",
      "side": "short",
-     "arm": "gbm",
-     "net_bp": -681.5,
-     "why": "стоп"
-    },
-    {
-     "at": 1795274993.3,
-     "exit": 1795287900,
-     "sym": "BLESSUSDT",
-     "side": "long",
-     "arm": "gbm",
-     "net_bp": 624.0,
+     "arm": "nn",
+     "net_bp": 617.8,
      "why": "цель"
     },
     {
-     "at": 1795274993.3,
-     "exit": 1795317660,
+     "at": 1795335034.0,
+     "exit": 1795337820,
+     "sym": "ZBCNUSDT",
+     "side": "short",
+     "arm": "nn",
+     "net_bp": -373.5,
+     "why": "стоп"
+    },
+    {
+     "at": 1795338582.3,
+     "exit": 1795341540,
+     "sym": "ELSAUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": 505.5,
+     "why": "цель"
+    },
+    {
+     "at": 1795338582.3,
+     "exit": 1795342140,
+     "sym": "MUUUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": 169.1,
+     "why": "цель"
+    },
+    {
+     "at": 1795338582.3,
+     "exit": 1795352400,
+     "sym": "ELSAUSDT",
+     "side": "long",
+     "arm": "nn",
+     "net_bp": 800.6,
+     "why": "цель"
+    },
+    {
+     "at": 1795338582.3,
+     "exit": 1795339380,
+     "sym": "MUUUSDT",
+     "side": "long",
+     "arm": "nn",
+     "net_bp": 92.3,
+     "why": "цель"
+    },
+    {
+     "at": 1795342182.4,
+     "exit": 1795343100,
+     "sym": "ELSAUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": -472.6,
+     "why": "стоп"
+    },
+    {
+     "at": 1795342182.4,
+     "exit": 1795376340,
+     "sym": "ZBCNUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": -392.4,
+     "why": "стоп"
+    },
+    {
+     "at": 1795342182.4,
+     "exit": 1795346700,
+     "sym": "ZBCNUSDT",
+     "side": "long",
+     "arm": "nn",
+     "net_bp": 326.5,
+     "why": "цель"
+    },
+    {
+     "at": 1795345785.4,
+     "exit": 1795346160,
+     "sym": "EVAAUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": -508.1,
+     "why": "стоп"
+    },
+    {
+     "at": 1795345785.4,
+     "exit": 1795351860,
+     "sym": "ELSAUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": 492.2,
+     "why": "цель"
+    },
+    {
+     "at": 1795345785.4,
+     "exit": 1795392000,
+     "sym": "CSOPSKHYNIX2LUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": 309.9,
+     "why": "цель"
+    },
+    {
+     "at": 1795345785.4,
+     "exit": 1795349040,
+     "sym": "JNJUSDT",
+     "side": "long",
+     "arm": "nn",
+     "net_bp": -10.2,
+     "why": "цель"
+    },
+    {
+     "at": 1795345785.4,
+     "exit": 1795352340,
+     "sym": "SKYAI1USDT",
+     "side": "long",
+     "arm": "nn",
+     "net_bp": 460.8,
+     "why": "цель"
+    },
+    {
+     "at": 1795345785.4,
+     "exit": 1795355160,
+     "sym": "CASHCATUSDT",
+     "side": "short",
+     "arm": "nn",
+     "net_bp": -467.3,
+     "why": "стоп"
+    },
+    {
+     "at": 1795345785.4,
+     "exit": 1795350000,
+     "sym": "CSOPSKHYNIX2LUSDT",
+     "side": "long",
+     "arm": "nn",
+     "net_bp": 96.2,
+     "why": "цель"
+    },
+    {
+     "at": 1795349383.0,
+     "exit": 1795351620,
+     "sym": "SKYAI1USDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": 268.4,
+     "why": "цель"
+    },
+    {
+     "at": 1795349383.0,
+     "exit": 1795365180,
      "sym": "ORCAUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": 322.3,
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": 140.1,
+     "why": "цель"
+    },
+    {
+     "at": 1795349383.0,
+     "exit": 1795392000,
+     "sym": "CSOPSAMSUNG2LUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": 305.6,
+     "why": "цель"
+    },
+    {
+     "at": 1795349383.0,
+     "exit": 1795401360,
+     "sym": "AMCUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": -180.4,
      "why": "срок"
     },
     {
-     "at": 1795274993.3,
-     "exit": 1795276440,
-     "sym": "IDOLUSDT",
+     "at": 1795349383.0,
+     "exit": 1795350180,
+     "sym": "DRVUSDT",
      "side": "short",
+     "arm": "gbm",
+     "net_bp": 356.8,
+     "why": "цель"
+    },
+    {
+     "at": 1795349383.0,
+     "exit": 1795363380,
+     "sym": "ZBCNUSDT",
+     "side": "long",
      "arm": "nn",
-     "net_bp": -395.8,
+     "net_bp": -462.6,
      "why": "стоп"
     },
     {
-     "at": 1795274993.3,
-     "exit": 1795287840,
-     "sym": "BLESSUSDT",
+     "at": 1795349383.0,
+     "exit": 1795356180,
+     "sym": "STBLUSDT",
      "side": "long",
      "arm": "nn",
-     "net_bp": 588.2,
+     "net_bp": 166.5,
      "why": "цель"
     },
     {
-     "at": 1795277393.7,
-     "exit": 1795280640,
-     "sym": "SAPIENUSDT",
+     "at": 1795349383.0,
+     "exit": 1795370580,
+     "sym": "CSOPSAMSUNG2LUSDT",
      "side": "long",
      "arm": "nn",
-     "net_bp": 188.1,
+     "net_bp": 137.4,
      "why": "цель"
     },
     {
-     "at": 1795280984.2,
-     "exit": 1795298100,
-     "sym": "ENSOUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": 346.9,
-     "why": "цель"
-    },
-    {
-     "at": 1795280984.2,
-     "exit": 1795306740,
-     "sym": "ENSOUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": -539.6,
-     "why": "стоп"
-    },
-    {
-     "at": 1795284611.0,
-     "exit": 1795316580,
-     "sym": "MVLLUSDT",
+     "at": 1795352978.1,
+     "exit": 1795371720,
+     "sym": "ELSAUSDT",
      "side": "long",
      "arm": "gbm",
-     "net_bp": 19.8,
-     "why": "срок"
+     "net_bp": 509.8,
+     "why": "цель"
     },
     {
-     "at": 1795284611.0,
-     "exit": 1795307340,
-     "sym": "SNXXUSDT",
+     "at": 1795352978.1,
+     "exit": 1795368960,
+     "sym": "JNJUSDT",
      "side": "long",
      "arm": "gbm",
-     "net_bp": 131.3,
+     "net_bp": 35.8,
      "why": "цель"
     },
     {
-     "at": 1795284611.0,
-     "exit": 1795316340,
-     "sym": "SKUUUSDT",
+     "at": 1795352978.1,
+     "exit": 1795361160,
+     "sym": "NAORISUSDT",
      "side": "long",
      "arm": "gbm",
-     "net_bp": 13.3,
-     "why": "срок"
-    },
-    {
-     "at": 1795284611.0,
-     "exit": 1795298220,
-     "sym": "MVLLUSDT",
-     "side": "long",
-     "arm": "nn",
-     "net_bp": 120.7,
+     "net_bp": 136.7,
      "why": "цель"
     },
     {
-     "at": 1795284611.0,
-     "exit": 1795312500,
-     "sym": "SKUUUSDT",
-     "side": "long",
-     "arm": "nn",
-     "net_bp": 96.0,
-     "why": "цель"
-    },
-    {
-     "at": 1795291819.1,
-     "exit": 1795302420,
+     "at": 1795352978.1,
+     "exit": 1795359600,
      "sym": "YBUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": 393.5,
-     "why": "цель"
-    },
-    {
-     "at": 1795302800.4,
-     "exit": 1795311060,
-     "sym": "INITUSDT",
-     "side": "short",
+     "side": "long",
      "arm": "gbm",
-     "net_bp": 401.2,
+     "net_bp": 111.7,
      "why": "цель"
     },
     {
-     "at": 1795302800.4,
-     "exit": 1795317000,
-     "sym": "INITUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": 242.7,
-     "why": "срок"
+     "at": 1795352978.1,
+     "exit": 1795389780,
+     "sym": "MVLLUSDT",
+     "side": "long",
+     "arm": "gbm",
+     "net_bp": 162.7,
+     "why": "цель"
     },
     {
-     "at": 1795302800.4,
-     "exit": 1795316580,
+     "at": 1795352978.1,
+     "exit": 1795389780,
      "sym": "MVLLUSDT",
      "side": "long",
      "arm": "nn",
-     "net_bp": -26.3,
-     "why": "срок"
-    },
-    {
-     "at": 1795306369.2,
-     "exit": 1795307160,
-     "sym": "IDOLUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": 949.8,
+     "net_bp": 167.6,
      "why": "цель"
     },
     {
-     "at": 1795306369.2,
-     "exit": 1795309440,
-     "sym": "ENSOUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": -535.8,
+     "at": 1795352978.1,
+     "exit": 1795373820,
+     "sym": "ELSAUSDT",
+     "side": "long",
+     "arm": "nn",
+     "net_bp": 787.1,
+     "why": "цель"
+    },
+    {
+     "at": 1795352978.1,
+     "exit": 1795356000,
+     "sym": "PIEVERSEUSDT",
+     "side": "long",
+     "arm": "nn",
+     "net_bp": -1068.7,
      "why": "стоп"
     },
     {
-     "at": 1795306369.2,
-     "exit": 1795317120,
-     "sym": "KORUUSDT",
+     "at": 1795352978.1,
+     "exit": 1795363080,
+     "sym": "PUFFERUSDT",
      "side": "long",
-     "arm": "gbm",
-     "net_bp": -70.2,
-     "why": "срок"
+     "arm": "nn",
+     "net_bp": 225.6,
+     "why": "цель"
     },
     {
-     "at": 1795306369.2,
-     "exit": 1795306980,
+     "at": 1795356572.5,
+     "exit": 1795389780,
+     "sym": "SOXLUSDT",
+     "side": "long",
+     "arm": "nn",
+     "net_bp": 183.3,
+     "why": "цель"
+    },
+    {
+     "at": 1795356572.5,
+     "exit": 1795356720,
+     "sym": "PIEVERSEUSDT",
+     "side": "long",
+     "arm": "nn",
+     "net_bp": 325.5,
+     "why": "цель"
+    },
+    {
+     "at": 1795356572.5,
+     "exit": 1795359660,
      "sym": "IDOLUSDT",
      "side": "short",
      "arm": "nn",
-     "net_bp": 577.9,
+     "net_bp": 261.8,
      "why": "цель"
     },
     {
-     "at": 1795309956.6,
-     "exit": 1795310400,
-     "sym": "IDOLUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": 900.9,
+     "at": 1795357701.8,
+     "exit": 1795357860,
+     "sym": "PIEVERSEUSDT",
+     "side": "long",
+     "arm": "nn",
+     "net_bp": 325.5,
      "why": "цель"
     },
     {
-     "at": 1795309956.6,
-     "exit": 1795314180,
-     "sym": "ENSOUSDT",
+     "at": 1795401491.1,
+     "exit": 1795401900,
+     "sym": "ACEUSDT",
      "side": "short",
      "arm": "gbm",
-     "net_bp": 516.5,
-     "why": "цель"
-    },
-    {
-     "at": 1795309956.6,
-     "exit": 1795317780,
-     "sym": "PUFFERUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": 203.7,
+     "net_bp": 31.2,
      "why": "срок"
     },
     {
-     "at": 1795309956.6,
-     "exit": 1795313040,
-     "sym": "AKEUSDT",
-     "side": "short",
-     "arm": "gbm",
-     "net_bp": 737.7,
-     "why": "цель"
-    },
-    {
-     "at": 1795309956.6,
-     "exit": 1795317780,
-     "sym": "PUFFERUSDT",
+     "at": 1795401491.1,
+     "exit": 1795401900,
+     "sym": "ACEUSDT",
      "side": "short",
      "arm": "nn",
-     "net_bp": 203.7,
+     "net_bp": 31.2,
      "why": "срок"
     },
     {
-     "at": 1795309956.6,
-     "exit": 1795316520,
-     "sym": "ENSOUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": 358.2,
-     "why": "срок"
-    },
-    {
-     "at": 1795309956.6,
-     "exit": 1795317000,
-     "sym": "IRYSUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": -12.0,
-     "why": "срок"
-    },
-    {
-     "at": 1795309956.6,
-     "exit": 1795310220,
+     "at": 1795401491.1,
+     "exit": 1795403220,
      "sym": "IDOLUSDT",
      "side": "short",
      "arm": "nn",
-     "net_bp": 426.2,
-     "why": "цель"
-    },
-    {
-     "at": 1795309956.6,
-     "exit": 1795311060,
-     "sym": "AKEUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": 624.7,
-     "why": "цель"
-    },
-    {
-     "at": 1795313690.3,
-     "exit": 1795318560,
-     "sym": "YBUSDT",
-     "side": "short",
-     "arm": "nn",
-     "net_bp": 95.0,
+     "net_bp": -292.7,
      "why": "срок"
     }
    ],
