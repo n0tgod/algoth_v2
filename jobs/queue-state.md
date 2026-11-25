@@ -1,4 +1,3 @@
-2026-11-25T16:05:04Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (9 МБ) research/dca_paper/out/DCA-short.json (9 МБ)
 2026-11-25T16:13:58Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (9 МБ) research/dca_paper/out/DCA-short.json (9 МБ)
 2026-11-25T16:20:02Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (9 МБ) research/dca_paper/out/DCA-short.json (9 МБ)
 2026-11-25T16:35:05Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (9 МБ) research/dca_paper/out/DCA-short.json (9 МБ)
@@ -18,3 +17,4 @@
 2026-11-25T18:13:54Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (9 МБ) research/dca_paper/out/DCA-short.json (9 МБ)
 2026-11-25T18:20:03Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (9 МБ) research/dca_paper/out/DCA-short.json (9 МБ)
 2026-11-25T18:35:05Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (9 МБ) research/dca_paper/out/DCA-short.json (9 МБ)
+2026-11-25T18:50:05Z · публикация: больше 5 МБ, НЕ опубликованы — git-копия устарела, живая на сервере: research/dca_paper/out/DCA-pair.json (9 МБ) research/dca_paper/out/DCA-short.json (9 МБ)
