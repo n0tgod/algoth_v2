@@ -2163,3 +2163,5 @@
 {"at": 1795747502.132, "role": "judge", "status": "start", "started": 1795747502.131, "ended": 1795747502.132, "dry": false, "pid": 3008100}
 {"at": 1795750446.415, "role": "judge", "status": "ok", "started": 1795747502.131, "ended": 1795750446.415, "dry": false, "note": "код возврата 0"}
 {"at": 1795750501.566, "role": "ceiling", "status": "start", "started": 1795750501.565, "ended": 1795750501.566, "dry": false, "pid": 3025184}
+{"at": 1795750502.752, "role": "ceiling", "status": "ok", "started": 1795750501.565, "ended": 1795750502.752, "dry": false, "note": "код возврата 0"}
+{"at": 1795750801.923, "role": "declare", "status": "start", "started": 1795750801.922, "ended": 1795750801.923, "dry": false, "pid": 3026974}
