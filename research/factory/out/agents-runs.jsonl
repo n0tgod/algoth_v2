@@ -2165,3 +2165,6 @@
 {"at": 1795750501.566, "role": "ceiling", "status": "start", "started": 1795750501.565, "ended": 1795750501.566, "dry": false, "pid": 3025184}
 {"at": 1795750502.752, "role": "ceiling", "status": "ok", "started": 1795750501.565, "ended": 1795750502.752, "dry": false, "note": "код возврата 0"}
 {"at": 1795750801.923, "role": "declare", "status": "start", "started": 1795750801.922, "ended": 1795750801.923, "dry": false, "pid": 3026974}
+{"at": 1795750808.846, "role": "declare", "status": "ok", "started": 1795750801.922, "ended": 1795750808.846, "dry": false, "note": "код возврата 0"}
+{"at": 1795751101.714, "role": "task", "status": "start", "started": 1795751101.713, "ended": 1795751101.714, "dry": false, "pid": 3028792}
+{"at": 1795751101.895, "role": "task", "status": "ok", "started": 1795751101.713, "ended": 1795751101.895, "dry": false, "note": "код возврата 0"}
