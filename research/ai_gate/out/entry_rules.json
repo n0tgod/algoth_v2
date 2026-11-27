@@ -758,9 +758,101 @@
    "why": "Funding turned positive with fresh longs piling in on an up-hour: longs are crowded and paying. This is the late-long state that tends to unwind, so the short entered here should see small adverse excursion and allow a 3% stop.",
    "exit": "s3:t2:book",
    "proposed_at": "2026-11-20T07:00:53Z"
+  },
+  {
+   "when": [
+    {
+     "field": "oi_1h",
+     "op": "<=",
+     "value": -0.02
+    },
+    {
+     "field": "px_1h",
+     "op": "<=",
+     "value": 0.0
+    },
+    {
+     "field": "btc_4h",
+     "op": ">=",
+     "value": -0.003
+    }
+   ],
+   "W": 6,
+   "why": "Open interest is unwinding while the coin's price stalls or dips and BTC is steady. Longs are leaving without a squeeze forcing a bounce. Entering after the unwind should mean less upside fuel, so adverse excursion stays small and a 3% stop can survive.",
+   "exit": "s3:t2:book",
+   "proposed_at": "2026-11-27T07:01:04Z"
+  },
+  {
+   "when": [
+    {
+     "field": "crowd_bybit_shift",
+     "op": "<=",
+     "value": -0.05
+    },
+    {
+     "field": "since_signal",
+     "op": ">=",
+     "value": 0.02
+    },
+    {
+     "field": "buy_share",
+     "op": "<=",
+     "value": 0.48
+    }
+   ],
+   "W": 6,
+   "why": "Shorts covered (the crowd shifted toward short-covering) and the price already squeezed up since the signal. Buying flow is now fading. The squeeze is spent, so we short its top with a short stop.",
+   "exit": "s3:t2:eq",
+   "proposed_at": "2026-11-27T07:01:04Z"
+  },
+  {
+   "when": [
+    {
+     "field": "burst_ratio",
+     "op": ">=",
+     "value": 2.0
+    },
+    {
+     "field": "px_1h",
+     "op": ">=",
+     "value": 0.015
+    },
+    {
+     "field": "buy_share",
+     "op": "<=",
+     "value": 0.5
+    }
+   ],
+   "W": 4,
+   "why": "A burst of activity lifted the price, but buy share is back at or below half. The buying climax is exhausting itself, so we enter near the local high and adverse excursion is limited.",
+   "exit": "s3:t3:book",
+   "proposed_at": "2026-11-27T07:01:04Z"
+  },
+  {
+   "when": [
+    {
+     "field": "funding",
+     "op": ">=",
+     "value": 5e-05
+    },
+    {
+     "field": "oi_1h",
+     "op": ">=",
+     "value": 0.02
+    },
+    {
+     "field": "btc_1h",
+     "op": "<=",
+     "value": 0.0
+    }
+   ],
+   "W": 6,
+   "why": "Funding has flipped positive while open interest builds: longs are crowding in and paying to hold. BTC is not helping. Late longs are vulnerable, which suits a short with a tight stop.",
+   "exit": "s2:t3:eq",
+   "proposed_at": "2026-11-27T07:01:04Z"
   }
  ],
- "updated": "2026-11-20T07:00:53Z",
+ "updated": "2026-11-27T07:01:04Z",
  "exit_rules": [
   {
    "when": [
@@ -1078,6 +1170,86 @@
    "exit": "s8:t3:book",
    "why": "A broad market selloff carries shorts further; the 8% stop barely cuts winners in a down tape, and the x3 take adds upside.",
    "proposed_at": "2026-11-20T07:00:53Z"
+  },
+  {
+   "when": [
+    {
+     "field": "fng",
+     "op": "<=",
+     "value": 28.0
+    }
+   ],
+   "exit": "s2:t1:eq",
+   "why": "In extreme fear, downside moves come quickly and rebounds are sharp. A quick ×1 take with a 2% equal-risk stop captures the fast drop. This gain held in both halves.",
+   "proposed_at": "2026-11-27T07:01:04Z"
+  },
+  {
+   "when": [
+    {
+     "field": "funding",
+     "op": ">=",
+     "value": 8e-06
+    }
+   ],
+   "exit": "s2:t3:eq",
+   "why": "Positive funding means longs are crowded and paying. The drop tends to run without a big adverse excursion, so a 2% stop survives and a ×3 take lets the long unwind run. This held in both halves.",
+   "proposed_at": "2026-11-27T07:01:04Z"
+  },
+  {
+   "when": [
+    {
+     "field": "fng",
+     "op": "<=",
+     "value": 28.0
+    },
+    {
+     "field": "funding",
+     "op": ">=",
+     "value": 0.0
+    }
+   ],
+   "exit": "s2:t2:eq",
+   "why": "Fear combined with non-negative funding: no short crowd to squeeze, so adverse excursion stays small and a 2% stop is viable.",
+   "proposed_at": "2026-11-27T07:01:04Z"
+  },
+  {
+   "when": [
+    {
+     "field": "name_floor_share",
+     "op": ">=",
+     "value": 0.125
+    },
+    {
+     "field": "name_floor_share",
+     "op": "<=",
+     "value": 0.28
+    },
+    {
+     "field": "depth_eat_ask",
+     "op": ">=",
+     "value": 230.0
+    }
+   ],
+   "exit": "s0:t3:book",
+   "why": "Moderate history of stop-floor exits for this coin plus a liquid book. These trades trend to the deadline, so a wider ×3 take captures more of the move.",
+   "proposed_at": "2026-11-27T07:01:04Z"
+  },
+  {
+   "when": [
+    {
+     "field": "crowd_bn_top",
+     "op": "<=",
+     "value": 0.5285
+    },
+    {
+     "field": "fng",
+     "op": ">=",
+     "value": 28.0
+    }
+   ],
+   "exit": "s0:t3:book",
+   "why": "Top traders are not long-heavy, so the move is not crowded. Winners run to the deadline and a ×3 take beats ×2.",
+   "proposed_at": "2026-11-27T07:01:04Z"
   }
  ],
  "close_rules": [
@@ -1268,6 +1440,45 @@
    "H": 3,
    "why": "BTC turns up sharply and the coin follows with new leverage: a market-wide squeeze. Exit early rather than ride it to the stop.",
    "proposed_at": "2026-11-20T07:00:53Z"
+  },
+  {
+   "when": [
+    {
+     "field": "name_floor_share",
+     "op": ">=",
+     "value": 0.27
+    },
+    {
+     "field": "oi_1h",
+     "op": ">=",
+     "value": 0.02
+    }
+   ],
+   "H": 3,
+   "why": "This coin often ends at the stop floor, and open interest is rebuilding right after entry. That points to a renewed long build or squeeze, so we exit early before the floor. This coin-history tercile held in both halves.",
+   "proposed_at": "2026-11-27T07:01:04Z"
+  },
+  {
+   "when": [
+    {
+     "field": "name_floor_share",
+     "op": ">=",
+     "value": 0.27
+    },
+    {
+     "field": "btc_1h",
+     "op": ">=",
+     "value": 0.004
+    },
+    {
+     "field": "buy_share",
+     "op": ">=",
+     "value": 0.55
+    }
+   ],
+   "H": 4,
+   "why": "For a coin prone to floor exits, BTC turning up together with a burst of aggressive buying breaks the short thesis, so we close early.",
+   "proposed_at": "2026-11-27T07:01:04Z"
   }
  ]
 }
