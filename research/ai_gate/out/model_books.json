@@ -1082,7 +1082,167 @@
    "exit_since": 1795168800.0,
    "close_rules": [],
    "close_since": 1795168800.0
+  },
+  {
+   "id": "m11",
+   "key": "optimal_h_m11",
+   "kind": "entry",
+   "rule": {
+    "when": [
+     {
+      "field": "since_signal",
+      "op": ">=",
+      "value": 0.015
+     },
+     {
+      "field": "burst_ratio",
+      "op": "<=",
+      "value": 0.8
+     },
+     {
+      "field": "trades_ratio",
+      "op": "<=",
+      "value": 1.0
+     }
+    ],
+    "W": 6,
+    "exit": "s5:t2:book"
+   },
+   "sig": "{\"W\": 6, \"exit\": \"s5:t2:book\", \"kind\": \"entry\", \"when\": [[\"burst_ratio\", \"<=\", 0.8], [\"since_signal\", \">=\", 0.015], [\"trades_ratio\", \"<=\", 1.0]]}",
+   "why": "The coin has already moved against the signal but activity and bursts are fading: buying exhaustion after the run-up. Entering after it means part of the adverse excursion is already behind, so a 5% stop survives more often.",
+   "text": null,
+   "source": "patterns:2026-11-20T07:00:53Z",
+   "gate": {
+    "trig": 757,
+    "rule_mean": 0.02254,
+    "book_mean": -0.03289,
+    "p_random_hour": 0.0,
+    "search_at": "2026-11-27T07:01:09Z"
+   },
+   "decided_at": 1795852802.879963,
+   "born_at": 1795856400.0,
+   "status": "live",
+   "exit_rules": [
+    {
+     "when": [
+      {
+       "field": "name_floor_share",
+       "op": ">=",
+       "value": 0.125
+      },
+      {
+       "field": "name_floor_share",
+       "op": "<=",
+       "value": 0.28
+      },
+      {
+       "field": "depth_eat_ask",
+       "op": ">=",
+       "value": 230.0
+      }
+     ],
+     "exit": "s0:t3:book",
+     "why": "Moderate history of stop-floor exits for this coin plus a liquid book. These trades trend to the deadline, so a wider ×3 take captures more of the move.",
+     "gate": {
+      "matched": 707,
+      "mean_cell": 0.11021,
+      "mean_book": 0.09012,
+      "gain": 0.00519,
+      "p_random": 0.0,
+      "search_at": "2026-11-27T07:01:09Z"
+     }
+    },
+    {
+     "when": [
+      {
+       "field": "name_floor_share",
+       "op": ">=",
+       "value": 0.282
+      },
+      {
+       "field": "spread_bp",
+       "op": ">=",
+       "value": 7.0
+      }
+     ],
+     "exit": "s3:t3:eq",
+     "why": "Coins that often hit the book's floor in thin books blow far against the position. A 3% equal-risk stop cuts the tail early while the take ×3 keeps the winners.",
+     "gate": {
+      "matched": 195,
+      "mean_cell": -0.06068,
+      "mean_book": -0.11132,
+      "gain": 0.00361,
+      "p_random": 0.0,
+      "search_at": "2026-11-27T07:01:09Z"
+     }
+    },
+    {
+     "when": [
+      {
+       "field": "fng",
+       "op": "<=",
+       "value": 28.0
+      },
+      {
+       "field": "funding",
+       "op": ">=",
+       "value": 0.0
+      }
+     ],
+     "exit": "s2:t2:eq",
+     "why": "Fear combined with non-negative funding: no short crowd to squeeze, so adverse excursion stays small and a 2% stop is viable.",
+     "gate": {
+      "matched": 188,
+      "mean_cell": 0.00451,
+      "mean_book": -0.04206,
+      "gain": 0.0032,
+      "p_random": 0.0,
+      "search_at": "2026-11-27T07:01:09Z"
+     }
+    }
+   ],
+   "exit_since": 1795856400.0,
+   "close_rules": [],
+   "close_since": 1795856400.0
+  },
+  {
+   "id": "m12",
+   "key": "optimal_h_m12",
+   "kind": "skip",
+   "rule": {
+    "when": [
+     {
+      "field": "book_rules.fav_bp",
+      "op": "<=",
+      "value": 0.0
+     },
+     {
+      "field": "price_moves_to_decision.1h_pct",
+      "op": ">=",
+      "value": 3.0
+     },
+     {
+      "field": "price_moves_to_decision.4h_pct",
+      "op": ">=",
+      "value": 5.0
+     }
+    ]
+   },
+   "sig": "{\"W\": null, \"kind\": \"skip\", \"when\": [[\"book_rules.fav_bp\", \"<=\", 0.0], [\"price_moves_to_decision.1h_pct\", \">=\", 3.0], [\"price_moves_to_decision.4h_pct\", \">=\", 5.0]]}",
+   "why": "A strong positive last hour on top of a 4h pump means buyers are still in control. Even at 1x, these shorts (DOOD, IRYS) ran straight to the floor, and at higher leverage the floor came within minutes. This replaces the weaker crowd-filtered 1h rule.",
+   "text": "Skip shorts into a pump that is still running hard: last hour up 3% or more and 4h up 5% or more, at any leverage.",
+   "source": "lessons:1067933818",
+   "gate": {
+    "n": 1098,
+    "matched": 79,
+    "mean_matched": -0.0935,
+    "mean_rest": 0.0291,
+    "p_random": 0.0
+   },
+   "decided_at": 1795852802.879963,
+   "born_at": 1795856400.0,
+   "status": "live"
   }
  ],
- "updated": "2026-11-27T07:30:18Z"
+ "updated": "2026-11-28T08:00:10Z"
 }
