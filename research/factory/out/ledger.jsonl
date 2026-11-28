@@ -38,3 +38,4 @@
 {"ev": "declare", "id": "h4_r_f44_w10_gl_rr0_se_b0_a1", "at": 1794888302.1956775, "rule": {"agree": "yes", "basket": "no", "sizing": "equal", "rr_band": "none", "geom": "levels", "width": 10, "floor_bp": 44, "rank": "raw", "target": "fwd_4h"}, "lane": "control", "seed": 20774, "source": "draw", "note": null}
 {"ev": "retire", "id": "h4_r_f30_w3_gl_rrlo_sv_b0_a1", "at": 1795833901.6964622, "why": "нетто за 10 суток -624.21 ниже медианы нуля -26.80"}
 {"ev": "retire", "id": "h4_r_f44_w10_gl_rr0_se_b0_a1", "at": 1795833901.6964622, "why": "нетто за 10 суток -50.00 ниже медианы нуля -26.80"}
+{"ev": "declare", "id": "h4_z_f44_w5_gs_rr0_sv_b0_a1", "at": 1795837202.200142, "rule": {"agree": "yes", "basket": "no", "sizing": "inv_sigma", "rr_band": "none", "geom": "stop_take", "width": 5, "floor_bp": 44, "rank": "sigma", "target": "fwd_4h"}, "lane": "control", "seed": 20785, "source": "draw", "note": null}
